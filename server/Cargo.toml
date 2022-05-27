@@ -1,5 +1,8 @@
 [workspace]
 
-members = []
+
+members = [
+    "common/database"
+]
 [profile.release]
 strip = "symbols"
