@@ -2,7 +2,9 @@
 
 
 members = [
-    "common/database"
+    "packages/bookmarks",
+    "packages/auth",
+    "common/proto",
 ]
 [profile.release]
 strip = "symbols"
