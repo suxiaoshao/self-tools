@@ -5,6 +5,8 @@ members = [
     "packages/bookmarks",
     "packages/auth",
     "common/proto",
+    "packages/login",
+    "common/errors",
 ]
 [profile.release]
 strip = "symbols"
