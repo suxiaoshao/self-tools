@@ -7,13 +7,17 @@ edition = "2021"
 
 [dependencies]
 prost = "0.10.4"
-tonic = "0.7.2"
+tonic = { version = "0.7.2", features = ["transport"] }
+tower = "0.4.12"
+http={ version = "0.2.7", optional = true }
 [build-dependencies]
 tonic-build = "0.7.2"
 anyhow = "1.0.57"
 
 
 [features]
+client=[]
+server=["http"]
 auth=[]
-auth_client=["auth"]
-auth_server=["auth"]
+auth_client=["auth","client"]
+auth_server=["auth","server"]
