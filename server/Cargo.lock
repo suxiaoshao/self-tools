@@ -566,7 +566,9 @@ dependencies = [
  "proto",
  "serde",
  "serde_json",
+ "thiserror",
  "tokio",
+ "tonic",
  "tower-http",
 ]
 
@@ -818,9 +820,11 @@ name = "proto"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "http",
  "prost",
  "tonic",
  "tonic-build",
+ "tower",
 ]
 
 [[package]]
