@@ -17,6 +17,6 @@
     "jsx": "react-jsx",
     "types": ["vite/client"]
   },
-  "include": ["packages/*/src", "packages/*/vite.config.js"],
+  "include": ["packages/*/src", "packages/*/vite.config.js", "common/*/src"],
   "exclude": ["./**/node_modules"]
 }
