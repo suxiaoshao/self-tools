@@ -16,7 +16,7 @@ anyhow = "1.0.57"
 
 
 [features]
-client=[]
+client=["http"]
 server=["http"]
 auth=[]
 auth_client=["auth","client"]
