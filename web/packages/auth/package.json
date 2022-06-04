@@ -8,6 +8,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "react-hook-form": "^7.31.3",
     "theme": "workspace:theme"
   }
 }

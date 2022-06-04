@@ -60,8 +60,10 @@ importers:
 
   packages/auth:
     specifiers:
+      react-hook-form: ^7.31.3
       theme: workspace:theme
     dependencies:
+      react-hook-form: registry.npmmirror.com/react-hook-form/7.31.3_react@18.1.0
       theme: link:../../common/theme
 
   packages/bookmarks:
@@ -2954,6 +2956,18 @@ packages:
       loose-envify: registry.npmmirror.com/loose-envify/1.4.0
       react: registry.npmmirror.com/react/18.1.0
       scheduler: registry.npmmirror.com/scheduler/0.22.0
+    dev: false
+
+  registry.npmmirror.com/react-hook-form/7.31.3_react@18.1.0:
+    resolution: {integrity: sha512-NVZdCWViIWXXXlQ3jxVQH0NuNfwPf8A/0KvuCxrM9qxtP1qYosfR2ZudarziFrVOC7eTUbWbm1T4OyYCwv9oSQ==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npmmirror.com/react-hook-form/-/react-hook-form-7.31.3.tgz}
+    id: registry.npmmirror.com/react-hook-form/7.31.3
+    name: react-hook-form
+    version: 7.31.3
+    engines: {node: '>=12.22.0'}
+    peerDependencies:
+      react: ^16.8.0 || ^17 || ^18
+    dependencies:
+      react: registry.npmmirror.com/react/18.1.0
     dev: false
 
   registry.npmmirror.com/react-is/16.13.1:
