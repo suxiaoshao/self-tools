@@ -6,9 +6,9 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-tokio = { version = "1.19.0", features = ["macros", "rt-multi-thread"] }
+tokio = { version = "1.19.2", features = ["macros", "rt-multi-thread"] }
 axum = { version = "0.5.6", features = ["headers", "json"] }
-tower-http= { version = "0.3.3", features = ["cors"] }
+tower-http= { version = "0.3.4", features = ["cors"] }
 
 anyhow = "1.0.57"
 thiserror = "1.0.31"
