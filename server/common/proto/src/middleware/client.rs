@@ -9,7 +9,7 @@ use crate::middleware::client::service::{Auth, AuthService};
 pub async fn login_client(
     auth: Option<String>,
 ) -> Result<LoginClient<AuthService>, tonic::transport::Error> {
-    let channel = Channel::from_static("http://core:80").connect().await?;
+    let channel = Channel::from_static("http://auth:80").connect().await?;
 
     let channel = ServiceBuilder::new()
         // Interceptors can be also be applied as middleware
