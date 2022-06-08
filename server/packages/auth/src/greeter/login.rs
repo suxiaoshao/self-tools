@@ -8,8 +8,8 @@ pub struct LoginGreeter;
 #[async_trait]
 impl Login for LoginGreeter {
     async fn login(&self, request: Request<LoginRequest>) -> Result<Response<LoginReply>, Status> {
-        let LoginRequest { name, password } = request.into_inner();
-        let auth = Claims::manager_token(name, password)?;
+        let LoginRequest { username, password } = request.into_inner();
+        let auth = Claims::manager_token(username, password)?;
 
         Ok(Response::new(LoginReply { auth }))
     }

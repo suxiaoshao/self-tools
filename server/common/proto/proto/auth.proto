@@ -10,7 +10,7 @@ service Login {
 }
 message LoginRequest {
   // 账号
-  string name = 1;
+  string username = 1;
   // 密码
   string password = 2;
 }
