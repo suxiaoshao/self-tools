@@ -7,9 +7,9 @@ use tonic::transport::Server;
 
 use crate::greeter::login::LoginGreeter;
 
-static PASSWORD: Lazy<String> = Lazy::new(|| var("password").expect("password not set"));
-static USERNAME: Lazy<String> = Lazy::new(|| var("username").expect("username not set"));
-static SECRET_KEY: Lazy<String> = Lazy::new(|| var("secret").expect("secret key not set"));
+static PASSWORD: Lazy<String> = Lazy::new(|| var("PASSWORD").expect("password not set"));
+static USERNAME: Lazy<String> = Lazy::new(|| var("USERNAME").expect("username not set"));
+static SECRET_KEY: Lazy<String> = Lazy::new(|| var("SECRET").expect("secret key not set"));
 
 mod greeter;
 mod utils;
