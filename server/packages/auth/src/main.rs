@@ -15,7 +15,7 @@ mod greeter;
 mod utils;
 #[tokio::main]
 async fn main() -> Result<()> {
-    let addr = "0.0.0.0:3000".parse()?;
+    let addr = "0.0.0.0:80".parse()?;
 
     let login_greeter = LoginGreeter;
     println!("GreeterServer listening on {addr}");
