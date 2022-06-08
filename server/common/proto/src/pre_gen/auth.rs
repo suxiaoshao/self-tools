@@ -2,7 +2,7 @@
 pub struct LoginRequest {
     /// 账号
     #[prost(string, tag="1")]
-    pub name: ::prost::alloc::string::String,
+    pub username: ::prost::alloc::string::String,
     /// 密码
     #[prost(string, tag="2")]
     pub password: ::prost::alloc::string::String,
