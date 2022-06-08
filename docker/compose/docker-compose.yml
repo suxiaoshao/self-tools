@@ -20,6 +20,20 @@ services:
       PGDATA: "/var/lib/postgresql/data/pgdata"
     volumes:
       - postgres:/var/lib/postgresql/data/pgdata
+  auth:
+    image: suxiaoshao/auth:latest
+    restart: always
+    container_name: auth
+    depends_on:
+      - postgres
+    env_file:
+      - .env
+  login:
+    image: suxiaoshao/login:latest
+    restart: always
+    container_name: login
+    depends_on:
+      - auth
 volumes:
   postgres:
     name: postgres
