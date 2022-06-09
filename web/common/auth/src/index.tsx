@@ -1,15 +1,66 @@
 import { Avatar, Box, Button, Container, TextField, Typography } from '@mui/material';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { LockOutlined } from '@mui/icons-material';
+import { atom, useAtom } from 'jotai';
+import { useEffect } from 'react';
+import { createSearchParams, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+
+const innerAuthAtom = atom<string | null>(window.localStorage.getItem('auth'));
+export const authAtom = atom(
+  (get) => get(innerAuthAtom),
+  async (_get, set, data: LoginForm) => {
+    const headers = new Headers({ 'Content-Type': 'application/json' });
+    const request = new Request('http://auth.sushao.top/api/login', {
+      mode: 'cors',
+      credentials: 'include',
+      method: 'POST',
+      body: JSON.stringify(data),
+      headers,
+    });
+    const response = await fetch(request);
+    const auth = await response.json();
+    window.localStorage.setItem('auth', auth.data);
+    return set(innerAuthAtom, auth.data);
+  },
+);
 interface LoginForm {
   username: string;
   password: string;
 }
 
+export function useLogin() {
+  const [auth] = useAtom(authAtom);
+  const navigate = useNavigate();
+  const { pathname, search, hash } = useLocation();
+
+  useEffect(() => {
+    if (auth === null) {
+      const url = pathname + search + hash;
+      if (pathname !== '/login') {
+        navigate({ pathname: '/login', search: createSearchParams({ from: url }).toString() });
+      }
+    }
+  }, [auth, hash, navigate, pathname, search]);
+}
+
 export default function Login() {
   const { register, handleSubmit } = useForm<LoginForm>();
-  const onSubmit: SubmitHandler<LoginForm> = (data) => {
-    console.log(data);
+  const [auth, setAuth] = useAtom(authAtom);
+  /** 跳转 */
+  const navigate = useNavigate();
+  const [urlSearch] = useSearchParams();
+  useEffect(() => {
+    if (auth !== null) {
+      const from = urlSearch.get('from');
+      if (from === null) {
+        navigate('/');
+      } else {
+        navigate(from);
+      }
+    }
+  }, [auth, navigate, urlSearch]);
+  const onSubmit: SubmitHandler<LoginForm> = async (data) => {
+    setAuth(data);
   };
   return (
     <Box sx={{ width: '100%', height: '100%' }}>

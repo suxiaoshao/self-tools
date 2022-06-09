@@ -1,4 +1,4 @@
-use axum::Json;
+use axum::{extract::rejection::JsonRejection, Json};
 use proto::{
     auth::{LoginReply, LoginRequest},
     middleware::client::login_client,
@@ -12,8 +12,9 @@ pub struct LoginInput {
     password: String,
 }
 pub(crate) async fn login(
-    Json(LoginInput { username, password }): Json<LoginInput>,
+    json: Result<Json<LoginInput>, JsonRejection>,
 ) -> OpenResult<OpenResponse<String>> {
+    let Json(LoginInput { username, password }) = json?;
     let mut client = login_client(None).await?;
     let LoginReply { auth } = client
         .login(LoginRequest { username, password })
