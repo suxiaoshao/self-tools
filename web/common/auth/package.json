@@ -1,0 +1,14 @@
+{
+  "name": "auth",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/index.tsx",
+  "types": "src/index.tsx",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "jotai": "^1.7.1",
+    "react-hook-form": "^7.31.3"
+  }
+}

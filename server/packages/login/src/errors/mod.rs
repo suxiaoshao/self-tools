@@ -1,4 +1,4 @@
-use axum::Json;
+use axum::{extract::rejection::JsonRejection, Json};
 use axum::{
     http::header::InvalidHeaderValue,
     response::{IntoResponse, Response},
@@ -21,6 +21,8 @@ pub enum OpenError {
     Status(OpenStatus),
     #[error("未知错误")]
     UnknownError,
+    #[error("json 解析错误：{}",.0)]
+    JsonError(String),
 }
 
 impl From<tonic::transport::Error> for OpenError {
@@ -38,6 +40,12 @@ impl From<tonic::Status> for OpenError {
 impl From<InvalidHeaderValue> for OpenError {
     fn from(_value: InvalidHeaderValue) -> Self {
         Self::UnknownError
+    }
+}
+
+impl From<JsonRejection> for OpenError {
+    fn from(value: JsonRejection) -> Self {
+        Self::JsonError(value.to_string())
     }
 }
 

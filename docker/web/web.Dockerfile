@@ -9,6 +9,5 @@ RUN pnpm install \
 
 FROM nginx:stable-alpine as prod
 COPY ./docker/web/nginx.conf /etc/nginx/nginx.conf
-COPY --from=builder ./app/packages/auth/dist /app/auth
 COPY --from=builder ./app/packages/bookmarks/dist /app/bookmarks
 EXPOSE 80
