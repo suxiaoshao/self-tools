@@ -27,6 +27,12 @@ pub(crate) struct OpenResponse<T: Serialize> {
     pub(crate) data: T,
 }
 
+impl<T: Serialize> OpenResponse<T> {
+    pub fn new(data: T) -> Self {
+        OpenResponse { data }
+    }
+}
+
 impl<T: Serialize> IntoResponse for OpenResponse<T> {
     fn into_response(self) -> Response {
         match serde_json::to_value(self) {
