@@ -1,47 +1,14 @@
 import { Avatar, Box, Button, Container, TextField, Typography } from '@mui/material';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { LockOutlined } from '@mui/icons-material';
-import { atom, useAtom } from 'jotai';
+import { useAtom } from 'jotai';
 import { useEffect } from 'react';
-import { createSearchParams, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { type LoginForm, authAtom } from './atom';
 
-const innerAuthAtom = atom<string | null>(window.localStorage.getItem('auth'));
-export const authAtom = atom(
-  (get) => get(innerAuthAtom),
-  async (_get, set, data: LoginForm) => {
-    const headers = new Headers({ 'Content-Type': 'application/json' });
-    const request = new Request('http://auth.sushao.top/api/login', {
-      mode: 'cors',
-      credentials: 'include',
-      method: 'POST',
-      body: JSON.stringify(data),
-      headers,
-    });
-    const response = await fetch(request);
-    const auth = await response.json();
-    window.localStorage.setItem('auth', auth.data);
-    return set(innerAuthAtom, auth.data);
-  },
-);
-interface LoginForm {
-  username: string;
-  password: string;
-}
+export * from './atom';
 
-export function useLogin() {
-  const [auth] = useAtom(authAtom);
-  const navigate = useNavigate();
-  const { pathname, search, hash } = useLocation();
-
-  useEffect(() => {
-    if (auth === null) {
-      const url = pathname + search + hash;
-      if (pathname !== '/login') {
-        navigate({ pathname: '/login', search: createSearchParams({ from: url }).toString() });
-      }
-    }
-  }, [auth, hash, navigate, pathname, search]);
-}
+export * from './useLogin';
 
 export default function Login() {
   const { register, handleSubmit } = useForm<LoginForm>();
