@@ -5,9 +5,10 @@ on:
       - main
     paths:
       - docker/packages/auth.Dockerfile
+      - docker/packages/.cargo/**
       - server/packages/auth/**
-      - server/common/**
-      - server/.cargo/**
+      - server/common/errors/**
+      - server/common/proto/**
       - .github/workflows/auth.yaml
 
 jobs:

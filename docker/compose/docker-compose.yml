@@ -27,7 +27,7 @@ services:
     depends_on:
       - postgres
     volumes:
-      - /app/self-tools/.env:.env
+      - /app/self-tools/.env:/.env
   login:
     image: suxiaoshao/login:latest
     restart: always
