@@ -7,6 +7,7 @@ members = [
     "common/proto",
     "packages/login",
     "common/errors",
+    "common/cors"
 ]
 [profile.release]
 strip = "symbols"

@@ -6,8 +6,24 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+# runtime
+tokio = { version = "1.19.2", features = ["macros", "rt-multi-thread"] }
+
+# graphql
+async-graphql = "4.0.2"
+axum = { version = "0.5.7", features = ["headers"] }
+async-graphql-axum = "4.0.2"
+
+# database
 diesel = { version = "1.4.8", features = ["postgres"] }
+
+# env
 dotenv = "0.15.0"
 
-[dev-dependencies]
+# error
 anyhow = "1.0.57"
+
+# cors
+cors = {path="../../common/cors"}
+[dev-dependencies]
+

@@ -26,8 +26,8 @@ services:
     container_name: auth
     depends_on:
       - postgres
-    env_file:
-      - .env
+    volumes:
+      - /app/self-tools/.env:.env
   login:
     image: suxiaoshao/login:latest
     restart: always
