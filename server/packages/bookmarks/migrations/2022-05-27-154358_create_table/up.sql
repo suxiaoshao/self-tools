@@ -1,11 +1,22 @@
 -- Your SQL goes here
+
+create type read_status as enum ('unread','read','reading');
 create table novel
 (
     id              bigserial primary key,
-    name            text   not null,
-    author_id       bigint not null,
+    name            text        not null,
+    author_id       bigint      not null,
     read_chapter_id bigint,
-    description     text   not null
+    description     text        not null,
+    tags            bigint[]    not null,
+    directory_id    bigint      not null,
+    status          read_status not null
+);
+create table directory
+(
+    id               bigserial primary key,
+    path             text not null,
+    father_directory bigint
 );
 create table author
 (
@@ -17,7 +28,9 @@ create table author
 );
 create table tag
 (
-    name varchar(20) primary key
+    id           bigserial primary key,
+    name         varchar(20) not null,
+    directory_id bigint
 );
 create table chapter
 (
