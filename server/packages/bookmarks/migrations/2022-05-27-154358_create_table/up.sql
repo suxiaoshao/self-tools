@@ -18,6 +18,8 @@ create table directory
     path             text not null,
     father_directory bigint
 );
+insert into directory (path, father_directory)
+values ('/', null);
 create table author
 (
     id          bigserial primary key,

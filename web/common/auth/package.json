@@ -8,8 +8,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "jotai": "^1.7.1",
-    "react-hook-form": "^7.31.3",
-    "notify": "workspace:notify"
+    "jotai": "^1.7.2",
+    "notify": "workspace:notify",
+    "react-hook-form": "^7.32.0"
   }
 }
