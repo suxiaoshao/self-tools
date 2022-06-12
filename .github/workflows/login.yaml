@@ -5,9 +5,10 @@ on:
       - main
     paths:
       - docker/packages/login.Dockerfile
+      - docker/packages/.cargo/**
       - server/packages/login/**
-      - server/common/**
-      - server/.cargo/**
+      - server/common/proto/**
+      - server/common/cors/**
       - .github/workflows/login.yaml
 
 jobs:
