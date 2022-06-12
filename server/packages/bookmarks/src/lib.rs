@@ -1,6 +1,6 @@
+mod schema;
 #[macro_use]
 extern crate diesel;
-mod schema;
 
 #[cfg(test)]
 mod tests {
