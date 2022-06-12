@@ -22,6 +22,12 @@ pub enum TonicError {
     AuthTimeout,
     #[error("身份令牌错误")]
     TokenError,
+    #[error("password 未配置")]
+    PasswordNotSet,
+    #[error("secret key 未配置")]
+    SecretKeyNotSet,
+    #[error("username 未配置")]
+    UsernameNotSet,
 }
 
 impl From<VarError> for TonicError {
@@ -52,6 +58,9 @@ impl From<TonicError> for Status {
             }
             #[cfg(feature = "jsonwebtoken")]
             TonicError::Jwt(_) => Status::unauthenticated(message),
+            TonicError::PasswordNotSet
+            | TonicError::SecretKeyNotSet
+            | TonicError::UsernameNotSet => Status::failed_precondition(message),
         }
     }
 }

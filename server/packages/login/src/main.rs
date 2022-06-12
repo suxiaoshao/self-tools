@@ -1,15 +1,14 @@
 use crate::router::get_router;
 use anyhow::Result;
-use middleware::cors::get_cors;
+use cors::get_cors;
 use std::net::SocketAddr;
 pub mod errors;
-mod middleware;
 mod router;
 
 #[tokio::main]
 async fn main() -> Result<()> {
     // 设置跨域
-    let cors = get_cors()?;
+    let cors = get_cors();
 
     // 获取路由
     let app = get_router()?.layer(cors);
