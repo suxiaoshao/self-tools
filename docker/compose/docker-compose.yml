@@ -34,6 +34,13 @@ services:
     container_name: login
     depends_on:
       - auth
+  bookmarks:
+    image: suxiaoshao/bookmarks:latest
+    restart: always
+    container_name: bookmarks
+    depends_on:
+      - auth
+      - postgres
 volumes:
   postgres:
     name: postgres
