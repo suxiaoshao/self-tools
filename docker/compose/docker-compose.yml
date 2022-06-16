@@ -41,6 +41,8 @@ services:
     depends_on:
       - auth
       - postgres
+    env_file:
+      - .env
 volumes:
   postgres:
     name: postgres
