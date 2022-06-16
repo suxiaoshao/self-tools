@@ -1,3 +1,10 @@
+mod errors;
+mod graphql;
+mod model;
+mod service;
+
+#[macro_use]
+extern crate diesel;
 use async_graphql::{
     http::{playground_source, GraphQLPlaygroundConfig},
     EmptySubscription, Schema,
@@ -10,8 +17,9 @@ use axum::{
     routing::get,
     Extension, Router, Server,
 };
-use bookmarks::graphql::{mutation::MutationRoot, query::QueryRoot, RootSchema};
 use cors::get_cors;
+use graphql::{mutation::MutationRoot, query::QueryRoot, RootSchema};
+use model::CONNECTION;
 
 async fn graphql_handler(
     schema: extract::Extension<RootSchema>,
@@ -36,6 +44,7 @@ async fn graphql_playground() -> impl IntoResponse {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    let _ = &CONNECTION.get()?;
     // 设置跨域
     let cors = get_cors();
     let schema = Schema::build(QueryRoot, MutationRoot, EmptySubscription).finish();
@@ -44,8 +53,6 @@ async fn main() -> anyhow::Result<()> {
         .route("/graphql", get(graphql_playground).post(graphql_handler))
         .layer(Extension(schema))
         .layer(cors);
-
-    println!("Playground: http://graphql:80");
 
     Server::bind(&"0.0.0.0:80".parse()?)
         .serve(app.into_make_service())

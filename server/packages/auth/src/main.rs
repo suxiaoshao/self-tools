@@ -10,7 +10,6 @@ async fn main() -> Result<()> {
     let addr = "0.0.0.0:80".parse()?;
 
     let login_greeter = LoginGreeter;
-    println!("GreeterServer listening on {addr}");
 
     Server::builder()
         .add_service(LoginServer::new(login_greeter))
