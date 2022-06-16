@@ -1,5 +1,3 @@
-pub mod custom_type;
-pub use self::custom_type::ReadStatus;
 table! {
     author (id) {
         id -> Int8,
@@ -7,6 +5,8 @@ table! {
         name -> Text,
         avatar -> Text,
         description -> Text,
+        create_time -> Timestamptz,
+        update_time -> Timestamptz,
     }
 }
 
@@ -16,6 +16,8 @@ table! {
         title -> Varchar,
         content -> Text,
         novel_id -> Int8,
+        create_time -> Timestamptz,
+        update_time -> Timestamptz,
     }
 }
 
@@ -24,12 +26,12 @@ table! {
         id -> Int8,
         path -> Text,
         father_directory -> Nullable<Int8>,
+        create_time -> Timestamptz,
+        update_time -> Timestamptz,
     }
 }
 
 table! {
-    use super::ReadStatus;
-    use diesel::sql_types::*;
     novel (id) {
         id -> Int8,
         name -> Text,
@@ -38,7 +40,9 @@ table! {
         description -> Text,
         tags -> Array<Int8>,
         directory_id -> Int8,
-        status -> ReadStatus,
+        status -> Read_status,
+        create_time -> Timestamptz,
+        update_time -> Timestamptz,
     }
 }
 
@@ -47,7 +51,15 @@ table! {
         id -> Int8,
         name -> Varchar,
         directory_id -> Nullable<Int8>,
+        create_time -> Timestamptz,
+        update_time -> Timestamptz,
     }
 }
 
-allow_tables_to_appear_in_same_query!(author, chapter, directory, novel, tag,);
+allow_tables_to_appear_in_same_query!(
+    author,
+    chapter,
+    directory,
+    novel,
+    tag,
+);
