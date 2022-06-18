@@ -11,19 +11,21 @@ pub enum GraphqlError {
     R2d2(String),
     Diesel(String),
     Unauthenticated,
+    FatherDirPathNotFound,
+    DirPathExists,
 }
 
 impl IntoResponse for GraphqlError {
     fn into_response(self) -> axum::response::Response {
         Json(serde_json::json!({
             "data": null,
-            "errors":{
+            "errors":[{
                 "message": self.message(),
                 "extensions": {
                     "code": self.code(),
                     "source":format!("{self:#?}")
                 }
-            }
+            }]
         }))
         .into_response()
     }
@@ -37,6 +39,8 @@ impl GraphqlError {
             GraphqlError::R2d2(_) => "数据库连接错误".to_string(),
             GraphqlError::Diesel(data) => format!("数据库错误:{}", data),
             GraphqlError::Unauthenticated => "没有发送 token".to_string(),
+            GraphqlError::FatherDirPathNotFound => "父目录不存在".to_string(),
+            GraphqlError::DirPathExists => "目录已存在".to_string(),
         }
     }
     pub fn code(&self) -> &str {
@@ -64,6 +68,8 @@ impl GraphqlError {
             GraphqlError::R2d2(_) => "FailedPrecondition",
             GraphqlError::Diesel(_) => "Internal",
             GraphqlError::Unauthenticated => "Unauthenticated",
+            GraphqlError::FatherDirPathNotFound => "InvalidArgument",
+            GraphqlError::DirPathExists => "InvalidArgument",
         }
     }
 }
@@ -78,6 +84,8 @@ impl Clone for GraphqlError {
             GraphqlError::R2d2(data) => Self::R2d2(data.clone()),
             GraphqlError::Diesel(data) => Self::Diesel(data.clone()),
             GraphqlError::Unauthenticated => Self::Unauthenticated,
+            GraphqlError::FatherDirPathNotFound => Self::FatherDirPathNotFound,
+            GraphqlError::DirPathExists => Self::DirPathExists,
         }
     }
 }
