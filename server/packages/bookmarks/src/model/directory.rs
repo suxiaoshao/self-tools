@@ -25,11 +25,12 @@ struct NewDirectory<'a> {
 }
 
 impl DirectoryModel {
-    pub fn create(path: &str, father_directory: Option<i64>) -> GraphqlResult<Self> {
+    /// 创建目录
+    pub fn create(path: &str, father_directory: i64) -> GraphqlResult<Self> {
         let now = chrono::Local::now().naive_local();
         let new_directory = NewDirectory {
             path,
-            father_directory,
+            father_directory: Some(father_directory),
             create_time: now,
             update_time: now,
         };
@@ -39,6 +40,23 @@ impl DirectoryModel {
             .values(&new_directory)
             .get_result(&conn)?;
         Ok(new_directory)
+    }
+    /// 判断目录是否存在
+    pub fn exists(path: &str) -> GraphqlResult<bool> {
+        let conn = CONNECTION.get()?;
+        let exists = diesel::select(diesel::dsl::exists(
+            directory::table.filter(directory::path.eq(path)),
+        ))
+        .get_result(&conn)?;
+        Ok(exists)
+    }
+    /// 查找目录
+    pub fn find_one(path: &str) -> GraphqlResult<Self> {
+        let conn = CONNECTION.get()?;
+        let directory = directory::table
+            .filter(directory::path.eq(path))
+            .first(&conn)?;
+        Ok(directory)
     }
 }
 
