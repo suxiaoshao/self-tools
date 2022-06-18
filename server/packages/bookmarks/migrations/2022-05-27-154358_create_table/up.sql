@@ -17,7 +17,7 @@ create table novel
 create table directory
 (
     id               bigserial primary key,
-    path             text        not null,
+    path             text        not null unique,
     father_directory bigint,
     create_time      timestamptz not null,
     update_time      timestamptz not null

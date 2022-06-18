@@ -1,4 +1,5 @@
 use async_graphql::{ErrorExtensionValues, ErrorExtensions};
+use axum::{response::IntoResponse, Json};
 use diesel::r2d2;
 use std::sync::Arc;
 use tonic::{transport, Code, Status};
@@ -7,9 +8,25 @@ use tonic::{transport, Code, Status};
 pub enum GraphqlError {
     Status(Status),
     Transport,
-    ParseFolderName,
     R2d2(String),
     Diesel(String),
+    Unauthenticated,
+}
+
+impl IntoResponse for GraphqlError {
+    fn into_response(self) -> axum::response::Response {
+        Json(serde_json::json!({
+            "data": null,
+            "errors":{
+                "message": self.message(),
+                "extensions": {
+                    "code": self.code(),
+                    "source":format!("{self:#?}")
+                }
+            }
+        }))
+        .into_response()
+    }
 }
 
 impl GraphqlError {
@@ -17,9 +34,36 @@ impl GraphqlError {
         match self {
             GraphqlError::Status(status) => status.message().to_string(),
             GraphqlError::Transport => "内部连接错误".to_string(),
-            GraphqlError::ParseFolderName => "目录获取错误".to_string(),
             GraphqlError::R2d2(_) => "数据库连接错误".to_string(),
             GraphqlError::Diesel(data) => format!("数据库错误:{}", data),
+            GraphqlError::Unauthenticated => "没有发送 token".to_string(),
+        }
+    }
+    pub fn code(&self) -> &str {
+        match self {
+            GraphqlError::Status(status) => match status.code() {
+                Code::Ok => "Ok",
+                Code::Cancelled => "Cancelled",
+                Code::Unknown => "Unknown",
+                Code::InvalidArgument => "InvalidArgument",
+                Code::DeadlineExceeded => "DeadlineExceeded",
+                Code::NotFound => "NotFound",
+                Code::AlreadyExists => "AlreadyExists",
+                Code::PermissionDenied => "PermissionDenied",
+                Code::ResourceExhausted => "ResourceExhausted",
+                Code::FailedPrecondition => "FailedPrecondition",
+                Code::Aborted => "Aborted",
+                Code::OutOfRange => "OutOfRange",
+                Code::Unimplemented => "Unimplemented",
+                Code::Internal => "Internal",
+                Code::Unavailable => "Unavailable",
+                Code::DataLoss => "DataLoss",
+                Code::Unauthenticated => "Unauthenticated",
+            },
+            GraphqlError::Transport => "Transport",
+            GraphqlError::R2d2(_) => "FailedPrecondition",
+            GraphqlError::Diesel(_) => "Internal",
+            GraphqlError::Unauthenticated => "Unauthenticated",
         }
     }
 }
@@ -31,9 +75,9 @@ impl Clone for GraphqlError {
                 Self::Status(Status::new(status.code(), status.message()))
             }
             GraphqlError::Transport => Self::Transport,
-            GraphqlError::ParseFolderName => GraphqlError::ParseFolderName,
             GraphqlError::R2d2(data) => Self::R2d2(data.clone()),
             GraphqlError::Diesel(data) => Self::Diesel(data.clone()),
+            GraphqlError::Unauthenticated => Self::Unauthenticated,
         }
     }
 }
@@ -68,35 +112,9 @@ impl ErrorExtensions for GraphqlError {
     fn extend(&self) -> async_graphql::Error {
         let mut extensions = ErrorExtensionValues::default();
         extensions.set("source", format!("{self:#?}"));
+        let code = self.code();
+        extensions.set("code", code);
 
-        match self {
-            GraphqlError::Status(status) => {
-                let code = match status.code() {
-                    Code::Ok => "Ok",
-                    Code::Cancelled => "Cancelled",
-                    Code::Unknown => "Unknown",
-                    Code::InvalidArgument => "InvalidArgument",
-                    Code::DeadlineExceeded => "DeadlineExceeded",
-                    Code::NotFound => "NotFound",
-                    Code::AlreadyExists => "AlreadyExists",
-                    Code::PermissionDenied => "PermissionDenied",
-                    Code::ResourceExhausted => "ResourceExhausted",
-                    Code::FailedPrecondition => "FailedPrecondition",
-                    Code::Aborted => "Aborted",
-                    Code::OutOfRange => "OutOfRange",
-                    Code::Unimplemented => "Unimplemented",
-                    Code::Internal => "Internal",
-                    Code::Unavailable => "Unavailable",
-                    Code::DataLoss => "DataLoss",
-                    Code::Unauthenticated => "Unauthenticated",
-                };
-                extensions.set("code", code);
-            }
-            GraphqlError::Transport => extensions.set("code", "Transport"),
-            GraphqlError::ParseFolderName => extensions.set("code", "Internal"),
-            GraphqlError::R2d2(_) => extensions.set("code", "R2d2"),
-            GraphqlError::Diesel(_) => extensions.set("code", "Diesel"),
-        };
         async_graphql::Error {
             message: self.message(),
             source: Some(Arc::new(self.clone())),

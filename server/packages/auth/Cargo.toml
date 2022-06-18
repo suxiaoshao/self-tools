@@ -12,7 +12,7 @@ proto = { path = "../../common/proto", features = ["auth_server"]}
 tonic = "0.7.2"
 
 # jwt
-jsonwebtoken = "8.1.0"
+jsonwebtoken = "8.1.1"
 serde = { version = "1.0.137", features = ["derive"] }
 
 # error
