@@ -10,6 +10,6 @@
   "dependencies": {
     "jotai": "^1.7.2",
     "notify": "workspace:notify",
-    "react-hook-form": "^7.32.1"
+    "react-hook-form": "^7.32.2"
   }
 }

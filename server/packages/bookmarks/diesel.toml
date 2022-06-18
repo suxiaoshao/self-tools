@@ -2,4 +2,4 @@
 # see diesel.rs/guides/configuring-diesel-cli
 
 [print_schema]
-file = "src/schema/pre_schema.rs"
+file = "src/model/schema/pre_schema.rs"

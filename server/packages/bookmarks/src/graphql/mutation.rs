@@ -1,8 +1,7 @@
 use async_graphql::Object;
 
 use crate::{
-    errors::GraphqlResult,
-    model::directory::{Directory, DirectoryModel},
+    errors::GraphqlResult, model::directory::DirectoryModel, service::directory::Directory,
 };
 
 pub struct MutationRoot;
