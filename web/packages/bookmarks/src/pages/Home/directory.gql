@@ -1,0 +1,17 @@
+query getDirectoryList($fatherPath: String!) {
+  getDirectoryList(fatherPath: $fatherPath) {
+    path
+    createTime
+    updateTime
+  }
+}
+mutation deleteDirectory($dirPath: String!) {
+  deleteDirectory(dirPath: $dirPath) {
+    path
+  }
+}
+mutation createDirectory($fatherPath: String!, $dirName: String!) {
+  createDirectory(fatherPath: $fatherPath, dirName: $dirName) {
+    path
+  }
+}

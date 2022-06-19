@@ -3,10 +3,10 @@ schema:
       headers:
         Authorization: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJuYW1lIjoic3VzaGFvIiwicGFzc3dvcmQiOiJzdXNoYW8xMjMiLCJleHAiOjEwMDAwMDAwMDAwfQ.Ba4OIXTVHqLC5o5ignGj6t_qG-UKb-7vDgXHN7g10hw
 documents:
-  - "./src/**/*.graphql"
-  - "./src/**/*.gql"
+  - './src/**/*.graphql'
+  - './src/**/*.gql'
 generates:
-  ./src/graphql/types.ts:
+  ./src/graphql.ts:
     plugins:
       - typescript
       - typescript-operations
@@ -14,4 +14,4 @@ generates:
     config:
       withHooks: true
       scalars:
-        Upload: "File"
+        Upload: 'File'
