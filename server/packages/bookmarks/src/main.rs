@@ -15,7 +15,7 @@ use axum::{
     extract,
     http::{header::AUTHORIZATION, HeaderMap},
     response::{self, IntoResponse},
-    routing::get,
+    routing::post,
     Extension, Router, Server,
 };
 use cors::get_cors;
@@ -52,10 +52,14 @@ async fn main() -> anyhow::Result<()> {
     let schema = Schema::build(QueryRoot, MutationRoot, EmptySubscription).finish();
 
     let app = Router::new()
-        .route("/graphql", get(graphql_playground).post(graphql_handler))
+        .route(
+            "/graphql",
+            post(graphql_handler)
+                .layer(axum::middleware::from_fn(auth))
+                .get(graphql_playground),
+        )
         .layer(Extension(schema))
-        .layer(cors)
-        .layer(axum::middleware::from_fn(auth));
+        .layer(cors);
 
     Server::bind(&"0.0.0.0:80".parse()?)
         .serve(app.into_make_service())

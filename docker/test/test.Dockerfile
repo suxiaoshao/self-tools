@@ -20,4 +20,4 @@ RUN cargo install cargo-watch
 RUN cargo install cargo-cache
 
 COPY ./server /app
-VOLUME [ "/app/target","/usr/local/cargo/registry" ]
+VOLUME [ "/app/target","/usr/local/cargo/registry","/root/.zsh_history" ]

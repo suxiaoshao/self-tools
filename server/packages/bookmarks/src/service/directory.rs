@@ -24,15 +24,16 @@ impl From<DirectoryModel> for Directory {
 
 impl Directory {
     // 父目录已存在
-    pub fn create(path: &str, father_directory: &str) -> GraphqlResult<Self> {
-        if !DirectoryModel::exists(father_directory)? {
+    pub fn create(dir_name: &str, father_path: &str) -> GraphqlResult<Self> {
+        if !DirectoryModel::exists(father_path)? {
             return Err(GraphqlError::FatherDirPathNotFound);
         }
-        let DirectoryModel { id, .. } = DirectoryModel::find_one(father_directory)?;
-        if DirectoryModel::exists(path)? {
+        let DirectoryModel { id, .. } = DirectoryModel::find_one(father_path)?;
+        let dir_path = format!("{}{}/", father_path, dir_name);
+        if DirectoryModel::exists(&dir_path)? {
             return Err(GraphqlError::DirPathExists);
         }
-        let directory = DirectoryModel::create(path, id)?;
+        let directory = DirectoryModel::create(&dir_path, id)?;
         Ok(directory.into())
     }
 }
