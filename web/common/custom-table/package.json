@@ -1,5 +1,5 @@
 {
-  "name": "auth",
+  "name": "custom-table",
   "version": "1.0.0",
   "description": "",
   "main": "src/index.tsx",
@@ -8,6 +8,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "notify": "workspace:notify"
+    "react-table": "^7.8.0"
+  },
+  "devDependencies": {
+    "@types/react-table": "^7.7.12"
   }
 }

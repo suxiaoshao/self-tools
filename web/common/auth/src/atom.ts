@@ -17,7 +17,6 @@ export const authAtom = atom(
     const auth = await response.json();
     if (auth.message) {
       enqueueSnackbar(auth.message, { variant: 'error' });
-      console.log(auth);
       return;
     }
     window.localStorage.setItem('auth', auth.data);

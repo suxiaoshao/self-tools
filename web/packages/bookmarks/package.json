@@ -9,15 +9,18 @@
     "generate": "graphql-codegen"
   },
   "dependencies": {
-    "theme": "workspace:theme",
-    "notify": "workspace:notify",
+    "@apollo/client": "^3.6.8",
     "auth": "workspace:auth",
-    "@apollo/client": "^3.6.2"
+    "notify": "workspace:notify",
+    "theme": "workspace:theme",
+    "custom-graphql": "workspace:custom-graphql",
+    "custom-table": "workspace:custom-table",
+    "time": "workspace:time"
   },
   "devDependencies": {
     "@graphql-codegen/cli": "^2.6.2",
-    "@graphql-codegen/typescript": "^2.4.8",
-    "@graphql-codegen/typescript-operations": "^2.3.5",
-    "@graphql-codegen/typescript-react-apollo": "^3.2.11"
+    "@graphql-codegen/typescript": "^2.5.1",
+    "@graphql-codegen/typescript-operations": "^2.4.1",
+    "@graphql-codegen/typescript-react-apollo": "^3.2.16"
   }
 }
