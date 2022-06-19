@@ -1,3 +1,4 @@
+use super::validator::DirNameValidator;
 use async_graphql::Object;
 
 use crate::{errors::GraphqlResult, service::directory::Directory};
@@ -8,10 +9,10 @@ pub struct MutationRoot;
 impl MutationRoot {
     async fn create_directory(
         &self,
-        path: String,
-        father_directory: String,
+        #[graphql(validator(custom = "DirNameValidator"))] dir_name: String,
+        father_path: String,
     ) -> GraphqlResult<Directory> {
-        let new_directory = Directory::create(&path, &father_directory)?;
+        let new_directory = Directory::create(&dir_name, &father_path)?;
         Ok(new_directory)
     }
 }
