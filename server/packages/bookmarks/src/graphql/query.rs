@@ -1,10 +1,14 @@
 use async_graphql::Object;
 
+use crate::{errors::GraphqlResult, service::directory::Directory};
+
 pub struct QueryRoot;
 
 #[Object]
 impl QueryRoot {
-    async fn add(&self, a: i32, b: i32) -> i32 {
-        a + b
+    /// 获取目录列表
+    async fn get_directory_list(&self, father_path: String) -> GraphqlResult<Vec<Directory>> {
+        let directory = Directory::get_list(&father_path)?;
+        Ok(directory)
     }
 }

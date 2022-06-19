@@ -5,11 +5,19 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "generate": "graphql-codegen"
   },
   "dependencies": {
     "theme": "workspace:theme",
     "notify": "workspace:notify",
-    "auth": "workspace:auth"
+    "auth": "workspace:auth",
+    "@apollo/client": "^3.6.2"
+  },
+  "devDependencies": {
+    "@graphql-codegen/cli": "^2.6.2",
+    "@graphql-codegen/typescript": "^2.4.8",
+    "@graphql-codegen/typescript-operations": "^2.3.5",
+    "@graphql-codegen/typescript-react-apollo": "^3.2.11"
   }
 }
