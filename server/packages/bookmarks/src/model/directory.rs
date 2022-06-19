@@ -24,6 +24,7 @@ struct NewDirectory<'a> {
     pub update_time: NaiveDateTime,
 }
 
+/// path 相关
 impl DirectoryModel {
     /// 创建目录
     pub fn create(path: &str, father_directory: i64) -> GraphqlResult<Self> {
@@ -58,22 +59,23 @@ impl DirectoryModel {
             .first(&conn)?;
         Ok(directory)
     }
+    /// 删除目录
+    pub fn delete(path: &str) -> GraphqlResult<Self> {
+        let conn = CONNECTION.get()?;
+        let directory =
+            diesel::delete(directory::table.filter(directory::path.eq(path))).get_result(&conn)?;
+        Ok(directory)
+    }
 }
 
-#[cfg(test)]
-mod test {
-    use diesel::prelude::*;
-    use diesel::{Connection, PgConnection};
-
-    use crate::model::directory::DirectoryModel;
-
-    #[test]
-    fn test_query() -> anyhow::Result<()> {
-        use super::super::schema::directory::dsl::*;
-        let database_url = dotenv::var("DATABASE_URL")?;
-        let conn = &PgConnection::establish(&database_url)?;
-        let data = directory.load::<DirectoryModel>(conn)?;
-        println!("{:?}", data);
-        Ok(())
+/// father_directory 相关
+impl DirectoryModel {
+    /// 获取父目录下的所有目录
+    pub fn get_list(&self) -> GraphqlResult<Vec<Self>> {
+        let conn = CONNECTION.get()?;
+        let directory = directory::table
+            .filter(directory::father_directory.eq(self.id))
+            .get_results(&conn)?;
+        Ok(directory)
     }
 }
