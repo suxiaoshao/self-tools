@@ -1,4 +1,4 @@
-use async_graphql::{ErrorExtensionValues, ErrorExtensions};
+use async_graphql::ErrorExtensionValues;
 use axum::{response::IntoResponse, Json};
 use diesel::r2d2;
 use std::sync::Arc;
@@ -11,9 +11,9 @@ pub enum GraphqlError {
     R2d2(String),
     Diesel(String),
     Unauthenticated,
-    FatherDirNotFound,
+    NotFound(&'static str),
     DirAreadyExists,
-    DirNotFound,
+    ParseDirName,
 }
 
 impl IntoResponse for GraphqlError {
@@ -40,9 +40,9 @@ impl GraphqlError {
             GraphqlError::R2d2(_) => "数据库连接错误".to_string(),
             GraphqlError::Diesel(data) => format!("数据库错误:{}", data),
             GraphqlError::Unauthenticated => "没有发送 token".to_string(),
-            GraphqlError::FatherDirNotFound => "父目录不存在".to_string(),
+            GraphqlError::NotFound(tag) => format!("该{}不存在", tag),
             GraphqlError::DirAreadyExists => "目录已存在".to_string(),
-            GraphqlError::DirNotFound => "目录不存在".to_string(),
+            GraphqlError::ParseDirName => "解析目录名错误".to_string(),
         }
     }
     pub fn code(&self) -> &str {
@@ -68,11 +68,9 @@ impl GraphqlError {
             },
             GraphqlError::Transport => "Transport",
             GraphqlError::R2d2(_) => "FailedPrecondition",
-            GraphqlError::Diesel(_) => "Internal",
+            GraphqlError::Diesel(_) | GraphqlError::ParseDirName => "Internal",
             GraphqlError::Unauthenticated => "Unauthenticated",
-            GraphqlError::FatherDirNotFound
-            | GraphqlError::DirAreadyExists
-            | GraphqlError::DirNotFound => "InvalidArgument",
+            GraphqlError::NotFound(_) | GraphqlError::DirAreadyExists => "InvalidArgument",
         }
     }
 }
@@ -87,9 +85,9 @@ impl Clone for GraphqlError {
             GraphqlError::R2d2(data) => Self::R2d2(data.clone()),
             GraphqlError::Diesel(data) => Self::Diesel(data.clone()),
             GraphqlError::Unauthenticated => Self::Unauthenticated,
-            GraphqlError::FatherDirNotFound => Self::FatherDirNotFound,
+            GraphqlError::NotFound(tag) => Self::NotFound(tag),
             GraphqlError::DirAreadyExists => Self::DirAreadyExists,
-            GraphqlError::DirNotFound => Self::DirNotFound,
+            GraphqlError::ParseDirName => Self::ParseDirName,
         }
     }
 }
@@ -120,23 +118,17 @@ impl From<diesel::result::Error> for GraphqlError {
 
 pub type GraphqlResult<T> = Result<T, GraphqlError>;
 
-impl ErrorExtensions for GraphqlError {
-    fn extend(&self) -> async_graphql::Error {
+impl From<GraphqlError> for async_graphql::Error {
+    fn from(value: GraphqlError) -> async_graphql::Error {
         let mut extensions = ErrorExtensionValues::default();
-        extensions.set("source", format!("{self:#?}"));
-        let code = self.code();
+        extensions.set("source", format!("{value:#?}"));
+        let code = value.code();
         extensions.set("code", code);
 
         async_graphql::Error {
-            message: self.message(),
-            source: Some(Arc::new(self.clone())),
+            message: value.message(),
+            source: Some(Arc::new(value)),
             extensions: Some(extensions),
         }
-    }
-}
-
-impl From<GraphqlError> for async_graphql::Error {
-    fn from(value: GraphqlError) -> async_graphql::Error {
-        value.extend()
     }
 }
