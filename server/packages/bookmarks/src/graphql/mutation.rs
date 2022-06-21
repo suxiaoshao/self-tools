@@ -3,7 +3,7 @@ use async_graphql::Object;
 
 use crate::{
     errors::GraphqlResult,
-    service::{author::Author, directory::Directory, tag::Tag},
+    service::{author::Author, collection::Collection, tag::Tag},
 };
 
 pub struct MutationRoot;
@@ -13,15 +13,16 @@ impl MutationRoot {
     /// 创建目录
     async fn create_directory(
         &self,
-        #[graphql(validator(custom = "DirNameValidator"))] dir_name: String,
-        father_path: String,
-    ) -> GraphqlResult<Directory> {
-        let new_directory = Directory::create(&dir_name, &father_path)?;
+        #[graphql(validator(custom = "DirNameValidator"))] name: String,
+        parent_id: Option<i64>,
+        description: Option<String>,
+    ) -> GraphqlResult<Collection> {
+        let new_directory = Collection::create(&name, parent_id, description)?;
         Ok(new_directory)
     }
     /// 删除目录
-    async fn delete_directory(&self, dir_path: String) -> GraphqlResult<Directory> {
-        let deleted_directory = Directory::delete(&dir_path)?;
+    async fn delete_directory(&self, id: i64) -> GraphqlResult<Collection> {
+        let deleted_directory = Collection::delete(id)?;
         Ok(deleted_directory)
     }
     /// 创建作者
@@ -41,8 +42,8 @@ impl MutationRoot {
         Ok(deleted_author)
     }
     /// 创建标签
-    async fn create_tag(&self, name: String, directory_id: Option<i64>) -> GraphqlResult<Tag> {
-        let new_tag = Tag::create(&name, directory_id)?;
+    async fn create_tag(&self, name: String, collection_id: Option<i64>) -> GraphqlResult<Tag> {
+        let new_tag = Tag::create(&name, collection_id)?;
         Ok(new_tag)
     }
     /// 删除标签

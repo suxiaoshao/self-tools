@@ -8,10 +8,10 @@ edition = "2021"
 [dependencies]
 # http
 tokio = { version = "1.19.2", features = ["macros", "rt-multi-thread"] }
-axum = { version = "0.5.8", features = ["json"] }
+axum = { version = "0.5.9", features = ["json"] }
 
 # error
-anyhow = "1.0.57"
+anyhow = "1.0.58"
 thiserror = "1.0.31"
 
 # json

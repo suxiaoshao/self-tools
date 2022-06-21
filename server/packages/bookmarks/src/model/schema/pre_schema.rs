@@ -22,10 +22,12 @@ table! {
 }
 
 table! {
-    directory (id) {
+    collection (id) {
         id -> Int8,
+        name -> Text,
         path -> Text,
-        father_directory -> Nullable<Int8>,
+        parent_id -> Nullable<Int8>,
+        description -> Nullable<Text>,
         create_time -> Timestamptz,
         update_time -> Timestamptz,
     }
@@ -39,7 +41,7 @@ table! {
         read_chapter_id -> Nullable<Int8>,
         description -> Text,
         tags -> Array<Int8>,
-        directory_id -> Int8,
+        collection_id -> Int8,
         status -> Read_status,
         create_time -> Timestamptz,
         update_time -> Timestamptz,
@@ -50,7 +52,7 @@ table! {
     tag (id) {
         id -> Int8,
         name -> Varchar,
-        directory_id -> Nullable<Int8>,
+        collection_id -> Nullable<Int8>,
         create_time -> Timestamptz,
         update_time -> Timestamptz,
     }
@@ -59,7 +61,7 @@ table! {
 allow_tables_to_appear_in_same_query!(
     author,
     chapter,
-    directory,
+    collection,
     novel,
     tag,
 );

@@ -1,3 +1,3 @@
 pub mod author;
-pub mod directory;
+pub mod collection;
 pub mod tag;

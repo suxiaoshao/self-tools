@@ -2,7 +2,7 @@ use async_graphql::Object;
 
 use crate::{
     errors::GraphqlResult,
-    service::{author::Author, directory::Directory},
+    service::{author::Author, collection::Collection, tag::Tag},
 };
 
 pub struct QueryRoot;
@@ -10,13 +10,18 @@ pub struct QueryRoot;
 #[Object]
 impl QueryRoot {
     /// 获取目录列表
-    async fn get_directory_list(&self, father_path: String) -> GraphqlResult<Vec<Directory>> {
-        let directory = Directory::get_list(&father_path)?;
+    async fn get_directory_list(&self, parent_id: i64) -> GraphqlResult<Vec<Collection>> {
+        let directory = Collection::get_list_parent_id(parent_id)?;
         Ok(directory)
     }
     /// 获取作者列表
     async fn get_author_list(&self) -> GraphqlResult<Vec<Author>> {
         let author = Author::get_list()?;
         Ok(author)
+    }
+    /// 获取标签列表
+    async fn get_tag_list(&self, directory_id: Option<i64>) -> GraphqlResult<Vec<Tag>> {
+        let tag = Tag::get_list(directory_id)?;
+        Ok(tag)
     }
 }

@@ -8,7 +8,7 @@ use diesel::prelude::*;
 pub struct TagModel {
     pub id: i64,
     pub name: String,
-    pub directory_id: Option<i64>,
+    pub collection_id: Option<i64>,
     pub create_time: NaiveDateTime,
     pub update_time: NaiveDateTime,
 }
@@ -16,18 +16,18 @@ pub struct TagModel {
 #[table_name = "tag"]
 pub struct NewTag {
     pub name: String,
-    pub directory_id: Option<i64>,
+    pub collection_id: Option<i64>,
     pub create_time: NaiveDateTime,
     pub update_time: NaiveDateTime,
 }
 
 impl TagModel {
     /// 创建标签
-    pub fn create(name: &str, directory_id: Option<i64>) -> GraphqlResult<Self> {
+    pub fn create(name: &str, collection_id: Option<i64>) -> GraphqlResult<Self> {
         let now = chrono::Local::now().naive_local();
         let new_tag = NewTag {
             name: name.to_string(),
-            directory_id,
+            collection_id,
             create_time: now,
             update_time: now,
         };
@@ -50,5 +50,23 @@ impl TagModel {
         let conn = super::CONNECTION.get()?;
         let deleted = diesel::delete(tag::table.filter(tag::id.eq(id))).get_result(&conn)?;
         Ok(deleted)
+    }
+    /// 获取标签列表
+    pub fn get_list() -> GraphqlResult<Vec<Self>> {
+        let conn = super::CONNECTION.get()?;
+        let tags = tag::table.load::<Self>(&conn)?;
+        Ok(tags)
+    }
+}
+
+/// by directory id
+impl TagModel {
+    /// 获取标签列表
+    pub fn get_list_by_directory_id(collect_id: i64) -> GraphqlResult<Vec<Self>> {
+        let conn = super::CONNECTION.get()?;
+        let tags = tag::table
+            .filter(tag::collection_id.eq(collect_id))
+            .load::<Self>(&conn)?;
+        Ok(tags)
     }
 }
