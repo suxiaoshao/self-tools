@@ -1,0 +1,89 @@
+use async_graphql::SimpleObject;
+
+use crate::{
+    errors::{GraphqlError, GraphqlResult},
+    model::collect::CollectionModel,
+};
+
+#[derive(SimpleObject)]
+pub struct Collection {
+    pub id: i64,
+    pub name: String,
+    pub path: String,
+    pub parent_id: Option<i64>,
+    pub description: Option<String>,
+    pub create_time: i64,
+    pub update_time: i64,
+}
+
+impl From<CollectionModel> for Collection {
+    fn from(model: CollectionModel) -> Self {
+        Self {
+            path: model.path,
+            name: model.name,
+            id: model.id,
+            parent_id: model.father_collection,
+            description: model.description,
+            create_time: model.create_time.timestamp_millis(),
+            update_time: model.update_time.timestamp_millis(),
+        }
+    }
+}
+
+impl Collection {
+    /// 创建目录
+    pub fn create(
+        name: &str,
+        parent_id: Option<i64>,
+        description: Option<String>,
+    ) -> GraphqlResult<Self> {
+        match parent_id {
+            None => {
+                let collection_path = format!("/{}/", name);
+                // 子目录已存在
+                if CollectionModel::exists_by_path(&collection_path)? {
+                    return Err(GraphqlError::DirAreadyExists);
+                }
+                let collection =
+                    CollectionModel::create(name, &collection_path, None, description)?;
+                Ok(collection.into())
+            }
+            Some(id) => {
+                // 父目录不存在
+                if !CollectionModel::exists(id)? {
+                    return Err(GraphqlError::NotFound("父目录"));
+                }
+                let CollectionModel {
+                    path: parent_path, ..
+                } = CollectionModel::find_one(id)?;
+                let collection_path = format!("{}{}/", parent_path, name);
+                // 子目录已存在
+                if CollectionModel::exists_by_path(&collection_path)? {
+                    return Err(GraphqlError::DirAreadyExists);
+                }
+                let collection =
+                    CollectionModel::create(name, &collection_path, parent_id, description)?;
+                Ok(collection.into())
+            }
+        }
+    }
+    /// 删除目录
+    pub fn delete(id: i64) -> GraphqlResult<Self> {
+        // 目录不存在
+        if !CollectionModel::exists(id)? {
+            return Err(GraphqlError::NotFound("目录"));
+        }
+        let collection = CollectionModel::delete(id)?;
+        Ok(collection.into())
+    }
+    /// 获取目录列表
+    pub fn get_list_parent_id(parent_id: i64) -> GraphqlResult<Vec<Self>> {
+        // 目录不存在
+        if !CollectionModel::exists(parent_id)? {
+            return Err(GraphqlError::NotFound("目录"));
+        }
+        let father_directory = CollectionModel::find_one(parent_id)?;
+        let collections = father_directory.get_list()?;
+        Ok(collections.into_iter().map(|d| d.into()).collect())
+    }
+}
