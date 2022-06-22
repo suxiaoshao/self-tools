@@ -1,6 +1,6 @@
 use crate::errors::GraphqlResult;
 
-use super::schema::collection;
+use super::schema::collection::{self};
 use super::CONNECTION;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -73,8 +73,8 @@ impl CollectionModel {
     /// 删除目录
     pub fn delete(id: i64) -> GraphqlResult<Self> {
         let conn = CONNECTION.get()?;
-        let collection = diesel::delete(collection::table.filter(collection::id.eq(id)))
-            .get_result(&conn)?;
+        let collection =
+            diesel::delete(collection::table.filter(collection::id.eq(id))).get_result(&conn)?;
         Ok(collection)
     }
 }
@@ -92,13 +92,13 @@ impl CollectionModel {
     }
 }
 
-/// parent_collection 相关
+/// parent_id 相关
 impl CollectionModel {
     /// 获取父目录下的所有目录
-    pub fn get_list(&self) -> GraphqlResult<Vec<Self>> {
+    pub fn get_list_by_parent(parent_id: Option<i64>) -> GraphqlResult<Vec<Self>> {
         let conn = CONNECTION.get()?;
         let collection = collection::table
-            .filter(collection::parent_id.eq(self.id))
+            .filter(collection::parent_id.eq(parent_id))
             .get_results(&conn)?;
         Ok(collection)
     }
