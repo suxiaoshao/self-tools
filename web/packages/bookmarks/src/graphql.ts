@@ -15,71 +15,142 @@ export type Scalars = {
   Float: number;
 };
 
-export type Directory = {
-  __typename?: 'Directory';
+export type Author = {
+  __typename?: 'Author';
+  avatar: Scalars['String'];
   createTime: Scalars['Int'];
+  description: Scalars['String'];
+  id: Scalars['Int'];
+  name: Scalars['String'];
+  updateTime: Scalars['Int'];
+  url: Scalars['String'];
+};
+
+export type Collection = {
+  __typename?: 'Collection';
+  createTime: Scalars['Int'];
+  description?: Maybe<Scalars['String']>;
+  id: Scalars['Int'];
+  name: Scalars['String'];
+  parentId?: Maybe<Scalars['Int']>;
   path: Scalars['String'];
   updateTime: Scalars['Int'];
 };
 
 export type MutationRoot = {
   __typename?: 'MutationRoot';
+  /** 创建作者 */
+  createAuthor: Author;
   /** 创建目录 */
-  createDirectory: Directory;
+  createDirectory: Collection;
+  /** 创建标签 */
+  createTag: Tag;
+  /** 删除作者 */
+  deleteAuthor: Author;
   /** 删除目录 */
-  deleteDirectory: Directory;
+  deleteDirectory: Collection;
+  /** 删除标签 */
+  deleteTag: Tag;
+};
+
+export type MutationRootCreateAuthorArgs = {
+  avatar: Scalars['String'];
+  description: Scalars['String'];
+  name: Scalars['String'];
+  url: Scalars['String'];
 };
 
 export type MutationRootCreateDirectoryArgs = {
-  dirName: Scalars['String'];
-  fatherPath: Scalars['String'];
+  description?: InputMaybe<Scalars['String']>;
+  name: Scalars['String'];
+  parentId?: InputMaybe<Scalars['Int']>;
+};
+
+export type MutationRootCreateTagArgs = {
+  collectionId?: InputMaybe<Scalars['Int']>;
+  name: Scalars['String'];
+};
+
+export type MutationRootDeleteAuthorArgs = {
+  id: Scalars['Int'];
 };
 
 export type MutationRootDeleteDirectoryArgs = {
-  dirPath: Scalars['String'];
+  id: Scalars['Int'];
+};
+
+export type MutationRootDeleteTagArgs = {
+  id: Scalars['Int'];
 };
 
 export type QueryRoot = {
   __typename?: 'QueryRoot';
+  /** 获取作者列表 */
+  getAuthorList: Array<Author>;
   /** 获取目录列表 */
-  getDirectoryList: Array<Directory>;
+  getDirectoryList: Array<Collection>;
+  /** 获取标签列表 */
+  getTagList: Array<Tag>;
 };
 
 export type QueryRootGetDirectoryListArgs = {
-  fatherPath: Scalars['String'];
+  parentId?: InputMaybe<Scalars['Int']>;
+};
+
+export type QueryRootGetTagListArgs = {
+  directoryId?: InputMaybe<Scalars['Int']>;
+};
+
+export type Tag = {
+  __typename?: 'Tag';
+  collectionId?: Maybe<Scalars['Int']>;
+  createTime: Scalars['Int'];
+  id: Scalars['Int'];
+  name: Scalars['String'];
+  updateTime: Scalars['Int'];
 };
 
 export type GetDirectoryListQueryVariables = Exact<{
-  fatherPath: Scalars['String'];
+  parentId?: InputMaybe<Scalars['Int']>;
 }>;
 
 export type GetDirectoryListQuery = {
   __typename?: 'QueryRoot';
-  getDirectoryList: Array<{ __typename?: 'Directory'; path: string; createTime: number; updateTime: number }>;
+  getDirectoryList: Array<{
+    __typename?: 'Collection';
+    name: string;
+    id: number;
+    path: string;
+    createTime: number;
+    updateTime: number;
+  }>;
 };
 
 export type DeleteDirectoryMutationVariables = Exact<{
-  dirPath: Scalars['String'];
+  id: Scalars['Int'];
 }>;
 
 export type DeleteDirectoryMutation = {
   __typename?: 'MutationRoot';
-  deleteDirectory: { __typename?: 'Directory'; path: string };
+  deleteDirectory: { __typename?: 'Collection'; path: string };
 };
 
 export type CreateDirectoryMutationVariables = Exact<{
-  fatherPath: Scalars['String'];
-  dirName: Scalars['String'];
+  parentId?: InputMaybe<Scalars['Int']>;
+  name: Scalars['String'];
+  description?: InputMaybe<Scalars['String']>;
 }>;
 
 export type CreateDirectoryMutation = {
   __typename?: 'MutationRoot';
-  createDirectory: { __typename?: 'Directory'; path: string };
+  createDirectory: { __typename?: 'Collection'; path: string };
 };
 
 export const GetDirectoryListDocument = gql`
-  query getDirectoryList($fatherPath: String!) {
-    getDirectoryList(fatherPath: $fatherPath) {
+  query getDirectoryList($parentId: Int) {
+    getDirectoryList(parentId: $parentId) {
+      name
+      id
       path
       createTime
       updateTime
@@ -99,12 +170,12 @@ export const GetDirectoryListDocument = gql`
  * @example
  * const { data, loading, error } = useGetDirectoryListQuery({
  *   variables: {
- *      fatherPath: // value for 'fatherPath'
+ *      parentId: // value for 'parentId'
  *   },
  * });
  */
 export function useGetDirectoryListQuery(
-  baseOptions: Apollo.QueryHookOptions<GetDirectoryListQuery, GetDirectoryListQueryVariables>,
+  baseOptions?: Apollo.QueryHookOptions<GetDirectoryListQuery, GetDirectoryListQueryVariables>,
 ) {
   const options = { ...defaultOptions, ...baseOptions };
   return Apollo.useQuery<GetDirectoryListQuery, GetDirectoryListQueryVariables>(GetDirectoryListDocument, options);
@@ -119,8 +190,8 @@ export type GetDirectoryListQueryHookResult = ReturnType<typeof useGetDirectoryL
 export type GetDirectoryListLazyQueryHookResult = ReturnType<typeof useGetDirectoryListLazyQuery>;
 export type GetDirectoryListQueryResult = Apollo.QueryResult<GetDirectoryListQuery, GetDirectoryListQueryVariables>;
 export const DeleteDirectoryDocument = gql`
-  mutation deleteDirectory($dirPath: String!) {
-    deleteDirectory(dirPath: $dirPath) {
+  mutation deleteDirectory($id: Int!) {
+    deleteDirectory(id: $id) {
       path
     }
   }
@@ -143,7 +214,7 @@ export type DeleteDirectoryMutationFn = Apollo.MutationFunction<
  * @example
  * const [deleteDirectoryMutation, { data, loading, error }] = useDeleteDirectoryMutation({
  *   variables: {
- *      dirPath: // value for 'dirPath'
+ *      id: // value for 'id'
  *   },
  * });
  */
@@ -163,8 +234,8 @@ export type DeleteDirectoryMutationOptions = Apollo.BaseMutationOptions<
   DeleteDirectoryMutationVariables
 >;
 export const CreateDirectoryDocument = gql`
-  mutation createDirectory($fatherPath: String!, $dirName: String!) {
-    createDirectory(fatherPath: $fatherPath, dirName: $dirName) {
+  mutation createDirectory($parentId: Int, $name: String!, $description: String) {
+    createDirectory(parentId: $parentId, name: $name, description: $description) {
       path
     }
   }
@@ -187,8 +258,9 @@ export type CreateDirectoryMutationFn = Apollo.MutationFunction<
  * @example
  * const [createDirectoryMutation, { data, loading, error }] = useCreateDirectoryMutation({
  *   variables: {
- *      fatherPath: // value for 'fatherPath'
- *      dirName: // value for 'dirName'
+ *      parentId: // value for 'parentId'
+ *      name: // value for 'name'
+ *      description: // value for 'description'
  *   },
  * });
  */

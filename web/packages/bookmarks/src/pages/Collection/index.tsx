@@ -8,14 +8,14 @@ import { Refresh } from '@mui/icons-material';
 import CreateDirButton from './components/CreateDIrButton';
 
 export default function Home() {
-  const { data: { getDirectoryList } = {}, refetch } = useGetDirectoryListQuery({ variables: { fatherPath: '/' } });
+  const { data: { getDirectoryList } = {}, refetch } = useGetDirectoryListQuery({ variables: {} });
   const [deleteDir] = useDeleteDirectoryMutation();
   const columns = useMemo<CustomColumnArray<GetDirectoryListQuery['getDirectoryList'][0]>>(
     () => [
       {
         Header: '路径',
         id: 'path',
-        accessor: 'path',
+        accessor: 'name',
       },
       {
         Header: '创建时间',
@@ -30,13 +30,13 @@ export default function Home() {
       {
         Header: '操作',
         id: 'action',
-        accessor: ({ path }) => (
+        accessor: ({ id }) => (
           <TableActions>
             {(onClose) => [
               {
                 text: '删除',
                 onClick: async () => {
-                  await deleteDir({ variables: { dirPath: path } });
+                  await deleteDir({ variables: { id } });
                   onClose();
                   await refetch();
                 },
@@ -61,7 +61,7 @@ export default function Home() {
           display: 'flex',
         }}
       >
-        <CreateDirButton reFetch={refetch} fatherPath={'/'} />
+        <CreateDirButton reFetch={refetch} />
         <IconButton sx={{ marginLeft: 'auto' }} onClick={() => refetch()}>
           <Refresh />
         </IconButton>

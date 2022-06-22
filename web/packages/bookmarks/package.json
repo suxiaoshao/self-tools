@@ -9,12 +9,12 @@
     "generate": "graphql-codegen"
   },
   "dependencies": {
-    "@apollo/client": "^3.6.8",
+    "@apollo/client": "^3.6.9",
     "auth": "workspace:auth",
-    "notify": "workspace:notify",
-    "theme": "workspace:theme",
     "custom-graphql": "workspace:custom-graphql",
     "custom-table": "workspace:custom-table",
+    "notify": "workspace:notify",
+    "theme": "workspace:theme",
     "time": "workspace:time"
   },
   "devDependencies": {

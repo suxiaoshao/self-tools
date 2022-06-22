@@ -4,19 +4,18 @@ import { useForm, SubmitHandler } from 'react-hook-form';
 import { CreateDirectoryMutationVariables, useCreateDirectoryMutation } from '../../../graphql';
 
 export interface UploadObjectButtonProps {
-  fatherPath: string;
   /** 表格重新刷新 */
   reFetch: () => void;
 }
 
-export default function CreateDirButton({ reFetch, fatherPath }: UploadObjectButtonProps): JSX.Element {
+export default function CreateDirButton({ reFetch }: UploadObjectButtonProps): JSX.Element {
   // 表单控制
   const { handleSubmit, register } = useForm<CreateDirectoryMutationVariables>();
 
   const [createDir] = useCreateDirectoryMutation();
 
-  const onSubmit: SubmitHandler<CreateDirectoryMutationVariables> = async ({ dirName }) => {
-    await createDir({ variables: { dirName, fatherPath } });
+  const onSubmit: SubmitHandler<CreateDirectoryMutationVariables> = async ({ name, parentId, description }) => {
+    await createDir({ variables: { name, parentId, description } });
     reFetch();
     handleClose();
   };
@@ -44,7 +43,7 @@ export default function CreateDirButton({ reFetch, fatherPath }: UploadObjectBut
               required
               fullWidth
               label="文件夹名"
-              {...register('dirName', { required: true })}
+              {...register('name', { required: true })}
             />
           </DialogContent>
           <DialogActions>
