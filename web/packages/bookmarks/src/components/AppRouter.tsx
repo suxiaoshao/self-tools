@@ -1,16 +1,21 @@
 import { Routes, Route } from 'react-router-dom';
 import Login, { useLogin } from 'auth';
-import Home from '../pages/Home';
+import Collection from '../pages/Collection';
+import AppDrawer from './AppDrawer';
+import Tags from '../pages/Tags';
 
 export default function AppRouter() {
   useLogin();
 
   return (
     <Routes>
-      <Route path="/">
-        <Route index element={<Home />} />
-        <Route path="login" element={<Login />} />
+      <Route path="/" element={<AppDrawer />}>
+        <Route index element={<>home</>} />
+        <Route path="tags" element={<Tags />} />
+        <Route path="authors" element={<>authors</>} />
+        <Route path="collections" element={<Collection />} />
       </Route>
+      <Route path="login" element={<Login />} />
     </Routes>
   );
 }

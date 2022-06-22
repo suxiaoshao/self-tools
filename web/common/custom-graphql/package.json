@@ -8,8 +8,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@apollo/client": "^3.6.8",
-    "notify": "workspace:notify",
-    "auth": "workspace:auth"
+    "@apollo/client": "^3.6.9",
+    "auth": "workspace:auth",
+    "notify": "workspace:notify"
   }
 }
