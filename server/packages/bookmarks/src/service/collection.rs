@@ -77,13 +77,14 @@ impl Collection {
         Ok(collection.into())
     }
     /// 获取目录列表
-    pub fn get_list_parent_id(parent_id: i64) -> GraphqlResult<Vec<Self>> {
-        // 目录不存在
-        if !CollectionModel::exists(parent_id)? {
-            return Err(GraphqlError::NotFound("目录"));
+    pub fn get_list_parent_id(parent_id: Option<i64>) -> GraphqlResult<Vec<Self>> {
+        //  判断父目录是否存在
+        if let Some(id) = parent_id {
+            if !CollectionModel::exists(id)? {
+                return Err(GraphqlError::NotFound("目录"));
+            }
         }
-        let father_directory = CollectionModel::find_one(parent_id)?;
-        let collections = father_directory.get_list()?;
+        let collections = CollectionModel::get_list_by_parent(parent_id)?;
         Ok(collections.into_iter().map(|d| d.into()).collect())
     }
 }
