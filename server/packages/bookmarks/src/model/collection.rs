@@ -97,9 +97,19 @@ impl CollectionModel {
     /// 获取父目录下的所有目录
     pub fn get_list_by_parent(parent_id: Option<i64>) -> GraphqlResult<Vec<Self>> {
         let conn = CONNECTION.get()?;
-        let collection = collection::table
-            .filter(collection::parent_id.eq(parent_id))
-            .get_results(&conn)?;
-        Ok(collection)
+        match parent_id {
+            Some(parent_id) => {
+                let collections = collection::table
+                    .filter(collection::parent_id.eq(parent_id))
+                    .load(&conn)?;
+                Ok(collections)
+            }
+            None => {
+                let collections = collection::table
+                    .filter(collection::parent_id.is_null())
+                    .load(&conn)?;
+                Ok(collections)
+            }
+        }
     }
 }

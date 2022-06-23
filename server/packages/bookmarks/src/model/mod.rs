@@ -9,7 +9,7 @@ use once_cell::sync::Lazy;
 
 pub mod author;
 pub mod chapter;
-pub mod collect;
+pub mod collection;
 pub mod novel;
 pub mod tag;
 
