@@ -1,10 +1,10 @@
 use async_graphql::SimpleObject;
 
+use crate::model::collection::CollectionModel;
 use crate::{
     errors::{GraphqlError, GraphqlResult},
     model::tag::TagModel,
 };
-use crate::model::collect::CollectionModel;
 
 #[derive(SimpleObject)]
 pub struct Tag {

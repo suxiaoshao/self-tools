@@ -2,7 +2,7 @@ use async_graphql::SimpleObject;
 
 use crate::{
     errors::{GraphqlError, GraphqlResult},
-    model::collect::CollectionModel,
+    model::collection::CollectionModel,
 };
 
 #[derive(SimpleObject)]
