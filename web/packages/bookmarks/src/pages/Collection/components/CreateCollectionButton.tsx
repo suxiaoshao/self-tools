@@ -1,21 +1,24 @@
 import { Button, Dialog, Box, DialogTitle, DialogContent, DialogActions, TextField } from '@mui/material';
 import { useState } from 'react';
 import { useForm, SubmitHandler } from 'react-hook-form';
-import { CreateDirectoryMutationVariables, useCreateDirectoryMutation } from '../../../graphql';
+import { CreateCollectionMutationVariables, useCreateCollectionMutation } from '../../../graphql';
+import useParentId from './useParentId';
 
 export interface UploadObjectButtonProps {
   /** 表格重新刷新 */
   reFetch: () => void;
 }
 
-export default function CreateDirButton({ reFetch }: UploadObjectButtonProps): JSX.Element {
+export default function CreateCollectionButton({ reFetch }: UploadObjectButtonProps): JSX.Element {
+  const parentId = useParentId();
+  type FormData = Omit<CreateCollectionMutationVariables, 'parentId'>;
   // 表单控制
-  const { handleSubmit, register } = useForm<CreateDirectoryMutationVariables>();
+  const { handleSubmit, register } = useForm<FormData>();
 
-  const [createDir] = useCreateDirectoryMutation();
+  const [createCollection] = useCreateCollectionMutation();
 
-  const onSubmit: SubmitHandler<CreateDirectoryMutationVariables> = async ({ name, parentId, description }) => {
-    await createDir({ variables: { name, parentId, description } });
+  const onSubmit: SubmitHandler<FormData> = async ({ name, description }) => {
+    await createCollection({ variables: { name, parentId, description } });
     reFetch();
     handleClose();
   };
@@ -27,14 +30,9 @@ export default function CreateDirButton({ reFetch }: UploadObjectButtonProps): J
   return (
     <>
       <Button color="primary" size="large" variant="contained" onClick={() => setOpen(true)}>
-        上传文件
+        添加集合
       </Button>
-      <Dialog
-        PaperProps={{ sx: { maxWidth: 700 } }}
-        open={open}
-        onClose={handleClose}
-        onSubmit={handleSubmit(onSubmit)}
-      >
+      <Dialog PaperProps={{ sx: { maxWidth: 700 } }} open={open} onClose={handleClose}>
         <Box sx={{ width: 500 }} onSubmit={handleSubmit(onSubmit)} component="form">
           <DialogTitle>新建文件夹</DialogTitle>
           <DialogContent>
@@ -45,7 +43,9 @@ export default function CreateDirButton({ reFetch }: UploadObjectButtonProps): J
               label="文件夹名"
               {...register('name', { required: true })}
             />
+            <TextField sx={{ mt: 1 }} variant="standard" fullWidth label="描述" {...register('description')} />
           </DialogContent>
+
           <DialogActions>
             <Button onClick={handleClose}>取消</Button>
             <Button type="submit">提交</Button>

@@ -1,0 +1,31 @@
+query getCollectionList($parentId: Int) {
+  getCollectionList(parentId: $parentId) {
+    name
+    id
+    path
+    createTime
+    updateTime
+    description
+  }
+}
+mutation deleteCollection($id: Int!) {
+  deleteCollection(id: $id) {
+    path
+  }
+}
+mutation createCollection($parentId: Int, $name: String!, $description: String) {
+  createCollection(parentId: $parentId, name: $name, description: $description) {
+    path
+  }
+}
+
+query getCollectionAncestors($id: Int!) {
+  getCollection(id: $id) {
+    ancestors {
+      id
+      name
+    }
+    id
+    name
+  }
+}
