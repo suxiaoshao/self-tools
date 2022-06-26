@@ -118,6 +118,7 @@ impl Collection {
             parent_id = collection.parent_id;
             collections.push(collection.into());
         }
+        collections.reverse();
         Ok(collections)
     }
     /// 获取集合详情
