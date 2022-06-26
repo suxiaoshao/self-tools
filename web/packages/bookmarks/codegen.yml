@@ -13,5 +13,3 @@ generates:
       - typescript-react-apollo
     config:
       withHooks: true
-      scalars:
-        Upload: 'File'
