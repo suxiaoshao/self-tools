@@ -11,7 +11,7 @@ pub struct CollectionModel {
     pub id: i64,
     pub name: String,
     pub path: String,
-    pub father_collection: Option<i64>,
+    pub parent_id: Option<i64>,
     pub description: Option<String>,
     pub create_time: NaiveDateTime,
     pub update_time: NaiveDateTime,
@@ -111,5 +111,18 @@ impl CollectionModel {
                 Ok(collections)
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+
+    use super::CollectionModel;
+
+    #[test]
+    fn test_get_list() -> anyhow::Result<()> {
+        let collection: Vec<CollectionModel> = CollectionModel::get_list_by_parent(None).unwrap();
+        println!("{:?}", collection);
+        Ok(())
     }
 }
