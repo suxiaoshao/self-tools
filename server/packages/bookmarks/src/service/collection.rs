@@ -76,6 +76,10 @@ impl Collection {
             }
         }
     }
+}
+
+/// id 相关
+impl Collection {
     /// 删除目录
     pub fn delete(id: i64) -> GraphqlResult<Self> {
         // 目录不存在
@@ -115,5 +119,14 @@ impl Collection {
             collections.push(collection.into());
         }
         Ok(collections)
+    }
+    /// 获取集合详情
+    pub fn get(id: i64) -> GraphqlResult<Self> {
+        //  判断目录是否存在
+        if !CollectionModel::exists(id)? {
+            return Err(GraphqlError::NotFound("目录"));
+        }
+        let collection = CollectionModel::find_one(id)?;
+        Ok(collection.into())
     }
 }
