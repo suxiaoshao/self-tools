@@ -1,0 +1,6 @@
+mutation createTag($name: String!, $collectionId: Int) {
+  createTag(name: $name, collectionId: $collectionId) {
+    name
+    id
+  }
+}

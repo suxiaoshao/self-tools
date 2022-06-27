@@ -23,6 +23,11 @@ impl Collection {
         let ancestors = Collection::get_ancestors(self.id)?;
         Ok(ancestors)
     }
+    /// 获取子列表
+    async fn children(&self) -> GraphqlResult<Vec<Collection>> {
+        let children = Collection::get_list_parent_id(Some(self.id))?;
+        Ok(children)
+    }
 }
 
 impl From<CollectionModel> for Collection {
