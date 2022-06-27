@@ -1,6 +1,6 @@
 import { Routes, Route } from 'react-router-dom';
 import Login, { useLogin } from 'auth';
-import Collection from '../pages/Collection';
+import Collection from '../pages/Collections';
 import AppDrawer from './AppDrawer';
 import Tags from '../pages/Tags';
 

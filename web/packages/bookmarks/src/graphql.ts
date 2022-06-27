@@ -118,6 +118,15 @@ export type Tag = {
   updateTime: Scalars['Int'];
 };
 
+export type GetCollectionSelectQueryVariables = Exact<{
+  parentId?: InputMaybe<Scalars['Int']>;
+}>;
+
+export type GetCollectionSelectQuery = {
+  __typename?: 'QueryRoot';
+  getCollectionList: Array<{ __typename?: 'Collection'; name: string; id: number }>;
+};
+
 export type GetCollectionListQueryVariables = Exact<{
   parentId?: InputMaybe<Scalars['Int']>;
 }>;
@@ -169,6 +178,65 @@ export type GetCollectionAncestorsQuery = {
   };
 };
 
+export type CreateTagMutationVariables = Exact<{
+  name: Scalars['String'];
+  collectionId?: InputMaybe<Scalars['Int']>;
+}>;
+
+export type CreateTagMutation = {
+  __typename?: 'MutationRoot';
+  createTag: { __typename?: 'Tag'; name: string; id: number };
+};
+
+export const GetCollectionSelectDocument = gql`
+  query getCollectionSelect($parentId: Int) {
+    getCollectionList(parentId: $parentId) {
+      name
+      id
+    }
+  }
+`;
+
+/**
+ * __useGetCollectionSelectQuery__
+ *
+ * To run a query within a React component, call `useGetCollectionSelectQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetCollectionSelectQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetCollectionSelectQuery({
+ *   variables: {
+ *      parentId: // value for 'parentId'
+ *   },
+ * });
+ */
+export function useGetCollectionSelectQuery(
+  baseOptions?: Apollo.QueryHookOptions<GetCollectionSelectQuery, GetCollectionSelectQueryVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useQuery<GetCollectionSelectQuery, GetCollectionSelectQueryVariables>(
+    GetCollectionSelectDocument,
+    options,
+  );
+}
+export function useGetCollectionSelectLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<GetCollectionSelectQuery, GetCollectionSelectQueryVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useLazyQuery<GetCollectionSelectQuery, GetCollectionSelectQueryVariables>(
+    GetCollectionSelectDocument,
+    options,
+  );
+}
+export type GetCollectionSelectQueryHookResult = ReturnType<typeof useGetCollectionSelectQuery>;
+export type GetCollectionSelectLazyQueryHookResult = ReturnType<typeof useGetCollectionSelectLazyQuery>;
+export type GetCollectionSelectQueryResult = Apollo.QueryResult<
+  GetCollectionSelectQuery,
+  GetCollectionSelectQueryVariables
+>;
 export const GetCollectionListDocument = gql`
   query getCollectionList($parentId: Int) {
     getCollectionList(parentId: $parentId) {
@@ -359,3 +427,40 @@ export type GetCollectionAncestorsQueryResult = Apollo.QueryResult<
   GetCollectionAncestorsQuery,
   GetCollectionAncestorsQueryVariables
 >;
+export const CreateTagDocument = gql`
+  mutation createTag($name: String!, $collectionId: Int) {
+    createTag(name: $name, collectionId: $collectionId) {
+      name
+      id
+    }
+  }
+`;
+export type CreateTagMutationFn = Apollo.MutationFunction<CreateTagMutation, CreateTagMutationVariables>;
+
+/**
+ * __useCreateTagMutation__
+ *
+ * To run a mutation, you first call `useCreateTagMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateTagMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createTagMutation, { data, loading, error }] = useCreateTagMutation({
+ *   variables: {
+ *      name: // value for 'name'
+ *      collectionId: // value for 'collectionId'
+ *   },
+ * });
+ */
+export function useCreateTagMutation(
+  baseOptions?: Apollo.MutationHookOptions<CreateTagMutation, CreateTagMutationVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useMutation<CreateTagMutation, CreateTagMutationVariables>(CreateTagDocument, options);
+}
+export type CreateTagMutationHookResult = ReturnType<typeof useCreateTagMutation>;
+export type CreateTagMutationResult = Apollo.MutationResult<CreateTagMutation>;
+export type CreateTagMutationOptions = Apollo.BaseMutationOptions<CreateTagMutation, CreateTagMutationVariables>;

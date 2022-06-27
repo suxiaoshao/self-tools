@@ -1,0 +1,6 @@
+query getCollectionSelect($parentId: Int) {
+  getCollectionList(parentId: $parentId) {
+    name
+    id
+  }
+}
