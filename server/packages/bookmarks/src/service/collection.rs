@@ -1,4 +1,4 @@
-use async_graphql::{ComplexObject, SimpleObject};
+use async_graphql::*;
 
 use crate::{
     errors::{GraphqlError, GraphqlResult},

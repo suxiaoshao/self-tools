@@ -49,19 +49,14 @@ impl Tag {
         Ok(deleted_tag.into())
     }
     /// 获取标签列表
-    pub fn get_list(directory_id: Option<i64>) -> GraphqlResult<Vec<Self>> {
-        match directory_id {
-            Some(directory) => {
-                if !TagModel::exists(directory)? {
-                    return Err(GraphqlError::NotFound("目录"));
-                }
-                let tags = TagModel::get_list_by_directory_id(directory)?;
-                Ok(tags.into_iter().map(|tag| tag.into()).collect())
-            }
-            None => {
-                let tags = TagModel::get_list()?;
-                Ok(tags.into_iter().map(|tag| tag.into()).collect())
+    pub fn get_list(collection_id: Option<i64>) -> GraphqlResult<Vec<Self>> {
+        //  判断父目录是否存在
+        if let Some(id) = collection_id {
+            if !CollectionModel::exists(id)? {
+                return Err(GraphqlError::NotFound("目录"));
             }
         }
+        let tags = TagModel::get_list_by_collection_id(collection_id)?;
+        Ok(tags.into_iter().map(|tag| tag.into()).collect())
     }
 }

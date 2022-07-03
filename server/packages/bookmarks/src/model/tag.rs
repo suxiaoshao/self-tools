@@ -51,22 +51,26 @@ impl TagModel {
         let deleted = diesel::delete(tag::table.filter(tag::id.eq(id))).get_result(&conn)?;
         Ok(deleted)
     }
-    /// 获取标签列表
-    pub fn get_list() -> GraphqlResult<Vec<Self>> {
-        let conn = super::CONNECTION.get()?;
-        let tags = tag::table.load::<Self>(&conn)?;
-        Ok(tags)
-    }
 }
 
 /// by directory id
 impl TagModel {
     /// 获取标签列表
-    pub fn get_list_by_directory_id(collect_id: i64) -> GraphqlResult<Vec<Self>> {
+    pub fn get_list_by_collection_id(collection_id: Option<i64>) -> GraphqlResult<Vec<Self>> {
         let conn = super::CONNECTION.get()?;
-        let tags = tag::table
-            .filter(tag::collection_id.eq(collect_id))
-            .load::<Self>(&conn)?;
-        Ok(tags)
+        match collection_id {
+            Some(id) => {
+                let tags = tag::table
+                    .filter(tag::collection_id.eq(id))
+                    .load::<Self>(&conn)?;
+                Ok(tags)
+            }
+            None => {
+                let tags = tag::table
+                    .filter(tag::collection_id.is_null())
+                    .load::<Self>(&conn)?;
+                Ok(tags)
+            }
+        }
     }
 }

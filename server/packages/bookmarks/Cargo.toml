@@ -11,9 +11,9 @@ tokio = { version = "1.19.2", features = ["macros", "rt-multi-thread"] }
 
 # graphql
 async-graphql = "4.0.4"
-axum = { version = "0.5.9", features = ["headers"] }
+axum = { version = "0.5.11", features = ["headers"] }
 async-graphql-axum = "4.0.4"
-serde_json = "1.0.81"
+serde_json = "1.0.82"
 
 
 # database

@@ -25,8 +25,8 @@ impl QueryRoot {
         Ok(author)
     }
     /// 获取标签列表
-    async fn get_tag_list(&self, directory_id: Option<i64>) -> GraphqlResult<Vec<Tag>> {
-        let tag = Tag::get_list(directory_id)?;
+    async fn get_tag_list(&self, collection_id: Option<i64>) -> GraphqlResult<Vec<Tag>> {
+        let tag = Tag::get_list(collection_id)?;
         Ok(tag)
     }
 }
