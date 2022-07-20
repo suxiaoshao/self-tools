@@ -7,13 +7,13 @@ edition = "2021"
 
 [dependencies]
 # grpc
-tokio = { version = "1.19.2", features = ["rt-multi-thread", "time", "fs", "macros", "net"] }
+tokio = { version = "1.20.0", features = ["rt-multi-thread", "time", "fs", "macros", "net"] }
 proto = { path = "../../common/proto", features = ["auth_server"]}
 tonic = "0.7.2"
 
 # jwt
 jsonwebtoken = "8.1.1"
-serde = { version = "1.0.138", features = ["derive"] }
+serde = { version = "1.0.139", features = ["derive"] }
 
 # error
 errors= { path = "../../common/errors", features=["jsonwebtoken"]}
