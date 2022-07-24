@@ -30,6 +30,8 @@ export type Collection = {
   __typename?: 'Collection';
   /** 获取祖先列表 */
   ancestors: Array<Collection>;
+  /** 获取子列表 */
+  children: Array<Collection>;
   createTime: Scalars['Int'];
   description?: Maybe<Scalars['String']>;
   id: Scalars['Int'];
@@ -106,7 +108,7 @@ export type QueryRootGetCollectionListArgs = {
 };
 
 export type QueryRootGetTagListArgs = {
-  directoryId?: InputMaybe<Scalars['Int']>;
+  collectionId?: InputMaybe<Scalars['Int']>;
 };
 
 export type Tag = {
@@ -186,6 +188,22 @@ export type CreateTagMutationVariables = Exact<{
 export type CreateTagMutation = {
   __typename?: 'MutationRoot';
   createTag: { __typename?: 'Tag'; name: string; id: number };
+};
+
+export type GetTagsQueryVariables = Exact<{
+  collectionId?: InputMaybe<Scalars['Int']>;
+}>;
+
+export type GetTagsQuery = {
+  __typename?: 'QueryRoot';
+  getTagList: Array<{
+    __typename?: 'Tag';
+    name: string;
+    id: number;
+    createTime: number;
+    updateTime: number;
+    collectionId?: number | null;
+  }>;
 };
 
 export const GetCollectionSelectDocument = gql`
@@ -464,3 +482,42 @@ export function useCreateTagMutation(
 export type CreateTagMutationHookResult = ReturnType<typeof useCreateTagMutation>;
 export type CreateTagMutationResult = Apollo.MutationResult<CreateTagMutation>;
 export type CreateTagMutationOptions = Apollo.BaseMutationOptions<CreateTagMutation, CreateTagMutationVariables>;
+export const GetTagsDocument = gql`
+  query getTags($collectionId: Int) {
+    getTagList(collectionId: $collectionId) {
+      name
+      id
+      createTime
+      updateTime
+      collectionId
+    }
+  }
+`;
+
+/**
+ * __useGetTagsQuery__
+ *
+ * To run a query within a React component, call `useGetTagsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetTagsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetTagsQuery({
+ *   variables: {
+ *      collectionId: // value for 'collectionId'
+ *   },
+ * });
+ */
+export function useGetTagsQuery(baseOptions?: Apollo.QueryHookOptions<GetTagsQuery, GetTagsQueryVariables>) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useQuery<GetTagsQuery, GetTagsQueryVariables>(GetTagsDocument, options);
+}
+export function useGetTagsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetTagsQuery, GetTagsQueryVariables>) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useLazyQuery<GetTagsQuery, GetTagsQueryVariables>(GetTagsDocument, options);
+}
+export type GetTagsQueryHookResult = ReturnType<typeof useGetTagsQuery>;
+export type GetTagsLazyQueryHookResult = ReturnType<typeof useGetTagsLazyQuery>;
+export type GetTagsQueryResult = Apollo.QueryResult<GetTagsQuery, GetTagsQueryVariables>;

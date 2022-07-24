@@ -4,3 +4,12 @@ mutation createTag($name: String!, $collectionId: Int) {
     id
   }
 }
+query getTags($collectionId: Int) {
+  getTagList(collectionId: $collectionId) {
+    name
+    id
+    createTime
+    updateTime
+    collectionId
+  }
+}
