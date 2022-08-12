@@ -42,7 +42,7 @@ fn inner_origin(origin: &str) -> IResult<&str, ()> {
 
 fn inner_host(host: &str) -> IResult<&str, ()> {
     let (input, _) = complete(alt((
-        map(tag("localhost"), |_| ()),
+        map(alt((tag("localhost"), tag("127.0.0.1"))), |_| ()),
         map(
             verify(take_till(|x| x == ':'), |s: &str| s.ends_with("sushao.top")),
             |_| (),
@@ -73,8 +73,11 @@ mod test {
         inner_host("sushao.top")?;
         inner_host("admin.sushao.top")?;
         inner_host("localhost")?;
+        inner_host("127.0.0.1")?;
 
         assert!(inner_host("admin.sushao.top.com").is_err());
+        assert!(inner_host("127.0.0.2").is_err());
+        assert!(inner_host("localhos").is_err());
         assert!(inner_host("baidu.com").is_err());
         Ok(())
     }
@@ -96,6 +99,12 @@ mod test {
         inner_origin("https://localhost")?;
         inner_origin("http://localhost:80")?;
         inner_origin("https://localhost:80")?;
+
+        inner_origin("http://127.0.0.1")?;
+        inner_origin("https://127.0.0.1")?;
+        inner_origin("http://127.0.0.1:80")?;
+        inner_origin("https://127.0.0.1:80")?;
+
         inner_origin("http://sushao.top:80")?;
         inner_origin("https://sushao.top:80")?;
         inner_origin("http://sushao.top")?;

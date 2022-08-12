@@ -8,5 +8,5 @@ edition = "2021"
 [dependencies]
 thiserror= "1.0.31"
 
-tonic= "0.7.2"
+tonic= "0.8.0"
 jsonwebtoken={ version = "8.1.1", optional = true }

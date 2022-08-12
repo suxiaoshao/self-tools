@@ -30,7 +30,7 @@ cors = { path = "../../common/cors" }
 
 # grpc
 proto = { path = "../../common/proto", features = ["auth_client"] }
-tonic = "0.7.2"
+tonic = "0.8.0"
 [dev-dependencies]
 # env
 dotenv = "0.15.0"
