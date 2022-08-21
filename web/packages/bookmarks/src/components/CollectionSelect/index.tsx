@@ -23,17 +23,21 @@ export default function CollectionSelect({ onChange, onBlur, value, sx, ...props
         <Link underline="hover" onClick={() => onChange({ target: { value: null } }, null)}>
           根目录
         </Link>
-        {getCollection && (
-          <>
-            {getCollection.ancestors.map(({ name, id }) => (
-              <Link underline="hover" key={id} onClick={() => onChange({ target: { value: id } }, id)}>
-                {name}
-              </Link>
-            ))}
-            <Link underline="hover" color="text.primary">
-              {getCollection.name}
+        {getCollection &&
+          getCollection.ancestors.map(({ name, id }) => (
+            <Link underline="hover" key={id} onClick={() => onChange({ target: { value: id } }, id)}>
+              {name}
             </Link>
-          </>
+          ))}
+        {getCollection && (
+          <Link
+            underline="hover"
+            key={value}
+            color="text.primary"
+            onClick={() => onChange({ target: { value } }, value)}
+          >
+            {getCollection?.name}
+          </Link>
         )}
       </Breadcrumbs>
 
@@ -46,7 +50,8 @@ export default function CollectionSelect({ onChange, onBlur, value, sx, ...props
             startIcon={getCollection ? <RadioButtonChecked /> : <RadioButtonUnchecked />}
             sx={{ ml: 2 }}
             onClick={onClick}
-            variant="contained"
+            variant="outlined"
+            size="large"
           >
             {getCollection?.name ?? '空集合'}
           </Button>
@@ -54,7 +59,15 @@ export default function CollectionSelect({ onChange, onBlur, value, sx, ...props
       >
         {[
           ...(getCollectionList?.map(({ id, name }) => ({ value: id, label: name, key: id })) ?? []),
-          ...(getCollection ? [{ value: getCollection?.id, label: getCollection?.name, key: getCollection?.id }] : []),
+          ...(getCollection
+            ? [
+                {
+                  value: getCollection?.id,
+                  label: getCollection?.name,
+                  key: getCollection?.id,
+                },
+              ]
+            : []),
         ]}
       </CustomSelector>
     </Box>

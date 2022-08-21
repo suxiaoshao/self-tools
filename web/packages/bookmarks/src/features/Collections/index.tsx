@@ -32,7 +32,7 @@ export default function Home() {
       },
       {
         Header: '描述',
-        id: 'descreption',
+        id: 'description',
         accessor: ({ description }) => description ?? '-',
         cellProps: {
           align: 'center',

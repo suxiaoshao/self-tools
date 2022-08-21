@@ -11,7 +11,7 @@ export interface CustomSelectorProps<T> {
 }
 
 function CustomSelector<T>(
-  { children, onBlur, onChange, render }: CustomSelectorProps<T>,
+  { children, onBlur, onChange, render, value }: CustomSelectorProps<T>,
   ref: ForwardedRef<HTMLDivElement>,
 ): JSX.Element {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -28,12 +28,13 @@ function CustomSelector<T>(
     <>
       {render?.(handleClick)}
       <Menu anchorEl={anchorEl} open={open} onClose={handleClose} ref={ref}>
-        {children?.map(({ value, label, key }) => (
+        {children?.map(({ value: itemValue, label, key }) => (
           <MenuItem
             onClick={() => {
-              onChange({ target: { value } }, value);
+              onChange({ target: { value: itemValue } }, itemValue);
               handleClose();
             }}
+            selected={itemValue === value}
             key={key}
           >
             {label}
