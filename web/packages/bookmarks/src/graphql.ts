@@ -129,6 +129,60 @@ export type GetCollectionSelectQuery = {
   getCollectionList: Array<{ __typename?: 'Collection'; name: string; id: number }>;
 };
 
+export type GetAuthorQueryVariables = Exact<{ [key: string]: never }>;
+
+export type GetAuthorQuery = {
+  __typename?: 'QueryRoot';
+  getAuthorList: Array<{
+    __typename?: 'Author';
+    id: number;
+    url: string;
+    name: string;
+    createTime: number;
+    updateTime: number;
+    avatar: string;
+    description: string;
+  }>;
+};
+
+export type DeleteAuthorMutationVariables = Exact<{
+  id: Scalars['Int'];
+}>;
+
+export type DeleteAuthorMutation = { __typename?: 'MutationRoot'; deleteAuthor: { __typename?: 'Author'; id: number } };
+
+export type CreateAuthorMutationVariables = Exact<{
+  avatar: Scalars['String'];
+  description: Scalars['String'];
+  name: Scalars['String'];
+  url: Scalars['String'];
+}>;
+
+export type CreateAuthorMutation = {
+  __typename?: 'MutationRoot';
+  createAuthor: {
+    __typename?: 'Author';
+    id: number;
+    url: string;
+    name: string;
+    createTime: number;
+    updateTime: number;
+    avatar: string;
+    description: string;
+  };
+};
+
+export type AuthorAllFragment = {
+  __typename?: 'Author';
+  id: number;
+  url: string;
+  name: string;
+  createTime: number;
+  updateTime: number;
+  avatar: string;
+  description: string;
+};
+
 export type GetCollectionListQueryVariables = Exact<{
   parentId?: InputMaybe<Scalars['Int']>;
 }>;
@@ -206,6 +260,23 @@ export type GetTagsQuery = {
   }>;
 };
 
+export type DeleteTagMutationVariables = Exact<{
+  id: Scalars['Int'];
+}>;
+
+export type DeleteTagMutation = { __typename?: 'MutationRoot'; deleteTag: { __typename?: 'Tag'; id: number } };
+
+export const AuthorAllFragmentDoc = gql`
+  fragment AuthorAll on Author {
+    id
+    url
+    name
+    createTime
+    updateTime
+    avatar
+    description
+  }
+`;
 export const GetCollectionSelectDocument = gql`
   query getCollectionSelect($parentId: Int) {
     getCollectionList(parentId: $parentId) {
@@ -254,6 +325,123 @@ export type GetCollectionSelectLazyQueryHookResult = ReturnType<typeof useGetCol
 export type GetCollectionSelectQueryResult = Apollo.QueryResult<
   GetCollectionSelectQuery,
   GetCollectionSelectQueryVariables
+>;
+export const GetAuthorDocument = gql`
+  query getAuthor {
+    getAuthorList {
+      ...AuthorAll
+    }
+  }
+  ${AuthorAllFragmentDoc}
+`;
+
+/**
+ * __useGetAuthorQuery__
+ *
+ * To run a query within a React component, call `useGetAuthorQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetAuthorQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetAuthorQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetAuthorQuery(baseOptions?: Apollo.QueryHookOptions<GetAuthorQuery, GetAuthorQueryVariables>) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useQuery<GetAuthorQuery, GetAuthorQueryVariables>(GetAuthorDocument, options);
+}
+export function useGetAuthorLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<GetAuthorQuery, GetAuthorQueryVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useLazyQuery<GetAuthorQuery, GetAuthorQueryVariables>(GetAuthorDocument, options);
+}
+export type GetAuthorQueryHookResult = ReturnType<typeof useGetAuthorQuery>;
+export type GetAuthorLazyQueryHookResult = ReturnType<typeof useGetAuthorLazyQuery>;
+export type GetAuthorQueryResult = Apollo.QueryResult<GetAuthorQuery, GetAuthorQueryVariables>;
+export const DeleteAuthorDocument = gql`
+  mutation deleteAuthor($id: Int!) {
+    deleteAuthor(id: $id) {
+      id
+    }
+  }
+`;
+export type DeleteAuthorMutationFn = Apollo.MutationFunction<DeleteAuthorMutation, DeleteAuthorMutationVariables>;
+
+/**
+ * __useDeleteAuthorMutation__
+ *
+ * To run a mutation, you first call `useDeleteAuthorMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteAuthorMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteAuthorMutation, { data, loading, error }] = useDeleteAuthorMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteAuthorMutation(
+  baseOptions?: Apollo.MutationHookOptions<DeleteAuthorMutation, DeleteAuthorMutationVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useMutation<DeleteAuthorMutation, DeleteAuthorMutationVariables>(DeleteAuthorDocument, options);
+}
+export type DeleteAuthorMutationHookResult = ReturnType<typeof useDeleteAuthorMutation>;
+export type DeleteAuthorMutationResult = Apollo.MutationResult<DeleteAuthorMutation>;
+export type DeleteAuthorMutationOptions = Apollo.BaseMutationOptions<
+  DeleteAuthorMutation,
+  DeleteAuthorMutationVariables
+>;
+export const CreateAuthorDocument = gql`
+  mutation createAuthor($avatar: String!, $description: String!, $name: String!, $url: String!) {
+    createAuthor(avatar: $avatar, description: $description, name: $name, url: $url) {
+      ...AuthorAll
+    }
+  }
+  ${AuthorAllFragmentDoc}
+`;
+export type CreateAuthorMutationFn = Apollo.MutationFunction<CreateAuthorMutation, CreateAuthorMutationVariables>;
+
+/**
+ * __useCreateAuthorMutation__
+ *
+ * To run a mutation, you first call `useCreateAuthorMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateAuthorMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createAuthorMutation, { data, loading, error }] = useCreateAuthorMutation({
+ *   variables: {
+ *      avatar: // value for 'avatar'
+ *      description: // value for 'description'
+ *      name: // value for 'name'
+ *      url: // value for 'url'
+ *   },
+ * });
+ */
+export function useCreateAuthorMutation(
+  baseOptions?: Apollo.MutationHookOptions<CreateAuthorMutation, CreateAuthorMutationVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useMutation<CreateAuthorMutation, CreateAuthorMutationVariables>(CreateAuthorDocument, options);
+}
+export type CreateAuthorMutationHookResult = ReturnType<typeof useCreateAuthorMutation>;
+export type CreateAuthorMutationResult = Apollo.MutationResult<CreateAuthorMutation>;
+export type CreateAuthorMutationOptions = Apollo.BaseMutationOptions<
+  CreateAuthorMutation,
+  CreateAuthorMutationVariables
 >;
 export const GetCollectionListDocument = gql`
   query getCollectionList($parentId: Int) {
@@ -521,3 +709,38 @@ export function useGetTagsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<Ge
 export type GetTagsQueryHookResult = ReturnType<typeof useGetTagsQuery>;
 export type GetTagsLazyQueryHookResult = ReturnType<typeof useGetTagsLazyQuery>;
 export type GetTagsQueryResult = Apollo.QueryResult<GetTagsQuery, GetTagsQueryVariables>;
+export const DeleteTagDocument = gql`
+  mutation deleteTag($id: Int!) {
+    deleteTag(id: $id) {
+      id
+    }
+  }
+`;
+export type DeleteTagMutationFn = Apollo.MutationFunction<DeleteTagMutation, DeleteTagMutationVariables>;
+
+/**
+ * __useDeleteTagMutation__
+ *
+ * To run a mutation, you first call `useDeleteTagMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteTagMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteTagMutation, { data, loading, error }] = useDeleteTagMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteTagMutation(
+  baseOptions?: Apollo.MutationHookOptions<DeleteTagMutation, DeleteTagMutationVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useMutation<DeleteTagMutation, DeleteTagMutationVariables>(DeleteTagDocument, options);
+}
+export type DeleteTagMutationHookResult = ReturnType<typeof useDeleteTagMutation>;
+export type DeleteTagMutationResult = Apollo.MutationResult<DeleteTagMutation>;
+export type DeleteTagMutationOptions = Apollo.BaseMutationOptions<DeleteTagMutation, DeleteTagMutationVariables>;

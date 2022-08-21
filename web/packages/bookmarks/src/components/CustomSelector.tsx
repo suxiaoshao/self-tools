@@ -40,6 +40,7 @@ function CustomSelector<T>(
             {label}
           </MenuItem>
         ))}
+        {(children?.length ?? 0) === 0 && <MenuItem disabled>No options</MenuItem>}
       </Menu>
     </>
   );

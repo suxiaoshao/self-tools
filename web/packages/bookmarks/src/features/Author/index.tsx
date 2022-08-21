@@ -1,25 +1,44 @@
-import { Box, IconButton } from '@mui/material';
-import { Controller, useForm } from 'react-hook-form';
-import CollectionSelect from '../../components/CollectionSelect';
-import { CreateTagMutationVariables, GetTagsQuery, useDeleteTagMutation, useGetTagsQuery } from '../../graphql';
+import { Avatar, Box, IconButton, Link, Typography } from '@mui/material';
 import { Refresh } from '@mui/icons-material';
-import { useMemo } from 'react';
 import { CustomColumnArray, CustomTable, TableActions, useCustomTable } from 'custom-table';
+import { GetAuthorQuery, useDeleteAuthorMutation, useGetAuthorQuery } from '../../graphql';
+import CreateAuthorButton from './components/CreateAuthorButton';
+import { useMemo } from 'react';
 import { format } from 'time';
-import CreateTagButton from './components/CreateTagButton';
 
-type FormData = CreateTagMutationVariables;
-export default function Tags() {
-  const { control, watch } = useForm<FormData>();
-  const collectionId = watch('collectionId');
-  const { data: { getTagList } = {}, refetch } = useGetTagsQuery({ variables: { collectionId } });
-  const [deleteTag] = useDeleteTagMutation();
-  const columns = useMemo<CustomColumnArray<GetTagsQuery['getTagList'][0]>>(
+export default function Author() {
+  const { data: { getAuthorList } = {}, refetch } = useGetAuthorQuery();
+  const [deleteAuthor] = useDeleteAuthorMutation();
+  const columns = useMemo<CustomColumnArray<GetAuthorQuery['getAuthorList'][0]>>(
     () => [
       {
         Header: '名字',
         id: 'name',
-        accessor: 'name',
+        accessor: ({ name, url }) => (
+          <Link target="_blank" href={url} rel="noreferrer">
+            {name}
+          </Link>
+        ),
+      },
+      {
+        Header: '头像',
+        id: 'avatar',
+        accessor: ({ avatar }) => <Avatar src={avatar} />,
+        cellProps: { padding: 'none' },
+      },
+      {
+        Header: '描述',
+        id: 'description',
+        accessor: ({ description }) => (
+          <Typography variant="body2" noWrap>
+            {description}
+          </Typography>
+        ),
+        cellProps: {
+          sx: {
+            maxWidth: 200,
+          },
+        },
       },
       {
         Header: '创建时间',
@@ -40,7 +59,7 @@ export default function Tags() {
               {
                 text: '删除',
                 onClick: async () => {
-                  await deleteTag({ variables: { id } });
+                  await deleteAuthor({ variables: { id } });
                   onClose();
                   await refetch();
                 },
@@ -51,9 +70,9 @@ export default function Tags() {
         cellProps: { padding: 'none' },
       },
     ],
-    [deleteTag, refetch],
+    [deleteAuthor, refetch],
   );
-  const tableInstance = useCustomTable({ columns, data: getTagList ?? [] });
+  const tableInstance = useCustomTable({ columns, data: getAuthorList ?? [] });
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', p: 2 }}>
@@ -64,8 +83,7 @@ export default function Tags() {
           display: 'flex',
         }}
       >
-        <Controller control={control} name="collectionId" render={({ field }) => <CollectionSelect {...field} />} />
-        <CreateTagButton refetch={refetch} collectionId={collectionId} />
+        <CreateAuthorButton refetch={refetch} />
         <IconButton sx={{ marginLeft: 'auto' }} onClick={() => refetch()}>
           <Refresh />
         </IconButton>

@@ -13,3 +13,9 @@ query getTags($collectionId: Int) {
     collectionId
   }
 }
+
+mutation deleteTag($id: Int!) {
+  deleteTag(id: $id) {
+    id
+  }
+}
