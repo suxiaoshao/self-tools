@@ -12,7 +12,7 @@ pub enum GraphqlError {
     Diesel(String),
     Unauthenticated,
     NotFound(&'static str),
-    DirAreadyExists,
+    DirAlreadyExists,
     ParseDirName,
 }
 
@@ -41,7 +41,7 @@ impl GraphqlError {
             GraphqlError::Diesel(data) => format!("数据库错误:{}", data),
             GraphqlError::Unauthenticated => "没有发送 token".to_string(),
             GraphqlError::NotFound(tag) => format!("该{}不存在", tag),
-            GraphqlError::DirAreadyExists => "目录已存在".to_string(),
+            GraphqlError::DirAlreadyExists => "目录已存在".to_string(),
             GraphqlError::ParseDirName => "解析目录名错误".to_string(),
         }
     }
@@ -70,7 +70,7 @@ impl GraphqlError {
             GraphqlError::R2d2(_) => "FailedPrecondition",
             GraphqlError::Diesel(_) | GraphqlError::ParseDirName => "Internal",
             GraphqlError::Unauthenticated => "Unauthenticated",
-            GraphqlError::NotFound(_) | GraphqlError::DirAreadyExists => "InvalidArgument",
+            GraphqlError::NotFound(_) | GraphqlError::DirAlreadyExists => "InvalidArgument",
         }
     }
 }
@@ -86,7 +86,7 @@ impl Clone for GraphqlError {
             GraphqlError::Diesel(data) => Self::Diesel(data.clone()),
             GraphqlError::Unauthenticated => Self::Unauthenticated,
             GraphqlError::NotFound(tag) => Self::NotFound(tag),
-            GraphqlError::DirAreadyExists => Self::DirAreadyExists,
+            GraphqlError::DirAlreadyExists => Self::DirAlreadyExists,
             GraphqlError::ParseDirName => Self::ParseDirName,
         }
     }

@@ -59,4 +59,9 @@ impl Tag {
         let tags = TagModel::get_list_by_collection_id(collection_id)?;
         Ok(tags.into_iter().map(|tag| tag.into()).collect())
     }
+    /// 根据 collection_id 删除标签
+    pub fn delete_by_collection(collection_id: i64) -> GraphqlResult<()> {
+        TagModel::delete_by_collection(collection_id)?;
+        Ok(())
+    }
 }

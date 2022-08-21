@@ -53,7 +53,7 @@ impl TagModel {
     }
 }
 
-/// by directory id
+/// by collection id
 impl TagModel {
     /// 获取标签列表
     pub fn get_list_by_collection_id(collection_id: Option<i64>) -> GraphqlResult<Vec<Self>> {
@@ -72,5 +72,12 @@ impl TagModel {
                 Ok(tags)
             }
         }
+    }
+    /// 根据 collectionId 删除
+    pub fn delete_by_collection(collection_id: i64) -> GraphqlResult<usize> {
+        let conn = super::CONNECTION.get()?;
+        let deleted = diesel::delete(tag::table.filter(tag::collection_id.eq(collection_id)))
+            .execute(&conn)?;
+        Ok(deleted)
     }
 }

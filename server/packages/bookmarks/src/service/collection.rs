@@ -5,6 +5,8 @@ use crate::{
     model::collection::CollectionModel,
 };
 
+use super::tag::Tag;
+
 #[derive(SimpleObject)]
 #[graphql(complex)]
 pub struct Collection {
@@ -56,7 +58,7 @@ impl Collection {
                 let collection_path = format!("/{}/", name);
                 // 子目录已存在
                 if CollectionModel::exists_by_path(&collection_path)? {
-                    return Err(GraphqlError::DirAreadyExists);
+                    return Err(GraphqlError::DirAlreadyExists);
                 }
                 let collection =
                     CollectionModel::create(name, &collection_path, None, description)?;
@@ -73,7 +75,7 @@ impl Collection {
                 let collection_path = format!("{}{}/", parent_path, name);
                 // 子目录已存在
                 if CollectionModel::exists_by_path(&collection_path)? {
-                    return Err(GraphqlError::DirAreadyExists);
+                    return Err(GraphqlError::DirAlreadyExists);
                 }
                 let collection =
                     CollectionModel::create(name, &collection_path, parent_id, description)?;
@@ -92,6 +94,8 @@ impl Collection {
             return Err(GraphqlError::NotFound("目录"));
         }
         let collection = CollectionModel::delete(id)?;
+        // 删除 tag
+        Tag::delete_by_collection(id)?;
         //递归删除子目录
         CollectionModel::get_list_by_parent(Some(id))?
             .into_iter()
