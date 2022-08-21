@@ -1,10 +1,9 @@
-import { useAtom } from 'jotai';
 import { useEffect } from 'react';
 import { useNavigate, useLocation, createSearchParams } from 'react-router-dom';
-import { authAtom } from './atom';
+import { selectAuth, useAppSelector } from './authSlice';
 
-export function useLogin() {
-  const [auth] = useAtom(authAtom);
+export default function useLogin() {
+  const auth = useAppSelector(selectAuth);
   const navigate = useNavigate();
   const { pathname, search, hash } = useLocation();
 

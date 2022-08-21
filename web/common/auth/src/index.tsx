@@ -1,18 +1,18 @@
 import { Avatar, Box, Button, Container, TextField, Typography } from '@mui/material';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { LockOutlined } from '@mui/icons-material';
-import { useAtom } from 'jotai';
 import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { type LoginForm, authAtom } from './atom';
+import { login, LoginForm, selectAuth, useAppDispatch, useAppSelector } from './authSlice';
 
-export * from './atom';
+export { default as authReducer, login, logout } from './authSlice';
 
-export * from './useLogin';
+export { default as useLogin } from './useLogin';
 
 export default function Login() {
   const { register, handleSubmit } = useForm<LoginForm>();
-  const [auth, setAuth] = useAtom(authAtom);
+  const auth = useAppSelector(selectAuth);
+  const dispatch = useAppDispatch();
   /** 跳转 */
   const navigate = useNavigate();
   const [urlSearch] = useSearchParams();
@@ -27,7 +27,7 @@ export default function Login() {
     }
   }, [auth, navigate, urlSearch]);
   const onSubmit: SubmitHandler<LoginForm> = async (data) => {
-    setAuth(data);
+    dispatch(login(data));
   };
   return (
     <Box sx={{ width: '100%', height: '100%' }}>

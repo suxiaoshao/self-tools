@@ -1,6 +1,5 @@
 import { Box, IconButton, Link } from '@mui/material';
 import { GetCollectionListQuery, useDeleteCollectionMutation, useGetCollectionListQuery } from '../../graphql';
-import {} from 'jotai';
 import { useMemo } from 'react';
 import { CustomColumnArray, TableActions, CustomTable, useCustomTable } from 'custom-table';
 import { format } from 'time';

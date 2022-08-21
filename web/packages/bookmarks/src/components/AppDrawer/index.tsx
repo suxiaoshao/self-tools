@@ -2,9 +2,12 @@ import { Logout, Bookmarks, Tag, People, CollectionsBookmark } from '@mui/icons-
 import { Box, Divider, List, ListItemButton, ListItemIcon, ListItemText, Paper } from '@mui/material';
 import { Outlet } from 'react-router-dom';
 import RouterItem from './RouterItem';
+import { useAppDispatch } from '../../app/hooks';
+import { logout } from 'auth';
 
 export default function AppDrawer(): JSX.Element {
   const width = 250;
+  const dispatch = useAppDispatch();
   return (
     <Box sx={{ display: 'flex', height: '100%' }}>
       <Box
@@ -28,7 +31,7 @@ export default function AppDrawer(): JSX.Element {
         </List>
         <Divider />
         <List sx={{ width }}>
-          <ListItemButton>
+          <ListItemButton onClick={() => dispatch(logout())}>
             <ListItemIcon>
               <Logout />
             </ListItemIcon>

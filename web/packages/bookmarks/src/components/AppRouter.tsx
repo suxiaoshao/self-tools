@@ -1,8 +1,8 @@
 import { Routes, Route } from 'react-router-dom';
 import Login, { useLogin } from 'auth';
-import Collection from '../pages/Collections';
+import Collection from '../features/Collections';
 import AppDrawer from './AppDrawer';
-import Tags from '../pages/Tags';
+import Tags from '../features/Tags';
 
 export default function AppRouter() {
   useLogin();
