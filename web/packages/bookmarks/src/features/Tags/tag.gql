@@ -5,7 +5,7 @@ mutation createTag($name: String!, $collectionId: Int) {
   }
 }
 query getTags($collectionId: Int) {
-  getTagList(collectionId: $collectionId) {
+  getTags(collectionId: $collectionId) {
     name
     id
     createTime

@@ -46,13 +46,13 @@ type MutationRoot {
 
 type QueryRoot {
   "获取作者列表"
-  getAuthorList: [Author!]!
+  getAuthors: [Author!]!
   "获取目录详情"
   getCollection(id: Int!): Collection!
   "获取目录列表"
-  getCollectionList(parentId: Int): [Collection!]!
+  getCollections(parentId: Int): [Collection!]!
   "获取标签列表"
-  getTagList(collectionId: Int): [Tag!]!
+  getTags(collectionId: Int): [Tag!]!
 }
 
 type Tag {

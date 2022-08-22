@@ -1,5 +1,5 @@
-query getAuthor {
-  getAuthorList {
+query getAuthors {
+  getAuthors {
     ...AuthorAll
   }
 }

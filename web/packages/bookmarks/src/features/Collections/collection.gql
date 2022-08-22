@@ -1,5 +1,5 @@
-query getCollectionList($parentId: Int) {
-  getCollectionList(parentId: $parentId) {
+query getCollections($parentId: Int) {
+  getCollections(parentId: $parentId) {
     name
     id
     path
