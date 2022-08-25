@@ -3,7 +3,7 @@ use async_graphql::Object;
 
 use crate::{
     errors::GraphqlResult,
-    service::{author::Author, collection::Collection, tag::Tag},
+    service::{author::Author, collection::Collection, novel::Novel, tag::Tag},
 };
 
 pub struct MutationRoot;
@@ -50,5 +50,16 @@ impl MutationRoot {
     async fn delete_tag(&self, id: i64) -> GraphqlResult<Tag> {
         let deleted_tag = Tag::delete(id)?;
         Ok(deleted_tag)
+    }
+    /// 创建小说
+    async fn create_novel(
+        &self,
+        name: String,
+        author_id: i64,
+        description: String,
+        tags: Vec<i64>,
+        collection_id: i64,
+    ) -> GraphqlResult<Novel> {
+        Novel::create(name, author_id, description, tags, collection_id)
     }
 }

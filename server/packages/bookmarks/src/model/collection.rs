@@ -114,6 +114,16 @@ impl CollectionModel {
     }
 }
 
+/// all
+impl CollectionModel {
+    /// 获取所有目录
+    pub fn get_list() -> GraphqlResult<Vec<Self>> {
+        let conn = CONNECTION.get()?;
+        let collections = collection::table.load(&conn)?;
+        Ok(collections)
+    }
+}
+
 #[cfg(test)]
 mod test {
 

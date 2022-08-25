@@ -1,6 +1,5 @@
 use std::env;
-mod schema;
-
+pub mod schema;
 use diesel::{
     r2d2::{ConnectionManager, Pool},
     PgConnection,

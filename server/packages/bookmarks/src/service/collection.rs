@@ -58,16 +58,17 @@ impl Collection {
                 let collection_path = format!("/{}/", name);
                 // 子目录已存在
                 if CollectionModel::exists_by_path(&collection_path)? {
-                    return Err(GraphqlError::DirAlreadyExists);
+                    return Err(GraphqlError::AlreadyExists(collection_path));
                 }
                 let collection =
                     CollectionModel::create(name, &collection_path, None, description)?;
                 Ok(collection.into())
             }
+
             Some(id) => {
                 // 父目录不存在
                 if !CollectionModel::exists(id)? {
-                    return Err(GraphqlError::NotFound("父目录"));
+                    return Err(GraphqlError::NotFound("父目录", id));
                 }
                 let CollectionModel {
                     path: parent_path, ..
@@ -75,7 +76,7 @@ impl Collection {
                 let collection_path = format!("{}{}/", parent_path, name);
                 // 子目录已存在
                 if CollectionModel::exists_by_path(&collection_path)? {
-                    return Err(GraphqlError::DirAlreadyExists);
+                    return Err(GraphqlError::AlreadyExists(collection_path));
                 }
                 let collection =
                     CollectionModel::create(name, &collection_path, parent_id, description)?;
@@ -91,7 +92,7 @@ impl Collection {
     pub fn delete(id: i64) -> GraphqlResult<Self> {
         // 目录不存在
         if !CollectionModel::exists(id)? {
-            return Err(GraphqlError::NotFound("目录"));
+            return Err(GraphqlError::NotFound("目录", id));
         }
         let collection = CollectionModel::delete(id)?;
         // 删除 tag
@@ -107,7 +108,7 @@ impl Collection {
         //  判断父目录是否存在
         if let Some(id) = parent_id {
             if !CollectionModel::exists(id)? {
-                return Err(GraphqlError::NotFound("目录"));
+                return Err(GraphqlError::NotFound("目录", id));
             }
         }
         let collections = CollectionModel::get_list_by_parent(parent_id)?;
@@ -117,7 +118,7 @@ impl Collection {
     pub fn get_ancestors(id: i64) -> GraphqlResult<Vec<Self>> {
         //  判断目录是否存在
         if !CollectionModel::exists(id)? {
-            return Err(GraphqlError::NotFound("目录"));
+            return Err(GraphqlError::NotFound("目录", id));
         }
         let collection = CollectionModel::find_one(id)?;
         let mut collections = Vec::new();
@@ -134,7 +135,7 @@ impl Collection {
     pub fn get(id: i64) -> GraphqlResult<Self> {
         //  判断目录是否存在
         if !CollectionModel::exists(id)? {
-            return Err(GraphqlError::NotFound("目录"));
+            return Err(GraphqlError::NotFound("目录", id));
         }
         let collection = CollectionModel::find_one(id)?;
         Ok(collection.into())

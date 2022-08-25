@@ -6,14 +6,27 @@ use tonic::{transport, Code, Status};
 
 #[derive(Debug)]
 pub enum GraphqlError {
+    /// grpc 错误
     Status(Status),
+    /// grpc 链接错误
     Transport,
+    /// 数据库连接池
     R2d2(String),
+    /// 数据库操作错误
     Diesel(String),
+    /// 没有认证
     Unauthenticated,
-    NotFound(&'static str),
-    DirAlreadyExists,
-    ParseDirName,
+    /// 资源不存在
+    NotFound(&'static str, i64),
+    /// 已存在
+    AlreadyExists(String),
+    /// scope 错误
+    Scope {
+        sub_tag: &'static str,
+        super_tag: &'static str,
+        sub_value: i64,
+        super_value: i64,
+    },
 }
 
 impl IntoResponse for GraphqlError {
@@ -40,9 +53,17 @@ impl GraphqlError {
             GraphqlError::R2d2(_) => "数据库连接错误".to_string(),
             GraphqlError::Diesel(data) => format!("数据库错误:{}", data),
             GraphqlError::Unauthenticated => "没有发送 token".to_string(),
-            GraphqlError::NotFound(tag) => format!("该{}不存在", tag),
-            GraphqlError::DirAlreadyExists => "目录已存在".to_string(),
-            GraphqlError::ParseDirName => "解析目录名错误".to_string(),
+            GraphqlError::NotFound(tag, id) => format!(r#"{tag}"{id}"不存在"#),
+            GraphqlError::AlreadyExists(name) => format!("{}已存在", name),
+            GraphqlError::Scope {
+                super_tag,
+                sub_tag,
+                sub_value,
+                super_value,
+            } => format!(
+                r#"{}"{}"不属于{}"{}""#,
+                sub_tag, sub_value, super_tag, super_value
+            ),
         }
     }
     pub fn code(&self) -> &str {
@@ -68,9 +89,11 @@ impl GraphqlError {
             },
             GraphqlError::Transport => "Transport",
             GraphqlError::R2d2(_) => "FailedPrecondition",
-            GraphqlError::Diesel(_) | GraphqlError::ParseDirName => "Internal",
+            GraphqlError::Diesel(_) => "Internal",
             GraphqlError::Unauthenticated => "Unauthenticated",
-            GraphqlError::NotFound(_) | GraphqlError::DirAlreadyExists => "InvalidArgument",
+            GraphqlError::NotFound(..)
+            | GraphqlError::AlreadyExists(_)
+            | GraphqlError::Scope { .. } => "InvalidArgument",
         }
     }
 }
@@ -85,9 +108,19 @@ impl Clone for GraphqlError {
             GraphqlError::R2d2(data) => Self::R2d2(data.clone()),
             GraphqlError::Diesel(data) => Self::Diesel(data.clone()),
             GraphqlError::Unauthenticated => Self::Unauthenticated,
-            GraphqlError::NotFound(tag) => Self::NotFound(tag),
-            GraphqlError::DirAlreadyExists => Self::DirAlreadyExists,
-            GraphqlError::ParseDirName => Self::ParseDirName,
+            GraphqlError::NotFound(tag, id) => Self::NotFound(tag, *id),
+            GraphqlError::AlreadyExists(name) => Self::AlreadyExists(name.clone()),
+            GraphqlError::Scope {
+                sub_tag,
+                super_tag,
+                sub_value,
+                super_value,
+            } => Self::Scope {
+                sub_tag: *sub_tag,
+                super_tag: *super_tag,
+                sub_value: *sub_value,
+                super_value: *super_value,
+            },
         }
     }
 }

@@ -21,6 +21,7 @@ pub struct NewTag {
     pub update_time: NaiveDateTime,
 }
 
+/// id 相关
 impl TagModel {
     /// 创建标签
     pub fn create(name: &str, collection_id: Option<i64>) -> GraphqlResult<Self> {
@@ -79,5 +80,16 @@ impl TagModel {
         let deleted = diesel::delete(tag::table.filter(tag::collection_id.eq(collection_id)))
             .execute(&conn)?;
         Ok(deleted)
+    }
+}
+
+/// all
+impl TagModel {
+    /// 获取所有标签
+    pub fn get_list() -> GraphqlResult<Vec<Self>> {
+        let conn = super::CONNECTION.get()?;
+        let tags = tag::table.load(&conn)?;
+
+        Ok(tags)
     }
 }

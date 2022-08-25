@@ -40,7 +40,7 @@ impl Author {
     pub fn delete(id: i64) -> GraphqlResult<Self> {
         // 作者不存在
         if !AuthorModel::exists(id)? {
-            return Err(GraphqlError::NotFound("作者"));
+            return Err(GraphqlError::NotFound("作者", id));
         }
         let deleted_author = AuthorModel::delete(id)?;
         Ok(deleted_author.into())
