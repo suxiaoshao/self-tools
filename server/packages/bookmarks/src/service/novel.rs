@@ -12,10 +12,14 @@ use async_graphql::SimpleObject;
 pub struct Novel {
     pub id: i64,
     pub name: String,
+    #[graphql(skip)]
     pub author_id: i64,
+    #[graphql(skip)]
     pub read_chapter_id: Option<i64>,
     pub description: String,
+    #[graphql(skip)]
     pub tags: Vec<i64>,
+    #[graphql(skip)]
     pub collection_id: i64,
     pub status: ReadStatus,
     pub create_time: i64,
@@ -70,6 +74,22 @@ impl Novel {
             ReadStatus::Unread,
         )?;
         Ok(new_novel.into())
+    }
+    /// 删除小说
+    pub fn delete(id: i64) -> GraphqlResult<Self> {
+        if !NovelModel::exists(id)? {
+            return Err(GraphqlError::NotFound("小说", id));
+        }
+        let novel = NovelModel::delete(id)?;
+        Ok(novel.into())
+    }
+    /// 获取小说
+    pub fn get(id: i64) -> GraphqlResult<Self> {
+        if !NovelModel::exists(id)? {
+            return Err(GraphqlError::NotFound("小说", id));
+        }
+        let novel = NovelModel::find_one(id)?;
+        Ok(novel.into())
     }
     /// 选择小说
     pub fn query(

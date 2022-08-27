@@ -68,6 +68,8 @@ type QueryRoot {
   getCollections(parentId: Int): [Collection!]!
   "获取标签列表"
   getTags(collectionId: Int): [Tag!]!
+  "获取小说列表"
+  queryNovels(collectionId: Int!, tagFullMatch: Boolean!, tags: [Int!]!): [Novel!]!
 }
 
 type Tag {

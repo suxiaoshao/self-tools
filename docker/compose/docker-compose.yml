@@ -7,7 +7,7 @@ services:
     restart: always
     container_name: web
     volumes:
-      - /etc/nginx:/etc/nginx
+      - /etc/nginx/nginx.conf:/etc/nginx/nginx.conf
   postgres:
     image: suxiaoshao/postgres:latest
     restart: always

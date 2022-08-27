@@ -63,6 +63,28 @@ impl NovelModel {
             .get_result(&conn)?;
         Ok(new_novel)
     }
+    /// 删除小说
+    pub fn delete(id: i64) -> GraphqlResult<Self> {
+        let conn = super::CONNECTION.get()?;
+        let novel = diesel::delete(novel::table.filter(novel::id.eq(id))).get_result(&conn)?;
+        Ok(novel)
+    }
+    /// 查找小说
+    pub fn find_one(id: i64) -> GraphqlResult<Self> {
+        let conn = super::CONNECTION.get()?;
+        let novel = novel::table.filter(novel::id.eq(id)).first::<Self>(&conn)?;
+        Ok(novel)
+    }
+    /// 判断是否存在
+    pub fn exists(id: i64) -> GraphqlResult<bool> {
+        let conn = super::CONNECTION.get()?;
+        let exists = diesel::select(diesel::dsl::exists(novel::table.filter(novel::id.eq(id))))
+            .get_result(&conn)?;
+        Ok(exists)
+    }
+}
+
+impl NovelModel {
     /// 查询小说
     pub fn query(
         collection_id: i64,
@@ -86,5 +108,23 @@ impl NovelModel {
                 .collect()
         };
         Ok(data)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use diesel::{debug_query, pg::Pg};
+
+    use crate::model::schema::novel;
+    use diesel::prelude::*;
+
+    #[test]
+    fn test() {
+        let query = diesel::delete(novel::table.find(2));
+        let sql = debug_query::<Pg, _>(&query).to_string();
+        assert_eq!(
+            sql,
+            "DELETE FROM \"novel\" WHERE \"novel\".\"id\" = $1 -- binds: [2]"
+        );
     }
 }

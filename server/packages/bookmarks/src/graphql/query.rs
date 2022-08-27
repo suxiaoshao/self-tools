@@ -41,4 +41,9 @@ impl QueryRoot {
         let novel = Novel::query(collection_id, tags, tag_full_match)?;
         Ok(novel)
     }
+    /// 获取小说详情
+    async fn get_novel(&self, id: i64) -> GraphqlResult<Novel> {
+        let novel = Novel::get(id)?;
+        Ok(novel)
+    }
 }

@@ -64,4 +64,9 @@ impl MutationRoot {
     ) -> GraphqlResult<Novel> {
         Novel::create(name, author_id, description, tags, collection_id)
     }
+    /// 删除小说
+    async fn delete_novel(&self, id: i64) -> GraphqlResult<Novel> {
+        let deleted_novel = Novel::delete(id)?;
+        Ok(deleted_novel)
+    }
 }
