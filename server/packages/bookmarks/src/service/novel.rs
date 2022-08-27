@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use crate::errors::{GraphqlError, GraphqlResult};
 use crate::model::author::AuthorModel;
 use crate::model::collection::CollectionModel;
@@ -43,7 +45,7 @@ impl Novel {
         name: String,
         author_id: i64,
         description: String,
-        tags: Vec<i64>,
+        tags: HashSet<i64>,
         collection_id: i64,
     ) -> GraphqlResult<Self> {
         // 作者不存在
@@ -55,28 +57,38 @@ impl Novel {
             return Err(GraphqlError::NotFound("集合", collection_id));
         }
         // tag 不存在
-        Tag::exists_all(&tags)?;
-        // 存在不符合的 tags
-        let allow_tags = Tag::get_recursion_id(Some(collection_id))?;
-        for tag in tags.iter() {
-            if !allow_tags.contains(tag) {
-                return Err(GraphqlError::Scope {
-                    sub_tag: "标签",
-                    sub_value: *tag,
-                    super_tag: "集合",
-                    super_value: collection_id,
-                });
-            }
-        }
+        Tag::exists_all(tags.iter())?;
+        // tags 都属于 collection_id
+        Tag::belong_to_collection(collection_id, tags.iter())?;
         let new_novel = NovelModel::create(
             &name,
             author_id,
             None,
             &description,
-            &tags,
+            &tags.into_iter().collect::<Vec<_>>(),
             collection_id,
             ReadStatus::Unread,
         )?;
         Ok(new_novel.into())
+    }
+    /// 选择小说
+    pub fn query(
+        collection_id: i64,
+        tags: HashSet<i64>,
+        tag_full_match: bool,
+    ) -> GraphqlResult<Vec<Self>> {
+        // 集合不存在
+        if !CollectionModel::exists(collection_id)? {
+            return Err(GraphqlError::NotFound("集合", collection_id));
+        }
+        // tag 不存在
+        Tag::exists_all(tags.iter())?;
+        // tags 都属于 collection_id
+        Tag::belong_to_collection(collection_id, tags.iter())?;
+        let data = NovelModel::query(collection_id, tags, tag_full_match)?
+            .into_iter()
+            .map(Into::into)
+            .collect();
+        Ok(data)
     }
 }

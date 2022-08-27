@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use super::validator::DirNameValidator;
 use async_graphql::Object;
 
@@ -57,7 +59,7 @@ impl MutationRoot {
         name: String,
         author_id: i64,
         description: String,
-        tags: Vec<i64>,
+        tags: HashSet<i64>,
         collection_id: i64,
     ) -> GraphqlResult<Novel> {
         Novel::create(name, author_id, description, tags, collection_id)

@@ -34,6 +34,8 @@ type MutationRoot {
   createAuthor(avatar: String!, description: String!, name: String!, url: String!): Author!
   "创建目录"
   createCollection(description: String, name: String!, parentId: Int): Collection!
+  "创建小说"
+  createNovel(authorId: Int!, collectionId: Int!, description: String!, name: String!, tags: [Int!]!): Novel!
   "创建标签"
   createTag(collectionId: Int, name: String!): Tag!
   "删除作者"
@@ -42,6 +44,19 @@ type MutationRoot {
   deleteCollection(id: Int!): Collection!
   "删除标签"
   deleteTag(id: Int!): Tag!
+}
+
+type Novel {
+  authorId: Int!
+  collectionId: Int!
+  createTime: Int!
+  description: String!
+  id: Int!
+  name: String!
+  readChapterId: Int
+  status: ReadStatus!
+  tags: [Int!]!
+  updateTime: Int!
 }
 
 type QueryRoot {
@@ -61,4 +76,10 @@ type Tag {
   id: Int!
   name: String!
   updateTime: Int!
+}
+
+enum ReadStatus {
+  READ
+  READING
+  UNREAD
 }

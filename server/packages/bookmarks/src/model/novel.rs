@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use super::schema::novel;
 use crate::errors::GraphqlResult;
 use chrono::NaiveDateTime;
@@ -60,5 +62,29 @@ impl NovelModel {
             .values(&new_novel)
             .get_result(&conn)?;
         Ok(new_novel)
+    }
+    /// 查询小说
+    pub fn query(
+        collection_id: i64,
+        match_tags: HashSet<i64>,
+        tag_full_match: bool,
+    ) -> GraphqlResult<Vec<Self>> {
+        let data = novel::dsl::novel
+            .filter(novel::dsl::collection_id.eq(collection_id))
+            .load(&super::CONNECTION.get()?)?;
+
+        let data = if tag_full_match {
+            data.into_iter()
+                .filter(|NovelModel { tags, .. }| {
+                    let tags = tags.iter().cloned().collect::<HashSet<_>>();
+                    match_tags.is_subset(&tags)
+                })
+                .collect()
+        } else {
+            data.into_iter()
+                .filter(|NovelModel { tags, .. }| tags.iter().any(|x| match_tags.contains(x)))
+                .collect()
+        };
+        Ok(data)
     }
 }

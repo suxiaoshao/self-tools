@@ -66,8 +66,8 @@ impl Tag {
         Ok(())
     }
     /// 判断标签是否全部存在
-    pub fn exists_all(tags: &[i64]) -> GraphqlResult<()> {
-        let tag_ids: HashSet<i64> = tags.iter().cloned().collect();
+    pub fn exists_all<'a, T: Iterator<Item = &'a i64>>(tags: T) -> GraphqlResult<()> {
+        let tag_ids: HashSet<i64> = tags.cloned().collect();
         let database_tags = TagModel::get_list()?;
         let database_tags: HashSet<i64> = database_tags.into_iter().map(|tag| tag.id).collect();
         for id in tag_ids {
@@ -79,6 +79,7 @@ impl Tag {
     }
     /// 递归获取标签列表
     pub fn get_recursion_id(collection_id: Option<i64>) -> GraphqlResult<HashSet<i64>> {
+        // 判断父目录是否存在, 如果不存在, 返回空集合对应的标签id
         let mut id = match collection_id {
             None => {
                 return Ok(TagModel::get_list_by_collection_id(None)?
@@ -89,12 +90,14 @@ impl Tag {
             Some(id) => id,
         };
 
+        // 获取全部标签id
         let tags = TagModel::get_list()?;
+        // 初始化集合
         let mut collections = CollectionModel::get_list()?
             .into_iter()
             .map(|CollectionModel { id, parent_id, .. }| (id, (parent_id, Vec::<Self>::new())))
             .collect::<HashMap<_, _>>();
-        // 全局 tag 列表
+        // 结果
         let mut result = HashSet::<i64>::new();
         // 遍历所有 tag, 将其加入到对应的 collection 中
         for tag in tags {
@@ -126,5 +129,24 @@ impl Tag {
             }
         }
         Ok(result)
+    }
+    /// 验证 tags 属于 collection_id
+    pub fn belong_to_collection<'a, T: Iterator<Item = &'a i64>>(
+        collection_id: i64,
+        tags: T,
+    ) -> GraphqlResult<()> {
+        // 存在不符合的 tags
+        let allow_tags = Tag::get_recursion_id(Some(collection_id))?;
+        for tag in tags {
+            if !allow_tags.contains(tag) {
+                return Err(GraphqlError::Scope {
+                    sub_tag: "标签",
+                    sub_value: *tag,
+                    super_tag: "集合",
+                    super_value: collection_id,
+                });
+            }
+        }
+        Ok(())
     }
 }
