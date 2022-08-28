@@ -132,11 +132,11 @@ impl Tag {
     }
     /// 验证 tags 属于 collection_id
     pub fn belong_to_collection<'a, T: Iterator<Item = &'a i64>>(
-        collection_id: i64,
+        collection_id: Option<i64>,
         tags: T,
     ) -> GraphqlResult<()> {
         // 存在不符合的 tags
-        let allow_tags = Tag::get_recursion_id(Some(collection_id))?;
+        let allow_tags = Tag::get_recursion_id(collection_id)?;
         for tag in tags {
             if !allow_tags.contains(tag) {
                 return Err(GraphqlError::Scope {

@@ -60,7 +60,7 @@ impl MutationRoot {
         author_id: i64,
         description: String,
         tags: HashSet<i64>,
-        collection_id: i64,
+        collection_id: Option<i64>,
     ) -> GraphqlResult<Novel> {
         Novel::create(name, author_id, description, tags, collection_id)
     }

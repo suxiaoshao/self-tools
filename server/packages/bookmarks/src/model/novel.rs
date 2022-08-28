@@ -15,7 +15,7 @@ pub struct NovelModel {
     pub read_chapter_id: Option<i64>,
     pub description: String,
     pub tags: Vec<i64>,
-    pub collection_id: i64,
+    pub collection_id: Option<i64>,
     pub status: ReadStatus,
     pub create_time: NaiveDateTime,
     pub update_time: NaiveDateTime,
@@ -28,7 +28,7 @@ pub struct NewNovel<'a> {
     pub read_chapter_id: Option<i64>,
     pub description: &'a str,
     pub tags: &'a [i64],
-    pub collection_id: i64,
+    pub collection_id: Option<i64>,
     pub status: ReadStatus,
     pub create_time: NaiveDateTime,
     pub update_time: NaiveDateTime,
@@ -42,7 +42,7 @@ impl NovelModel {
         read_chapter_id: Option<i64>,
         description: &str,
         tags: &[i64],
-        collection_id: i64,
+        collection_id: Option<i64>,
         status: ReadStatus,
     ) -> GraphqlResult<Self> {
         let now = chrono::Local::now().naive_local();
@@ -87,13 +87,26 @@ impl NovelModel {
 impl NovelModel {
     /// 查询小说
     pub fn query(
-        collection_id: i64,
+        collection_id: Option<i64>,
         match_tags: HashSet<i64>,
         tag_full_match: bool,
+        read_status: Option<ReadStatus>,
     ) -> GraphqlResult<Vec<Self>> {
-        let data = novel::dsl::novel
-            .filter(novel::dsl::collection_id.eq(collection_id))
-            .load(&super::CONNECTION.get()?)?;
+        let conn = super::CONNECTION.get()?;
+        let data = match (collection_id, read_status) {
+            (Some(collection_id), Some(read_status)) => novel::table
+                .filter(novel::collection_id.eq(collection_id))
+                .filter(novel::status.eq(read_status))
+                .load(&conn)?,
+            (Some(collection_id), None) => novel::table
+                .filter(novel::collection_id.eq(collection_id))
+                .load(&conn)?,
+            (None, Some(read_status)) => novel::table
+                .filter(novel::status.eq(read_status))
+                .filter(novel::collection_id.is_null())
+                .load(&conn)?,
+            (None, None) => novel::table.load(&conn)?,
+        };
 
         let data = if tag_full_match {
             data.into_iter()

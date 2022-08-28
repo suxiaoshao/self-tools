@@ -47,12 +47,16 @@ export type MutationRoot = {
   createAuthor: Author;
   /** 创建目录 */
   createCollection: Collection;
+  /** 创建小说 */
+  createNovel: Novel;
   /** 创建标签 */
   createTag: Tag;
   /** 删除作者 */
   deleteAuthor: Author;
   /** 删除目录 */
   deleteCollection: Collection;
+  /** 删除小说 */
+  deleteNovel: Novel;
   /** 删除标签 */
   deleteTag: Tag;
 };
@@ -70,6 +74,14 @@ export type MutationRootCreateCollectionArgs = {
   parentId?: InputMaybe<Scalars['Int']>;
 };
 
+export type MutationRootCreateNovelArgs = {
+  authorId: Scalars['Int'];
+  collectionId: Scalars['Int'];
+  description: Scalars['String'];
+  name: Scalars['String'];
+  tags: Array<Scalars['Int']>;
+};
+
 export type MutationRootCreateTagArgs = {
   collectionId?: InputMaybe<Scalars['Int']>;
   name: Scalars['String'];
@@ -83,33 +95,67 @@ export type MutationRootDeleteCollectionArgs = {
   id: Scalars['Int'];
 };
 
+export type MutationRootDeleteNovelArgs = {
+  id: Scalars['Int'];
+};
+
 export type MutationRootDeleteTagArgs = {
   id: Scalars['Int'];
+};
+
+export type Novel = {
+  __typename?: 'Novel';
+  createTime: Scalars['Int'];
+  description: Scalars['String'];
+  id: Scalars['Int'];
+  name: Scalars['String'];
+  status: ReadStatus;
+  updateTime: Scalars['Int'];
 };
 
 export type QueryRoot = {
   __typename?: 'QueryRoot';
   /** 获取作者列表 */
-  getAuthorList: Array<Author>;
+  getAuthors: Array<Author>;
   /** 获取目录详情 */
   getCollection: Collection;
   /** 获取目录列表 */
-  getCollectionList: Array<Collection>;
+  getCollections: Array<Collection>;
+  /** 获取小说详情 */
+  getNovel: Novel;
   /** 获取标签列表 */
-  getTagList: Array<Tag>;
+  getTags: Array<Tag>;
+  /** 获取小说列表 */
+  queryNovels: Array<Novel>;
 };
 
 export type QueryRootGetCollectionArgs = {
   id: Scalars['Int'];
 };
 
-export type QueryRootGetCollectionListArgs = {
+export type QueryRootGetCollectionsArgs = {
   parentId?: InputMaybe<Scalars['Int']>;
 };
 
-export type QueryRootGetTagListArgs = {
+export type QueryRootGetNovelArgs = {
+  id: Scalars['Int'];
+};
+
+export type QueryRootGetTagsArgs = {
   collectionId?: InputMaybe<Scalars['Int']>;
 };
+
+export type QueryRootQueryNovelsArgs = {
+  collectionId: Scalars['Int'];
+  tagFullMatch: Scalars['Boolean'];
+  tags: Array<Scalars['Int']>;
+};
+
+export enum ReadStatus {
+  Read = 'READ',
+  Reading = 'READING',
+  Unread = 'UNREAD',
+}
 
 export type Tag = {
   __typename?: 'Tag';
@@ -126,14 +172,14 @@ export type GetCollectionSelectQueryVariables = Exact<{
 
 export type GetCollectionSelectQuery = {
   __typename?: 'QueryRoot';
-  getCollectionList: Array<{ __typename?: 'Collection'; name: string; id: number }>;
+  getCollections: Array<{ __typename?: 'Collection'; name: string; id: number }>;
 };
 
-export type GetAuthorQueryVariables = Exact<{ [key: string]: never }>;
+export type GetAuthorsQueryVariables = Exact<{ [key: string]: never }>;
 
-export type GetAuthorQuery = {
+export type GetAuthorsQuery = {
   __typename?: 'QueryRoot';
-  getAuthorList: Array<{
+  getAuthors: Array<{
     __typename?: 'Author';
     id: number;
     url: string;
@@ -183,13 +229,13 @@ export type AuthorAllFragment = {
   description: string;
 };
 
-export type GetCollectionListQueryVariables = Exact<{
+export type GetCollectionsQueryVariables = Exact<{
   parentId?: InputMaybe<Scalars['Int']>;
 }>;
 
-export type GetCollectionListQuery = {
+export type GetCollectionsQuery = {
   __typename?: 'QueryRoot';
-  getCollectionList: Array<{
+  getCollections: Array<{
     __typename?: 'Collection';
     name: string;
     id: number;
@@ -234,6 +280,40 @@ export type GetCollectionAncestorsQuery = {
   };
 };
 
+export type GetNovelsQueryVariables = Exact<{
+  collectionId: Scalars['Int'];
+  tagFullMatch: Scalars['Boolean'];
+  tags: Array<Scalars['Int']> | Scalars['Int'];
+}>;
+
+export type GetNovelsQuery = {
+  __typename?: 'QueryRoot';
+  queryNovels: Array<{
+    __typename?: 'Novel';
+    id: number;
+    name: string;
+    description: string;
+    createTime: number;
+    status: ReadStatus;
+  }>;
+};
+
+export type CreateNovelMutationVariables = Exact<{
+  collectionId: Scalars['Int'];
+  name: Scalars['String'];
+  description: Scalars['String'];
+  tags: Array<Scalars['Int']> | Scalars['Int'];
+  authorId: Scalars['Int'];
+}>;
+
+export type CreateNovelMutation = { __typename?: 'MutationRoot'; createNovel: { __typename?: 'Novel'; id: number } };
+
+export type DeleteNovelMutationVariables = Exact<{
+  id: Scalars['Int'];
+}>;
+
+export type DeleteNovelMutation = { __typename?: 'MutationRoot'; deleteNovel: { __typename?: 'Novel'; id: number } };
+
 export type CreateTagMutationVariables = Exact<{
   name: Scalars['String'];
   collectionId?: InputMaybe<Scalars['Int']>;
@@ -250,7 +330,7 @@ export type GetTagsQueryVariables = Exact<{
 
 export type GetTagsQuery = {
   __typename?: 'QueryRoot';
-  getTagList: Array<{
+  getTags: Array<{
     __typename?: 'Tag';
     name: string;
     id: number;
@@ -279,7 +359,7 @@ export const AuthorAllFragmentDoc = gql`
 `;
 export const GetCollectionSelectDocument = gql`
   query getCollectionSelect($parentId: Int) {
-    getCollectionList(parentId: $parentId) {
+    getCollections(parentId: $parentId) {
       name
       id
     }
@@ -326,9 +406,9 @@ export type GetCollectionSelectQueryResult = Apollo.QueryResult<
   GetCollectionSelectQuery,
   GetCollectionSelectQueryVariables
 >;
-export const GetAuthorDocument = gql`
-  query getAuthor {
-    getAuthorList {
+export const GetAuthorsDocument = gql`
+  query getAuthors {
+    getAuthors {
       ...AuthorAll
     }
   }
@@ -336,33 +416,33 @@ export const GetAuthorDocument = gql`
 `;
 
 /**
- * __useGetAuthorQuery__
+ * __useGetAuthorsQuery__
  *
- * To run a query within a React component, call `useGetAuthorQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetAuthorQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * To run a query within a React component, call `useGetAuthorsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetAuthorsQuery` returns an object from Apollo Client that contains loading, error, and data properties
  * you can use to render your UI.
  *
  * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
  *
  * @example
- * const { data, loading, error } = useGetAuthorQuery({
+ * const { data, loading, error } = useGetAuthorsQuery({
  *   variables: {
  *   },
  * });
  */
-export function useGetAuthorQuery(baseOptions?: Apollo.QueryHookOptions<GetAuthorQuery, GetAuthorQueryVariables>) {
+export function useGetAuthorsQuery(baseOptions?: Apollo.QueryHookOptions<GetAuthorsQuery, GetAuthorsQueryVariables>) {
   const options = { ...defaultOptions, ...baseOptions };
-  return Apollo.useQuery<GetAuthorQuery, GetAuthorQueryVariables>(GetAuthorDocument, options);
+  return Apollo.useQuery<GetAuthorsQuery, GetAuthorsQueryVariables>(GetAuthorsDocument, options);
 }
-export function useGetAuthorLazyQuery(
-  baseOptions?: Apollo.LazyQueryHookOptions<GetAuthorQuery, GetAuthorQueryVariables>,
+export function useGetAuthorsLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<GetAuthorsQuery, GetAuthorsQueryVariables>,
 ) {
   const options = { ...defaultOptions, ...baseOptions };
-  return Apollo.useLazyQuery<GetAuthorQuery, GetAuthorQueryVariables>(GetAuthorDocument, options);
+  return Apollo.useLazyQuery<GetAuthorsQuery, GetAuthorsQueryVariables>(GetAuthorsDocument, options);
 }
-export type GetAuthorQueryHookResult = ReturnType<typeof useGetAuthorQuery>;
-export type GetAuthorLazyQueryHookResult = ReturnType<typeof useGetAuthorLazyQuery>;
-export type GetAuthorQueryResult = Apollo.QueryResult<GetAuthorQuery, GetAuthorQueryVariables>;
+export type GetAuthorsQueryHookResult = ReturnType<typeof useGetAuthorsQuery>;
+export type GetAuthorsLazyQueryHookResult = ReturnType<typeof useGetAuthorsLazyQuery>;
+export type GetAuthorsQueryResult = Apollo.QueryResult<GetAuthorsQuery, GetAuthorsQueryVariables>;
 export const DeleteAuthorDocument = gql`
   mutation deleteAuthor($id: Int!) {
     deleteAuthor(id: $id) {
@@ -443,9 +523,9 @@ export type CreateAuthorMutationOptions = Apollo.BaseMutationOptions<
   CreateAuthorMutation,
   CreateAuthorMutationVariables
 >;
-export const GetCollectionListDocument = gql`
-  query getCollectionList($parentId: Int) {
-    getCollectionList(parentId: $parentId) {
+export const GetCollectionsDocument = gql`
+  query getCollections($parentId: Int) {
+    getCollections(parentId: $parentId) {
       name
       id
       path
@@ -457,39 +537,36 @@ export const GetCollectionListDocument = gql`
 `;
 
 /**
- * __useGetCollectionListQuery__
+ * __useGetCollectionsQuery__
  *
- * To run a query within a React component, call `useGetCollectionListQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetCollectionListQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * To run a query within a React component, call `useGetCollectionsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetCollectionsQuery` returns an object from Apollo Client that contains loading, error, and data properties
  * you can use to render your UI.
  *
  * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
  *
  * @example
- * const { data, loading, error } = useGetCollectionListQuery({
+ * const { data, loading, error } = useGetCollectionsQuery({
  *   variables: {
  *      parentId: // value for 'parentId'
  *   },
  * });
  */
-export function useGetCollectionListQuery(
-  baseOptions?: Apollo.QueryHookOptions<GetCollectionListQuery, GetCollectionListQueryVariables>,
+export function useGetCollectionsQuery(
+  baseOptions?: Apollo.QueryHookOptions<GetCollectionsQuery, GetCollectionsQueryVariables>,
 ) {
   const options = { ...defaultOptions, ...baseOptions };
-  return Apollo.useQuery<GetCollectionListQuery, GetCollectionListQueryVariables>(GetCollectionListDocument, options);
+  return Apollo.useQuery<GetCollectionsQuery, GetCollectionsQueryVariables>(GetCollectionsDocument, options);
 }
-export function useGetCollectionListLazyQuery(
-  baseOptions?: Apollo.LazyQueryHookOptions<GetCollectionListQuery, GetCollectionListQueryVariables>,
+export function useGetCollectionsLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<GetCollectionsQuery, GetCollectionsQueryVariables>,
 ) {
   const options = { ...defaultOptions, ...baseOptions };
-  return Apollo.useLazyQuery<GetCollectionListQuery, GetCollectionListQueryVariables>(
-    GetCollectionListDocument,
-    options,
-  );
+  return Apollo.useLazyQuery<GetCollectionsQuery, GetCollectionsQueryVariables>(GetCollectionsDocument, options);
 }
-export type GetCollectionListQueryHookResult = ReturnType<typeof useGetCollectionListQuery>;
-export type GetCollectionListLazyQueryHookResult = ReturnType<typeof useGetCollectionListLazyQuery>;
-export type GetCollectionListQueryResult = Apollo.QueryResult<GetCollectionListQuery, GetCollectionListQueryVariables>;
+export type GetCollectionsQueryHookResult = ReturnType<typeof useGetCollectionsQuery>;
+export type GetCollectionsLazyQueryHookResult = ReturnType<typeof useGetCollectionsLazyQuery>;
+export type GetCollectionsQueryResult = Apollo.QueryResult<GetCollectionsQuery, GetCollectionsQueryVariables>;
 export const DeleteCollectionDocument = gql`
   mutation deleteCollection($id: Int!) {
     deleteCollection(id: $id) {
@@ -633,6 +710,124 @@ export type GetCollectionAncestorsQueryResult = Apollo.QueryResult<
   GetCollectionAncestorsQuery,
   GetCollectionAncestorsQueryVariables
 >;
+export const GetNovelsDocument = gql`
+  query getNovels($collectionId: Int!, $tagFullMatch: Boolean!, $tags: [Int!]!) {
+    queryNovels(collectionId: $collectionId, tagFullMatch: $tagFullMatch, tags: $tags) {
+      id
+      name
+      description
+      createTime
+      description
+      status
+    }
+  }
+`;
+
+/**
+ * __useGetNovelsQuery__
+ *
+ * To run a query within a React component, call `useGetNovelsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetNovelsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetNovelsQuery({
+ *   variables: {
+ *      collectionId: // value for 'collectionId'
+ *      tagFullMatch: // value for 'tagFullMatch'
+ *      tags: // value for 'tags'
+ *   },
+ * });
+ */
+export function useGetNovelsQuery(baseOptions: Apollo.QueryHookOptions<GetNovelsQuery, GetNovelsQueryVariables>) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useQuery<GetNovelsQuery, GetNovelsQueryVariables>(GetNovelsDocument, options);
+}
+export function useGetNovelsLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<GetNovelsQuery, GetNovelsQueryVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useLazyQuery<GetNovelsQuery, GetNovelsQueryVariables>(GetNovelsDocument, options);
+}
+export type GetNovelsQueryHookResult = ReturnType<typeof useGetNovelsQuery>;
+export type GetNovelsLazyQueryHookResult = ReturnType<typeof useGetNovelsLazyQuery>;
+export type GetNovelsQueryResult = Apollo.QueryResult<GetNovelsQuery, GetNovelsQueryVariables>;
+export const CreateNovelDocument = gql`
+  mutation createNovel($collectionId: Int!, $name: String!, $description: String!, $tags: [Int!]!, $authorId: Int!) {
+    createNovel(collectionId: $collectionId, name: $name, description: $description, tags: $tags, authorId: $authorId) {
+      id
+    }
+  }
+`;
+export type CreateNovelMutationFn = Apollo.MutationFunction<CreateNovelMutation, CreateNovelMutationVariables>;
+
+/**
+ * __useCreateNovelMutation__
+ *
+ * To run a mutation, you first call `useCreateNovelMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateNovelMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createNovelMutation, { data, loading, error }] = useCreateNovelMutation({
+ *   variables: {
+ *      collectionId: // value for 'collectionId'
+ *      name: // value for 'name'
+ *      description: // value for 'description'
+ *      tags: // value for 'tags'
+ *      authorId: // value for 'authorId'
+ *   },
+ * });
+ */
+export function useCreateNovelMutation(
+  baseOptions?: Apollo.MutationHookOptions<CreateNovelMutation, CreateNovelMutationVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useMutation<CreateNovelMutation, CreateNovelMutationVariables>(CreateNovelDocument, options);
+}
+export type CreateNovelMutationHookResult = ReturnType<typeof useCreateNovelMutation>;
+export type CreateNovelMutationResult = Apollo.MutationResult<CreateNovelMutation>;
+export type CreateNovelMutationOptions = Apollo.BaseMutationOptions<CreateNovelMutation, CreateNovelMutationVariables>;
+export const DeleteNovelDocument = gql`
+  mutation deleteNovel($id: Int!) {
+    deleteNovel(id: $id) {
+      id
+    }
+  }
+`;
+export type DeleteNovelMutationFn = Apollo.MutationFunction<DeleteNovelMutation, DeleteNovelMutationVariables>;
+
+/**
+ * __useDeleteNovelMutation__
+ *
+ * To run a mutation, you first call `useDeleteNovelMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteNovelMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteNovelMutation, { data, loading, error }] = useDeleteNovelMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteNovelMutation(
+  baseOptions?: Apollo.MutationHookOptions<DeleteNovelMutation, DeleteNovelMutationVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useMutation<DeleteNovelMutation, DeleteNovelMutationVariables>(DeleteNovelDocument, options);
+}
+export type DeleteNovelMutationHookResult = ReturnType<typeof useDeleteNovelMutation>;
+export type DeleteNovelMutationResult = Apollo.MutationResult<DeleteNovelMutation>;
+export type DeleteNovelMutationOptions = Apollo.BaseMutationOptions<DeleteNovelMutation, DeleteNovelMutationVariables>;
 export const CreateTagDocument = gql`
   mutation createTag($name: String!, $collectionId: Int) {
     createTag(name: $name, collectionId: $collectionId) {
@@ -672,7 +867,7 @@ export type CreateTagMutationResult = Apollo.MutationResult<CreateTagMutation>;
 export type CreateTagMutationOptions = Apollo.BaseMutationOptions<CreateTagMutation, CreateTagMutationVariables>;
 export const GetTagsDocument = gql`
   query getTags($collectionId: Int) {
-    getTagList(collectionId: $collectionId) {
+    getTags(collectionId: $collectionId) {
       name
       id
       createTime

@@ -8,7 +8,7 @@ use diesel::{
     types::{FromSql, ToSql},
 };
 
-#[derive(SqlType, Debug, FromSqlRow, AsExpression, Enum, Copy, Clone, Eq, PartialEq)]
+#[derive(SqlType, Debug, FromSqlRow, AsExpression, Enum, Copy, Clone, Eq, PartialEq, QueryId)]
 #[postgres(type_name = "read_status")]
 #[sql_type = "ReadStatus"]
 pub enum ReadStatus {

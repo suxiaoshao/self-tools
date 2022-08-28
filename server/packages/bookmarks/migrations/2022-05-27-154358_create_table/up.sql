@@ -9,7 +9,7 @@ create table novel
     read_chapter_id bigint,
     description     text        not null,
     tags            bigint[]    not null,
-    collection_id   bigint      not null,
+    collection_id   bigint,
     status          read_status not null,
     create_time     timestamptz not null,
     update_time     timestamptz not null

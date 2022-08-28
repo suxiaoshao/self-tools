@@ -8,13 +8,13 @@ import { CustomColumnArray, CustomTable, TableActions, useCustomTable } from 'cu
 import { format } from 'time';
 import CreateTagButton from './components/CreateTagButton';
 
-type FormData = CreateTagMutationVariables;
 export default function Tags() {
+  type FormData = CreateTagMutationVariables;
   const { control, watch } = useForm<FormData>();
   const collectionId = watch('collectionId');
-  const { data: { getTagList } = {}, refetch } = useGetTagsQuery({ variables: { collectionId } });
+  const { data: { getTags } = {}, refetch } = useGetTagsQuery({ variables: { collectionId } });
   const [deleteTag] = useDeleteTagMutation();
-  const columns = useMemo<CustomColumnArray<GetTagsQuery['getTagList'][0]>>(
+  const columns = useMemo<CustomColumnArray<GetTagsQuery['getTags'][0]>>(
     () => [
       {
         Header: '名字',
@@ -53,7 +53,7 @@ export default function Tags() {
     ],
     [deleteTag, refetch],
   );
-  const tableInstance = useCustomTable({ columns, data: getTagList ?? [] });
+  const tableInstance = useCustomTable({ columns, data: getTags ?? [] });
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', p: 2 }}>

@@ -1,15 +1,15 @@
 import { Avatar, Box, IconButton, Link, Typography } from '@mui/material';
 import { Refresh } from '@mui/icons-material';
 import { CustomColumnArray, CustomTable, TableActions, useCustomTable } from 'custom-table';
-import { GetAuthorQuery, useDeleteAuthorMutation, useGetAuthorQuery } from '../../graphql';
+import { GetAuthorsQuery, useDeleteAuthorMutation, useGetAuthorsQuery } from '../../graphql';
 import CreateAuthorButton from './components/CreateAuthorButton';
 import { useMemo } from 'react';
 import { format } from 'time';
 
 export default function Author() {
-  const { data: { getAuthorList } = {}, refetch } = useGetAuthorQuery();
+  const { data: { getAuthors } = {}, refetch } = useGetAuthorsQuery();
   const [deleteAuthor] = useDeleteAuthorMutation();
-  const columns = useMemo<CustomColumnArray<GetAuthorQuery['getAuthorList'][0]>>(
+  const columns = useMemo<CustomColumnArray<GetAuthorsQuery['getAuthors'][0]>>(
     () => [
       {
         Header: '名字',
@@ -72,7 +72,7 @@ export default function Author() {
     ],
     [deleteAuthor, refetch],
   );
-  const tableInstance = useCustomTable({ columns, data: getAuthorList ?? [] });
+  const tableInstance = useCustomTable({ columns, data: getAuthors ?? [] });
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', p: 2 }}>

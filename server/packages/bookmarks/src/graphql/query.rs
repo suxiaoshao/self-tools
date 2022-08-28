@@ -4,6 +4,7 @@ use async_graphql::Object;
 
 use crate::{
     errors::GraphqlResult,
+    model::schema::ReadStatus,
     service::{author::Author, collection::Collection, novel::Novel, tag::Tag},
 };
 
@@ -34,11 +35,12 @@ impl QueryRoot {
     /// 获取小说列表
     async fn query_novels(
         &self,
-        collection_id: i64,
+        collection_id: Option<i64>,
         tags: HashSet<i64>,
-        tag_full_match: bool,
+        #[graphql(default = true)] tag_full_match: bool,
+        read_status: Option<ReadStatus>,
     ) -> GraphqlResult<Vec<Novel>> {
-        let novel = Novel::query(collection_id, tags, tag_full_match)?;
+        let novel = Novel::query(collection_id, tags, tag_full_match, read_status)?;
         Ok(novel)
     }
     /// 获取小说详情

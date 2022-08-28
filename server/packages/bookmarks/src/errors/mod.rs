@@ -25,7 +25,7 @@ pub enum GraphqlError {
         sub_tag: &'static str,
         super_tag: &'static str,
         sub_value: i64,
-        super_value: i64,
+        super_value: Option<i64>,
     },
 }
 
@@ -62,7 +62,13 @@ impl GraphqlError {
                 super_value,
             } => format!(
                 r#"{}"{}"不属于{}"{}""#,
-                sub_tag, sub_value, super_tag, super_value
+                sub_tag,
+                sub_value,
+                super_tag,
+                match super_value {
+                    Some(super_value) => super_value.to_string(),
+                    None => "无".to_string(),
+                }
             ),
         }
     }

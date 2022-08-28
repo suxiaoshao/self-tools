@@ -15,7 +15,7 @@ export default function CollectionSelect({ onChange, onBlur, value, sx, ...props
     variables: { id: value ?? 0 },
     skip: value === undefined || value === null,
   });
-  const { data: { getCollectionList } = {} } = useGetCollectionSelectQuery({ variables: { parentId: value } });
+  const { data: { getCollections } = {} } = useGetCollectionSelectQuery({ variables: { parentId: value } });
 
   return (
     <Box {...props} sx={{ display: 'flex', alignItems: 'center', ...sx }}>
@@ -58,7 +58,7 @@ export default function CollectionSelect({ onChange, onBlur, value, sx, ...props
         )}
       >
         {[
-          ...(getCollectionList?.map(({ id, name }) => ({ value: id, label: name, key: id })) ?? []),
+          ...(getCollections?.map(({ id, name }) => ({ value: id, label: name, key: id })) ?? []),
           ...(getCollection
             ? [
                 {

@@ -41,7 +41,7 @@ table! {
         read_chapter_id -> Nullable<Int8>,
         description -> Text,
         tags -> Array<Int8>,
-        collection_id -> Int8,
+        collection_id -> Nullable<Int8>,
         status -> Read_status,
         create_time -> Timestamptz,
         update_time -> Timestamptz,

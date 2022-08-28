@@ -20,7 +20,7 @@ pub struct Novel {
     #[graphql(skip)]
     pub tags: Vec<i64>,
     #[graphql(skip)]
-    pub collection_id: i64,
+    pub collection_id: Option<i64>,
     pub status: ReadStatus,
     pub create_time: i64,
     pub update_time: i64,
@@ -50,15 +50,17 @@ impl Novel {
         author_id: i64,
         description: String,
         tags: HashSet<i64>,
-        collection_id: i64,
+        collection_id: Option<i64>,
     ) -> GraphqlResult<Self> {
         // 作者不存在
         if !AuthorModel::exists(author_id)? {
             return Err(GraphqlError::NotFound("作者", author_id));
         }
-        // 集合不存在
-        if !CollectionModel::exists(collection_id)? {
-            return Err(GraphqlError::NotFound("集合", collection_id));
+        //  判断父目录是否存在
+        if let Some(id) = collection_id {
+            if !CollectionModel::exists(id)? {
+                return Err(GraphqlError::NotFound("目录", id));
+            }
         }
         // tag 不存在
         Tag::exists_all(tags.iter())?;
@@ -93,19 +95,22 @@ impl Novel {
     }
     /// 选择小说
     pub fn query(
-        collection_id: i64,
+        collection_id: Option<i64>,
         tags: HashSet<i64>,
         tag_full_match: bool,
+        read_status: Option<ReadStatus>,
     ) -> GraphqlResult<Vec<Self>> {
-        // 集合不存在
-        if !CollectionModel::exists(collection_id)? {
-            return Err(GraphqlError::NotFound("集合", collection_id));
+        //  判断父目录是否存在
+        if let Some(id) = collection_id {
+            if !CollectionModel::exists(id)? {
+                return Err(GraphqlError::NotFound("目录", id));
+            }
         }
         // tag 不存在
         Tag::exists_all(tags.iter())?;
         // tags 都属于 collection_id
         Tag::belong_to_collection(collection_id, tags.iter())?;
-        let data = NovelModel::query(collection_id, tags, tag_full_match)?
+        let data = NovelModel::query(collection_id, tags, tag_full_match, read_status)?
             .into_iter()
             .map(Into::into)
             .collect();

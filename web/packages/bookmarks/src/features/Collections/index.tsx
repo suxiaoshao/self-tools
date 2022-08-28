@@ -1,5 +1,5 @@
 import { Box, IconButton, Link } from '@mui/material';
-import { GetCollectionListQuery, useDeleteCollectionMutation, useGetCollectionListQuery } from '../../graphql';
+import { GetCollectionsQuery, useDeleteCollectionMutation, useGetCollectionsQuery } from '../../graphql';
 import { useMemo } from 'react';
 import { CustomColumnArray, TableActions, CustomTable, useCustomTable } from 'custom-table';
 import { format } from 'time';
@@ -11,10 +11,10 @@ import useParentId from './components/useParentId';
 
 export default function Home() {
   const parentId = useParentId();
-  const { data: { getCollectionList } = {}, refetch } = useGetCollectionListQuery({ variables: { parentId } });
+  const { data: { getCollections } = {}, refetch } = useGetCollectionsQuery({ variables: { parentId } });
   const [deleteCollection] = useDeleteCollectionMutation();
 
-  const columns = useMemo<CustomColumnArray<GetCollectionListQuery['getCollectionList'][0]>>(
+  const columns = useMemo<CustomColumnArray<GetCollectionsQuery['getCollections'][0]>>(
     () => [
       {
         Header: '名字',
@@ -70,7 +70,7 @@ export default function Home() {
     ],
     [deleteCollection, refetch],
   );
-  const tableInstance = useCustomTable({ columns, data: getCollectionList ?? [] });
+  const tableInstance = useCustomTable({ columns, data: getCollections ?? [] });
 
   return (
     <Box sx={{ width: '100%', height: '100%', p: 2, display: 'flex', flexDirection: 'column' }}>

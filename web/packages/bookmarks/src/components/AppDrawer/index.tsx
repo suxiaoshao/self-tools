@@ -1,4 +1,4 @@
-import { Logout, Bookmarks, Tag, People, CollectionsBookmark } from '@mui/icons-material';
+import { Logout, Tag, People, CollectionsBookmark, Book } from '@mui/icons-material';
 import { Box, Divider, List, ListItemButton, ListItemIcon, ListItemText, Paper } from '@mui/material';
 import { Outlet } from 'react-router-dom';
 import RouterItem from './RouterItem';
@@ -19,7 +19,7 @@ export default function AppDrawer(): JSX.Element {
         square
       >
         <List sx={{ width }}>
-          <RouterItem text="工作区" icon={<Bookmarks />} matchPaths={['/']} toPath="/" />
+          <RouterItem text="工作区" icon={<Book />} matchPaths={['/']} toPath="/" />
           <RouterItem
             text="集合管理"
             icon={<CollectionsBookmark />}

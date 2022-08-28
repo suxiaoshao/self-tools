@@ -45,7 +45,7 @@ table! {
         read_chapter_id -> Nullable<Int8>,
         description -> Text,
         tags -> Array<Int8>,
-        collection_id -> Int8,
+        collection_id -> Nullable<Int8>,
         status -> ReadStatus,
         create_time -> Timestamptz,
         update_time -> Timestamptz,
@@ -62,11 +62,4 @@ table! {
     }
 }
 
-allow_tables_to_appear_in_same_query!(
-    author,
-    chapter,
-    collection,
-    novel,
-    tag,
-);
-
+allow_tables_to_appear_in_same_query!(author, chapter, collection, novel, tag,);

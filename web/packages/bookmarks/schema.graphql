@@ -42,20 +42,18 @@ type MutationRoot {
   deleteAuthor(id: Int!): Author!
   "删除目录"
   deleteCollection(id: Int!): Collection!
+  "删除小说"
+  deleteNovel(id: Int!): Novel!
   "删除标签"
   deleteTag(id: Int!): Tag!
 }
 
 type Novel {
-  authorId: Int!
-  collectionId: Int!
   createTime: Int!
   description: String!
   id: Int!
   name: String!
-  readChapterId: Int
   status: ReadStatus!
-  tags: [Int!]!
   updateTime: Int!
 }
 
@@ -66,6 +64,8 @@ type QueryRoot {
   getCollection(id: Int!): Collection!
   "获取目录列表"
   getCollections(parentId: Int): [Collection!]!
+  "获取小说详情"
+  getNovel(id: Int!): Novel!
   "获取标签列表"
   getTags(collectionId: Int): [Tag!]!
   "获取小说列表"
