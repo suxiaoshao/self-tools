@@ -1,11 +1,13 @@
 use std::collections::HashSet;
 
-use crate::errors::{GraphqlError, GraphqlResult};
-use crate::model::author::AuthorModel;
 use crate::model::collection::CollectionModel;
 use crate::model::novel::NovelModel;
-use crate::model::schema::ReadStatus;
 use crate::service::tag::Tag;
+use crate::{
+    errors::{GraphqlError, GraphqlResult},
+    model::schema::custom_type::ReadStatus,
+};
+use crate::{graphql::input::TagMatch, model::author::AuthorModel};
 use async_graphql::SimpleObject;
 
 #[derive(SimpleObject)]
@@ -96,8 +98,7 @@ impl Novel {
     /// 选择小说
     pub fn query(
         collection_id: Option<i64>,
-        tags: HashSet<i64>,
-        tag_full_match: bool,
+        tag_match: Option<TagMatch>,
         read_status: Option<ReadStatus>,
     ) -> GraphqlResult<Vec<Self>> {
         //  判断父目录是否存在
@@ -106,11 +107,13 @@ impl Novel {
                 return Err(GraphqlError::NotFound("目录", id));
             }
         }
-        // tag 不存在
-        Tag::exists_all(tags.iter())?;
-        // tags 都属于 collection_id
-        Tag::belong_to_collection(collection_id, tags.iter())?;
-        let data = NovelModel::query(collection_id, tags, tag_full_match, read_status)?
+        if let Some(TagMatch { match_set, .. }) = &tag_match {
+            // tag 不存在
+            Tag::exists_all(match_set.iter())?;
+            // tags 都属于 collection_id
+            Tag::belong_to_collection(collection_id, match_set.iter())?;
+        }
+        let data = NovelModel::query(collection_id, tag_match, read_status)?
             .into_iter()
             .map(Into::into)
             .collect();

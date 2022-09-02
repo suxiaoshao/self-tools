@@ -8,7 +8,7 @@ create table novel
     author_id       bigint      not null,
     read_chapter_id bigint,
     description     text        not null,
-    tags            bigint[]    not null,
+    tags            bigint[]    not null check (array_position(tags, null) is null),
     collection_id   bigint,
     status          read_status not null,
     create_time     timestamptz not null,

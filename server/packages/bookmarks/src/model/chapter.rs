@@ -1,4 +1,5 @@
 use chrono::NaiveDateTime;
+use diesel::Queryable;
 
 #[derive(Queryable)]
 pub struct ChapterModel {

@@ -4,8 +4,6 @@ mod middleware;
 mod model;
 mod service;
 
-#[macro_use]
-extern crate diesel;
 use async_graphql::{
     http::{playground_source, GraphQLPlaygroundConfig},
     EmptySubscription, Schema,
@@ -61,7 +59,7 @@ async fn main() -> anyhow::Result<()> {
         .layer(Extension(schema))
         .layer(cors);
 
-    Server::bind(&"0.0.0.0:80".parse()?)
+    Server::bind(&"0.0.0.0:8080".parse()?)
         .serve(app.into_make_service())
         .await?;
     Ok(())

@@ -2,26 +2,23 @@ use async_graphql::Enum;
 use std::io::Write;
 
 use diesel::{
-    deserialize,
-    pg::Pg,
-    serialize::{self, IsNull, Output},
-    types::{FromSql, ToSql},
+    deserialize::{self, FromSql, FromSqlRow},
+    expression::AsExpression,
+    pg::{Pg, PgValue},
+    serialize::{self, IsNull, Output, ToSql},
+    QueryId,
 };
 
-#[derive(SqlType, Debug, FromSqlRow, AsExpression, Enum, Copy, Clone, Eq, PartialEq, QueryId)]
-#[postgres(type_name = "read_status")]
-#[sql_type = "ReadStatus"]
+#[derive(Debug, FromSqlRow, AsExpression, QueryId, Enum, Copy, Clone, Eq, PartialEq)]
+#[diesel(sql_type = super::sql_types::ReadStatus)]
 pub enum ReadStatus {
-    #[postgres(name = "read")]
     Read,
-    #[postgres(name = "unread")]
     Unread,
-    #[postgres(name = "reading")]
     Reading,
 }
 
-impl ToSql<ReadStatus, Pg> for ReadStatus {
-    fn to_sql<W: Write>(&self, out: &mut Output<W, Pg>) -> serialize::Result {
+impl ToSql<super::sql_types::ReadStatus, Pg> for ReadStatus {
+    fn to_sql<'b>(&'b self, out: &mut Output<'b, '_, Pg>) -> serialize::Result {
         match *self {
             ReadStatus::Read => out.write_all(b"read")?,
             ReadStatus::Unread => out.write_all(b"unread")?,
@@ -31,9 +28,9 @@ impl ToSql<ReadStatus, Pg> for ReadStatus {
     }
 }
 
-impl FromSql<ReadStatus, Pg> for ReadStatus {
-    fn from_sql(bytes: Option<&[u8]>) -> deserialize::Result<Self> {
-        match not_none!(bytes) {
+impl FromSql<super::sql_types::ReadStatus, Pg> for ReadStatus {
+    fn from_sql(bytes: PgValue) -> deserialize::Result<Self> {
+        match bytes.as_bytes() {
             b"read" => Ok(ReadStatus::Read),
             b"unread" => Ok(ReadStatus::Unread),
             b"reading" => Ok(ReadStatus::Reading),

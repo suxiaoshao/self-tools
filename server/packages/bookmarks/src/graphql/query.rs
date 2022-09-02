@@ -1,12 +1,12 @@
-use std::collections::HashSet;
-
 use async_graphql::Object;
 
 use crate::{
     errors::GraphqlResult,
-    model::schema::ReadStatus,
+    model::schema::custom_type::ReadStatus,
     service::{author::Author, collection::Collection, novel::Novel, tag::Tag},
 };
+
+use super::{input::TagMatch, validator::TagMatchValidator};
 
 pub struct QueryRoot;
 
@@ -36,11 +36,10 @@ impl QueryRoot {
     async fn query_novels(
         &self,
         collection_id: Option<i64>,
-        tags: HashSet<i64>,
-        #[graphql(default = true)] tag_full_match: bool,
+        #[graphql(validator(custom = "TagMatchValidator"))] tag_match: Option<TagMatch>,
         read_status: Option<ReadStatus>,
     ) -> GraphqlResult<Vec<Novel>> {
-        let novel = Novel::query(collection_id, tags, tag_full_match, read_status)?;
+        let novel = Novel::query(collection_id, tag_match, read_status)?;
         Ok(novel)
     }
     /// 获取小说详情

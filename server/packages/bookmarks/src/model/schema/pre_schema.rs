@@ -1,4 +1,12 @@
-table! {
+// @generated automatically by Diesel CLI.
+
+pub mod sql_types {
+    #[derive(diesel::sql_types::SqlType)]
+    #[diesel(postgres_type(name = "read_status"))]
+    pub struct ReadStatus;
+}
+
+diesel::table! {
     author (id) {
         id -> Int8,
         url -> Text,
@@ -10,7 +18,7 @@ table! {
     }
 }
 
-table! {
+diesel::table! {
     chapter (id) {
         id -> Int8,
         title -> Varchar,
@@ -21,7 +29,7 @@ table! {
     }
 }
 
-table! {
+diesel::table! {
     collection (id) {
         id -> Int8,
         name -> Text,
@@ -33,22 +41,25 @@ table! {
     }
 }
 
-table! {
+diesel::table! {
+    use diesel::sql_types::*;
+    use super::sql_types::ReadStatus;
+
     novel (id) {
         id -> Int8,
         name -> Text,
         author_id -> Int8,
         read_chapter_id -> Nullable<Int8>,
         description -> Text,
-        tags -> Array<Int8>,
+        tags -> Array<Nullable<Int8>>,
         collection_id -> Nullable<Int8>,
-        status -> Read_status,
+        status -> ReadStatus,
         create_time -> Timestamptz,
         update_time -> Timestamptz,
     }
 }
 
-table! {
+diesel::table! {
     tag (id) {
         id -> Int8,
         name -> Varchar,
@@ -58,7 +69,7 @@ table! {
     }
 }
 
-allow_tables_to_appear_in_same_query!(
+diesel::allow_tables_to_appear_in_same_query!(
     author,
     chapter,
     collection,

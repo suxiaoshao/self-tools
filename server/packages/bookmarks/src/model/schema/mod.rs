@@ -1,6 +1,13 @@
+// @generated automatically by Diesel CLI.
 pub mod custom_type;
-pub use self::custom_type::ReadStatus;
-table! {
+
+pub mod sql_types {
+    #[derive(diesel::sql_types::SqlType, diesel::QueryId)]
+    #[diesel(postgres_type(name = "read_status"))]
+    pub struct ReadStatus;
+}
+
+diesel::table! {
     author (id) {
         id -> Int8,
         url -> Text,
@@ -12,7 +19,7 @@ table! {
     }
 }
 
-table! {
+diesel::table! {
     chapter (id) {
         id -> Int8,
         title -> Varchar,
@@ -23,7 +30,7 @@ table! {
     }
 }
 
-table! {
+diesel::table! {
     collection (id) {
         id -> Int8,
         name -> Text,
@@ -35,9 +42,10 @@ table! {
     }
 }
 
-table! {
-    use super::ReadStatus;
+diesel::table! {
     use diesel::sql_types::*;
+    use super::sql_types::ReadStatus;
+
     novel (id) {
         id -> Int8,
         name -> Text,
@@ -52,7 +60,7 @@ table! {
     }
 }
 
-table! {
+diesel::table! {
     tag (id) {
         id -> Int8,
         name -> Varchar,
@@ -62,4 +70,4 @@ table! {
     }
 }
 
-allow_tables_to_appear_in_same_query!(author, chapter, collection, novel, tag,);
+diesel::allow_tables_to_appear_in_same_query!(author, chapter, collection, novel, tag,);
