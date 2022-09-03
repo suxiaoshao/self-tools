@@ -25,6 +25,7 @@ pub struct NewAuthor<'a> {
     pub update_time: NaiveDateTime,
 }
 
+/// id 相关的操作
 impl AuthorModel {
     /// 创建作者
     pub fn create(url: &str, name: &str, avatar: &str, description: &str) -> GraphqlResult<Self> {
@@ -57,10 +58,21 @@ impl AuthorModel {
         let deleted = diesel::delete(author::table.filter(author::id.eq(id))).get_result(conn)?;
         Ok(deleted)
     }
+}
+
+impl AuthorModel {
     /// 获取所有作者
     pub fn get_list() -> GraphqlResult<Vec<Self>> {
         let conn = &mut super::CONNECTION.get()?;
         let authors = author::table.load(conn)?;
+        Ok(authors)
+    }
+    /// 获取作者搜索列表
+    pub fn get_search_list(search_name: String) -> GraphqlResult<Vec<Self>> {
+        let conn = &mut super::CONNECTION.get()?;
+        let authors = author::table
+            .filter(author::name.like(format!("%{}%", search_name)))
+            .load(conn)?;
         Ok(authors)
     }
 }

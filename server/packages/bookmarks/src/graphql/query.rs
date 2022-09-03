@@ -23,8 +23,17 @@ impl QueryRoot {
         Ok(collection)
     }
     /// 获取作者列表
-    async fn get_authors(&self) -> GraphqlResult<Vec<Author>> {
-        let author = Author::get_list()?;
+    async fn query_authors(
+        &self,
+        // 搜索作者名
+        search_name: Option<String>,
+    ) -> GraphqlResult<Vec<Author>> {
+        // 空字符串视为无效
+        let search_name = match search_name {
+            Some(x) if x.is_empty() => None,
+            _ => search_name,
+        };
+        let author = Author::query(search_name)?;
         Ok(author)
     }
     /// 获取标签列表

@@ -46,8 +46,11 @@ impl Author {
         Ok(deleted_author.into())
     }
     /// 获取作者列表
-    pub fn get_list() -> GraphqlResult<Vec<Self>> {
-        let authors = AuthorModel::get_list()?;
+    pub fn query(search_name: Option<String>) -> GraphqlResult<Vec<Self>> {
+        let authors = match search_name {
+            Some(search_name) => AuthorModel::get_search_list(search_name)?,
+            None => AuthorModel::get_list()?,
+        };
         Ok(authors.into_iter().map(|x| x.into()).collect())
     }
 }
