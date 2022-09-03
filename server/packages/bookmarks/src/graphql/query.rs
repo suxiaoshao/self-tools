@@ -28,8 +28,13 @@ impl QueryRoot {
         Ok(author)
     }
     /// 获取标签列表
-    async fn get_tags(&self, collection_id: Option<i64>) -> GraphqlResult<Vec<Tag>> {
-        let tag = Tag::get_list(collection_id)?;
+    async fn query_tags(
+        &self,
+        collection_id: Option<i64>,
+        // 是否深度搜索
+        deep_search: Option<bool>,
+    ) -> GraphqlResult<Vec<Tag>> {
+        let tag = Tag::query(collection_id, deep_search.unwrap_or(false))?;
         Ok(tag)
     }
     /// 获取小说列表

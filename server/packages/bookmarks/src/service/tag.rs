@@ -1,5 +1,5 @@
 use async_graphql::SimpleObject;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 
 use crate::model::collection::CollectionModel;
 use crate::{
@@ -50,14 +50,20 @@ impl Tag {
         Ok(deleted_tag.into())
     }
     /// 获取标签列表
-    pub fn get_list(collection_id: Option<i64>) -> GraphqlResult<Vec<Self>> {
+    pub fn query(collection_id: Option<i64>, deep_search: bool) -> GraphqlResult<Vec<Self>> {
         //  判断父目录是否存在
         if let Some(id) = collection_id {
             if !CollectionModel::exists(id)? {
                 return Err(GraphqlError::NotFound("目录", id));
             }
         }
-        let tags = TagModel::get_list_by_collection_id(collection_id)?;
+        // 获取标签列表
+        let tags = match (collection_id, deep_search) {
+            (Some(id), false) => TagModel::query_by_collection(id)?,
+            (None, false) => TagModel::query_root()?,
+            (None, true) => TagModel::get_list()?,
+            (Some(id), true) => TagModel::allow_tags(id)?,
+        };
         Ok(tags.into_iter().map(|tag| tag.into()).collect())
     }
     /// 根据 collection_id 删除标签
@@ -77,66 +83,17 @@ impl Tag {
         }
         Ok(())
     }
-    /// 递归获取标签列表
-    pub fn get_recursion_id(collection_id: Option<i64>) -> GraphqlResult<HashSet<i64>> {
-        // 判断父目录是否存在, 如果不存在, 返回空集合对应的标签id
-        let mut id = match collection_id {
-            None => {
-                return Ok(TagModel::get_list_by_collection_id(None)?
-                    .into_iter()
-                    .map(|tag| tag.id)
-                    .collect())
-            }
-            Some(id) => id,
-        };
-
-        // 获取全部标签id
-        let tags = TagModel::get_list()?;
-        // 初始化集合
-        let mut collections = CollectionModel::get_list()?
-            .into_iter()
-            .map(|CollectionModel { id, parent_id, .. }| (id, (parent_id, Vec::<Self>::new())))
-            .collect::<HashMap<_, _>>();
-        // 结果
-        let mut result = HashSet::<i64>::new();
-        // 遍历所有 tag, 将其加入到对应的 collection 中
-        for tag in tags {
-            match tag.collection_id {
-                None => {
-                    result.insert(tag.id);
-                }
-                Some(tags_collection_id) => {
-                    if let Some((_, data)) = collections.get_mut(&tags_collection_id) {
-                        data.push(tag.into());
-                    }
-                }
-            }
-        }
-        while let Some((parent, tags)) = collections.remove(&id) {
-            match parent {
-                None => {
-                    for tag in tags {
-                        result.insert(tag.id);
-                    }
-                    return Ok(result);
-                }
-                Some(parent_id) => {
-                    for tag in tags {
-                        result.insert(tag.id);
-                    }
-                    id = parent_id;
-                }
-            }
-        }
-        Ok(result)
-    }
     /// 验证 tags 属于 collection_id
     pub fn belong_to_collection<'a, T: Iterator<Item = &'a i64>>(
         collection_id: Option<i64>,
         tags: T,
     ) -> GraphqlResult<()> {
+        let allow_tags = match collection_id {
+            Some(id) => TagModel::allow_tags(id)?,
+            None => TagModel::query_root()?,
+        };
+        let allow_tags: HashSet<_> = allow_tags.into_iter().map(|tag| tag.id).collect();
         // 存在不符合的 tags
-        let allow_tags = Tag::get_recursion_id(collection_id)?;
         for tag in tags {
             if !allow_tags.contains(tag) {
                 return Err(GraphqlError::Scope {

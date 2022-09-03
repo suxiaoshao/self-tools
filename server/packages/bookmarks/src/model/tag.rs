@@ -1,4 +1,6 @@
-use crate::errors::GraphqlResult;
+use std::collections::HashMap;
+
+use crate::{errors::GraphqlResult, model::collection::CollectionModel};
 
 use super::schema::tag;
 use chrono::NaiveDateTime;
@@ -56,30 +58,79 @@ impl TagModel {
 
 /// by collection id
 impl TagModel {
-    /// 获取标签列表
-    pub fn get_list_by_collection_id(collection_id: Option<i64>) -> GraphqlResult<Vec<Self>> {
-        let conn = &mut super::CONNECTION.get()?;
-        match collection_id {
-            Some(id) => {
-                let tags = tag::table
-                    .filter(tag::collection_id.eq(id))
-                    .load::<Self>(conn)?;
-                Ok(tags)
-            }
-            None => {
-                let tags = tag::table
-                    .filter(tag::collection_id.is_null())
-                    .load::<Self>(conn)?;
-                Ok(tags)
-            }
-        }
-    }
     /// 根据 collectionId 删除
     pub fn delete_by_collection(collection_id: i64) -> GraphqlResult<usize> {
         let conn = &mut super::CONNECTION.get()?;
         let deleted = diesel::delete(tag::table.filter(tag::collection_id.eq(collection_id)))
             .execute(conn)?;
         Ok(deleted)
+    }
+    /// 根据 collectionId 查询
+    pub fn query_by_collection(collection_id: i64) -> GraphqlResult<Vec<Self>> {
+        let conn = &mut super::CONNECTION.get()?;
+        let tags = tag::table
+            .filter(tag::collection_id.eq(collection_id))
+            .load(conn)?;
+        Ok(tags)
+    }
+    /// 递归获取可访问标签
+    pub fn allow_tags(collection_id: i64) -> GraphqlResult<Vec<TagModel>> {
+        let mut id = collection_id;
+
+        // 获取全部标签id
+        let tags = TagModel::get_list()?;
+        struct Collection {
+            parent_id: Option<i64>,
+            tags: Vec<TagModel>,
+        }
+        impl Collection {
+            fn new(parent_id: Option<i64>) -> Self {
+                Self {
+                    parent_id,
+                    tags: Vec::new(),
+                }
+            }
+            fn push(&mut self, tag: TagModel) {
+                self.tags.push(tag);
+            }
+        }
+        // 初始化集合
+        let mut collection_map = CollectionModel::get_list()?
+            .into_iter()
+            .map(|CollectionModel { id, parent_id, .. }| (id, Collection::new(parent_id)))
+            .collect::<HashMap<_, _>>();
+        // 结果
+        let mut result = Vec::new();
+        // 遍历所有 tag, 将其加入到对应的 collection 中
+        for tag in tags {
+            match tag.collection_id {
+                None => {
+                    result.push(tag);
+                }
+                Some(tags_collection_id) => {
+                    if let Some(collection) = collection_map.get_mut(&tags_collection_id) {
+                        collection.push(tag);
+                    }
+                }
+            }
+        }
+        while let Some(Collection { parent_id, tags }) = collection_map.remove(&id) {
+            match parent_id {
+                None => {
+                    for tag in tags {
+                        result.push(tag);
+                    }
+                    return Ok(result);
+                }
+                Some(parent_id) => {
+                    for tag in tags {
+                        result.push(tag);
+                    }
+                    id = parent_id;
+                }
+            }
+        }
+        Ok(result)
     }
 }
 
@@ -90,6 +141,15 @@ impl TagModel {
         let conn = &mut super::CONNECTION.get()?;
         let tags = tag::table.load(conn)?;
 
+        Ok(tags)
+    }
+
+    /// 获取根目录标签
+    pub fn query_root() -> GraphqlResult<Vec<Self>> {
+        let conn = &mut super::CONNECTION.get()?;
+        let tags = tag::table
+            .filter(tag::collection_id.is_null())
+            .load::<Self>(conn)?;
         Ok(tags)
     }
 }
