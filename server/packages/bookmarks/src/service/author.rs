@@ -53,4 +53,13 @@ impl Author {
         };
         Ok(authors.into_iter().map(|x| x.into()).collect())
     }
+    /// 获取作者
+    pub fn get(id: i64) -> GraphqlResult<Self> {
+        // 作者不存在
+        if !AuthorModel::exists(id)? {
+            return Err(GraphqlError::NotFound("作者", id));
+        }
+        let author = AuthorModel::get(id)?;
+        Ok(author.into())
+    }
 }

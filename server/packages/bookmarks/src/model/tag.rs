@@ -54,6 +54,12 @@ impl TagModel {
         let deleted = diesel::delete(tag::table.filter(tag::id.eq(id))).get_result(conn)?;
         Ok(deleted)
     }
+    /// 获取标签列表
+    pub fn get_by_ids(ids: &[i64]) -> GraphqlResult<Vec<Self>> {
+        let conn = &mut super::CONNECTION.get()?;
+        let tags = tag::table.filter(tag::id.eq_any(ids)).load::<Self>(conn)?;
+        Ok(tags)
+    }
 }
 
 /// by collection id

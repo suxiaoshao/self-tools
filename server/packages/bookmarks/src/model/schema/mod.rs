@@ -23,6 +23,7 @@ diesel::table! {
     chapter (id) {
         id -> Int8,
         title -> Varchar,
+        url -> Text,
         content -> Text,
         novel_id -> Int8,
         create_time -> Timestamptz,
@@ -49,9 +50,10 @@ diesel::table! {
     novel (id) {
         id -> Int8,
         name -> Text,
+        url -> Text,
+        description -> Text,
         author_id -> Int8,
         read_chapter_id -> Nullable<Int8>,
-        description -> Text,
         tags -> Array<Int8>,
         collection_id -> Nullable<Int8>,
         status -> ReadStatus,

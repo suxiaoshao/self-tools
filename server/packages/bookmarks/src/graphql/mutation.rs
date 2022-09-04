@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use super::validator::DirNameValidator;
-use async_graphql::Object;
+use async_graphql::{InputObject, Object};
 
 use crate::{
     errors::GraphqlResult,
@@ -54,19 +54,30 @@ impl MutationRoot {
         Ok(deleted_tag)
     }
     /// 创建小说
-    async fn create_novel(
-        &self,
-        name: String,
-        author_id: i64,
-        description: String,
-        tags: HashSet<i64>,
-        collection_id: Option<i64>,
-    ) -> GraphqlResult<Novel> {
-        Novel::create(name, author_id, description, tags, collection_id)
+    async fn create_novel(&self, data: CreateNovelInput) -> GraphqlResult<Novel> {
+        let CreateNovelInput {
+            name,
+            author_id,
+            url,
+            description,
+            tags,
+            collection_id,
+        } = data;
+        Novel::create(name, author_id, url, description, tags, collection_id)
     }
     /// 删除小说
     async fn delete_novel(&self, id: i64) -> GraphqlResult<Novel> {
         let deleted_novel = Novel::delete(id)?;
         Ok(deleted_novel)
     }
+}
+
+#[derive(InputObject)]
+struct CreateNovelInput {
+    name: String,
+    author_id: i64,
+    url: String,
+    description: String,
+    tags: HashSet<i64>,
+    collection_id: Option<i64>,
 }

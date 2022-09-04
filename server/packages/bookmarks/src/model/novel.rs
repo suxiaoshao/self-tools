@@ -9,9 +9,10 @@ use diesel::prelude::*;
 pub struct NovelModel {
     pub id: i64,
     pub name: String,
+    pub url: String,
+    pub description: String,
     pub author_id: i64,
     pub read_chapter_id: Option<i64>,
-    pub description: String,
     pub tags: Vec<i64>,
     pub collection_id: Option<i64>,
     pub status: ReadStatus,
@@ -23,8 +24,9 @@ pub struct NovelModel {
 pub struct NewNovel<'a> {
     pub name: &'a str,
     pub author_id: i64,
-    pub read_chapter_id: Option<i64>,
+    pub url: &'a str,
     pub description: &'a str,
+    pub read_chapter_id: Option<i64>,
     pub tags: &'a [i64],
     pub collection_id: Option<i64>,
     pub status: ReadStatus,
@@ -37,21 +39,21 @@ impl NovelModel {
     pub fn create(
         name: &str,
         author_id: i64,
-        read_chapter_id: Option<i64>,
+        url: &str,
         description: &str,
         tags: &[i64],
         collection_id: Option<i64>,
-        status: ReadStatus,
     ) -> GraphqlResult<Self> {
         let now = chrono::Local::now().naive_local();
         let new_novel = NewNovel {
             name,
             author_id,
-            read_chapter_id,
+            url,
+            read_chapter_id: None,
             description,
             tags,
             collection_id,
-            status,
+            status: ReadStatus::Unread,
             create_time: now,
             update_time: now,
         };

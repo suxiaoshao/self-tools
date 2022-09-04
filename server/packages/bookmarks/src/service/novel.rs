@@ -8,9 +8,12 @@ use crate::{
     model::schema::custom_type::ReadStatus,
 };
 use crate::{graphql::input::TagMatch, model::author::AuthorModel};
-use async_graphql::SimpleObject;
+use async_graphql::{ComplexObject, SimpleObject};
+
+use super::{author::Author, collection::Collection};
 
 #[derive(SimpleObject)]
+#[graphql(complex)]
 pub struct Novel {
     pub id: i64,
     pub name: String,
@@ -26,6 +29,28 @@ pub struct Novel {
     pub status: ReadStatus,
     pub create_time: i64,
     pub update_time: i64,
+}
+
+#[ComplexObject]
+impl Novel {
+    async fn author(&self) -> GraphqlResult<Author> {
+        let author = Author::get(self.author_id)?;
+        Ok(author)
+    }
+
+    async fn tags(&self) -> GraphqlResult<Vec<Tag>> {
+        let tags = Tag::get_by_ids(&self.tags)?;
+        Ok(tags)
+    }
+
+    async fn collection(&self) -> GraphqlResult<Option<Collection>> {
+        if let Some(collection_id) = self.collection_id {
+            let collection = Collection::get(collection_id)?;
+            Ok(Some(collection))
+        } else {
+            Ok(None)
+        }
+    }
 }
 
 impl From<NovelModel> for Novel {
@@ -50,6 +75,7 @@ impl Novel {
     pub fn create(
         name: String,
         author_id: i64,
+        url: String,
         description: String,
         tags: HashSet<i64>,
         collection_id: Option<i64>,
@@ -71,11 +97,10 @@ impl Novel {
         let new_novel = NovelModel::create(
             &name,
             author_id,
-            None,
+            &url,
             &description,
             &tags.into_iter().collect::<Vec<_>>(),
             collection_id,
-            ReadStatus::Unread,
         )?;
         Ok(new_novel.into())
     }

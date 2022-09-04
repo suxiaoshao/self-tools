@@ -28,6 +28,7 @@ impl From<TagModel> for Tag {
     }
 }
 
+/// id 相关
 impl Tag {
     /// 创建标签
     pub fn create(name: &str, collection_id: Option<i64>) -> GraphqlResult<Self> {
@@ -50,26 +51,9 @@ impl Tag {
         Ok(deleted_tag.into())
     }
     /// 获取标签列表
-    pub fn query(collection_id: Option<i64>, deep_search: bool) -> GraphqlResult<Vec<Self>> {
-        //  判断父目录是否存在
-        if let Some(id) = collection_id {
-            if !CollectionModel::exists(id)? {
-                return Err(GraphqlError::NotFound("目录", id));
-            }
-        }
-        // 获取标签列表
-        let tags = match (collection_id, deep_search) {
-            (Some(id), false) => TagModel::query_by_collection(id)?,
-            (None, false) => TagModel::query_root()?,
-            (None, true) => TagModel::get_list()?,
-            (Some(id), true) => TagModel::allow_tags(id)?,
-        };
-        Ok(tags.into_iter().map(|tag| tag.into()).collect())
-    }
-    /// 根据 collection_id 删除标签
-    pub fn delete_by_collection(collection_id: i64) -> GraphqlResult<()> {
-        TagModel::delete_by_collection(collection_id)?;
-        Ok(())
+    pub fn get_by_ids(ids: &[i64]) -> GraphqlResult<Vec<Self>> {
+        let tags = TagModel::get_by_ids(ids)?;
+        Ok(tags.into_iter().map(|x| x.into()).collect())
     }
     /// 判断标签是否全部存在
     pub fn exists_all<'a, T: Iterator<Item = &'a i64>>(tags: T) -> GraphqlResult<()> {
@@ -81,6 +65,15 @@ impl Tag {
                 return Err(GraphqlError::NotFound("标签", id));
             }
         }
+        Ok(())
+    }
+}
+
+/// collection_id 相关
+impl Tag {
+    /// 根据 collection_id 删除标签
+    pub fn delete_by_collection(collection_id: i64) -> GraphqlResult<()> {
+        TagModel::delete_by_collection(collection_id)?;
         Ok(())
     }
     /// 验证 tags 属于 collection_id
@@ -105,5 +98,22 @@ impl Tag {
             }
         }
         Ok(())
+    }
+    /// 获取标签列表
+    pub fn query(collection_id: Option<i64>, deep_search: bool) -> GraphqlResult<Vec<Self>> {
+        //  判断父目录是否存在
+        if let Some(id) = collection_id {
+            if !CollectionModel::exists(id)? {
+                return Err(GraphqlError::NotFound("目录", id));
+            }
+        }
+        // 获取标签列表
+        let tags = match (collection_id, deep_search) {
+            (Some(id), false) => TagModel::query_by_collection(id)?,
+            (None, false) => TagModel::query_root()?,
+            (None, true) => TagModel::get_list()?,
+            (Some(id), true) => TagModel::allow_tags(id)?,
+        };
+        Ok(tags.into_iter().map(|tag| tag.into()).collect())
     }
 }

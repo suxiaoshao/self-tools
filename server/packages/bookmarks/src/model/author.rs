@@ -58,6 +58,12 @@ impl AuthorModel {
         let deleted = diesel::delete(author::table.filter(author::id.eq(id))).get_result(conn)?;
         Ok(deleted)
     }
+    /// 获取作者
+    pub fn get(id: i64) -> GraphqlResult<Self> {
+        let conn = &mut super::CONNECTION.get()?;
+        let author = author::table.filter(author::id.eq(id)).first(conn)?;
+        Ok(author)
+    }
 }
 
 impl AuthorModel {
