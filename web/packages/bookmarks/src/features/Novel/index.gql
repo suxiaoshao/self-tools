@@ -1,15 +1,16 @@
-query getNovels($collectionId: Int!, $tagFullMatch: Boolean!, $tags: [Int!]!) {
-  queryNovels(collectionId: $collectionId, tagFullMatch: $tagFullMatch, tags: $tags) {
+query getNovels($collectionId: Int, $readStatus: ReadStatus, $tagMatch: TagMatch) {
+  queryNovels(collectionId: $collectionId, readStatus: $readStatus, tagMatch: $tagMatch) {
     id
     name
     description
     createTime
+    updateTime
     description
     status
   }
 }
 
-mutation createNovel($collectionId: Int!, $name: String!, $description: String!, $tags: [Int!]!, $authorId: Int!) {
+mutation createNovel($collectionId: Int, $name: String!, $description: String!, $tags: [Int!]!, $authorId: Int!) {
   createNovel(collectionId: $collectionId, name: $name, description: $description, tags: $tags, authorId: $authorId) {
     id
   }

@@ -35,7 +35,7 @@ type MutationRoot {
   "创建目录"
   createCollection(description: String, name: String!, parentId: Int): Collection!
   "创建小说"
-  createNovel(authorId: Int!, collectionId: Int!, description: String!, name: String!, tags: [Int!]!): Novel!
+  createNovel(authorId: Int!, collectionId: Int, description: String!, name: String!, tags: [Int!]!): Novel!
   "创建标签"
   createTag(collectionId: Int, name: String!): Tag!
   "删除作者"
@@ -58,18 +58,18 @@ type Novel {
 }
 
 type QueryRoot {
-  "获取作者列表"
-  getAuthors: [Author!]!
   "获取目录详情"
   getCollection(id: Int!): Collection!
   "获取目录列表"
   getCollections(parentId: Int): [Collection!]!
   "获取小说详情"
   getNovel(id: Int!): Novel!
-  "获取标签列表"
-  getTags(collectionId: Int): [Tag!]!
+  "获取作者列表"
+  queryAuthors(searchName: String): [Author!]!
   "获取小说列表"
-  queryNovels(collectionId: Int!, tagFullMatch: Boolean!, tags: [Int!]!): [Novel!]!
+  queryNovels(collectionId: Int, readStatus: ReadStatus, tagMatch: TagMatch): [Novel!]!
+  "获取标签列表"
+  queryTags(collectionId: Int, deepSearch: Boolean): [Tag!]!
 }
 
 type Tag {
@@ -84,4 +84,9 @@ enum ReadStatus {
   READ
   READING
   UNREAD
+}
+
+input TagMatch {
+  fullMatch: Boolean!
+  matchSet: [Int!]!
 }

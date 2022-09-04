@@ -1,0 +1,6 @@
+query allowTags($collectionId: Int) {
+  queryTags(collectionId: $collectionId, deepSearch: true) {
+    id
+    name
+  }
+}

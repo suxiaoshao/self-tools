@@ -1,17 +1,67 @@
 import { Refresh } from '@mui/icons-material';
 import { Box, IconButton } from '@mui/material';
-import { CustomTable } from 'custom-table';
+import { CustomColumnArray, CustomTable, TableActions, useCustomTable } from 'custom-table';
+import { useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
+import { format } from 'time';
 import CollectionSelect from '../../components/CollectionSelect';
-import { CreateNovelMutationVariables, useDeleteNovelMutation, useGetNovelsQuery } from '../../graphql';
-import CreateTagButton from '../Tags/components/CreateTagButton';
+import { GetNovelsQuery, GetNovelsQueryVariables, useDeleteNovelMutation, useGetNovelsQuery } from '../../graphql';
+import CreateNovelButton from './Components/CreateNovelButton';
 
 export default function Novel() {
-  type FormData = CreateNovelMutationVariables;
-  const { control, watch } = useForm<FormData>();
-  const collectionId = watch('collectionId');
-  const { data: { queryNovels } = {}, refetch } = useGetNovelsQuery({ variables: { collectionId } });
+  type FormData = GetNovelsQueryVariables;
+  const { control, watch } = useForm<FormData>({ defaultValues: {} });
+  const form = watch();
+  const { data: { queryNovels } = {}, refetch } = useGetNovelsQuery({ variables: form });
   const [deleteNovel] = useDeleteNovelMutation();
+  const columns = useMemo<CustomColumnArray<GetNovelsQuery['queryNovels'][0]>>(
+    () => [
+      {
+        Header: '名字',
+        id: 'name',
+        accessor: 'name',
+      },
+      {
+        Header: '描述',
+        id: 'description',
+        accessor: ({ description }) => description ?? '-',
+        cellProps: {
+          align: 'center',
+        },
+      },
+      {
+        Header: '创建时间',
+        id: 'createTime',
+        accessor: ({ createTime }) => format(createTime),
+      },
+      {
+        Header: '更新时间',
+        id: 'updateTime',
+        accessor: ({ updateTime }) => format(updateTime),
+      },
+      {
+        Header: '操作',
+        id: 'action',
+        accessor: ({ id }) => (
+          <TableActions>
+            {(onClose) => [
+              {
+                text: '删除',
+                onClick: async () => {
+                  await deleteNovel({ variables: { id } });
+                  onClose();
+                  await refetch();
+                },
+              },
+            ]}
+          </TableActions>
+        ),
+        cellProps: { padding: 'none' },
+      },
+    ],
+    [deleteNovel, refetch],
+  );
+  const tableInstance = useCustomTable({ columns, data: queryNovels ?? [] });
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', p: 2 }}>
       <Box
@@ -22,7 +72,7 @@ export default function Novel() {
         }}
       >
         <Controller control={control} name="collectionId" render={({ field }) => <CollectionSelect {...field} />} />
-        <CreateTagButton refetch={refetch} collectionId={collectionId} />
+        <CreateNovelButton collectionId={form.collectionId} refetch={refetch} />
         <IconButton sx={{ marginLeft: 'auto' }} onClick={() => refetch()}>
           <Refresh />
         </IconButton>

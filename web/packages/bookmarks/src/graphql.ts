@@ -76,7 +76,7 @@ export type MutationRootCreateCollectionArgs = {
 
 export type MutationRootCreateNovelArgs = {
   authorId: Scalars['Int'];
-  collectionId: Scalars['Int'];
+  collectionId?: InputMaybe<Scalars['Int']>;
   description: Scalars['String'];
   name: Scalars['String'];
   tags: Array<Scalars['Int']>;
@@ -115,18 +115,18 @@ export type Novel = {
 
 export type QueryRoot = {
   __typename?: 'QueryRoot';
-  /** 获取作者列表 */
-  getAuthors: Array<Author>;
   /** 获取目录详情 */
   getCollection: Collection;
   /** 获取目录列表 */
   getCollections: Array<Collection>;
   /** 获取小说详情 */
   getNovel: Novel;
-  /** 获取标签列表 */
-  getTags: Array<Tag>;
+  /** 获取作者列表 */
+  queryAuthors: Array<Author>;
   /** 获取小说列表 */
   queryNovels: Array<Novel>;
+  /** 获取标签列表 */
+  queryTags: Array<Tag>;
 };
 
 export type QueryRootGetCollectionArgs = {
@@ -141,14 +141,19 @@ export type QueryRootGetNovelArgs = {
   id: Scalars['Int'];
 };
 
-export type QueryRootGetTagsArgs = {
-  collectionId?: InputMaybe<Scalars['Int']>;
+export type QueryRootQueryAuthorsArgs = {
+  searchName?: InputMaybe<Scalars['String']>;
 };
 
 export type QueryRootQueryNovelsArgs = {
-  collectionId: Scalars['Int'];
-  tagFullMatch: Scalars['Boolean'];
-  tags: Array<Scalars['Int']>;
+  collectionId?: InputMaybe<Scalars['Int']>;
+  readStatus?: InputMaybe<ReadStatus>;
+  tagMatch?: InputMaybe<TagMatch>;
+};
+
+export type QueryRootQueryTagsArgs = {
+  collectionId?: InputMaybe<Scalars['Int']>;
+  deepSearch?: InputMaybe<Scalars['Boolean']>;
 };
 
 export enum ReadStatus {
@@ -166,6 +171,20 @@ export type Tag = {
   updateTime: Scalars['Int'];
 };
 
+export type TagMatch = {
+  fullMatch: Scalars['Boolean'];
+  matchSet: Array<Scalars['Int']>;
+};
+
+export type SearchAuthorQueryVariables = Exact<{
+  searchName?: InputMaybe<Scalars['String']>;
+}>;
+
+export type SearchAuthorQuery = {
+  __typename?: 'QueryRoot';
+  queryAuthors: Array<{ __typename?: 'Author'; id: number; name: string; description: string; avatar: string }>;
+};
+
 export type GetCollectionSelectQueryVariables = Exact<{
   parentId?: InputMaybe<Scalars['Int']>;
 }>;
@@ -175,11 +194,20 @@ export type GetCollectionSelectQuery = {
   getCollections: Array<{ __typename?: 'Collection'; name: string; id: number }>;
 };
 
+export type AllowTagsQueryVariables = Exact<{
+  collectionId?: InputMaybe<Scalars['Int']>;
+}>;
+
+export type AllowTagsQuery = {
+  __typename?: 'QueryRoot';
+  queryTags: Array<{ __typename?: 'Tag'; id: number; name: string }>;
+};
+
 export type GetAuthorsQueryVariables = Exact<{ [key: string]: never }>;
 
 export type GetAuthorsQuery = {
   __typename?: 'QueryRoot';
-  getAuthors: Array<{
+  queryAuthors: Array<{
     __typename?: 'Author';
     id: number;
     url: string;
@@ -281,9 +309,9 @@ export type GetCollectionAncestorsQuery = {
 };
 
 export type GetNovelsQueryVariables = Exact<{
-  collectionId: Scalars['Int'];
-  tagFullMatch: Scalars['Boolean'];
-  tags: Array<Scalars['Int']> | Scalars['Int'];
+  collectionId?: InputMaybe<Scalars['Int']>;
+  readStatus?: InputMaybe<ReadStatus>;
+  tagMatch?: InputMaybe<TagMatch>;
 }>;
 
 export type GetNovelsQuery = {
@@ -294,12 +322,13 @@ export type GetNovelsQuery = {
     name: string;
     description: string;
     createTime: number;
+    updateTime: number;
     status: ReadStatus;
   }>;
 };
 
 export type CreateNovelMutationVariables = Exact<{
-  collectionId: Scalars['Int'];
+  collectionId?: InputMaybe<Scalars['Int']>;
   name: Scalars['String'];
   description: Scalars['String'];
   tags: Array<Scalars['Int']> | Scalars['Int'];
@@ -330,7 +359,7 @@ export type GetTagsQueryVariables = Exact<{
 
 export type GetTagsQuery = {
   __typename?: 'QueryRoot';
-  getTags: Array<{
+  queryTags: Array<{
     __typename?: 'Tag';
     name: string;
     id: number;
@@ -357,6 +386,48 @@ export const AuthorAllFragmentDoc = gql`
     description
   }
 `;
+export const SearchAuthorDocument = gql`
+  query searchAuthor($searchName: String) {
+    queryAuthors(searchName: $searchName) {
+      id
+      name
+      description
+      avatar
+    }
+  }
+`;
+
+/**
+ * __useSearchAuthorQuery__
+ *
+ * To run a query within a React component, call `useSearchAuthorQuery` and pass it any options that fit your needs.
+ * When your component renders, `useSearchAuthorQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useSearchAuthorQuery({
+ *   variables: {
+ *      searchName: // value for 'searchName'
+ *   },
+ * });
+ */
+export function useSearchAuthorQuery(
+  baseOptions?: Apollo.QueryHookOptions<SearchAuthorQuery, SearchAuthorQueryVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useQuery<SearchAuthorQuery, SearchAuthorQueryVariables>(SearchAuthorDocument, options);
+}
+export function useSearchAuthorLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<SearchAuthorQuery, SearchAuthorQueryVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useLazyQuery<SearchAuthorQuery, SearchAuthorQueryVariables>(SearchAuthorDocument, options);
+}
+export type SearchAuthorQueryHookResult = ReturnType<typeof useSearchAuthorQuery>;
+export type SearchAuthorLazyQueryHookResult = ReturnType<typeof useSearchAuthorLazyQuery>;
+export type SearchAuthorQueryResult = Apollo.QueryResult<SearchAuthorQuery, SearchAuthorQueryVariables>;
 export const GetCollectionSelectDocument = gql`
   query getCollectionSelect($parentId: Int) {
     getCollections(parentId: $parentId) {
@@ -406,9 +477,47 @@ export type GetCollectionSelectQueryResult = Apollo.QueryResult<
   GetCollectionSelectQuery,
   GetCollectionSelectQueryVariables
 >;
+export const AllowTagsDocument = gql`
+  query allowTags($collectionId: Int) {
+    queryTags(collectionId: $collectionId, deepSearch: true) {
+      id
+      name
+    }
+  }
+`;
+
+/**
+ * __useAllowTagsQuery__
+ *
+ * To run a query within a React component, call `useAllowTagsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useAllowTagsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useAllowTagsQuery({
+ *   variables: {
+ *      collectionId: // value for 'collectionId'
+ *   },
+ * });
+ */
+export function useAllowTagsQuery(baseOptions?: Apollo.QueryHookOptions<AllowTagsQuery, AllowTagsQueryVariables>) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useQuery<AllowTagsQuery, AllowTagsQueryVariables>(AllowTagsDocument, options);
+}
+export function useAllowTagsLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<AllowTagsQuery, AllowTagsQueryVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useLazyQuery<AllowTagsQuery, AllowTagsQueryVariables>(AllowTagsDocument, options);
+}
+export type AllowTagsQueryHookResult = ReturnType<typeof useAllowTagsQuery>;
+export type AllowTagsLazyQueryHookResult = ReturnType<typeof useAllowTagsLazyQuery>;
+export type AllowTagsQueryResult = Apollo.QueryResult<AllowTagsQuery, AllowTagsQueryVariables>;
 export const GetAuthorsDocument = gql`
   query getAuthors {
-    getAuthors {
+    queryAuthors {
       ...AuthorAll
     }
   }
@@ -711,12 +820,13 @@ export type GetCollectionAncestorsQueryResult = Apollo.QueryResult<
   GetCollectionAncestorsQueryVariables
 >;
 export const GetNovelsDocument = gql`
-  query getNovels($collectionId: Int!, $tagFullMatch: Boolean!, $tags: [Int!]!) {
-    queryNovels(collectionId: $collectionId, tagFullMatch: $tagFullMatch, tags: $tags) {
+  query getNovels($collectionId: Int, $readStatus: ReadStatus, $tagMatch: TagMatch) {
+    queryNovels(collectionId: $collectionId, readStatus: $readStatus, tagMatch: $tagMatch) {
       id
       name
       description
       createTime
+      updateTime
       description
       status
     }
@@ -736,12 +846,12 @@ export const GetNovelsDocument = gql`
  * const { data, loading, error } = useGetNovelsQuery({
  *   variables: {
  *      collectionId: // value for 'collectionId'
- *      tagFullMatch: // value for 'tagFullMatch'
- *      tags: // value for 'tags'
+ *      readStatus: // value for 'readStatus'
+ *      tagMatch: // value for 'tagMatch'
  *   },
  * });
  */
-export function useGetNovelsQuery(baseOptions: Apollo.QueryHookOptions<GetNovelsQuery, GetNovelsQueryVariables>) {
+export function useGetNovelsQuery(baseOptions?: Apollo.QueryHookOptions<GetNovelsQuery, GetNovelsQueryVariables>) {
   const options = { ...defaultOptions, ...baseOptions };
   return Apollo.useQuery<GetNovelsQuery, GetNovelsQueryVariables>(GetNovelsDocument, options);
 }
@@ -755,7 +865,7 @@ export type GetNovelsQueryHookResult = ReturnType<typeof useGetNovelsQuery>;
 export type GetNovelsLazyQueryHookResult = ReturnType<typeof useGetNovelsLazyQuery>;
 export type GetNovelsQueryResult = Apollo.QueryResult<GetNovelsQuery, GetNovelsQueryVariables>;
 export const CreateNovelDocument = gql`
-  mutation createNovel($collectionId: Int!, $name: String!, $description: String!, $tags: [Int!]!, $authorId: Int!) {
+  mutation createNovel($collectionId: Int, $name: String!, $description: String!, $tags: [Int!]!, $authorId: Int!) {
     createNovel(collectionId: $collectionId, name: $name, description: $description, tags: $tags, authorId: $authorId) {
       id
     }
@@ -867,7 +977,7 @@ export type CreateTagMutationResult = Apollo.MutationResult<CreateTagMutation>;
 export type CreateTagMutationOptions = Apollo.BaseMutationOptions<CreateTagMutation, CreateTagMutationVariables>;
 export const GetTagsDocument = gql`
   query getTags($collectionId: Int) {
-    getTags(collectionId: $collectionId) {
+    queryTags(collectionId: $collectionId, deepSearch: false) {
       name
       id
       createTime

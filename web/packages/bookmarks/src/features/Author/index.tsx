@@ -7,9 +7,9 @@ import { useMemo } from 'react';
 import { format } from 'time';
 
 export default function Author() {
-  const { data: { getAuthors } = {}, refetch } = useGetAuthorsQuery();
+  const { data: { queryAuthors } = {}, refetch } = useGetAuthorsQuery();
   const [deleteAuthor] = useDeleteAuthorMutation();
-  const columns = useMemo<CustomColumnArray<GetAuthorsQuery['getAuthors'][0]>>(
+  const columns = useMemo<CustomColumnArray<GetAuthorsQuery['queryAuthors'][0]>>(
     () => [
       {
         Header: '名字',
@@ -72,7 +72,7 @@ export default function Author() {
     ],
     [deleteAuthor, refetch],
   );
-  const tableInstance = useCustomTable({ columns, data: getAuthors ?? [] });
+  const tableInstance = useCustomTable({ columns, data: queryAuthors ?? [] });
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', p: 2 }}>

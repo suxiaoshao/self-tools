@@ -1,4 +1,3 @@
-import { RadioButtonChecked, RadioButtonUnchecked } from '@mui/icons-material';
 import { Box, BoxProps, Breadcrumbs, Button, Link } from '@mui/material';
 import { FocusEventHandler } from 'react';
 import { useGetCollectionAncestorsQuery, useGetCollectionSelectQuery } from '../../graphql';
@@ -16,7 +15,6 @@ export default function CollectionSelect({ onChange, onBlur, value, sx, ...props
     skip: value === undefined || value === null,
   });
   const { data: { getCollections } = {} } = useGetCollectionSelectQuery({ variables: { parentId: value } });
-
   return (
     <Box {...props} sx={{ display: 'flex', alignItems: 'center', ...sx }}>
       <Breadcrumbs>
@@ -29,47 +27,30 @@ export default function CollectionSelect({ onChange, onBlur, value, sx, ...props
               {name}
             </Link>
           ))}
-        {getCollection && (
-          <Link
-            underline="hover"
-            key={value}
-            color="text.primary"
-            onClick={() => onChange({ target: { value } }, value)}
-          >
-            {getCollection?.name}
-          </Link>
-        )}
+        <CustomSelector<number | null | undefined>
+          onChange={onChange}
+          onBlur={onBlur}
+          value={value}
+          render={(onClick) => (
+            <Button size="large" onClick={onClick} variant="outlined">
+              {getCollection?.name ?? '空集合'}
+            </Button>
+          )}
+        >
+          {[
+            ...(getCollections?.map(({ id, name }) => ({ value: id, label: name, key: id })) ?? []),
+            ...(getCollection
+              ? [
+                  {
+                    value: getCollection?.id,
+                    label: getCollection?.name,
+                    key: getCollection?.id,
+                  },
+                ]
+              : []),
+          ]}
+        </CustomSelector>
       </Breadcrumbs>
-
-      <CustomSelector<number | null | undefined>
-        onChange={onChange}
-        onBlur={onBlur}
-        value={value}
-        render={(onClick) => (
-          <Button
-            startIcon={getCollection ? <RadioButtonChecked /> : <RadioButtonUnchecked />}
-            sx={{ ml: 2 }}
-            onClick={onClick}
-            variant="outlined"
-            size="large"
-          >
-            {getCollection?.name ?? '空集合'}
-          </Button>
-        )}
-      >
-        {[
-          ...(getCollections?.map(({ id, name }) => ({ value: id, label: name, key: id })) ?? []),
-          ...(getCollection
-            ? [
-                {
-                  value: getCollection?.id,
-                  label: getCollection?.name,
-                  key: getCollection?.id,
-                },
-              ]
-            : []),
-        ]}
-      </CustomSelector>
     </Box>
   );
 }

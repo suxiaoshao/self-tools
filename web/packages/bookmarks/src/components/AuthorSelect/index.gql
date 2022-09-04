@@ -1,0 +1,8 @@
+query searchAuthor($searchName: String) {
+  queryAuthors(searchName: $searchName) {
+    id
+    name
+    description
+    avatar
+  }
+}

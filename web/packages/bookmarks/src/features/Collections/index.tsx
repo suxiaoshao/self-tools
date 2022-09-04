@@ -82,7 +82,7 @@ export default function Home() {
           display: 'flex',
         }}
       >
-        <CreateCollectionButton reFetch={refetch} />
+        <CreateCollectionButton refetch={refetch} />
         <IconButton sx={{ marginLeft: 'auto' }} onClick={() => refetch()}>
           <Refresh />
         </IconButton>

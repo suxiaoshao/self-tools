@@ -1,5 +1,5 @@
 query getAuthors {
-  getAuthors {
+  queryAuthors {
     ...AuthorAll
   }
 }
