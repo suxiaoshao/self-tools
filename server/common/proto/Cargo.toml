@@ -12,7 +12,7 @@ tower = "0.4.13"
 http={ version = "0.2.8", optional = true }
 [build-dependencies]
 tonic-build = "0.8.0"
-anyhow = "1.0.63"
+anyhow = "1.0.64"
 
 
 [features]
