@@ -9,7 +9,7 @@ edition = "2021"
 # grpc
 tokio = { version = "1.21.0", features = ["rt-multi-thread", "time", "fs", "macros", "net"] }
 proto = { path = "../../common/proto", features = ["auth_server"]}
-tonic = "0.8.0"
+tonic = "0.8.1"
 
 # jwt
 jsonwebtoken = "8.1.1"

@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 prost = "0.11.0"
-tonic = { version = "0.8.0", features = ["transport"] }
+tonic = { version = "0.8.1", features = ["transport"] }
 tower = "0.4.13"
 http={ version = "0.2.8", optional = true }
 [build-dependencies]
