@@ -1,4 +1,4 @@
-import { ApolloClient, createHttpLink, from, InMemoryCache } from '@apollo/client';
+import { ApolloClient, createHttpLink, DefaultOptions, from, InMemoryCache } from '@apollo/client';
 import { onError } from '@apollo/client/link/error';
 import { enqueueSnackbar } from 'notify';
 import { setContext } from '@apollo/client/link/context';
@@ -34,7 +34,19 @@ const authLink = setContext((_, { headers }) => {
   };
 });
 
+const defaultOptions: DefaultOptions = {
+  watchQuery: {
+    fetchPolicy: 'no-cache',
+    errorPolicy: 'ignore',
+  },
+  query: {
+    fetchPolicy: 'no-cache',
+    errorPolicy: 'all',
+  },
+};
+
 export const client = new ApolloClient({
   link: from([errorLink, authLink, httpLink]),
   cache: new InMemoryCache(),
+  defaultOptions,
 });
