@@ -31,7 +31,7 @@ export interface TagsSelectProps extends Omit<FormControlProps, 'name' | 'onChan
 }
 
 export default function TagsSelect({ collectionId, value, onChange, onBlur, sx, ...props }: TagsSelectProps) {
-  const { data: { queryTags } = {} } = useAllowTagsQuery({ variables: { collectionId } });
+  const { data: { queryTags } = {}, loading } = useAllowTagsQuery({ variables: { collectionId } });
   const formValue = useMemo(() => {
     if (value === null || value === undefined) {
       return undefined;
@@ -60,11 +60,18 @@ export default function TagsSelect({ collectionId, value, onChange, onBlur, sx, 
         )}
         MenuProps={MenuProps}
       >
-        {queryTags?.map(({ name, id }) => (
-          <MenuItem key={id} value={id}>
-            {name}
-          </MenuItem>
-        ))}
+        {loading ? (
+          <MenuItem disabled>Loading...</MenuItem>
+        ) : (
+          <>
+            {queryTags?.map(({ name, id }) => (
+              <MenuItem key={id} value={id}>
+                {name}
+              </MenuItem>
+            ))}
+            {(queryTags?.length ?? 0) === 0 && <MenuItem disabled>No options</MenuItem>}
+          </>
+        )}
       </Select>
     </FormControl>
   );

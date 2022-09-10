@@ -8,9 +8,9 @@ import {
   SelectChangeEvent,
   TextField,
 } from '@mui/material';
-import { FocusEventHandler } from 'react';
-import { useForm } from 'react-hook-form';
-import { SearchAuthorQuery, SearchAuthorQueryVariables, useSearchAuthorQuery } from '../../graphql';
+import { FocusEventHandler, useEffect, useMemo, useState } from 'react';
+import { debounceTime, Subject } from 'rxjs';
+import { SearchAuthorQuery, useSearchAuthorQuery } from '../../graphql';
 
 export interface TagsSelectProps
   extends Omit<
@@ -23,10 +23,16 @@ export interface TagsSelectProps
 }
 
 export default function AuthorSelect({ onBlur, onChange, sx, value, ...props }: TagsSelectProps) {
-  const { watch, register } = useForm<SearchAuthorQueryVariables>();
+  const [searchName, setSearchName] = useState('');
 
-  const searchName = watch('searchName');
   const { loading, data: { queryAuthors } = {} } = useSearchAuthorQuery({ variables: { searchName } });
+  const event = useMemo(() => new Subject<string>(), []);
+  useEffect(() => {
+    const key = event.pipe(debounceTime(300)).subscribe((value) => setSearchName(value));
+    return () => {
+      key.unsubscribe();
+    };
+  }, [event]);
   return (
     <Autocomplete<SearchAuthorQuery['queryAuthors'][0], false, false, false>
       sx={sx}
@@ -40,7 +46,9 @@ export default function AuthorSelect({ onBlur, onChange, sx, value, ...props }: 
       options={queryAuthors ?? []}
       getOptionLabel={({ name }) => name}
       loading={loading}
-      renderInput={(params) => <TextField {...params} {...register('searchName')} label="作者" fullWidth />}
+      renderInput={(params) => (
+        <TextField {...params} onChange={(e) => event.next(e.target.value)} label="作者" fullWidth />
+      )}
       renderOption={(props, { name, avatar }) => (
         <MenuItem {...props}>
           <ListItemAvatar>
