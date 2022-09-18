@@ -5,7 +5,7 @@ use crate::{
     model::collection::CollectionModel,
 };
 
-use super::tag::Tag;
+use super::{novel::Novel, tag::Tag};
 
 #[derive(SimpleObject)]
 #[graphql(complex)]
@@ -95,6 +95,8 @@ impl Collection {
             return Err(GraphqlError::NotFound("目录", id));
         }
         let collection = CollectionModel::delete(id)?;
+        // 删除 小说
+        Novel::delete_by_collection_id(id)?;
         // 删除 tag
         Tag::delete_by_collection(id)?;
         //递归删除子目录

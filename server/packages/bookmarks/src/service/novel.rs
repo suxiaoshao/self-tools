@@ -120,6 +120,10 @@ impl Novel {
         let novel = NovelModel::find_one(id)?;
         Ok(novel.into())
     }
+}
+
+/// collection_id 相关
+impl Novel {
     /// 选择小说
     pub fn query(
         collection_id: Option<i64>,
@@ -143,5 +147,10 @@ impl Novel {
             .map(Into::into)
             .collect();
         Ok(data)
+    }
+    /// 根据 collection_id 删除小说
+    pub fn delete_by_collection_id(collection_id: i64) -> GraphqlResult<()> {
+        NovelModel::delete_by_collection_id(collection_id)?;
+        Ok(())
     }
 }

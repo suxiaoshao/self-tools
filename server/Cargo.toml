@@ -1,13 +1,13 @@
 [workspace]
 
-
 members = [
     "packages/bookmarks",
     "packages/auth",
     "common/proto",
     "packages/login",
     "common/errors",
-    "common/cors"
+    "common/cors",
+    "common/novel_crawler"
 ]
 [profile.release]
 strip = "symbols"

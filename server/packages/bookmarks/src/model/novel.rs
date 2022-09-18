@@ -34,6 +34,7 @@ pub struct NewNovel<'a> {
     pub update_time: NaiveDateTime,
 }
 
+/// id 相关
 impl NovelModel {
     /// 创建小说
     pub fn create(
@@ -84,6 +85,7 @@ impl NovelModel {
     }
 }
 
+/// collection_id 相关
 impl NovelModel {
     /// 查询小说
     pub fn query(
@@ -132,6 +134,13 @@ impl NovelModel {
                 .collect()
         };
         Ok(data)
+    }
+    /// 根据 collection_id 删除小说
+    pub fn delete_by_collection_id(collection_id: i64) -> GraphqlResult<usize> {
+        let conn = &mut super::CONNECTION.get()?;
+        let deleted = diesel::delete(novel::table.filter(novel::collection_id.eq(collection_id)))
+            .execute(conn)?;
+        Ok(deleted)
     }
 }
 
