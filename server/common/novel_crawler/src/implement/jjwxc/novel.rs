@@ -7,7 +7,7 @@ pub(crate) struct JJNovel {
     name: String,
     description: String,
     image: String,
-    chapters: Vec<JJChapter>,
+    chapter_ids: Vec<String>,
 }
 
 #[async_trait::async_trait]
@@ -35,7 +35,7 @@ impl NovelFn for JJNovel {
         self.image.as_str()
     }
 
-    async fn chapters(&self) -> &[Self::Chapter] {
-        self.chapters.as_slice()
+    async fn chapters(&self) -> NovelResult<Vec<Self::Chapter>> {
+        todo!()
     }
 }

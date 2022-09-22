@@ -8,5 +8,5 @@ pub(crate) trait AuthorFn: Sized {
     fn name(&self) -> &str;
     fn description(&self) -> &str;
     fn image(&self) -> &str;
-    async fn novels(&self) -> &[Self::Novel];
+    async fn novels(&self) -> NovelResult<Vec<Self::Novel>>;
 }

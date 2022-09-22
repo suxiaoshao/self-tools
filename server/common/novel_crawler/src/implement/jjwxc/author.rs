@@ -1,10 +1,19 @@
+use futures::future::try_join_all;
+use nom::{
+    bytes::complete::{tag, take_while},
+    combinator::{all_consuming, eof},
+    sequence::tuple,
+    IResult,
+};
+
 use once_cell::sync::Lazy;
-use scraper::{Html, Selector};
+use scraper::{ElementRef, Html, Selector};
 
 use crate::{
     author::AuthorFn,
     errors::{NovelError, NovelResult},
-    implement::{get_doc, text_from_url},
+    implement::text_from_url,
+    novel::NovelFn,
 };
 
 use super::novel::JJNovel;
@@ -18,13 +27,15 @@ static SELECTOR_AUTHOR_DESCRIPTION: Lazy<Selector> = Lazy::new(|| {
 static SELECTOR_AUTHOR_IMAGE: Lazy<Selector> = Lazy::new(|| {
     Selector::parse("body > table:nth-child(23) > tbody > tr > td:nth-child(1) > table > tbody > tr:nth-child(2) > td > table > tbody > tr:nth-child(1) > td:nth-child(1) > div:nth-child(1) > img").unwrap()
 });
+static SELECTOR_NOVEL_URLS: Lazy<Selector> =
+    Lazy::new(|| Selector::parse("body > table > tbody > tr:nth-child(1) > td > a").unwrap());
 
 struct JJAuthor {
     url: String,
     name: String,
     description: String,
     image: String,
-    novels: Vec<JJNovel>,
+    novel_urls: Vec<String>,
 }
 #[async_trait::async_trait]
 impl AuthorFn for JJAuthor {
@@ -58,13 +69,17 @@ impl AuthorFn for JJAuthor {
                 acc.push_str(x);
                 acc
             });
+        let urls = doc
+            .select(&SELECTOR_NOVEL_URLS)
+            .filter_map(filter_map_url)
+            .collect();
 
         Ok(Self {
             url,
             name,
             description,
             image,
-            novels: todo!(),
+            novel_urls: urls,
         })
     }
 
@@ -80,8 +95,9 @@ impl AuthorFn for JJAuthor {
     fn image(&self) -> &str {
         self.image.as_str()
     }
-    async fn novels(&self) -> &[Self::Novel] {
-        self.novels.as_slice()
+    async fn novels(&self) -> NovelResult<Vec<Self::Novel>> {
+        let data = try_join_all(self.novel_urls.iter().map(|x| JJNovel::get_novel_data(x))).await?;
+        Ok(data)
     }
 }
 
@@ -92,5 +108,31 @@ impl JJAuthor {
 
         let (image_doc, doc) = tokio::try_join!(text_from_url(&image_url), text_from_url(&url))?;
         Ok((image_doc, doc, url))
+    }
+}
+
+fn filter_map_url(element_ref: ElementRef) -> Option<String> {
+    let href = element_ref.value().attr("href")?;
+
+    let (_, id) = novel_id(href).ok()?;
+    Some(id)
+}
+fn novel_id(input: &str) -> IResult<&str, String> {
+    let (input, (_, data, _)) =
+        all_consuming(tuple((tag("/book2/"), take_while(|_| true), eof)))(input)?;
+    Ok((input, data.to_string()))
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn novel_id_test() -> anyhow::Result<()> {
+        let input = "/book2/369639";
+        let (input, id) = novel_id(input)?;
+        assert_eq!(id, "369639");
+        assert_eq!(input, "");
+        Ok(())
     }
 }
