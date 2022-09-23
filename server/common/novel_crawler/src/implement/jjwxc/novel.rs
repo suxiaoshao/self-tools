@@ -8,11 +8,11 @@ use nom::{
     IResult,
 };
 use once_cell::sync::Lazy;
-use scraper::Selector;
+use scraper::{Html, Selector};
 
 use crate::{
-    errors::NovelResult,
-    implement::{get_doc, parse_image_src, parse_inner_html, parse_text, parse_urls},
+    errors::{NovelError, NovelResult},
+    implement::{get_doc, parse_image_src, parse_inner_html, parse_text},
     novel::NovelFn,
 };
 
@@ -40,6 +40,7 @@ static SELECTOR_CHAPTER_URLS: Lazy<Selector> = Lazy::new(|| {
     .unwrap()
 });
 
+#[derive(Debug)]
 pub(crate) struct JJNovel {
     id: String,
     name: String,
@@ -57,13 +58,7 @@ impl NovelFn for JJNovel {
         let name = parse_inner_html(&html, &SELECTOR_NOVEL_NAME)?;
         let description = parse_text(&html, &SELECTOR_NOVEL_DESCRIPTION)?;
         let image = parse_image_src(&html, &SELECTOR_NOVEL_IMAGE)?;
-        let chapters = parse_urls(&html, &SELECTOR_CHAPTER_URLS)?
-            .into_iter()
-            .map(|(url, title)| {
-                let (_, chapter_id) = parse_chapter_id(&url)?;
-                Ok(JJChapter::new(novel_id.to_string(), chapter_id, title))
-            })
-            .collect::<NovelResult<Vec<_>>>()?;
+        let chapters = parse_chapters(&html, &SELECTOR_CHAPTER_URLS, novel_id)?;
 
         Ok(Self {
             id: novel_id.to_string(),
@@ -105,8 +100,33 @@ fn parse_chapter_id(url: &str) -> IResult<&str, String> {
     Ok((input, data.to_string()))
 }
 
+fn parse_chapters(html: &Html, selector: &Selector, novel_id: &str) -> NovelResult<Vec<JJChapter>> {
+    use scraper::ElementRef;
+    fn map_chapter(element: ElementRef) -> NovelResult<(String, String)> {
+        let value = element.value();
+        let url = value
+            .attr("href")
+            .or_else(|| value.attr("rel"))
+            .ok_or(NovelError::ParseError)?
+            .to_string();
+        let id = parse_chapter_id(&url)?.1;
+        let name = element.inner_html();
+        Ok((id, name))
+    }
+    let element_ref = html
+        .select(selector)
+        .map(|x| match map_chapter(x) {
+            Ok((chapter_id, name)) => Ok(JJChapter::new(novel_id.to_string(), chapter_id, name)),
+            Err(e) => Err(e),
+        })
+        .collect::<NovelResult<Vec<_>>>()?;
+    Ok(element_ref)
+}
+
 #[cfg(test)]
 mod test {
+    use crate::novel::NovelFn;
+
     #[test]
     fn parse_chapter_id_test() -> anyhow::Result<()> {
         let input = "http://www.jjwxc.net/onebook.php?novelid=4375938&chapterid=1";
@@ -115,6 +135,14 @@ mod test {
         let input = "http://my.jjwxc.net/onebook_vip.php?novelid=4375938&chapterid=25";
         let (_, data) = super::parse_chapter_id(input)?;
         assert_eq!(data, "25");
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn jj_novel_test() -> anyhow::Result<()> {
+        let novel_id = "1485737";
+        let novel = super::JJNovel::get_novel_data(novel_id).await?;
+        println!("{:#?}", novel);
         Ok(())
     }
 }

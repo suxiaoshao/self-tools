@@ -1,6 +1,6 @@
 use crate::chapter::ChapterFn;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub(crate) struct JJChapter {
     novel_id: String,
     chapter_id: String,

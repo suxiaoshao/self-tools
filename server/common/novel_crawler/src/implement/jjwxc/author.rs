@@ -11,7 +11,7 @@ use scraper::{ElementRef, Html, Selector};
 
 use crate::{
     author::AuthorFn,
-    errors::NovelResult,
+    errors::{NovelError, NovelResult},
     implement::{parse_image_src, parse_inner_html, parse_text, text_from_url},
     novel::NovelFn,
 };
@@ -27,9 +27,11 @@ static SELECTOR_AUTHOR_DESCRIPTION: Lazy<Selector> = Lazy::new(|| {
 static SELECTOR_AUTHOR_IMAGE: Lazy<Selector> = Lazy::new(|| {
     Selector::parse("body > table:nth-child(23) > tbody > tr > td:nth-child(1) > table > tbody > tr:nth-child(2) > td > table > tbody > tr:nth-child(1) > td:nth-child(1) > div:nth-child(1) > img").unwrap()
 });
-static SELECTOR_NOVEL_URLS: Lazy<Selector> =
-    Lazy::new(|| Selector::parse("body > table > tbody > tr:nth-child(1) > td > a").unwrap());
+static SELECTOR_NOVEL_URLS: Lazy<Selector> = Lazy::new(|| {
+    Selector::parse("body > table:nth-child(2N+27) > tbody > tr > td a:not([target])").unwrap()
+});
 
+#[derive(Debug)]
 struct JJAuthor {
     id: String,
     name: String,
@@ -37,23 +39,24 @@ struct JJAuthor {
     image: String,
     novel_ids: Vec<String>,
 }
+
 #[async_trait::async_trait]
 impl AuthorFn for JJAuthor {
     type Novel = JJNovel;
     async fn get_author_data(author_id: &str) -> NovelResult<Self> {
-        let (image_doc, doc) = Self::html(author_id).await?;
+        let url = format!("https://www.jjwxc.net/oneauthor.php?authorid={}", author_id);
+        let image_doc = text_from_url(&url, "gb18030").await?;
         let image_doc = Html::parse_document(&image_doc);
-        let doc = Html::parse_document(&doc);
 
         // 图片
         let image = parse_image_src(&image_doc, &SELECTOR_AUTHOR_IMAGE)?;
         // 其他
         let name = parse_inner_html(&image_doc, &SELECTOR_AUTHOR_NAME)?;
         let description = parse_text(&image_doc, &SELECTOR_AUTHOR_DESCRIPTION)?;
-        let urls = doc
+        let urls = image_doc
             .select(&SELECTOR_NOVEL_URLS)
-            .filter_map(filter_map_url)
-            .collect();
+            .map(map_url)
+            .collect::<NovelResult<Vec<_>>>()?;
 
         Ok(Self {
             id: author_id.to_string(),
@@ -83,22 +86,16 @@ impl AuthorFn for JJAuthor {
     }
 }
 
-impl JJAuthor {
-    async fn html(author_id: &str) -> NovelResult<(String, String)> {
-        let image_url = format!("https://www.jjwxc.net/oneauthor.php?authorid={}", author_id);
-        let url = format!("https://m.jjwxc.net/wapauthor/{}", author_id);
+fn map_url(element_ref: ElementRef) -> NovelResult<String> {
+    let href = element_ref
+        .value()
+        .attr("href")
+        .ok_or(NovelError::ParseError)?;
 
-        let (image_doc, doc) = tokio::try_join!(text_from_url(&image_url), text_from_url(&url))?;
-        Ok((image_doc, doc))
-    }
+    let (_, id) = novel_id(href)?;
+    Ok(id)
 }
 
-fn filter_map_url(element_ref: ElementRef) -> Option<String> {
-    let href = element_ref.value().attr("href")?;
-
-    let (_, id) = novel_id(href).ok()?;
-    Some(id)
-}
 fn novel_id(input: &str) -> IResult<&str, String> {
     let (input, (_, data, _)) =
         all_consuming(tuple((tag("/book2/"), take_while(|_| true), eof)))(input)?;
@@ -115,6 +112,13 @@ mod test {
         let (input, id) = novel_id(input)?;
         assert_eq!(id, "369639");
         assert_eq!(input, "");
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn jj_author_test() -> anyhow::Result<()> {
+        let author = JJAuthor::get_author_data("1000001").await?;
+        println!("{:#?}", author);
         Ok(())
     }
 }
