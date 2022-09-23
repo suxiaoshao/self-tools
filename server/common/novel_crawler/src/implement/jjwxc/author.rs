@@ -31,7 +31,7 @@ static SELECTOR_NOVEL_URLS: Lazy<Selector> =
     Lazy::new(|| Selector::parse("body > table > tbody > tr:nth-child(1) > td > a").unwrap());
 
 struct JJAuthor {
-    url: String,
+    id: String,
     name: String,
     description: String,
     image: String,
@@ -41,7 +41,7 @@ struct JJAuthor {
 impl AuthorFn for JJAuthor {
     type Novel = JJNovel;
     async fn get_author_data(author_id: &str) -> NovelResult<Self> {
-        let (image_doc, doc, url) = Self::html(author_id).await?;
+        let (image_doc, doc) = Self::html(author_id).await?;
         let image_doc = Html::parse_document(&image_doc);
         let doc = Html::parse_document(&doc);
 
@@ -56,7 +56,7 @@ impl AuthorFn for JJAuthor {
             .collect();
 
         Ok(Self {
-            url,
+            id: author_id.to_string(),
             name,
             description,
             image,
@@ -64,8 +64,9 @@ impl AuthorFn for JJAuthor {
         })
     }
 
-    fn url(&self) -> &str {
-        self.url.as_str()
+    fn url(&self) -> String {
+        let data = format!("https://www.jjwxc.net/oneauthor.php?authorid={}", self.id);
+        data
     }
     fn name(&self) -> &str {
         self.name.as_str()
@@ -83,12 +84,12 @@ impl AuthorFn for JJAuthor {
 }
 
 impl JJAuthor {
-    async fn html(author_id: &str) -> NovelResult<(String, String, String)> {
+    async fn html(author_id: &str) -> NovelResult<(String, String)> {
         let image_url = format!("https://www.jjwxc.net/oneauthor.php?authorid={}", author_id);
         let url = format!("https://m.jjwxc.net/wapauthor/{}", author_id);
 
         let (image_doc, doc) = tokio::try_join!(text_from_url(&image_url), text_from_url(&url))?;
-        Ok((image_doc, doc, url))
+        Ok((image_doc, doc))
     }
 }
 

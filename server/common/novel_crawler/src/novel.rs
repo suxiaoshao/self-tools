@@ -3,7 +3,7 @@ use crate::{chapter::ChapterFn, errors::NovelResult};
 pub(crate) trait NovelFn: Sized {
     type Chapter: ChapterFn;
     async fn get_novel_data(novel_id: &str) -> NovelResult<Self>;
-    fn url(&self) -> &str;
+    fn url(&self) -> String;
     fn name(&self) -> &str;
     fn description(&self) -> &str;
     fn image(&self) -> &str;

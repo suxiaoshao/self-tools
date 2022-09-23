@@ -14,15 +14,15 @@ async fn text_from_url(url: &str) -> NovelResult<String> {
     Ok(body)
 }
 
-fn parse_url(html: &Html, selector: &Selector) -> NovelResult<(String, String)> {
-    let element_ref = html.select(selector).next().ok_or(NovelError::ParseError)?;
-    let url = element_ref
-        .value()
-        .attr("href")
-        .ok_or(NovelError::ParseError)?
-        .to_string();
-    let text = element_ref.inner_html();
-    Ok((url, text))
+fn parse_urls(html: &Html, selector: &Selector) -> NovelResult<Vec<(String, String)>> {
+    use scraper::ElementRef;
+    fn filter_map_url(element: ElementRef) -> Option<(String, String)> {
+        let url = element.value().attr("href")?.to_string();
+        let name = element.text().collect::<Vec<_>>().join("");
+        Some((url, name))
+    }
+    let element_ref = html.select(selector).filter_map(filter_map_url).collect();
+    Ok(element_ref)
 }
 
 fn parse_image_src(html: &Html, selector: &Selector) -> NovelResult<String> {

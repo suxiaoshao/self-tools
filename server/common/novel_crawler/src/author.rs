@@ -4,7 +4,7 @@ use crate::{errors::NovelResult, novel::NovelFn};
 pub(crate) trait AuthorFn: Sized {
     type Novel: NovelFn;
     async fn get_author_data(author_id: &str) -> NovelResult<Self>;
-    fn url(&self) -> &str;
+    fn url(&self) -> String;
     fn name(&self) -> &str;
     fn description(&self) -> &str;
     fn image(&self) -> &str;

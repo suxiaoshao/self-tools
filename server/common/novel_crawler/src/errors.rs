@@ -14,4 +14,10 @@ impl From<reqwest::Error> for NovelError {
     }
 }
 
+impl From<nom::Err<nom::error::Error<&str>>> for NovelError {
+    fn from(_: nom::Err<nom::error::Error<&str>>) -> Self {
+        NovelError::ParseError
+    }
+}
+
 pub(crate) type NovelResult<T> = Result<T, NovelError>;
