@@ -1,9 +1,9 @@
 use crate::chapter::ChapterFn;
 
+#[derive(Clone)]
 pub(crate) struct JJChapter {
     url: String,
     title: String,
-    content: String,
 }
 
 impl ChapterFn for JJChapter {

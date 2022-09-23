@@ -11,8 +11,8 @@ use scraper::{ElementRef, Html, Selector};
 
 use crate::{
     author::AuthorFn,
-    errors::{NovelError, NovelResult},
-    implement::text_from_url,
+    errors::NovelResult,
+    implement::{parse_image_src, parse_inner_html, parse_text, text_from_url},
     novel::NovelFn,
 };
 
@@ -35,7 +35,7 @@ struct JJAuthor {
     name: String,
     description: String,
     image: String,
-    novel_urls: Vec<String>,
+    novel_ids: Vec<String>,
 }
 #[async_trait::async_trait]
 impl AuthorFn for JJAuthor {
@@ -46,29 +46,10 @@ impl AuthorFn for JJAuthor {
         let doc = Html::parse_document(&doc);
 
         // 图片
-        let image = image_doc
-            .select(&SELECTOR_AUTHOR_IMAGE)
-            .next()
-            .ok_or(NovelError::ParseError)?
-            .value()
-            .attr("src")
-            .ok_or(NovelError::ParseError)?
-            .to_string();
+        let image = parse_image_src(&image_doc, &SELECTOR_AUTHOR_IMAGE)?;
         // 其他
-        let name = image_doc
-            .select(&SELECTOR_AUTHOR_NAME)
-            .next()
-            .ok_or(NovelError::ParseError)?
-            .inner_html();
-        let description = image_doc
-            .select(&SELECTOR_AUTHOR_DESCRIPTION)
-            .next()
-            .ok_or(NovelError::ParseError)?
-            .text()
-            .fold(String::new(), |mut acc, x| {
-                acc.push_str(x);
-                acc
-            });
+        let name = parse_inner_html(&image_doc, &SELECTOR_AUTHOR_NAME)?;
+        let description = parse_text(&image_doc, &SELECTOR_AUTHOR_DESCRIPTION)?;
         let urls = doc
             .select(&SELECTOR_NOVEL_URLS)
             .filter_map(filter_map_url)
@@ -79,7 +60,7 @@ impl AuthorFn for JJAuthor {
             name,
             description,
             image,
-            novel_urls: urls,
+            novel_ids: urls,
         })
     }
 
@@ -96,7 +77,7 @@ impl AuthorFn for JJAuthor {
         self.image.as_str()
     }
     async fn novels(&self) -> NovelResult<Vec<Self::Novel>> {
-        let data = try_join_all(self.novel_urls.iter().map(|x| JJNovel::get_novel_data(x))).await?;
+        let data = try_join_all(self.novel_ids.iter().map(|x| JJNovel::get_novel_data(x))).await?;
         Ok(data)
     }
 }
