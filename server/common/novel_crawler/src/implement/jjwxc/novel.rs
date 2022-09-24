@@ -54,7 +54,7 @@ impl NovelFn for JJNovel {
     type Chapter = JJChapter;
     async fn get_novel_data(novel_id: &str) -> NovelResult<Self> {
         let url = format!("https://www.jjwxc.net/onebook.php?novelid={}", novel_id);
-        let html = get_doc(&url).await?;
+        let html = get_doc(&url, "gb18030").await?;
         let name = parse_inner_html(&html, &SELECTOR_NOVEL_NAME)?;
         let description = parse_text(&html, &SELECTOR_NOVEL_DESCRIPTION)?;
         let image = parse_image_src(&html, &SELECTOR_NOVEL_IMAGE)?;

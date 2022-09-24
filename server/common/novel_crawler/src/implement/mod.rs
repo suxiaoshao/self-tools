@@ -3,12 +3,10 @@ use scraper::{Html, Selector};
 use crate::errors::{NovelError, NovelResult};
 
 mod jjwxc;
+mod qidian;
 
-async fn get_doc(url: &str) -> NovelResult<Html> {
-    let body = reqwest::get(url)
-        .await?
-        .text_with_charset("gb18030")
-        .await?;
+async fn get_doc(url: &str, charset: &str) -> NovelResult<Html> {
+    let body = reqwest::get(url).await?.text_with_charset(charset).await?;
     let document = Html::parse_document(&body);
     Ok(document)
 }

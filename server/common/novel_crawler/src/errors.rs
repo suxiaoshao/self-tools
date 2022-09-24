@@ -19,5 +19,10 @@ impl From<nom::Err<nom::error::Error<&str>>> for NovelError {
         NovelError::ParseError
     }
 }
+impl From<serde_json::Error> for NovelError {
+    fn from(_: serde_json::Error) -> Self {
+        NovelError::ParseError
+    }
+}
 
 pub(crate) type NovelResult<T> = Result<T, NovelError>;
