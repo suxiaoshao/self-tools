@@ -36,7 +36,7 @@ export const login =
   (data: LoginForm): AppThunkAction =>
   async (dispatch) => {
     const headers = new Headers({ 'Content-Type': 'application/json' });
-    const request = new Request('http://auth.sushao.top/api/login', {
+    const request = new Request('https://auth.sushao.top/api/login', {
       mode: 'cors',
       credentials: 'include',
       method: 'POST',

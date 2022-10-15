@@ -4,7 +4,7 @@ import { enqueueSnackbar } from 'notify';
 import { setContext } from '@apollo/client/link/context';
 
 const httpLink = createHttpLink({
-  uri: String(import.meta.env.VITE_GRAPHQL_URL ?? 'http://bookmarks.sushao.top/graphql'),
+  uri: String(import.meta.env.VITE_GRAPHQL_URL ?? 'https://bookmarks.sushao.top/graphql'),
   credentials: 'include',
 });
 
