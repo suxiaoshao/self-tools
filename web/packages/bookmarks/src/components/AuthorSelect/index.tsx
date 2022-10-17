@@ -39,7 +39,7 @@ export default function AuthorSelect({ onBlur, onChange, sx, value, ...props }: 
       onBlur={onBlur}
       value={queryAuthors?.find((author) => author.id === value)}
       onChange={(event: React.SyntheticEvent, newValue) => {
-        event.target = { value: newValue?.id, ...event.target } as EventTarget;
+        event.target = { value: newValue?.id, ...event.target } as unknown as EventTarget;
         onChange(event as SelectChangeEvent<number>, newValue?.id);
       }}
       isOptionEqualToValue={(option, value) => option.id === value.id}

@@ -4,7 +4,7 @@
   "extensions": {
     "endpoints": {
       "GraphQL schema": {
-        "url": "http://bookmarks.sushao.top/graphql",
+        "url": "https://bookmarks.sushao.top/graphql",
         "headers": {
           "Authorization": "${env:AUTH_TOKEN_ENV}",
           "user-agent": "JS GraphQL"
