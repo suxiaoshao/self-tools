@@ -8,6 +8,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "notistack": "^2.0.5"
+    "notistack": "^2.0.8"
   }
 }
