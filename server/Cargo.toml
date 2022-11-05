@@ -7,7 +7,8 @@ members = [
     "packages/login",
     "common/errors",
     "common/cors",
-    "common/novel_crawler"
+    "common/novel_crawler",
+    "packages/collections"
 ]
 [profile.release]
 strip = "symbols"
