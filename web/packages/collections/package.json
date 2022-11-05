@@ -1,12 +1,12 @@
 {
-  "name": "bookmarks",
+  "name": "collections",
   "private": true,
   "version": "0.0.0",
+  "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview",
-    "generate": "graphql-codegen"
+    "preview": "vite preview"
   },
   "dependencies": {
     "auth": "workspace:auth",

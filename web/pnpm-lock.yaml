@@ -4,9 +4,14 @@ importers:
 
   .:
     specifiers:
+      '@apollo/client': ^3.7.1
       '@emotion/react': ^11.10.5
       '@emotion/styled': ^11.10.5
       '@fontsource/roboto': ^4.5.8
+      '@graphql-codegen/cli': ^2.13.11
+      '@graphql-codegen/typescript': ^2.8.1
+      '@graphql-codegen/typescript-operations': ^2.5.6
+      '@graphql-codegen/typescript-react-apollo': ^3.3.6
       '@mui/icons-material': ^5.10.9
       '@mui/lab': 5.0.0-alpha.106
       '@mui/material': ^5.10.12
@@ -33,6 +38,7 @@ importers:
       typescript: 4.8.4
       vite: ^3.2.2
     dependencies:
+      '@apollo/client': 3.7.1_gdcq4dv6opitr3wbfwyjmanyra
       '@emotion/react': 11.10.5_cuziicjcvwawlf5iuhzacuhqcy
       '@emotion/styled': 11.10.5_hmjty4frusbltjhl3xd7udcm2y
       '@fontsource/roboto': 4.5.8
@@ -47,6 +53,10 @@ importers:
       react-router-dom: 6.4.3_biqbaboplfbrettd7655fr4n2y
       rxjs: 7.5.7
     devDependencies:
+      '@graphql-codegen/cli': 2.13.11_5r3mmcyz2qxsj6cwjz753kl35e
+      '@graphql-codegen/typescript': 2.8.1_graphql@16.6.0
+      '@graphql-codegen/typescript-operations': 2.5.6_graphql@16.6.0
+      '@graphql-codegen/typescript-react-apollo': 3.3.6_sy4knu3obj4ys7pjcqbyfxmqle
       '@types/node': 18.11.9
       '@types/react': 18.0.25
       '@types/react-dom': 18.0.8
@@ -108,11 +118,6 @@ importers:
 
   packages/bookmarks:
     specifiers:
-      '@apollo/client': ^3.7.1
-      '@graphql-codegen/cli': ^2.13.11
-      '@graphql-codegen/typescript': ^2.8.1
-      '@graphql-codegen/typescript-operations': ^2.5.6
-      '@graphql-codegen/typescript-react-apollo': ^3.3.6
       auth: workspace:auth
       custom-graphql: workspace:custom-graphql
       custom-table: workspace:custom-table
@@ -120,18 +125,28 @@ importers:
       theme: workspace:theme
       time: workspace:time
     dependencies:
-      '@apollo/client': 3.7.1_graphql@16.6.0
       auth: link:../../common/auth
       custom-graphql: link:../../common/custom-graphql
       custom-table: link:../../common/custom-table
       notify: link:../../common/notify
       theme: link:../../common/theme
       time: link:../../common/time
-    devDependencies:
-      '@graphql-codegen/cli': 2.13.11_5r3mmcyz2qxsj6cwjz753kl35e
-      '@graphql-codegen/typescript': 2.8.1_graphql@16.6.0
-      '@graphql-codegen/typescript-operations': 2.5.6_graphql@16.6.0
-      '@graphql-codegen/typescript-react-apollo': 3.3.6_sy4knu3obj4ys7pjcqbyfxmqle
+
+  packages/collections:
+    specifiers:
+      auth: workspace:auth
+      custom-graphql: workspace:custom-graphql
+      custom-table: workspace:custom-table
+      notify: workspace:notify
+      theme: workspace:theme
+      time: workspace:time
+    dependencies:
+      auth: link:../../common/auth
+      custom-graphql: link:../../common/custom-graphql
+      custom-table: link:../../common/custom-table
+      notify: link:../../common/notify
+      theme: link:../../common/theme
+      time: link:../../common/time
 
 packages:
 
@@ -141,6 +156,42 @@ packages:
     dependencies:
       '@jridgewell/gen-mapping': 0.1.1
       '@jridgewell/trace-mapping': 0.3.17
+
+  /@apollo/client/3.7.1_gdcq4dv6opitr3wbfwyjmanyra:
+    resolution: {integrity: sha512-xu5M/l7p9gT9Fx7nF3AQivp0XukjB7TM7tOd5wifIpI8RskYveL4I+rpTijzWrnqCPZabkbzJKH7WEAKdctt9w==}
+    peerDependencies:
+      graphql: ^14.0.0 || ^15.0.0 || ^16.0.0
+      graphql-ws: ^5.5.5
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+      subscriptions-transport-ws: ^0.9.0 || ^0.11.0
+    peerDependenciesMeta:
+      graphql-ws:
+        optional: true
+      react:
+        optional: true
+      react-dom:
+        optional: true
+      subscriptions-transport-ws:
+        optional: true
+    dependencies:
+      '@graphql-typed-document-node/core': 3.1.1_graphql@16.6.0
+      '@wry/context': 0.7.0
+      '@wry/equality': 0.5.3
+      '@wry/trie': 0.3.2
+      graphql: 16.6.0
+      graphql-tag: 2.12.6_graphql@16.6.0
+      hoist-non-react-statics: 3.3.2
+      optimism: 0.16.1
+      prop-types: 15.8.1
+      react: 18.2.0
+      react-dom: 18.2.0_react@18.2.0
+      response-iterator: 0.2.6
+      symbol-observable: 4.0.0
+      ts-invariant: 0.10.3
+      tslib: 2.4.1
+      zen-observable-ts: 1.2.5
+    dev: false
 
   /@apollo/client/3.7.1_graphql@16.6.0:
     resolution: {integrity: sha512-xu5M/l7p9gT9Fx7nF3AQivp0XukjB7TM7tOd5wifIpI8RskYveL4I+rpTijzWrnqCPZabkbzJKH7WEAKdctt9w==}
