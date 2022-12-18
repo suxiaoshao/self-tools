@@ -346,9 +346,20 @@ dependencies = [
 name = "collections"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
+ "async-graphql",
+ "async-graphql-axum",
+ "axum",
+ "cors",
  "diesel",
+ "dotenv",
  "once_cell",
+ "proto",
+ "serde_json",
+ "thiserror",
  "time 0.3.16",
+ "tokio",
+ "tonic",
 ]
 
 [[package]]
