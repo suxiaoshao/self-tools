@@ -1,27 +1,27 @@
-use async_graphql::CustomValidator;
+use async_graphql::{CustomValidator, InputValueError};
 
 pub struct DirNameValidator;
 
 impl CustomValidator<String> for DirNameValidator {
-    fn check(&self, input: &String) -> Result<(), String> {
+    fn check(&self, input: &String) -> Result<(), InputValueError<String>> {
         let len = input.chars().count();
         if len > 255 {
-            return Err("不能大于255字符".to_string());
+            return Err(InputValueError::custom("不能大于255字符"));
         }
         if len < 1 {
-            return Err("不能小于1个字符".to_string());
+            return Err(InputValueError::custom("不能小于1个字符"));
         }
         if input == "." || input == ".." {
-            return Err("不能为\"..\" \".\"".to_string());
+            return Err(InputValueError::custom("不能为\"..\" \".\""));
         }
         if input.chars().all(|x| x == ' ') {
-            return Err("不能为空".to_string());
+            return Err(InputValueError::custom("不能为空"));
         }
         if input
             .chars()
             .any(|x| x == '/' || x == '\n' || x == '\r' || x == '\t')
         {
-            Err("不能含有/和换行符等特殊字符".to_string())
+            Err(InputValueError::custom("不能含有/和换行符等特殊字符"))
         } else {
             Ok(())
         }

@@ -1,13 +1,13 @@
-use async_graphql::CustomValidator;
+use async_graphql::{CustomValidator, InputValueError};
 
 use crate::graphql::input::TagMatch;
 
 pub struct TagMatchValidator;
 
 impl CustomValidator<TagMatch> for TagMatchValidator {
-    fn check(&self, input: &TagMatch) -> Result<(), String> {
+    fn check(&self, input: &TagMatch) -> Result<(), InputValueError<TagMatch>> {
         if input.match_set.is_empty() {
-            return Err("至少选择一个标签".to_string());
+            return Err(InputValueError::custom("至少选择一个标签"));
         }
         Ok(())
     }

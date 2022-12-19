@@ -1,6 +1,6 @@
+use axum::routing::post;
 use axum::Router;
-use axum::{body::Body, routing::post};
 mod login;
-pub(crate) fn get_router() -> Router<Body> {
+pub(crate) fn get_router() -> Router {
     Router::new().route("/api/login", post(login::login))
 }

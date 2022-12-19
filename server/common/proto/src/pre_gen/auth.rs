@@ -1,25 +1,28 @@
+#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct LoginRequest {
     /// 账号
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub username: ::prost::alloc::string::String,
     /// 密码
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub password: ::prost::alloc::string::String,
 }
+#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct LoginReply {
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub auth: ::prost::alloc::string::String,
 }
+#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CheckRequest {
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub auth: ::prost::alloc::string::String,
 }
+#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Empty {
-}
+pub struct Empty {}
 /// Generated client implementations.
 pub mod login_client {
     #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
@@ -131,7 +134,7 @@ pub mod login_client {
 pub mod login_server {
     #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
     use tonic::codegen::*;
-    ///Generated trait containing gRPC methods that should be implemented for use with LoginServer.
+    /// Generated trait containing gRPC methods that should be implemented for use with LoginServer.
     #[async_trait]
     pub trait Login: Send + Sync + 'static {
         /// 用户登陆

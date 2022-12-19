@@ -8,19 +8,19 @@ use async_graphql::{
 };
 use async_graphql_axum::{GraphQLRequest, GraphQLResponse};
 use axum::{
-    extract,
+    extract::State,
     http::{header::AUTHORIZATION, HeaderMap},
     response::{self, IntoResponse},
     routing::post,
-    Extension, Router, Server,
+    Router, Server,
 };
 use cors::get_cors;
 use graphql::{mutation::MutationRoot, query::QueryRoot, RootSchema};
 
 async fn graphql_handler(
-    schema: extract::Extension<RootSchema>,
-    req: GraphQLRequest,
+    State(schema): State<RootSchema>,
     header: HeaderMap,
+    req: GraphQLRequest,
 ) -> GraphQLResponse {
     match header
         .get(AUTHORIZATION)
@@ -46,7 +46,7 @@ async fn main() -> anyhow::Result<()> {
 
     let app = Router::new()
         .route("/graphql", post(graphql_handler).get(graphql_playground))
-        .layer(Extension(schema))
+        .with_state(schema)
         .layer(cors);
 
     Server::bind(&"0.0.0.0:8080".parse()?)

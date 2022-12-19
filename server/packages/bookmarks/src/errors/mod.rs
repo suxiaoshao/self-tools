@@ -122,8 +122,8 @@ impl Clone for GraphqlError {
                 sub_value,
                 super_value,
             } => Self::Scope {
-                sub_tag: *sub_tag,
-                super_tag: *super_tag,
+                sub_tag,
+                super_tag,
                 sub_value: *sub_value,
                 super_value: *super_value,
             },
