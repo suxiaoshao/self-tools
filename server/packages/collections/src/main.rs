@@ -1,6 +1,7 @@
 mod errors;
 mod graphql;
 mod model;
+mod service;
 
 use async_graphql::{
     http::{playground_source, GraphQLPlaygroundConfig},
