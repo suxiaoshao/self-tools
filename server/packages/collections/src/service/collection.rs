@@ -12,6 +12,7 @@ use crate::{
 pub struct Collection {
     pub id: i64,
     pub name: String,
+    pub path: String,
     pub parent_id: Option<i64>,
     pub description: Option<String>,
     pub create_time: OffsetDateTime,
@@ -36,6 +37,7 @@ impl From<CollectionModel> for Collection {
         Self {
             name: model.name,
             id: model.id,
+            path: model.path,
             parent_id: model.parent_id,
             description: model.description,
             create_time: model.create_time,
@@ -54,7 +56,13 @@ impl Collection {
         let conn = &mut CONNECTION.get()?;
         match parent_id {
             None => {
-                let collection = CollectionModel::create(name, None, description, conn)?;
+                let collection_path = format!("/{}/", name);
+                // 子目录已存在
+                if CollectionModel::exists_by_path(&collection_path, conn)? {
+                    return Err(GraphqlError::AlreadyExists(collection_path));
+                }
+                let collection =
+                    CollectionModel::create(name, &collection_path, None, description, conn)?;
                 Ok(collection.into())
             }
 
@@ -63,7 +71,16 @@ impl Collection {
                 if !CollectionModel::exists(id, conn)? {
                     return Err(GraphqlError::NotFound("父目录", id));
                 }
-                let collection = CollectionModel::create(name, parent_id, description, conn)?;
+                let CollectionModel {
+                    path: parent_path, ..
+                } = CollectionModel::find_one(id, conn)?;
+                let collection_path = format!("{}{}/", parent_path, name);
+                // 子目录已存在
+                if CollectionModel::exists_by_path(&collection_path, conn)? {
+                    return Err(GraphqlError::AlreadyExists(collection_path));
+                }
+                let collection =
+                    CollectionModel::create(name, &collection_path, parent_id, description, conn)?;
                 Ok(collection.into())
             }
         }

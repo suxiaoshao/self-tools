@@ -4,6 +4,7 @@ diesel::table! {
     collection (id) {
         id -> Int8,
         name -> Text,
+        path -> Text,
         description -> Nullable<Text>,
         parent_id -> Nullable<Int8>,
         create_time -> Timestamptz,

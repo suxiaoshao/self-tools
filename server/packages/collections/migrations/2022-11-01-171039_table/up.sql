@@ -3,6 +3,7 @@ create table collection
 (
     id          bigserial primary key,
     name        text        not null,
+    path        text        not null unique,
     description text,
     parent_id   bigint,
     create_time timestamptz not null default now(),

@@ -9,6 +9,7 @@ use time::OffsetDateTime;
 pub struct CollectionModel {
     pub id: i64,
     pub name: String,
+    pub path: String,
     pub description: Option<String>,
     pub parent_id: Option<i64>,
     pub create_time: OffsetDateTime,
@@ -18,6 +19,7 @@ pub struct CollectionModel {
 #[diesel(table_name = collection)]
 struct NewCollection<'a> {
     pub name: &'a str,
+    pub path: &'a str,
     pub description: Option<String>,
     pub parent_id: Option<i64>,
     pub create_time: OffsetDateTime,
@@ -29,6 +31,7 @@ impl CollectionModel {
     /// 创建目录
     pub fn create(
         name: &str,
+        path: &str,
         parent_id: Option<i64>,
         description: Option<String>,
         conn: &mut PgConnection,
@@ -36,6 +39,7 @@ impl CollectionModel {
         let now = time::OffsetDateTime::now_utc();
         let new_collection = NewCollection {
             name,
+            path,
             parent_id,
             description,
             create_time: now,
@@ -67,6 +71,18 @@ impl CollectionModel {
         let collection =
             diesel::delete(collection::table.filter(collection::id.eq(id))).get_result(conn)?;
         Ok(collection)
+    }
+}
+
+/// path 相关
+impl CollectionModel {
+    /// 是否存在该路径
+    pub fn exists_by_path(path: &str, conn: &mut PgConnection) -> GraphqlResult<bool> {
+        let exists = diesel::select(diesel::dsl::exists(
+            collection::table.filter(collection::path.eq(path)),
+        ))
+        .get_result(conn)?;
+        Ok(exists)
     }
 }
 
