@@ -1,3 +1,5 @@
+use crate::errors::GraphqlResult;
+
 use super::schema::item;
 use diesel::prelude::*;
 use time::OffsetDateTime;
@@ -14,10 +16,71 @@ pub struct ItemModel {
 }
 #[derive(Insertable)]
 #[diesel(table_name = item)]
-struct NewCollection<'a> {
+struct NewItem<'a> {
     pub name: &'a str,
     pub content: &'a str,
     pub collection_id: i64,
     pub create_time: OffsetDateTime,
     pub update_time: OffsetDateTime,
+}
+
+/// id 相关
+impl ItemModel {
+    /// 创建记录
+    pub fn create(
+        name: &str,
+        content: &str,
+        collection_id: i64,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<Self> {
+        let now = time::OffsetDateTime::now_utc();
+        let new_item = NewItem {
+            name,
+            content,
+            collection_id,
+            create_time: now,
+            update_time: now,
+        };
+        let new_item = diesel::insert_into(item::table)
+            .values(&new_item)
+            .get_result(conn)?;
+        Ok(new_item)
+    }
+    /// 删除记录
+    pub fn delete(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
+        let item = diesel::delete(item::table.filter(item::id.eq(id))).get_result(conn)?;
+        Ok(item)
+    }
+    /// 查找小说
+    pub fn find_one(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
+        let item = item::table.filter(item::id.eq(id)).first::<Self>(conn)?;
+        Ok(item)
+    }
+    /// 判断是否存在
+    pub fn exists(id: i64, conn: &mut PgConnection) -> GraphqlResult<bool> {
+        let exists = diesel::select(diesel::dsl::exists(item::table.filter(item::id.eq(id))))
+            .get_result(conn)?;
+        Ok(exists)
+    }
+}
+
+/// collection_id 相关
+impl ItemModel {
+    /// 查询小说
+    pub fn query(collection_id: i64, conn: &mut PgConnection) -> GraphqlResult<Vec<Self>> {
+        // 获取数据
+        let data = item::table
+            .filter(item::collection_id.eq(collection_id))
+            .load(conn)?;
+        Ok(data)
+    }
+    /// 根据 collection_id 删除小说
+    pub fn delete_by_collection_id(
+        collection_id: i64,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<usize> {
+        let deleted = diesel::delete(item::table.filter(item::collection_id.eq(collection_id)))
+            .execute(conn)?;
+        Ok(deleted)
+    }
 }

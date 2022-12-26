@@ -1,7 +1,10 @@
 use async_graphql::Object;
 
 use super::validator::DirNameValidator;
-use crate::{errors::GraphqlResult, service::collection::Collection};
+use crate::{
+    errors::GraphqlResult,
+    service::{collection::Collection, item::Item},
+};
 
 pub struct MutationRoot;
 
@@ -21,5 +24,19 @@ impl MutationRoot {
     async fn delete_collection(&self, id: i64) -> GraphqlResult<Collection> {
         let deleted_directory = Collection::delete(id)?;
         Ok(deleted_directory)
+    }
+    /// 创建小说
+    async fn create_item(
+        &self,
+        name: String,
+        content: String,
+        collection_id: i64,
+    ) -> GraphqlResult<Item> {
+        Item::create(name, content, collection_id)
+    }
+    /// 删除小说
+    async fn delete_item(&self, id: i64) -> GraphqlResult<Item> {
+        let deleted_item = Item::delete(id)?;
+        Ok(deleted_item)
     }
 }

@@ -109,12 +109,3 @@ impl CollectionModel {
         }
     }
 }
-
-/// all
-impl CollectionModel {
-    /// 获取所有目录
-    pub fn get_list(conn: &mut PgConnection) -> GraphqlResult<Vec<Self>> {
-        let collections = collection::table.load(conn)?;
-        Ok(collections)
-    }
-}

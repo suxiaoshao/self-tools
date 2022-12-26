@@ -1,10 +1,10 @@
 use async_graphql::*;
-use diesel::Connection;
+use diesel::{Connection, PgConnection};
 use time::OffsetDateTime;
 
 use crate::{
     errors::{GraphqlError, GraphqlResult},
-    model::{collection::CollectionModel, CONNECTION},
+    model::{collection::CollectionModel, item::ItemModel, CONNECTION},
 };
 
 #[derive(SimpleObject)]
@@ -93,17 +93,24 @@ impl Collection {
     pub fn delete(id: i64) -> GraphqlResult<Self> {
         let conn = &mut CONNECTION.get()?;
         conn.transaction(|conn| {
-            // 目录不存在
-            if !CollectionModel::exists(id, conn)? {
-                return Err(GraphqlError::NotFound("目录", id));
-            }
-            let collection = CollectionModel::delete(id, conn)?;
-            //递归删除子目录
-            CollectionModel::get_list_by_parent(Some(id), conn)?
-                .into_iter()
-                .try_for_each(|CollectionModel { id, .. }| Collection::delete(id).map(|_| ()))?;
-            Ok(collection.into())
+            let collection = Self::delete_inner(id, conn)?;
+            Ok(collection)
         })
+    }
+    /// 删除目录
+    fn delete_inner(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
+        // 目录不存在
+        if !CollectionModel::exists(id, conn)? {
+            return Err(GraphqlError::NotFound("目录", id));
+        }
+        // 删除目录下的记录
+        ItemModel::delete_by_collection_id(id, conn)?;
+        let collection = CollectionModel::delete(id, conn)?;
+        //递归删除子目录
+        CollectionModel::get_list_by_parent(Some(id), conn)?
+            .into_iter()
+            .try_for_each(|CollectionModel { id, .. }| Collection::delete(id).map(|_| ()))?;
+        Ok(collection.into())
     }
     /// 获取目录列表
     pub fn get_list_parent_id(parent_id: Option<i64>) -> GraphqlResult<Vec<Self>> {
