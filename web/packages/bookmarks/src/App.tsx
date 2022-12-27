@@ -3,7 +3,7 @@ import { CustomTheme } from 'theme';
 import AppRouter from './components/AppRouter';
 import { SnackbarProvider } from 'notify';
 import { ApolloProvider } from '@apollo/client';
-import { client } from 'custom-graphql';
+import { getClient } from 'custom-graphql';
 import { Provider } from 'react-redux';
 import store from './app/store';
 
@@ -12,7 +12,7 @@ function App() {
     <Provider store={store}>
       <CustomTheme>
         <SnackbarProvider>
-          <ApolloProvider client={client}>
+          <ApolloProvider client={getClient('https://bookmarks.sushao.top/graphql')}>
             <BrowserRouter>
               <AppRouter />
             </BrowserRouter>

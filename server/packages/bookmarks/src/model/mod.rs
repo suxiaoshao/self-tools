@@ -14,7 +14,7 @@ pub mod tag;
 
 type PgPool = Pool<ConnectionManager<PgConnection>>;
 pub static CONNECTION: Lazy<PgPool> = Lazy::new(|| {
-    let database_url = env::var("POSTGRES").expect("DATABASE_URL must be set");
+    let database_url = env::var("BOOKMARKS_PG").expect("DATABASE_URL must be set");
     let manager = ConnectionManager::<PgConnection>::new(database_url);
 
     Pool::builder()

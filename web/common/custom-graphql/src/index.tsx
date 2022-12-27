@@ -3,10 +3,11 @@ import { onError } from '@apollo/client/link/error';
 import { enqueueSnackbar } from 'notify';
 import { setContext } from '@apollo/client/link/context';
 
-const httpLink = createHttpLink({
-  uri: String(import.meta.env.VITE_GRAPHQL_URL ?? 'https://bookmarks.sushao.top/graphql'),
-  credentials: 'include',
-});
+const getHttpLink = (url: string) =>
+  createHttpLink({
+    uri: String(url),
+    credentials: 'include',
+  });
 
 /** 错误处理  */
 const errorLink = onError(({ graphQLErrors, networkError }) => {
@@ -45,8 +46,9 @@ const defaultOptions: DefaultOptions = {
   },
 };
 
-export const client = new ApolloClient({
-  link: from([errorLink, authLink, httpLink]),
-  cache: new InMemoryCache(),
-  defaultOptions,
-});
+export const getClient = (url: string) =>
+  new ApolloClient({
+    link: from([errorLink, authLink, getHttpLink(url)]),
+    cache: new InMemoryCache(),
+    defaultOptions,
+  });

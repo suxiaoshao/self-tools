@@ -1,0 +1,104 @@
+# This file was generated based on ".graphqlconfig". Do not edit manually.
+
+schema {
+  query: QueryRoot
+  mutation: MutationRoot
+}
+
+type Author {
+  avatar: String!
+  createTime: Int!
+  description: String!
+  id: Int!
+  name: String!
+  updateTime: Int!
+  url: String!
+}
+
+type Collection {
+  "获取祖先列表"
+  ancestors: [Collection!]!
+  "获取子列表"
+  children: [Collection!]!
+  createTime: Int!
+  description: String
+  id: Int!
+  name: String!
+  parentId: Int
+  path: String!
+  updateTime: Int!
+}
+
+type MutationRoot {
+  "创建作者"
+  createAuthor(avatar: String!, description: String!, name: String!, url: String!): Author!
+  "创建目录"
+  createCollection(description: String, name: String!, parentId: Int): Collection!
+  "创建小说"
+  createNovel(data: CreateNovelInput!): Novel!
+  "创建标签"
+  createTag(collectionId: Int, name: String!): Tag!
+  "删除作者"
+  deleteAuthor(id: Int!): Author!
+  "删除目录"
+  deleteCollection(id: Int!): Collection!
+  "删除小说"
+  deleteNovel(id: Int!): Novel!
+  "删除标签"
+  deleteTag(id: Int!): Tag!
+}
+
+type Novel {
+  author: Author!
+  collection: Collection
+  createTime: Int!
+  description: String!
+  id: Int!
+  name: String!
+  status: ReadStatus!
+  tags: [Tag!]!
+  updateTime: Int!
+}
+
+type QueryRoot {
+  "获取目录详情"
+  getCollection(id: Int!): Collection!
+  "获取目录列表"
+  getCollections(parentId: Int): [Collection!]!
+  "获取小说详情"
+  getNovel(id: Int!): Novel!
+  "获取作者列表"
+  queryAuthors(searchName: String): [Author!]!
+  "获取小说列表"
+  queryNovels(collectionId: Int, readStatus: ReadStatus, tagMatch: TagMatch): [Novel!]!
+  "获取标签列表"
+  queryTags(collectionId: Int, deepSearch: Boolean): [Tag!]!
+}
+
+type Tag {
+  collectionId: Int
+  createTime: Int!
+  id: Int!
+  name: String!
+  updateTime: Int!
+}
+
+enum ReadStatus {
+  READ
+  READING
+  UNREAD
+}
+
+input CreateNovelInput {
+  authorId: Int!
+  collectionId: Int
+  description: String!
+  name: String!
+  tags: [Int!]!
+  url: String!
+}
+
+input TagMatch {
+  fullMatch: Boolean!
+  matchSet: [Int!]!
+}
