@@ -7,3 +7,4 @@ pub mod mutation;
 pub mod query;
 pub mod validator;
 pub type RootSchema = Schema<QueryRoot, MutationRoot, EmptySubscription>;
+mod guard;

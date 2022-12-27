@@ -1,6 +1,6 @@
 use async_graphql::Object;
 
-use super::validator::DirNameValidator;
+use super::{guard::AuthGuard, validator::DirNameValidator};
 use crate::{
     errors::GraphqlResult,
     service::{collection::Collection, item::Item},
@@ -11,6 +11,7 @@ pub struct MutationRoot;
 #[Object]
 impl MutationRoot {
     /// 创建目录
+    #[graphql(guard = "AuthGuard::default()")]
     async fn create_collection(
         &self,
         #[graphql(validator(custom = "DirNameValidator"))] name: String,
@@ -21,11 +22,13 @@ impl MutationRoot {
         Ok(new_directory)
     }
     /// 删除目录
+    #[graphql(guard = "AuthGuard::default()")]
     async fn delete_collection(&self, id: i64) -> GraphqlResult<Collection> {
         let deleted_directory = Collection::delete(id)?;
         Ok(deleted_directory)
     }
     /// 创建小说
+    #[graphql(guard = "AuthGuard::default()")]
     async fn create_item(
         &self,
         name: String,
@@ -35,6 +38,7 @@ impl MutationRoot {
         Item::create(name, content, collection_id)
     }
     /// 删除小说
+    #[graphql(guard = "AuthGuard::default()")]
     async fn delete_item(&self, id: i64) -> GraphqlResult<Item> {
         let deleted_item = Item::delete(id)?;
         Ok(deleted_item)
