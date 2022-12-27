@@ -46,6 +46,15 @@ services:
       - postgres
     env_file:
       - .env
+  collections:
+    image: suxiaoshao/collections:latest
+    restart: always
+    container_name: collections
+    depends_on:
+      - auth
+      - postgres
+    env_file:
+      - .env
 volumes:
   postgres:
     name: postgres
