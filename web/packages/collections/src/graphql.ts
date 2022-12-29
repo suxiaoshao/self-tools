@@ -13,17 +13,15 @@ export type Scalars = {
   Boolean: boolean;
   Int: number;
   Float: number;
-};
-
-export type Author = {
-  __typename?: 'Author';
-  avatar: Scalars['String'];
-  createTime: Scalars['Int'];
-  description: Scalars['String'];
-  id: Scalars['Int'];
-  name: Scalars['String'];
-  updateTime: Scalars['Int'];
-  url: Scalars['String'];
+  /**
+   * A datetime with timezone offset.
+   *
+   * The input is a string in RFC3339 format, e.g. "2022-01-12T04:00:19.12345Z"
+   * or "2022-01-12T04:00:19+03:00". The output is also a string in RFC3339
+   * format, but it is always normalized to the UTC (Z) offset, e.g.
+   * "2022-01-12T04:00:19.12345Z".
+   */
+  DateTime: string;
 };
 
 export type Collection = {
@@ -32,49 +30,35 @@ export type Collection = {
   ancestors: Array<Collection>;
   /** 获取子列表 */
   children: Array<Collection>;
-  createTime: Scalars['Int'];
+  createTime: Scalars['DateTime'];
   description?: Maybe<Scalars['String']>;
   id: Scalars['Int'];
   name: Scalars['String'];
   parentId?: Maybe<Scalars['Int']>;
   path: Scalars['String'];
-  updateTime: Scalars['Int'];
+  updateTime: Scalars['DateTime'];
 };
 
-export type CreateNovelInput = {
-  authorId: Scalars['Int'];
-  collectionId?: InputMaybe<Scalars['Int']>;
-  description: Scalars['String'];
+export type Item = {
+  __typename?: 'Item';
+  collection?: Maybe<Collection>;
+  content: Scalars['String'];
+  createTime: Scalars['DateTime'];
+  id: Scalars['Int'];
   name: Scalars['String'];
-  tags: Array<Scalars['Int']>;
-  url: Scalars['String'];
+  updateTime: Scalars['DateTime'];
 };
 
 export type MutationRoot = {
   __typename?: 'MutationRoot';
-  /** 创建作者 */
-  createAuthor: Author;
   /** 创建目录 */
   createCollection: Collection;
   /** 创建小说 */
-  createNovel: Novel;
-  /** 创建标签 */
-  createTag: Tag;
-  /** 删除作者 */
-  deleteAuthor: Author;
+  createItem: Item;
   /** 删除目录 */
   deleteCollection: Collection;
   /** 删除小说 */
-  deleteNovel: Novel;
-  /** 删除标签 */
-  deleteTag: Tag;
-};
-
-export type MutationRootCreateAuthorArgs = {
-  avatar: Scalars['String'];
-  description: Scalars['String'];
-  name: Scalars['String'];
-  url: Scalars['String'];
+  deleteItem: Item;
 };
 
 export type MutationRootCreateCollectionArgs = {
@@ -83,42 +67,18 @@ export type MutationRootCreateCollectionArgs = {
   parentId?: InputMaybe<Scalars['Int']>;
 };
 
-export type MutationRootCreateNovelArgs = {
-  data: CreateNovelInput;
-};
-
-export type MutationRootCreateTagArgs = {
-  collectionId?: InputMaybe<Scalars['Int']>;
+export type MutationRootCreateItemArgs = {
+  collectionId: Scalars['Int'];
+  content: Scalars['String'];
   name: Scalars['String'];
-};
-
-export type MutationRootDeleteAuthorArgs = {
-  id: Scalars['Int'];
 };
 
 export type MutationRootDeleteCollectionArgs = {
   id: Scalars['Int'];
 };
 
-export type MutationRootDeleteNovelArgs = {
+export type MutationRootDeleteItemArgs = {
   id: Scalars['Int'];
-};
-
-export type MutationRootDeleteTagArgs = {
-  id: Scalars['Int'];
-};
-
-export type Novel = {
-  __typename?: 'Novel';
-  author: Author;
-  collection?: Maybe<Collection>;
-  createTime: Scalars['Int'];
-  description: Scalars['String'];
-  id: Scalars['Int'];
-  name: Scalars['String'];
-  status: ReadStatus;
-  tags: Array<Tag>;
-  updateTime: Scalars['Int'];
 };
 
 export type QueryRoot = {
@@ -127,14 +87,10 @@ export type QueryRoot = {
   getCollection: Collection;
   /** 获取目录列表 */
   getCollections: Array<Collection>;
-  /** 获取小说详情 */
-  getNovel: Novel;
-  /** 获取作者列表 */
-  queryAuthors: Array<Author>;
-  /** 获取小说列表 */
-  queryNovels: Array<Novel>;
-  /** 获取标签列表 */
-  queryTags: Array<Tag>;
+  /** 获取记录详情 */
+  getItem: Item;
+  /** 获记录列表 */
+  queryItems: Array<Item>;
 };
 
 export type QueryRootGetCollectionArgs = {
@@ -145,43 +101,21 @@ export type QueryRootGetCollectionsArgs = {
   parentId?: InputMaybe<Scalars['Int']>;
 };
 
-export type QueryRootGetNovelArgs = {
+export type QueryRootGetItemArgs = {
   id: Scalars['Int'];
 };
 
-export type QueryRootQueryAuthorsArgs = {
-  searchName?: InputMaybe<Scalars['String']>;
+export type QueryRootQueryItemsArgs = {
+  collectionId: Scalars['Int'];
 };
 
-export type QueryRootQueryNovelsArgs = {
-  collectionId?: InputMaybe<Scalars['Int']>;
-  readStatus?: InputMaybe<ReadStatus>;
-  tagMatch?: InputMaybe<TagMatch>;
-};
+export type GetCollectionSelectQueryVariables = Exact<{
+  parentId?: InputMaybe<Scalars['Int']>;
+}>;
 
-export type QueryRootQueryTagsArgs = {
-  collectionId?: InputMaybe<Scalars['Int']>;
-  deepSearch?: InputMaybe<Scalars['Boolean']>;
-};
-
-export enum ReadStatus {
-  Read = 'READ',
-  Reading = 'READING',
-  Unread = 'UNREAD',
-}
-
-export type Tag = {
-  __typename?: 'Tag';
-  collectionId?: Maybe<Scalars['Int']>;
-  createTime: Scalars['Int'];
-  id: Scalars['Int'];
-  name: Scalars['String'];
-  updateTime: Scalars['Int'];
-};
-
-export type TagMatch = {
-  fullMatch: Scalars['Boolean'];
-  matchSet: Array<Scalars['Int']>;
+export type GetCollectionSelectQuery = {
+  __typename?: 'QueryRoot';
+  getCollections: Array<{ __typename?: 'Collection'; name: string; id: number }>;
 };
 
 export type GetCollectionsQueryVariables = Exact<{
@@ -195,8 +129,8 @@ export type GetCollectionsQuery = {
     name: string;
     id: number;
     path: string;
-    createTime: number;
-    updateTime: number;
+    createTime: string;
+    updateTime: string;
     description?: string | null;
   }>;
 };
@@ -235,6 +169,85 @@ export type GetCollectionAncestorsQuery = {
   };
 };
 
+export type GetItemsQueryVariables = Exact<{
+  collectionId: Scalars['Int'];
+}>;
+
+export type GetItemsQuery = {
+  __typename?: 'QueryRoot';
+  queryItems: Array<{
+    __typename?: 'Item';
+    name: string;
+    id: number;
+    updateTime: string;
+    createTime: string;
+    content: string;
+  }>;
+};
+
+export type DeleteItemMutationVariables = Exact<{
+  id: Scalars['Int'];
+}>;
+
+export type DeleteItemMutation = { __typename?: 'MutationRoot'; deleteItem: { __typename?: 'Item'; name: string } };
+
+export type CreateItemMutationVariables = Exact<{
+  collectionId: Scalars['Int'];
+  name: Scalars['String'];
+  content: Scalars['String'];
+}>;
+
+export type CreateItemMutation = { __typename?: 'MutationRoot'; createItem: { __typename?: 'Item'; name: string } };
+
+export const GetCollectionSelectDocument = gql`
+  query getCollectionSelect($parentId: Int) {
+    getCollections(parentId: $parentId) {
+      name
+      id
+    }
+  }
+`;
+
+/**
+ * __useGetCollectionSelectQuery__
+ *
+ * To run a query within a React component, call `useGetCollectionSelectQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetCollectionSelectQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetCollectionSelectQuery({
+ *   variables: {
+ *      parentId: // value for 'parentId'
+ *   },
+ * });
+ */
+export function useGetCollectionSelectQuery(
+  baseOptions?: Apollo.QueryHookOptions<GetCollectionSelectQuery, GetCollectionSelectQueryVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useQuery<GetCollectionSelectQuery, GetCollectionSelectQueryVariables>(
+    GetCollectionSelectDocument,
+    options,
+  );
+}
+export function useGetCollectionSelectLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<GetCollectionSelectQuery, GetCollectionSelectQueryVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useLazyQuery<GetCollectionSelectQuery, GetCollectionSelectQueryVariables>(
+    GetCollectionSelectDocument,
+    options,
+  );
+}
+export type GetCollectionSelectQueryHookResult = ReturnType<typeof useGetCollectionSelectQuery>;
+export type GetCollectionSelectLazyQueryHookResult = ReturnType<typeof useGetCollectionSelectLazyQuery>;
+export type GetCollectionSelectQueryResult = Apollo.QueryResult<
+  GetCollectionSelectQuery,
+  GetCollectionSelectQueryVariables
+>;
 export const GetCollectionsDocument = gql`
   query getCollections($parentId: Int) {
     getCollections(parentId: $parentId) {
@@ -422,3 +435,114 @@ export type GetCollectionAncestorsQueryResult = Apollo.QueryResult<
   GetCollectionAncestorsQuery,
   GetCollectionAncestorsQueryVariables
 >;
+export const GetItemsDocument = gql`
+  query getItems($collectionId: Int!) {
+    queryItems(collectionId: $collectionId) {
+      name
+      id
+      updateTime
+      createTime
+      content
+    }
+  }
+`;
+
+/**
+ * __useGetItemsQuery__
+ *
+ * To run a query within a React component, call `useGetItemsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetItemsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetItemsQuery({
+ *   variables: {
+ *      collectionId: // value for 'collectionId'
+ *   },
+ * });
+ */
+export function useGetItemsQuery(baseOptions: Apollo.QueryHookOptions<GetItemsQuery, GetItemsQueryVariables>) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useQuery<GetItemsQuery, GetItemsQueryVariables>(GetItemsDocument, options);
+}
+export function useGetItemsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetItemsQuery, GetItemsQueryVariables>) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useLazyQuery<GetItemsQuery, GetItemsQueryVariables>(GetItemsDocument, options);
+}
+export type GetItemsQueryHookResult = ReturnType<typeof useGetItemsQuery>;
+export type GetItemsLazyQueryHookResult = ReturnType<typeof useGetItemsLazyQuery>;
+export type GetItemsQueryResult = Apollo.QueryResult<GetItemsQuery, GetItemsQueryVariables>;
+export const DeleteItemDocument = gql`
+  mutation deleteItem($id: Int!) {
+    deleteItem(id: $id) {
+      name
+    }
+  }
+`;
+export type DeleteItemMutationFn = Apollo.MutationFunction<DeleteItemMutation, DeleteItemMutationVariables>;
+
+/**
+ * __useDeleteItemMutation__
+ *
+ * To run a mutation, you first call `useDeleteItemMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteItemMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteItemMutation, { data, loading, error }] = useDeleteItemMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteItemMutation(
+  baseOptions?: Apollo.MutationHookOptions<DeleteItemMutation, DeleteItemMutationVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useMutation<DeleteItemMutation, DeleteItemMutationVariables>(DeleteItemDocument, options);
+}
+export type DeleteItemMutationHookResult = ReturnType<typeof useDeleteItemMutation>;
+export type DeleteItemMutationResult = Apollo.MutationResult<DeleteItemMutation>;
+export type DeleteItemMutationOptions = Apollo.BaseMutationOptions<DeleteItemMutation, DeleteItemMutationVariables>;
+export const CreateItemDocument = gql`
+  mutation createItem($collectionId: Int!, $name: String!, $content: String!) {
+    createItem(collectionId: $collectionId, name: $name, content: $content) {
+      name
+    }
+  }
+`;
+export type CreateItemMutationFn = Apollo.MutationFunction<CreateItemMutation, CreateItemMutationVariables>;
+
+/**
+ * __useCreateItemMutation__
+ *
+ * To run a mutation, you first call `useCreateItemMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateItemMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createItemMutation, { data, loading, error }] = useCreateItemMutation({
+ *   variables: {
+ *      collectionId: // value for 'collectionId'
+ *      name: // value for 'name'
+ *      content: // value for 'content'
+ *   },
+ * });
+ */
+export function useCreateItemMutation(
+  baseOptions?: Apollo.MutationHookOptions<CreateItemMutation, CreateItemMutationVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useMutation<CreateItemMutation, CreateItemMutationVariables>(CreateItemDocument, options);
+}
+export type CreateItemMutationHookResult = ReturnType<typeof useCreateItemMutation>;
+export type CreateItemMutationResult = Apollo.MutationResult<CreateItemMutation>;
+export type CreateItemMutationOptions = Apollo.BaseMutationOptions<CreateItemMutation, CreateItemMutationVariables>;

@@ -1,0 +1,20 @@
+query getItems($collectionId: Int!) {
+  queryItems(collectionId: $collectionId) {
+    name
+    id
+    updateTime
+    createTime
+    content
+  }
+}
+mutation deleteItem($id: Int!) {
+  deleteItem(id: $id) {
+    name
+  }
+}
+
+mutation createItem($collectionId: Int!, $name: String!, $content: String!) {
+  createItem(collectionId: $collectionId, name: $name, content: $content) {
+    name
+  }
+}

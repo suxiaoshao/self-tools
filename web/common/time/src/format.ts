@@ -1,7 +1,7 @@
-import { dayjs } from './index';
+import { Dayjs, dayjs } from './index';
 
 /** 格式化时间 */
-export function format(timestamp?: number): string {
+export function format(timestamp?: string | number | Date | Dayjs | null | undefined): string {
   if (timestamp == null || timestamp == undefined) {
     return '~';
   }
