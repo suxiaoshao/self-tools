@@ -43,7 +43,7 @@ impl From<ItemModel> for Item {
 }
 
 impl Item {
-    /// 创建小说
+    /// 创建记录
     pub fn create(name: String, content: String, collection_id: i64) -> GraphqlResult<Self> {
         let conn = &mut CONNECTION.get()?;
         //  判断父目录是否存在
@@ -53,20 +53,20 @@ impl Item {
         let new_item = ItemModel::create(&name, &content, collection_id, conn)?;
         Ok(new_item.into())
     }
-    /// 删除小说
+    /// 删除记录
     pub fn delete(id: i64) -> GraphqlResult<Self> {
         let conn = &mut CONNECTION.get()?;
         if !ItemModel::exists(id, conn)? {
-            return Err(GraphqlError::NotFound("小说", id));
+            return Err(GraphqlError::NotFound("记录", id));
         }
         let item = ItemModel::delete(id, conn)?;
         Ok(item.into())
     }
-    /// 获取小说
+    /// 获取记录
     pub fn get(id: i64) -> GraphqlResult<Self> {
         let conn = &mut CONNECTION.get()?;
         if !ItemModel::exists(id, conn)? {
-            return Err(GraphqlError::NotFound("小说", id));
+            return Err(GraphqlError::NotFound("记录", id));
         }
         let item = ItemModel::find_one(id, conn)?;
         Ok(item.into())
@@ -75,17 +75,26 @@ impl Item {
 
 /// collection_id 相关
 impl Item {
-    /// 选择小说
-    pub fn query(collection_id: i64) -> GraphqlResult<Vec<Self>> {
+    /// 选择记录
+    pub fn query(collection_id: i64, offset: i64, limit: i64) -> GraphqlResult<Vec<Self>> {
         let conn = &mut CONNECTION.get()?;
         //  判断父目录是否存在
         if !CollectionModel::exists(collection_id, conn)? {
             return Err(GraphqlError::NotFound("目录", collection_id));
         }
-        let data = ItemModel::query(collection_id, conn)?
+        let data = ItemModel::query(collection_id, offset, limit, conn)?
             .into_iter()
             .map(Into::into)
             .collect();
         Ok(data)
+    }
+    /// 记录数量
+    pub fn count(collection_id: i64) -> GraphqlResult<i64> {
+        let conn = &mut CONNECTION.get()?;
+        //  判断父目录是否存在
+        if !CollectionModel::exists(collection_id, conn)? {
+            return Err(GraphqlError::NotFound("目录", collection_id));
+        }
+        ItemModel::count(collection_id, conn)
     }
 }

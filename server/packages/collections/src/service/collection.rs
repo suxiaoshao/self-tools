@@ -25,11 +25,6 @@ impl Collection {
         let ancestors = Collection::get_ancestors(self.id)?;
         Ok(ancestors)
     }
-    /// 获取子列表
-    async fn children(&self) -> GraphqlResult<Vec<Collection>> {
-        let children = Collection::get_list_parent_id(Some(self.id))?;
-        Ok(children)
-    }
 }
 
 impl From<CollectionModel> for Collection {
@@ -107,22 +102,10 @@ impl Collection {
         ItemModel::delete_by_collection_id(id, conn)?;
         let collection = CollectionModel::delete(id, conn)?;
         //递归删除子目录
-        CollectionModel::get_list_by_parent(Some(id), conn)?
+        CollectionModel::list_parent(Some(id), conn)?
             .into_iter()
             .try_for_each(|CollectionModel { id, .. }| Collection::delete(id).map(|_| ()))?;
         Ok(collection.into())
-    }
-    /// 获取目录列表
-    pub fn get_list_parent_id(parent_id: Option<i64>) -> GraphqlResult<Vec<Self>> {
-        let conn = &mut CONNECTION.get()?;
-        //  判断父目录是否存在
-        if let Some(id) = parent_id {
-            if !CollectionModel::exists(id, conn)? {
-                return Err(GraphqlError::NotFound("目录", id));
-            }
-        }
-        let collections = CollectionModel::get_list_by_parent(parent_id, conn)?;
-        Ok(collections.into_iter().map(|d| d.into()).collect())
     }
     /// 获取祖先目录列表
     pub fn get_ancestors(id: i64) -> GraphqlResult<Vec<Self>> {
@@ -151,5 +134,37 @@ impl Collection {
         }
         let collection = CollectionModel::find_one(id, conn)?;
         Ok(collection.into())
+    }
+}
+
+/// parent id 相关
+impl Collection {
+    /// 获取目录列表
+    pub fn get_list_parent_id(
+        parent_id: Option<i64>,
+        offset: i64,
+        limit: i64,
+    ) -> GraphqlResult<Vec<Self>> {
+        let conn = &mut CONNECTION.get()?;
+        //  判断父目录是否存在
+        if let Some(id) = parent_id {
+            if !CollectionModel::exists(id, conn)? {
+                return Err(GraphqlError::NotFound("目录", id));
+            }
+        }
+        let collections = CollectionModel::list_parent_with_page(parent_id, offset, limit, conn)?;
+        Ok(collections.into_iter().map(|d| d.into()).collect())
+    }
+    /// 获取目录数量
+    pub fn count_parent_id(parent_id: Option<i64>) -> GraphqlResult<i64> {
+        let conn = &mut CONNECTION.get()?;
+        //  判断父目录是否存在
+        if let Some(id) = parent_id {
+            if !CollectionModel::exists(id, conn)? {
+                return Err(GraphqlError::NotFound("目录", id));
+            }
+        }
+        let count = CollectionModel::get_count_by_parent(parent_id, conn)?;
+        Ok(count)
     }
 }

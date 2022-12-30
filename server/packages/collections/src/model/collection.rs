@@ -89,7 +89,7 @@ impl CollectionModel {
 /// parent_id 相关
 impl CollectionModel {
     /// 获取父目录下的所有目录
-    pub fn get_list_by_parent(
+    pub fn list_parent(
         parent_id: Option<i64>,
         conn: &mut PgConnection,
     ) -> GraphqlResult<Vec<Self>> {
@@ -105,6 +105,54 @@ impl CollectionModel {
                     .filter(collection::parent_id.is_null())
                     .load(conn)?;
                 Ok(collections)
+            }
+        }
+    }
+    /// 获取父目录下的目录
+    pub fn list_parent_with_page(
+        parent_id: Option<i64>,
+        offset: i64,
+        limit: i64,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<Vec<Self>> {
+        match parent_id {
+            Some(parent_id) => {
+                let collections = collection::table
+                    .filter(collection::parent_id.eq(parent_id))
+                    .offset(offset)
+                    .limit(limit)
+                    .load(conn)?;
+                Ok(collections)
+            }
+            None => {
+                let collections = collection::table
+                    .filter(collection::parent_id.is_null())
+                    .offset(offset)
+                    .limit(limit)
+                    .load(conn)?;
+                Ok(collections)
+            }
+        }
+    }
+    /// 获取父目录下的目录数量
+    pub fn get_count_by_parent(
+        parent_id: Option<i64>,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<i64> {
+        match parent_id {
+            Some(parent_id) => {
+                let count = collection::table
+                    .filter(collection::parent_id.eq(parent_id))
+                    .count()
+                    .get_result(conn)?;
+                Ok(count)
+            }
+            None => {
+                let count = collection::table
+                    .filter(collection::parent_id.is_null())
+                    .count()
+                    .get_result(conn)?;
+                Ok(count)
             }
         }
     }

@@ -27,6 +27,7 @@ pub enum GraphqlError {
         sub_value: i64,
         super_value: Option<i64>,
     },
+    PageSizeTooMore,
 }
 
 impl IntoResponse for GraphqlError {
@@ -70,6 +71,7 @@ impl GraphqlError {
                     None => "无".to_string(),
                 }
             ),
+            GraphqlError::PageSizeTooMore => "页码太大".to_string(),
         }
     }
     pub fn code(&self) -> &str {
@@ -100,6 +102,7 @@ impl GraphqlError {
             GraphqlError::NotFound(..)
             | GraphqlError::AlreadyExists(_)
             | GraphqlError::Scope { .. } => "InvalidArgument",
+            GraphqlError::PageSizeTooMore => "InvalidArgument",
         }
     }
 }
@@ -127,6 +130,7 @@ impl Clone for GraphqlError {
                 sub_value: *sub_value,
                 super_value: *super_value,
             },
+            GraphqlError::PageSizeTooMore => Self::PageSizeTooMore,
         }
     }
 }

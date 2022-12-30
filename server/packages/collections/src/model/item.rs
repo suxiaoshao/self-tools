@@ -51,7 +51,7 @@ impl ItemModel {
         let item = diesel::delete(item::table.filter(item::id.eq(id))).get_result(conn)?;
         Ok(item)
     }
-    /// 查找小说
+    /// 查找记录
     pub fn find_one(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
         let item = item::table.filter(item::id.eq(id)).first::<Self>(conn)?;
         Ok(item)
@@ -66,15 +66,30 @@ impl ItemModel {
 
 /// collection_id 相关
 impl ItemModel {
-    /// 查询小说
-    pub fn query(collection_id: i64, conn: &mut PgConnection) -> GraphqlResult<Vec<Self>> {
+    /// 查询记录
+    pub fn query(
+        collection_id: i64,
+        offset: i64,
+        limit: i64,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<Vec<Self>> {
         // 获取数据
         let data = item::table
             .filter(item::collection_id.eq(collection_id))
+            .offset(offset)
+            .limit(limit)
             .load(conn)?;
         Ok(data)
     }
-    /// 根据 collection_id 删除小说
+    /// 查询记录数量
+    pub fn count(collection_id: i64, conn: &mut PgConnection) -> GraphqlResult<i64> {
+        let count = item::table
+            .filter(item::collection_id.eq(collection_id))
+            .count()
+            .get_result(conn)?;
+        Ok(count)
+    }
+    /// 根据 collection_id 删除记录
     pub fn delete_by_collection_id(
         collection_id: i64,
         conn: &mut PgConnection,
