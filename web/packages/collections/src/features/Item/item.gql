@@ -1,12 +1,3 @@
-query getItems($collectionId: Int!) {
-  queryItems(collectionId: $collectionId) {
-    name
-    id
-    updateTime
-    createTime
-    content
-  }
-}
 mutation deleteItem($id: Int!) {
   deleteItem(id: $id) {
     name

@@ -1,5 +1,5 @@
 import { Box, IconButton, Link } from '@mui/material';
-import { GetCollectionsQuery, useDeleteCollectionMutation, useGetCollectionsQuery } from '../../graphql';
+import { useDeleteCollectionMutation, useCollectionAndItemsQuery, CollectionAndItemsQuery } from '../../graphql';
 import { useMemo } from 'react';
 import { CustomColumnArray, TableActions, CustomTable, useCustomTable } from 'custom-table';
 import { format } from 'time';
@@ -10,11 +10,13 @@ import AncestorsPath from './components/AncestorsPath';
 import useParentId from './components/useParentId';
 
 export default function Home() {
-  const parentId = useParentId();
-  const { data: { getCollections } = {}, refetch } = useGetCollectionsQuery({ variables: { parentId } });
+  const id = useParentId();
+  const { data: { collectionAndItem } = {}, refetch } = useCollectionAndItemsQuery({
+    variables: { id, pagitation: { page: 1, pageSize: 50 } },
+  });
   const [deleteCollection] = useDeleteCollectionMutation();
 
-  const columns = useMemo<CustomColumnArray<GetCollectionsQuery['getCollections'][0]>>(
+  const columns = useMemo<CustomColumnArray<CollectionAndItemsQuery['collectionAndItem'][0]>>(
     () => [
       {
         Header: '名字',
@@ -28,12 +30,12 @@ export default function Home() {
       {
         Header: '路径',
         id: 'path',
-        accessor: 'path',
+        accessor: (data) => (data.__typename === 'Collection' ? data.path : '-'),
       },
       {
         Header: '描述',
         id: 'description',
-        accessor: ({ description }) => description ?? '-',
+        accessor: (data) => (data.__typename === 'Collection' ? data.description ?? '-' : '-'),
         cellProps: {
           align: 'center',
         },
@@ -70,7 +72,7 @@ export default function Home() {
     ],
     [deleteCollection, refetch],
   );
-  const tableInstance = useCustomTable({ columns, data: getCollections ?? [] });
+  const tableInstance = useCustomTable({ columns, data: collectionAndItem ?? [] });
 
   return (
     <Box sx={{ width: '100%', height: '100%', p: 2, display: 'flex', flexDirection: 'column' }}>

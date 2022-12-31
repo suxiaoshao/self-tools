@@ -1,11 +1,22 @@
-query getCollections($parentId: Int) {
-  getCollections(parentId: $parentId) {
-    name
-    id
-    path
-    createTime
-    updateTime
-    description
+query collectionAndItems($id: Int, $pagitation: Pagination!) {
+  collectionAndItem(id: $id, pagination: $pagitation) {
+    ... on Collection {
+      name
+      id
+      path
+      createTime
+      updateTime
+      description
+      __typename
+    }
+    ... on Item {
+      name
+      id
+      updateTime
+      createTime
+      content
+      __typename
+    }
   }
 }
 mutation deleteCollection($id: Int!) {
