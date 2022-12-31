@@ -1,20 +1,4 @@
-use std::collections::HashSet;
-
-use async_graphql::{InputObject, Union};
-
-use crate::service::{collection::Collection, item::Item};
-
-#[derive(InputObject)]
-pub struct TagMatch {
-    pub match_set: HashSet<i64>,
-    pub full_match: bool,
-}
-
-#[derive(Union)]
-pub enum ItemAndCollection {
-    Item(Item),
-    Collection(Collection),
-}
+use async_graphql::InputObject;
 
 #[derive(InputObject)]
 pub struct Pagination {

@@ -2,7 +2,7 @@ use async_graphql::Object;
 
 use super::{
     guard::AuthGuard,
-    input::{ItemAndCollection, Pagination},
+    types::{ItemAndCollection, List, Pagination},
 };
 use crate::{
     errors::{GraphqlError, GraphqlResult},
@@ -31,17 +31,22 @@ impl QueryRoot {
         &self,
         id: Option<i64>,
         pagination: Pagination,
-    ) -> GraphqlResult<Vec<ItemAndCollection>> {
+    ) -> GraphqlResult<List<ItemAndCollection>> {
         let offset = pagination.offset();
         let offset_plus_imit = pagination.offset_plus_limit();
         let collection_count = Collection::count_parent_id(id)?;
+        let item_count = match id {
+            Some(id) => Item::count(id)?,
+            None => 0,
+        };
+        let total = collection_count + item_count;
         // 全目录
         if offset_plus_imit <= collection_count {
             let data = Collection::get_list_parent_id(id, offset, pagination.page_size)?
                 .into_iter()
                 .map(ItemAndCollection::Collection)
                 .collect();
-            return Ok(data);
+            return Ok(List::new(data, total));
         }
         // 目录 & 记录
         if offset < collection_count && collection_count < offset_plus_imit {
@@ -54,7 +59,7 @@ impl QueryRoot {
                     .into_iter()
                     .for_each(|x| data.push(ItemAndCollection::Item(x)));
             }
-            return Ok(data);
+            return Ok(List::new(data, total));
         }
         // 全记录
         let id = match id {
@@ -63,7 +68,6 @@ impl QueryRoot {
                 return Err(GraphqlError::PageSizeTooMore);
             }
         };
-        let item_count = Item::count(id)?;
         if collection_count + item_count < offset {
             return Err(GraphqlError::PageSizeTooMore);
         }
@@ -71,6 +75,6 @@ impl QueryRoot {
             .into_iter()
             .map(ItemAndCollection::Item)
             .collect();
-        Ok(data)
+        Ok(List::new(data, total))
     }
 }
