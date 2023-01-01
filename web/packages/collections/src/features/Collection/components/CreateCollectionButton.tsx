@@ -2,7 +2,7 @@ import { Button, Dialog, Box, DialogTitle, DialogContent, DialogActions, TextFie
 import { useState } from 'react';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { CreateCollectionMutationVariables, useCreateCollectionMutation } from '../../../graphql';
-import useParentId from './useParentId';
+import useParentId from '../hooks/useParentId';
 
 export interface CreateCollectButtonProps {
   /** 表格重新刷新 */

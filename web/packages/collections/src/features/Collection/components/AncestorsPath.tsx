@@ -1,7 +1,7 @@
 import { Breadcrumbs, LinearProgress, Link } from '@mui/material';
 import { createSearchParams, Link as RouterLink } from 'react-router-dom';
 import { useGetCollectionAncestorsQuery } from '../../../graphql';
-import useParentId from './useParentId';
+import useParentId from '../hooks/useParentId';
 
 export default function AncestorsPath() {
   const parentId = useParentId();

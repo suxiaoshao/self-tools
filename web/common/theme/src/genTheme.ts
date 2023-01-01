@@ -2,7 +2,7 @@ import { argbFromHex, themeFromSourceColor, Theme as YouTheme, hexFromArgb } fro
 import { createTheme, Theme as MuiTheme } from '@mui/material';
 
 // Get the theme from a hex color
-export const genTheme = themeFromSourceColor(argbFromHex('#3c5ba9'));
+export const genTheme = themeFromSourceColor(argbFromHex('#d5ebe1'));
 
 export function youThemeToMuiTheme(youTheme: YouTheme, mode: 'dark' | 'light' = 'light'): MuiTheme {
   const theme = youTheme.schemes[mode];

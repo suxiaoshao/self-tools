@@ -28,6 +28,11 @@ type Item {
   updateTime: DateTime!
 }
 
+type List {
+  data: [ItemAndCollection!]!
+  total: Int!
+}
+
 type MutationRoot {
   "创建目录"
   createCollection(description: String, name: String!, parentId: Int): Collection!
@@ -41,7 +46,7 @@ type MutationRoot {
 
 type QueryRoot {
   "获取集合下的集合和记录"
-  collectionAndItem(id: Int, pagination: Pagination!): [ItemAndCollection!]!
+  collectionAndItem(id: Int, pagination: Pagination!): List!
   "获取目录详情"
   getCollection(id: Int!): Collection!
   "获取记录详情"

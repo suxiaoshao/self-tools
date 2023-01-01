@@ -113,7 +113,7 @@ export function CustomTable<D extends object>({
                 rowsPerPageOptions={page.pageSizeOptions}
                 onRowsPerPageChange={(event) => {
                   page.setPageSize(parseInt(event.target.value, 10));
-                  page.setPage(0);
+                  page.setPage(1);
                 }}
               />
             </TableRow>

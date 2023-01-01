@@ -49,6 +49,12 @@ export type Item = {
 
 export type ItemAndCollection = Collection | Item;
 
+export type List = {
+  __typename?: 'List';
+  data: Array<ItemAndCollection>;
+  total: Scalars['Int'];
+};
+
 export type MutationRoot = {
   __typename?: 'MutationRoot';
   /** 创建目录 */
@@ -89,7 +95,7 @@ export type Pagination = {
 export type QueryRoot = {
   __typename?: 'QueryRoot';
   /** 获取集合下的集合和记录 */
-  collectionAndItem: Array<ItemAndCollection>;
+  collectionAndItem: List;
   /** 获取目录详情 */
   getCollection: Collection;
   /** 获取记录详情 */
@@ -116,18 +122,22 @@ export type CollectionAndItemsQueryVariables = Exact<{
 
 export type CollectionAndItemsQuery = {
   __typename?: 'QueryRoot';
-  collectionAndItem: Array<
-    | {
-        __typename: 'Collection';
-        name: string;
-        id: number;
-        path: string;
-        createTime: string;
-        updateTime: string;
-        description?: string | null;
-      }
-    | { __typename: 'Item'; name: string; id: number; updateTime: string; createTime: string; content: string }
-  >;
+  collectionAndItem: {
+    __typename?: 'List';
+    total: number;
+    data: Array<
+      | {
+          __typename: 'Collection';
+          name: string;
+          id: number;
+          path: string;
+          createTime: string;
+          updateTime: string;
+          description?: string | null;
+        }
+      | { __typename: 'Item'; name: string; id: number; updateTime: string; createTime: string; content: string }
+    >;
+  };
 };
 
 export type DeleteCollectionMutationVariables = Exact<{
@@ -181,23 +191,26 @@ export type CreateItemMutation = { __typename?: 'MutationRoot'; createItem: { __
 export const CollectionAndItemsDocument = gql`
   query collectionAndItems($id: Int, $pagitation: Pagination!) {
     collectionAndItem(id: $id, pagination: $pagitation) {
-      ... on Collection {
-        name
-        id
-        path
-        createTime
-        updateTime
-        description
-        __typename
+      data {
+        ... on Collection {
+          name
+          id
+          path
+          createTime
+          updateTime
+          description
+          __typename
+        }
+        ... on Item {
+          name
+          id
+          updateTime
+          createTime
+          content
+          __typename
+        }
       }
-      ... on Item {
-        name
-        id
-        updateTime
-        createTime
-        content
-        __typename
-      }
+      total
     }
   }
 `;

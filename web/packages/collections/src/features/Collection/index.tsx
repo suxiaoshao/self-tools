@@ -1,78 +1,24 @@
-import { Box, IconButton, Link } from '@mui/material';
-import { useDeleteCollectionMutation, useCollectionAndItemsQuery, CollectionAndItemsQuery } from '../../graphql';
-import { useMemo } from 'react';
-import { CustomColumnArray, TableActions, CustomTable, useCustomTable } from 'custom-table';
-import { format } from 'time';
+import { Box, IconButton } from '@mui/material';
+import { useCollectionAndItemsQuery } from '../../graphql';
+import { CustomTable, useCustomTable, usePage, usePageWithTotal } from 'custom-table';
 import { Refresh } from '@mui/icons-material';
 import CreateCollectionButton from './components/CreateCollectionButton';
-import { Link as RouterLink, createSearchParams } from 'react-router-dom';
 import AncestorsPath from './components/AncestorsPath';
-import useParentId from './components/useParentId';
+import useParentId from './hooks/useParentId';
+import useTableColumns from './hooks/useTableColumns';
+import CreateItemButton from './components/CreateItemButton';
 
 export default function Home() {
   const id = useParentId();
-  const { data: { collectionAndItem } = {}, refetch } = useCollectionAndItemsQuery({
-    variables: { id, pagitation: { page: 1, pageSize: 50 } },
-  });
-  const [deleteCollection] = useDeleteCollectionMutation();
+  const pageState = usePage();
+  const { data: { collectionAndItem: { data, total } } = { collectionAndItem: {} }, refetch } =
+    useCollectionAndItemsQuery({
+      variables: { id, pagitation: { page: pageState.pageIndex, pageSize: pageState.pageSize } },
+    });
+  const page = usePageWithTotal(pageState, total);
 
-  const columns = useMemo<CustomColumnArray<CollectionAndItemsQuery['collectionAndItem'][0]>>(
-    () => [
-      {
-        Header: '名字',
-        id: 'name',
-        accessor: ({ name, id }) => (
-          <Link component={RouterLink} to={{ search: createSearchParams({ parentId: id.toString() }).toString() }}>
-            {name}
-          </Link>
-        ),
-      },
-      {
-        Header: '路径',
-        id: 'path',
-        accessor: (data) => (data.__typename === 'Collection' ? data.path : '-'),
-      },
-      {
-        Header: '描述',
-        id: 'description',
-        accessor: (data) => (data.__typename === 'Collection' ? data.description ?? '-' : '-'),
-        cellProps: {
-          align: 'center',
-        },
-      },
-      {
-        Header: '创建时间',
-        id: 'createTime',
-        accessor: ({ createTime }) => format(createTime),
-      },
-      {
-        Header: '更新时间',
-        id: 'updateTime',
-        accessor: ({ updateTime }) => format(updateTime),
-      },
-      {
-        Header: '操作',
-        id: 'action',
-        accessor: ({ id }) => (
-          <TableActions>
-            {(onClose) => [
-              {
-                text: '删除',
-                onClick: async () => {
-                  await deleteCollection({ variables: { id } });
-                  onClose();
-                  await refetch();
-                },
-              },
-            ]}
-          </TableActions>
-        ),
-        cellProps: { padding: 'none' },
-      },
-    ],
-    [deleteCollection, refetch],
-  );
-  const tableInstance = useCustomTable({ columns, data: collectionAndItem ?? [] });
+  const columns = useTableColumns(refetch);
+  const tableInstance = useCustomTable({ columns, data: data ?? [] });
 
   return (
     <Box sx={{ width: '100%', height: '100%', p: 2, display: 'flex', flexDirection: 'column' }}>
@@ -85,11 +31,12 @@ export default function Home() {
         }}
       >
         <CreateCollectionButton refetch={refetch} />
+        {id && <CreateItemButton refetch={refetch} collectionId={id} />}
         <IconButton sx={{ marginLeft: 'auto' }} onClick={() => refetch()}>
           <Refresh />
         </IconButton>
       </Box>
-      <CustomTable tableInstance={tableInstance} />
+      <CustomTable tableInstance={tableInstance} page={page} />
     </Box>
   );
 }

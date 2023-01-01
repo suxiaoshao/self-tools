@@ -10,17 +10,17 @@ export interface PageState {
   pageSizeOptions?: number[];
 }
 export function usePage({
-  initPageIndex = 0,
-  initPageSize = 10,
-  pageSizeOptions,
+  initPageIndex = 1,
+  initPageSize = 20,
+  pageSizeOptions = [5, 10, 20, 50, 100],
 }: {
   initPageSize?: number;
   initPageIndex?: number;
   pageSizeOptions?: number[];
-}): PageState {
+} = {}): PageState {
   const [pageIndex, setPage] = useState(initPageIndex);
   const [pageSize, setPageSize] = useState(initPageSize);
-  const offset = useMemo(() => pageIndex * pageSize, [pageIndex, pageSize]);
+  const offset = useMemo(() => (pageIndex - 1) * pageSize, [pageIndex, pageSize]);
   const limit = useMemo(() => pageSize, [pageSize]);
   return { pageIndex, setPage, offset, limit, pageSize, setPageSize, pageSizeOptions };
 }
