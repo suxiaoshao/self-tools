@@ -1,8 +1,9 @@
 import { Close } from '@mui/icons-material';
-import { Button, Dialog, Box, DialogContent, TextField, AppBar, IconButton, Toolbar, Typography } from '@mui/material';
+import { Button, Dialog, Box, TextField, AppBar, IconButton, Toolbar, Typography, FormLabel } from '@mui/material';
 import { useState } from 'react';
-import { useForm, SubmitHandler } from 'react-hook-form';
+import { useForm, SubmitHandler, Controller } from 'react-hook-form';
 import { CreateItemMutationVariables, useCreateItemMutation } from '../../../graphql';
+import CustomEdit from '../../../components/CustomEdit';
 
 export interface CreateItemButtonProps {
   /** 表格重新刷新 */
@@ -13,8 +14,7 @@ export interface CreateItemButtonProps {
 export default function CreateItemButton({ refetch, collectionId }: CreateItemButtonProps): JSX.Element {
   type FormData = Omit<CreateItemMutationVariables, 'parentId'>;
   // 表单控制
-  const { handleSubmit, register } = useForm<FormData>();
-
+  const { handleSubmit, register, control } = useForm<FormData>();
   const [createItem] = useCreateItemMutation();
 
   const onSubmit: SubmitHandler<FormData> = async ({ name, content }) => {
@@ -33,7 +33,7 @@ export default function CreateItemButton({ refetch, collectionId }: CreateItemBu
         添加项目
       </Button>
       <Dialog fullScreen open={open} onClose={handleClose}>
-        <Box onSubmit={handleSubmit(onSubmit)} component="form">
+        <Box sx={{ height: '100%' }} onSubmit={handleSubmit(onSubmit)} component="form">
           <AppBar sx={{ position: 'relative' }}>
             <Toolbar>
               <IconButton edge="start" color="inherit" onClick={handleClose} aria-label="close">
@@ -47,10 +47,35 @@ export default function CreateItemButton({ refetch, collectionId }: CreateItemBu
               </Button>
             </Toolbar>
           </AppBar>
-          <DialogContent>
+          <Box
+            sx={{
+              overflow: 'hidden',
+              height: 'calc(100% - 64px)',
+              display: 'flex',
+              flexDirection: 'column',
+              padding: 2,
+            }}
+          >
             <TextField variant="standard" required fullWidth label="项目名" {...register('name', { required: true })} />
-            <TextField sx={{ mt: 1 }} variant="standard" fullWidth label="内容" {...register('content')} />
-          </DialogContent>
+
+            <Controller
+              control={control}
+              name="content"
+              rules={{ required: true }}
+              render={({ field }) => (
+                <>
+                  <FormLabel required sx={{ mt: 2 }}>
+                    内容
+                  </FormLabel>
+                  <CustomEdit
+                    sx={{ width: '100%', flex: '1 1 0', borderRadius: 2, overflow: 'hidden' }}
+                    language="markdown"
+                    {...field}
+                  />
+                </>
+              )}
+            />
+          </Box>
         </Box>
       </Dialog>
     </>

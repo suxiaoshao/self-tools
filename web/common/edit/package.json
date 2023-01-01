@@ -1,0 +1,13 @@
+{
+  "name": "edit",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/index.tsx",
+  "types": "src/index.tsx",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "monaco-editor": "^0.34.1"
+  }
+}

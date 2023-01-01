@@ -15,7 +15,7 @@
     "custom-table": "workspace:custom-table",
     "notify": "workspace:notify",
     "theme": "workspace:theme",
-    "time": "workspace:time"
-  },
-  "devDependencies": {}
+    "time": "workspace:time",
+    "edit": "workspace:edit"
+  }
 }

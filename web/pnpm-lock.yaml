@@ -96,6 +96,12 @@ importers:
     devDependencies:
       '@types/react-table': 7.7.14
 
+  common/edit:
+    specifiers:
+      monaco-editor: ^0.34.1
+    dependencies:
+      monaco-editor: 0.34.1
+
   common/notify:
     specifiers:
       notistack: ^2.0.8
@@ -135,16 +141,21 @@ importers:
       auth: workspace:auth
       custom-graphql: workspace:custom-graphql
       custom-table: workspace:custom-table
+      edit: workspace:edit
       notify: workspace:notify
       theme: workspace:theme
       time: workspace:time
+      vite-plugin-monaco-editor: ^1.1.0
     dependencies:
       auth: link:../../common/auth
       custom-graphql: link:../../common/custom-graphql
       custom-table: link:../../common/custom-table
+      edit: link:../../common/edit
       notify: link:../../common/notify
       theme: link:../../common/theme
       time: link:../../common/time
+    devDependencies:
+      vite-plugin-monaco-editor: 1.1.0_monaco-editor@0.34.1
 
 packages:
 
@@ -4519,6 +4530,9 @@ packages:
       brace-expansion: 1.1.11
     dev: true
 
+  /monaco-editor/0.34.1:
+    resolution: {integrity: sha512-FKc80TyiMaruhJKKPz5SpJPIjL+dflGvz4CpuThaPMc94AyN7SeC9HQ8hrvaxX7EyHdJcUY5i4D0gNyJj1vSZQ==}
+
   /ms/2.1.2:
     resolution: {integrity: sha512-sGkPx+VjMtmA6MX27oA4FBFELFCZZ4S4XqeGOXCv68tT+jb3vk/RyaKWP0PTKyWtmLSM0b+adUTEvbs1PEaH2w==}
 
@@ -5607,6 +5621,14 @@ packages:
   /value-or-promise/1.0.11:
     resolution: {integrity: sha512-41BrgH+dIbCFXClcSapVs5M6GkENd3gQOJpEfPDNa71LsUGMXDL0jMWpI/Rh7WhX+Aalfz2TTS3Zt5pUsbnhLg==}
     engines: {node: '>=12'}
+    dev: true
+
+  /vite-plugin-monaco-editor/1.1.0_monaco-editor@0.34.1:
+    resolution: {integrity: sha512-IvtUqZotrRoVqwT0PBBDIZPNraya3BxN/bfcNfnxZ5rkJiGcNtO5eAOWWSgT7zullIAEqQwxMU83yL9J5k7gww==}
+    peerDependencies:
+      monaco-editor: '>=0.33.0'
+    dependencies:
+      monaco-editor: 0.34.1
     dev: true
 
   /vite/4.0.3_@types+node@18.11.18:
