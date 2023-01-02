@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import './init';
 import { editor } from 'monaco-editor';
 import { Box, BoxProps, useTheme } from '@mui/material';
+import { MonacoMarkdownExtension } from 'monaco-markdown';
 
 /**
  * @author sushao
@@ -43,7 +45,7 @@ export default function Edit({ onChangeCode, code, language, ...props }: EditPro
     (html: HTMLElement) => {
       if (createTimes.current === 0) {
         const newEditor = editor.create(html, {
-          theme: theme.palette.mode === 'dark' ? 'vs-dark' : undefined,
+          theme: theme.palette.mode === 'dark' ? 'monankai' : undefined,
           automaticLayout: true,
           fontSize: 16,
           minimap: {
@@ -52,6 +54,10 @@ export default function Edit({ onChangeCode, code, language, ...props }: EditPro
           language,
           value: code,
         });
+        if (language === 'markdown') {
+          const extension = new MonacoMarkdownExtension();
+          extension.activate(newEditor as Parameters<typeof extension.activate>[0]);
+        }
         createTimes.current++;
         return newEditor;
       } else {

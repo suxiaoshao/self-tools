@@ -13,9 +13,15 @@
     "auth": "workspace:auth",
     "custom-graphql": "workspace:custom-graphql",
     "custom-table": "workspace:custom-table",
+    "edit": "workspace:edit",
+    "markdown-to-jsx": "^7.1.8",
     "notify": "workspace:notify",
+    "prism-themes": "^1.9.0",
+    "prismjs": "^1.29.0",
     "theme": "workspace:theme",
-    "time": "workspace:time",
-    "edit": "workspace:edit"
+    "time": "workspace:time"
+  },
+  "devDependencies": {
+    "@types/prismjs": "^1.26.0"
   }
 }

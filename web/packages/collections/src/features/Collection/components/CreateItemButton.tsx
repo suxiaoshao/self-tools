@@ -1,9 +1,22 @@
-import { Close } from '@mui/icons-material';
-import { Button, Dialog, Box, TextField, AppBar, IconButton, Toolbar, Typography, FormLabel } from '@mui/material';
+import { Close, Edit as EditIcon, Preview } from '@mui/icons-material';
+import {
+  Button,
+  Dialog,
+  Box,
+  TextField,
+  AppBar,
+  IconButton,
+  Toolbar,
+  Typography,
+  FormLabel,
+  ToggleButton,
+  ToggleButtonGroup,
+} from '@mui/material';
 import { useState } from 'react';
 import { useForm, SubmitHandler, Controller } from 'react-hook-form';
 import { CreateItemMutationVariables, useCreateItemMutation } from '../../../graphql';
 import CustomEdit from '../../../components/CustomEdit';
+import Markdown from '../../../components/Markdown';
 
 export interface CreateItemButtonProps {
   /** 表格重新刷新 */
@@ -27,6 +40,10 @@ export default function CreateItemButton({ refetch, collectionId }: CreateItemBu
   const handleClose = () => {
     setOpen(false);
   };
+  const [alignment, setAlignment] = useState<'edit' | 'preview' | null>('edit');
+  const handleAlignment = (event: React.MouseEvent<HTMLElement>, newAlignment: 'edit' | 'preview' | null) => {
+    setAlignment(newAlignment);
+  };
   return (
     <>
       <Button color="secondary" sx={{ ml: 2 }} size="large" variant="contained" onClick={() => setOpen(true)}>
@@ -36,7 +53,7 @@ export default function CreateItemButton({ refetch, collectionId }: CreateItemBu
         <Box sx={{ height: '100%' }} onSubmit={handleSubmit(onSubmit)} component="form">
           <AppBar sx={{ position: 'relative' }}>
             <Toolbar>
-              <IconButton edge="start" color="inherit" onClick={handleClose} aria-label="close">
+              <IconButton edge="start" color="secondary" onClick={handleClose} aria-label="close">
                 <Close />
               </IconButton>
               <Typography sx={{ ml: 2, flex: 1 }} variant="h6" component="div">
@@ -64,14 +81,34 @@ export default function CreateItemButton({ refetch, collectionId }: CreateItemBu
               rules={{ required: true }}
               render={({ field }) => (
                 <>
-                  <FormLabel required sx={{ mt: 2 }}>
-                    内容
-                  </FormLabel>
-                  <CustomEdit
-                    sx={{ width: '100%', flex: '1 1 0', borderRadius: 2, overflow: 'hidden' }}
-                    language="markdown"
-                    {...field}
-                  />
+                  <Box sx={{ display: 'flex', alignItems: 'center', mt: 2 }}>
+                    <FormLabel sx={{ flex: 1 }} required>
+                      内容
+                    </FormLabel>
+                    <ToggleButtonGroup
+                      color="primary"
+                      size="small"
+                      value={alignment}
+                      exclusive
+                      onChange={handleAlignment}
+                    >
+                      <ToggleButton value="edit">
+                        <EditIcon />
+                      </ToggleButton>
+                      <ToggleButton value="preview">
+                        <Preview />
+                      </ToggleButton>
+                    </ToggleButtonGroup>
+                  </Box>
+                  {alignment === 'edit' ? (
+                    <CustomEdit
+                      sx={{ width: '100%', flex: '1 1 0', borderRadius: 2, overflow: 'hidden', mt: 1 }}
+                      language="markdown"
+                      {...field}
+                    />
+                  ) : (
+                    <Markdown sx={{ overflowY: 'auto' }} value={field.value ?? ''} />
+                  )}
                 </>
               )}
             />
