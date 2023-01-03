@@ -1,8 +1,11 @@
 import { argbFromHex, themeFromSourceColor, Theme as YouTheme, hexFromArgb } from '@material/material-color-utilities';
 import { createTheme, Theme as MuiTheme } from '@mui/material';
+import { createContext } from 'react';
 
 // Get the theme from a hex color
-export const genTheme = themeFromSourceColor(argbFromHex('#d5ebe1'));
+export const youTheme = themeFromSourceColor(argbFromHex('#9cd67e'));
+
+export const YouThemeContext = createContext<YouTheme>(youTheme);
 
 export function youThemeToMuiTheme(youTheme: YouTheme, mode: 'dark' | 'light' = 'light'): MuiTheme {
   const theme = youTheme.schemes[mode];

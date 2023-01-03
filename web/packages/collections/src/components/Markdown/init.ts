@@ -27,6 +27,8 @@ import 'prismjs/components/prism-ejs.min';
 import 'prismjs/components/prism-java.min';
 import 'prismjs/components/prism-json.min';
 import 'prismjs/components/prism-nasm.min';
+import 'prismjs/components/prism-sql.min';
+import 'prismjs/components/prism-rust.min';
 
 /* style */
 import 'prism-themes/themes/prism-dracula.css';

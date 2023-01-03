@@ -21,6 +21,7 @@ export interface EditProps extends Omit<BoxProps, 'onChange'> {
    * */
   onChangeCode?(newCode: string): void;
   language?: string;
+  wordWrap?: 'off' | 'on' | 'wordWrapColumn' | 'bounded';
 }
 
 /**
@@ -29,7 +30,7 @@ export interface EditProps extends Omit<BoxProps, 'onChange'> {
  * @since 0.2.2
  * @description 编辑器组件
  * */
-export default function Edit({ onChangeCode, code, language, ...props }: EditProps): JSX.Element {
+export default function Edit({ onChangeCode, code, language, wordWrap, ...props }: EditProps): JSX.Element {
   /**
    * 编辑器绑定的 dom 的引用
    * */
@@ -53,6 +54,8 @@ export default function Edit({ onChangeCode, code, language, ...props }: EditPro
           },
           language,
           value: code,
+          fontLigatures: true,
+          wordWrap,
         });
         if (language === 'markdown') {
           const extension = new MonacoMarkdownExtension();
@@ -64,7 +67,7 @@ export default function Edit({ onChangeCode, code, language, ...props }: EditPro
         return null;
       }
     },
-    [code, language, theme.palette.mode],
+    [code, language, theme.palette.mode, wordWrap],
   );
   /**
    * 编辑器要绑定的 dom 生成时,再这个 dom 上新建一个编辑器,并赋值给 edit

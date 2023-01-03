@@ -102,12 +102,13 @@ export default function CreateItemButton({ refetch, collectionId }: CreateItemBu
                   </Box>
                   {alignment === 'edit' ? (
                     <CustomEdit
+                      wordWrap="on"
                       sx={{ width: '100%', flex: '1 1 0', borderRadius: 2, overflow: 'hidden', mt: 1 }}
                       language="markdown"
                       {...field}
                     />
                   ) : (
-                    <Markdown sx={{ overflowY: 'auto' }} value={field.value ?? ''} />
+                    <Markdown sx={{ overflowY: 'auto', mt: 1 }} value={field.value ?? ''} />
                   )}
                 </>
               )}
