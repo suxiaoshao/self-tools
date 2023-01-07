@@ -1,5 +1,5 @@
 import { hexFromArgb, Scheme } from '@material/material-color-utilities';
-export default function setYouThemeToCssVars(theme: Scheme): void {
+export default function setYouThemeToCssVars(theme: ReturnType<Scheme['toJSON']>): void {
   const {
     primary,
     onPrimary,

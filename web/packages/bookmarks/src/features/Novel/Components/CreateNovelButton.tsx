@@ -19,8 +19,6 @@ export default function CreateNovelButton({ refetch, collectionId }: CreateNovel
   const [createNovel] = useCreateNovelMutation();
 
   const onSubmit: SubmitHandler<FormData> = async ({ ...formData }) => {
-    console.log(formData);
-
     await createNovel({ variables: { ...formData, collectionId } });
     refetch();
     handleClose();

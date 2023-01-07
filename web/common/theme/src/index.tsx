@@ -1,37 +1,48 @@
 import React, { useEffect } from 'react';
-import { CssBaseline, ThemeProvider, useMediaQuery } from '@mui/material';
+import { createTheme, CssBaseline, ThemeProvider } from '@mui/material';
 import '@fontsource/roboto/300.css';
 import '@fontsource/roboto/400.css';
 import '@fontsource/roboto/500.css';
 import '@fontsource/roboto/700.css';
 import './index.css';
-import { youTheme, YouThemeContext, youThemeToMuiTheme } from './youTheme';
 import setYouThemeToCssVars from './cssVar';
+import {
+  colorSchemaMatch,
+  selectActiveYouTheme,
+  selectMuiTheme,
+  setSystemColorScheme,
+  useAppDispatch,
+  useAppSelector,
+} from './themeSlice';
 
 export interface CustomThemeProps {
   children?: React.ReactNode;
 }
 
 export function CustomTheme({ children }: CustomThemeProps): JSX.Element {
-  const isDark = useMediaQuery('(prefers-color-scheme: dark)');
+  const youTheme = useAppSelector(selectActiveYouTheme);
+  const muiTheme = useAppSelector(selectMuiTheme);
+  const dispatch = useAppDispatch();
 
-  const theme = React.useMemo(() => {
-    const newTheme = youThemeToMuiTheme(youTheme, isDark ? 'dark' : 'light');
-    return newTheme;
-  }, [isDark]);
   useEffect(() => {
-    setYouThemeToCssVars(youTheme.schemes[isDark ? 'dark' : 'light']);
-  }, [isDark]);
+    setYouThemeToCssVars(youTheme);
+  }, [youTheme]);
+  useEffect(() => {
+    colorSchemaMatch.addEventListener('change', (e) => {
+      const colorScheme = e.matches ? 'dark' : 'light';
+      dispatch(setSystemColorScheme(colorScheme));
+    });
+  }, [dispatch]);
   return (
-    <YouThemeContext.Provider value={youTheme}>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        {children}
-      </ThemeProvider>
-    </YouThemeContext.Provider>
+    <ThemeProvider theme={createTheme(muiTheme)}>
+      <CssBaseline />
+      {children}
+    </ThemeProvider>
   );
 }
 
-export { YouThemeContext } from './youTheme';
-
 export { hexFromArgb } from '@material/material-color-utilities';
+
+export { default as themeReducer, selectActiveYouTheme } from './themeSlice';
+
+export { default as ThemeFormItem } from './ThemeFormItem';

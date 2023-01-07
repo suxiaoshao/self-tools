@@ -1,15 +1,8 @@
-import { argbFromHex, themeFromSourceColor, Theme as YouTheme, hexFromArgb } from '@material/material-color-utilities';
-import { createTheme, Theme as MuiTheme } from '@mui/material';
-import { createContext } from 'react';
+import { hexFromArgb, Scheme } from '@material/material-color-utilities';
+import { ThemeOptions } from '@mui/material';
 
-// Get the theme from a hex color
-export const youTheme = themeFromSourceColor(argbFromHex('#9cd67e'));
-
-export const YouThemeContext = createContext<YouTheme>(youTheme);
-
-export function youThemeToMuiTheme(youTheme: YouTheme, mode: 'dark' | 'light' = 'light'): MuiTheme {
-  const theme = youTheme.schemes[mode];
-  return createTheme({
+export function youThemeToMuiTheme(theme: ReturnType<Scheme['toJSON']>, mode: 'dark' | 'light' = 'light') {
+  return {
     palette: {
       mode,
       primary: {
@@ -42,5 +35,5 @@ export function youThemeToMuiTheme(youTheme: YouTheme, mode: 'dark' | 'light' = 
         disabled: hexFromArgb(theme.onSurfaceVariant),
       },
     },
-  });
+  } satisfies ThemeOptions;
 }

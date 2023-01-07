@@ -1,5 +1,5 @@
-import React, { useContext, useEffect } from 'react';
-import MarkdownSrouce, { MarkdownToJSX } from 'markdown-to-jsx';
+import React, { useEffect } from 'react';
+import MarkdownSource, { MarkdownToJSX } from 'markdown-to-jsx';
 import Prism from 'prismjs';
 import './init';
 import {
@@ -18,9 +18,9 @@ import {
   BoxProps,
   SxProps,
   Theme,
-  useTheme,
 } from '@mui/material';
-import { hexFromArgb, YouThemeContext } from 'theme';
+import { hexFromArgb, selectActiveYouTheme } from 'theme';
+import { useAppSelector } from '../../app/hooks';
 
 export interface MarkdownProps extends BoxProps {
   value: string;
@@ -140,8 +140,7 @@ function MyTable(props: { children: JSX.Element }) {
 }
 
 function MyBlockquote(props: { children: JSX.Element }) {
-  const youTheme = useContext(YouThemeContext);
-  const theme = useTheme();
+  const youTheme = useAppSelector(selectActiveYouTheme);
   return (
     <Box
       sx={{
@@ -149,8 +148,8 @@ function MyBlockquote(props: { children: JSX.Element }) {
         mb: 2,
         p: 1,
         borderRadius: 2,
-        background: hexFromArgb(youTheme.schemes[theme.palette.mode].onTertiary),
-        color: hexFromArgb(youTheme.schemes[theme.palette.mode].tertiary),
+        background: hexFromArgb(youTheme.onTertiary),
+        color: hexFromArgb(youTheme.tertiary),
       }}
     >
       {props.children}
@@ -215,7 +214,7 @@ export default function MyMarkdown({ value, ...props }: MarkdownProps): JSX.Elem
   }, []);
   return (
     <Box {...props}>
-      <MarkdownSrouce options={option}>{value}</MarkdownSrouce>
+      <MarkdownSource options={option}>{value}</MarkdownSource>
     </Box>
   );
 }

@@ -8,6 +8,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@material/material-color-utilities": "^0.2.0"
+    "@material/material-color-utilities": "^0.2.0",
+    "@mui/system": "^5.11.2"
   }
 }

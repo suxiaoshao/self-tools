@@ -4,6 +4,7 @@ import { Outlet } from 'react-router-dom';
 import RouterItem from './RouterItem';
 import { useAppDispatch } from '../../app/hooks';
 import { logout } from 'auth';
+import { ThemeFormItem } from 'theme';
 
 export default function AppDrawer(): JSX.Element {
   const width = 250;
@@ -31,6 +32,7 @@ export default function AppDrawer(): JSX.Element {
         </List>
         <Divider />
         <List sx={{ width }}>
+          <ThemeFormItem />
           <ListItemButton onClick={() => dispatch(logout())}>
             <ListItemIcon>
               <Logout />

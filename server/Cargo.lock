@@ -63,9 +63,9 @@ dependencies = [
 
 [[package]]
 name = "async-graphql"
-version = "5.0.4"
+version = "5.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6d56592fdc896f45ca73e04f9562033f95ab38b33878155464003187190bb4ba"
+checksum = "6c7c1f9bf1a875b047e97404d16313b3dde09ea06d0639800c9657138e38a441"
 dependencies = [
  "async-graphql-derive",
  "async-graphql-parser",
@@ -77,6 +77,7 @@ dependencies = [
  "fast_chemail",
  "fnv",
  "futures-util",
+ "handlebars",
  "http",
  "indexmap",
  "mime",
@@ -96,9 +97,9 @@ dependencies = [
 
 [[package]]
 name = "async-graphql-axum"
-version = "5.0.4"
+version = "5.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7ede00c2c015686678e91181253b8811c405e17c9185cddb6ff29b84849516a9"
+checksum = "7376168771050c81d948df67fdabccf0ed9a238e565c6ca8065af6eccc570d84"
 dependencies = [
  "async-graphql",
  "async-trait",
@@ -113,9 +114,9 @@ dependencies = [
 
 [[package]]
 name = "async-graphql-derive"
-version = "5.0.4"
+version = "5.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5cbc24a7c61fb52fa8eb563b8ca60ec890d54778be644796ef72047a07c555b2"
+checksum = "381ed1575c53cfc864013932bb5a5df05c21802781dfa6dd27c57068eac9a80d"
 dependencies = [
  "Inflector",
  "async-graphql-parser",
@@ -129,9 +130,9 @@ dependencies = [
 
 [[package]]
 name = "async-graphql-parser"
-version = "5.0.4"
+version = "5.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a7dd090476ce5300418018518c25f2247576a214ffadc504f2af1f074939daf8"
+checksum = "41a7ec217e184ca3034c806957842afb28914f894b69cb5a76b4a57e64f44506"
 dependencies = [
  "async-graphql-value",
  "pest",
@@ -141,9 +142,9 @@ dependencies = [
 
 [[package]]
 name = "async-graphql-value"
-version = "5.0.4"
+version = "5.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "305055a67bece03b7c870544b38d5ed87aaa4d6792f14e4aabdd33e5e43120fa"
+checksum = "e294ef57859c27d31a9bb23edf1db948f7534445df30115d8672314f65451858"
 dependencies = [
  "bytes",
  "indexmap",
@@ -174,9 +175,9 @@ dependencies = [
 
 [[package]]
 name = "async-trait"
-version = "0.1.60"
+version = "0.1.61"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "677d1d8ab452a3936018a687b20e6f7cf5363d713b732b8884001317b0e48aa3"
+checksum = "705339e0e4a9690e2908d2b3d049d85682cf19fbd5782494498fbf7003a6a282"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -823,6 +824,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "handlebars"
+version = "4.3.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "035ef95d03713f2c347a72547b7cd38cbc9af7cd51e6099fb62d586d4a6dee3a"
+dependencies = [
+ "log",
+ "pest",
+ "pest_derive",
+ "serde",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
 name = "hashbrown"
 version = "0.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1244,9 +1259,9 @@ checksum = "72ef4a56884ca558e5ddb05a1d1e7e1bfd9a68d9ed024c21704cc98872dae1bb"
 
 [[package]]
 name = "nom"
-version = "7.1.1"
+version = "7.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a8903e5a29a317527874d0402f867152a3d21c908bb0b933e416c65e301d4c36"
+checksum = "e5507769c4919c998e69e49c839d9dc6e693ede4cc4290d6ad8b41d4f09c548c"
 dependencies = [
  "memchr",
  "minimal-lexical",
@@ -1400,12 +1415,46 @@ checksum = "478c572c3d73181ff3c2539045f6eb99e5491218eae919370993b890cdbdd98e"
 
 [[package]]
 name = "pest"
-version = "2.5.1"
+version = "2.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cc8bed3549e0f9b0a2a78bf7c0018237a2cdf085eecbbc048e52612438e4e9d0"
+checksum = "0f6e86fb9e7026527a0d46bc308b841d73170ef8f443e1807f6ef88526a816d4"
 dependencies = [
  "thiserror",
  "ucd-trie",
+]
+
+[[package]]
+name = "pest_derive"
+version = "2.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "96504449aa860c8dcde14f9fba5c58dc6658688ca1fe363589d6327b8662c603"
+dependencies = [
+ "pest",
+ "pest_generator",
+]
+
+[[package]]
+name = "pest_generator"
+version = "2.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "798e0220d1111ae63d66cb66a5dcb3fc2d986d520b98e49e1852bfdb11d7c5e7"
+dependencies = [
+ "pest",
+ "pest_meta",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "pest_meta"
+version = "2.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "984298b75898e30a843e278a9f2452c31e349a073a0ce6fd950a12a74464e065"
+dependencies = [
+ "once_cell",
+ "pest",
+ "sha1",
 ]
 
 [[package]]
@@ -2303,9 +2352,9 @@ checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
 
 [[package]]
 name = "tokio"
-version = "1.23.0"
+version = "1.24.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eab6d665857cc6ca78d6e80303a02cea7a7851e85dfbd77cbdc09bd129f1ef46"
+checksum = "1d9f76183f91ecfb55e1d7d5602bd1d979e38a3a522fe900241cf195624d67ae"
 dependencies = [
  "autocfg",
  "bytes",
