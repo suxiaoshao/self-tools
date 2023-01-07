@@ -45,4 +45,4 @@ export { hexFromArgb } from '@material/material-color-utilities';
 
 export { default as themeReducer, selectActiveYouTheme } from './themeSlice';
 
-export { default as ThemeFormItem } from './ThemeFormItem';
+export { default as ThemeDrawerItem } from './ThemeDrawerItem';

@@ -1,14 +1,12 @@
-import { Logout, Tag, People, CollectionsBookmark, Book } from '@mui/icons-material';
-import { Box, Divider, List, ListItemButton, ListItemIcon, ListItemText, Paper } from '@mui/material';
+import { Tag, People, CollectionsBookmark, Book } from '@mui/icons-material';
+import { Box, Divider, List, Paper } from '@mui/material';
 import { Outlet } from 'react-router-dom';
 import RouterItem from './RouterItem';
-import { useAppDispatch } from '../../app/hooks';
-import { logout } from 'auth';
-import { ThemeFormItem } from 'theme';
+import { AuthDrawerItem } from 'auth';
+import { ThemeDrawerItem } from 'theme';
 
 export default function AppDrawer(): JSX.Element {
   const width = 250;
-  const dispatch = useAppDispatch();
   return (
     <Box sx={{ display: 'flex', height: '100%' }}>
       <Box
@@ -32,13 +30,8 @@ export default function AppDrawer(): JSX.Element {
         </List>
         <Divider />
         <List sx={{ width }}>
-          <ThemeFormItem />
-          <ListItemButton onClick={() => dispatch(logout())}>
-            <ListItemIcon>
-              <Logout />
-            </ListItemIcon>
-            <ListItemText>登出</ListItemText>
-          </ListItemButton>
+          <ThemeDrawerItem />
+          <AuthDrawerItem />
         </List>
       </Box>
 

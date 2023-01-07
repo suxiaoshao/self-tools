@@ -37,7 +37,13 @@ export default function CreateCollectionButton({ refetch }: CreateCollectButtonP
           <DialogTitle>新建集合</DialogTitle>
           <DialogContent>
             <TextField variant="standard" required fullWidth label="集合名" {...register('name', { required: true })} />
-            <TextField sx={{ mt: 1 }} variant="standard" fullWidth label="描述" {...register('description')} />
+            <TextField
+              sx={{ mt: 1 }}
+              variant="standard"
+              fullWidth
+              label="描述"
+              {...register('description', { setValueAs: (value) => value || null })}
+            />
           </DialogContent>
 
           <DialogActions>

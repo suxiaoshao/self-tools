@@ -5,9 +5,14 @@ import { CustomColumnArray } from 'custom-table';
 import { format } from 'time';
 import Name from '../components/Name';
 import Actions from '../components/Actions';
+import { Article, Folder } from '@mui/icons-material';
 
 const Typename = ({ __typename }: { __typename: CollectionAndItem['__typename'] }) =>
-  __typename === 'Collection' ? <Chip label="集合" color="primary" /> : <Chip label="条目" color="secondary" />;
+  __typename === 'Collection' ? (
+    <Chip icon={<Folder />} variant="outlined" label="集合" color="primary" />
+  ) : (
+    <Chip icon={<Article />} variant="outlined" label="条目" color="secondary" />
+  );
 
 export type CollectionAndItem = CollectionAndItemsQuery['collectionAndItem']['data'][0];
 

@@ -30,7 +30,7 @@ const createColorSchema = object({
   colorSetting: string().required('主题模式不能为空').equals(['light', 'dark', 'system']),
 });
 
-export default function ThemeFormItem() {
+export default function ThemeDrawerItem() {
   // 控制 dialog
   const [open, setOpen] = useState(false);
   const handleClose = () => {

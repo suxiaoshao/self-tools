@@ -76,3 +76,5 @@ export default function Login() {
     </Box>
   );
 }
+
+export { default as AuthDrawerItem } from './AuthDrawerItem';
