@@ -36,12 +36,16 @@ type List {
 type MutationRoot {
   "创建目录"
   createCollection(description: String, name: String!, parentId: Int): Collection!
-  "创建小说"
+  "创建记录"
   createItem(collectionId: Int!, content: String!, name: String!): Item!
   "删除目录"
   deleteCollection(id: Int!): Collection!
-  "删除小说"
+  "删除记录"
   deleteItem(id: Int!): Item!
+  "修改目录"
+  updateCollection(description: String!, id: Int!, name: String!): Collection!
+  "修改小说"
+  updateItem(content: String!, id: Int!, name: String!): Item!
 }
 
 type QueryRoot {
@@ -54,6 +58,7 @@ type QueryRoot {
 }
 
 """
+
 A datetime with timezone offset.
 
 The input is a string in RFC3339 format, e.g. "2022-01-12T04:00:19.12345Z"

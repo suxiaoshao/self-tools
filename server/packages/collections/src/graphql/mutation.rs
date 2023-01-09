@@ -33,9 +33,9 @@ impl MutationRoot {
         &self,
         id: i64,
         name: String,
-        description: String,
+        description: Option<String>,
     ) -> GraphqlResult<Collection> {
-        let updated_directory = Collection::update(id, &name, &description)?;
+        let updated_directory = Collection::update(id, &name, description.as_deref())?;
         Ok(updated_directory)
     }
     /// 创建记录
@@ -54,7 +54,7 @@ impl MutationRoot {
         let deleted_item = Item::delete(id)?;
         Ok(deleted_item)
     }
-    /// 修改小说
+    /// 修改记录
     async fn update_item(&self, id: i64, name: String, content: String) -> GraphqlResult<Item> {
         let updated_item = Item::update(id, &name, &content)?;
         Ok(updated_item)

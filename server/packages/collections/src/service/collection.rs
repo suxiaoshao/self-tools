@@ -136,7 +136,7 @@ impl Collection {
         Ok(collection.into())
     }
     /// 修改集合
-    pub fn update(id: i64, name: &str, description: &str) -> GraphqlResult<Self> {
+    pub fn update(id: i64, name: &str, description: Option<&str>) -> GraphqlResult<Self> {
         let conn = &mut CONNECTION.get()?;
         //  判断目录是否存在
         if !CollectionModel::exists(id, conn)? {

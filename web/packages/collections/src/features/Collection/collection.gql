@@ -43,3 +43,9 @@ query getCollectionAncestors($id: Int!) {
     name
   }
 }
+
+mutation updateCollection($id: Int!, $name: String!, $description: String) {
+  updateCollection(id: $id, name: $name, description: $description) {
+    path
+  }
+}

@@ -76,7 +76,7 @@ impl CollectionModel {
     pub fn update(
         id: i64,
         name: &str,
-        description: &str,
+        description: Option<&str>,
         conn: &mut PgConnection,
     ) -> GraphqlResult<Self> {
         let now = time::OffsetDateTime::now_utc();
