@@ -58,9 +58,25 @@ impl ItemModel {
     }
     /// 判断是否存在
     pub fn exists(id: i64, conn: &mut PgConnection) -> GraphqlResult<bool> {
-        let exists = diesel::select(diesel::dsl::exists(item::table.filter(item::id.eq(id))))
-            .get_result(conn)?;
+        let exists = diesel::select(diesel::dsl::exists(item::table.find(id))).get_result(conn)?;
         Ok(exists)
+    }
+    /// 更新记录
+    pub fn update(
+        id: i64,
+        name: &str,
+        content: &str,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<Self> {
+        let now = time::OffsetDateTime::now_utc();
+        let item = diesel::update(item::table.find(id))
+            .set((
+                item::name.eq(name),
+                item::content.eq(content),
+                item::update_time.eq(now),
+            ))
+            .get_result(conn)?;
+        Ok(item)
     }
 }
 

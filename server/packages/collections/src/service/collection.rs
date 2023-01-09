@@ -135,6 +135,16 @@ impl Collection {
         let collection = CollectionModel::find_one(id, conn)?;
         Ok(collection.into())
     }
+    /// 修改集合
+    pub fn update(id: i64, name: &str, description: &str) -> GraphqlResult<Self> {
+        let conn = &mut CONNECTION.get()?;
+        //  判断目录是否存在
+        if !CollectionModel::exists(id, conn)? {
+            return Err(GraphqlError::NotFound("目录", id));
+        }
+        let collection = CollectionModel::update(id, name, description, conn)?;
+        Ok(collection.into())
+    }
 }
 
 /// parent id 相关

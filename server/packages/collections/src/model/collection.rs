@@ -72,6 +72,23 @@ impl CollectionModel {
             diesel::delete(collection::table.filter(collection::id.eq(id))).get_result(conn)?;
         Ok(collection)
     }
+    /// 更新目录
+    pub fn update(
+        id: i64,
+        name: &str,
+        description: &str,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<Self> {
+        let now = time::OffsetDateTime::now_utc();
+        let collection = diesel::update(collection::table.find(id))
+            .set((
+                collection::name.eq(name),
+                collection::description.eq(description),
+                collection::update_time.eq(now),
+            ))
+            .get_result(conn)?;
+        Ok(collection)
+    }
 }
 
 /// path 相关

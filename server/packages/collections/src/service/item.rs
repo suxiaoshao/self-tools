@@ -71,6 +71,15 @@ impl Item {
         let item = ItemModel::find_one(id, conn)?;
         Ok(item.into())
     }
+    /// 更新记录
+    pub fn update(id: i64, name: &str, content: &str) -> GraphqlResult<Self> {
+        let conn = &mut CONNECTION.get()?;
+        if !ItemModel::exists(id, conn)? {
+            return Err(GraphqlError::NotFound("记录", id));
+        }
+        let item = ItemModel::update(id, name, content, conn)?;
+        Ok(item.into())
+    }
 }
 
 /// collection_id 相关
