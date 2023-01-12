@@ -59,12 +59,16 @@ export type MutationRoot = {
   __typename?: 'MutationRoot';
   /** 创建目录 */
   createCollection: Collection;
-  /** 创建小说 */
+  /** 创建记录 */
   createItem: Item;
   /** 删除目录 */
   deleteCollection: Collection;
-  /** 删除小说 */
+  /** 删除记录 */
   deleteItem: Item;
+  /** 修改目录 */
+  updateCollection: Collection;
+  /** 修改记录 */
+  updateItem: Item;
 };
 
 export type MutationRootCreateCollectionArgs = {
@@ -85,6 +89,18 @@ export type MutationRootDeleteCollectionArgs = {
 
 export type MutationRootDeleteItemArgs = {
   id: Scalars['Int'];
+};
+
+export type MutationRootUpdateCollectionArgs = {
+  description?: InputMaybe<Scalars['String']>;
+  id: Scalars['Int'];
+  name: Scalars['String'];
+};
+
+export type MutationRootUpdateItemArgs = {
+  content: Scalars['String'];
+  id: Scalars['Int'];
+  name: Scalars['String'];
 };
 
 export type Pagination = {
@@ -117,7 +133,7 @@ export type QueryRootGetItemArgs = {
 
 export type CollectionAndItemsQueryVariables = Exact<{
   id?: InputMaybe<Scalars['Int']>;
-  pagitation: Pagination;
+  pagination: Pagination;
 }>;
 
 export type CollectionAndItemsQuery = {
@@ -174,6 +190,17 @@ export type GetCollectionAncestorsQuery = {
   };
 };
 
+export type UpdateCollectionMutationVariables = Exact<{
+  id: Scalars['Int'];
+  name: Scalars['String'];
+  description?: InputMaybe<Scalars['String']>;
+}>;
+
+export type UpdateCollectionMutation = {
+  __typename?: 'MutationRoot';
+  updateCollection: { __typename?: 'Collection'; path: string };
+};
+
 export type DeleteItemMutationVariables = Exact<{
   id: Scalars['Int'];
 }>;
@@ -189,8 +216,8 @@ export type CreateItemMutationVariables = Exact<{
 export type CreateItemMutation = { __typename?: 'MutationRoot'; createItem: { __typename?: 'Item'; name: string } };
 
 export const CollectionAndItemsDocument = gql`
-  query collectionAndItems($id: Int, $pagitation: Pagination!) {
-    collectionAndItem(id: $id, pagination: $pagitation) {
+  query collectionAndItems($id: Int, $pagination: Pagination!) {
+    collectionAndItem(id: $id, pagination: $pagination) {
       data {
         ... on Collection {
           name
@@ -228,7 +255,7 @@ export const CollectionAndItemsDocument = gql`
  * const { data, loading, error } = useCollectionAndItemsQuery({
  *   variables: {
  *      id: // value for 'id'
- *      pagitation: // value for 'pagitation'
+ *      pagination: // value for 'pagination'
  *   },
  * });
  */
@@ -398,6 +425,52 @@ export type GetCollectionAncestorsLazyQueryHookResult = ReturnType<typeof useGet
 export type GetCollectionAncestorsQueryResult = Apollo.QueryResult<
   GetCollectionAncestorsQuery,
   GetCollectionAncestorsQueryVariables
+>;
+export const UpdateCollectionDocument = gql`
+  mutation updateCollection($id: Int!, $name: String!, $description: String) {
+    updateCollection(id: $id, name: $name, description: $description) {
+      path
+    }
+  }
+`;
+export type UpdateCollectionMutationFn = Apollo.MutationFunction<
+  UpdateCollectionMutation,
+  UpdateCollectionMutationVariables
+>;
+
+/**
+ * __useUpdateCollectionMutation__
+ *
+ * To run a mutation, you first call `useUpdateCollectionMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateCollectionMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateCollectionMutation, { data, loading, error }] = useUpdateCollectionMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      name: // value for 'name'
+ *      description: // value for 'description'
+ *   },
+ * });
+ */
+export function useUpdateCollectionMutation(
+  baseOptions?: Apollo.MutationHookOptions<UpdateCollectionMutation, UpdateCollectionMutationVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useMutation<UpdateCollectionMutation, UpdateCollectionMutationVariables>(
+    UpdateCollectionDocument,
+    options,
+  );
+}
+export type UpdateCollectionMutationHookResult = ReturnType<typeof useUpdateCollectionMutation>;
+export type UpdateCollectionMutationResult = Apollo.MutationResult<UpdateCollectionMutation>;
+export type UpdateCollectionMutationOptions = Apollo.BaseMutationOptions<
+  UpdateCollectionMutation,
+  UpdateCollectionMutationVariables
 >;
 export const DeleteItemDocument = gql`
   mutation deleteItem($id: Int!) {

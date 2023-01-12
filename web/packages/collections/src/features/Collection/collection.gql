@@ -1,5 +1,5 @@
-query collectionAndItems($id: Int, $pagitation: Pagination!) {
-  collectionAndItem(id: $id, pagination: $pagitation) {
+query collectionAndItems($id: Int, $pagination: Pagination!) {
+  collectionAndItem(id: $id, pagination: $pagination) {
     data {
       ... on Collection {
         name
@@ -15,7 +15,6 @@ query collectionAndItems($id: Int, $pagitation: Pagination!) {
         id
         updateTime
         createTime
-        content
         __typename
       }
     }

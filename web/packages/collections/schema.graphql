@@ -43,8 +43,8 @@ type MutationRoot {
   "删除记录"
   deleteItem(id: Int!): Item!
   "修改目录"
-  updateCollection(description: String!, id: Int!, name: String!): Collection!
-  "修改小说"
+  updateCollection(description: String, id: Int!, name: String!): Collection!
+  "修改记录"
   updateItem(content: String!, id: Int!, name: String!): Item!
 }
 
@@ -58,7 +58,6 @@ type QueryRoot {
 }
 
 """
-
 A datetime with timezone offset.
 
 The input is a string in RFC3339 format, e.g. "2022-01-12T04:00:19.12345Z"

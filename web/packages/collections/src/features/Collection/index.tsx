@@ -13,7 +13,7 @@ export default function Home() {
   const pageState = usePage();
   const { data: { collectionAndItem: { data, total } } = { collectionAndItem: {} }, refetch } =
     useCollectionAndItemsQuery({
-      variables: { id, pagitation: { page: pageState.pageIndex, pageSize: pageState.pageSize } },
+      variables: { id, pagination: { page: pageState.pageIndex, pageSize: pageState.pageSize } },
     });
   const page = usePageWithTotal(pageState, total);
 
