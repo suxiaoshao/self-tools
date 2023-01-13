@@ -151,7 +151,7 @@ export type CollectionAndItemsQuery = {
           updateTime: string;
           description?: string | null;
         }
-      | { __typename: 'Item'; name: string; id: number; updateTime: string; createTime: string; content: string }
+      | { __typename: 'Item'; name: string; id: number; updateTime: string; createTime: string }
     >;
   };
 };
@@ -215,6 +215,23 @@ export type CreateItemMutationVariables = Exact<{
 
 export type CreateItemMutation = { __typename?: 'MutationRoot'; createItem: { __typename?: 'Item'; name: string } };
 
+export type UpdateItemMutationVariables = Exact<{
+  id: Scalars['Int'];
+  name: Scalars['String'];
+  content: Scalars['String'];
+}>;
+
+export type UpdateItemMutation = { __typename?: 'MutationRoot'; updateItem: { __typename?: 'Item'; name: string } };
+
+export type GetEditItemQueryVariables = Exact<{
+  id: Scalars['Int'];
+}>;
+
+export type GetEditItemQuery = {
+  __typename?: 'QueryRoot';
+  getItem: { __typename?: 'Item'; name: string; content: string };
+};
+
 export const CollectionAndItemsDocument = gql`
   query collectionAndItems($id: Int, $pagination: Pagination!) {
     collectionAndItem(id: $id, pagination: $pagination) {
@@ -233,7 +250,6 @@ export const CollectionAndItemsDocument = gql`
           id
           updateTime
           createTime
-          content
           __typename
         }
       }
@@ -544,3 +560,78 @@ export function useCreateItemMutation(
 export type CreateItemMutationHookResult = ReturnType<typeof useCreateItemMutation>;
 export type CreateItemMutationResult = Apollo.MutationResult<CreateItemMutation>;
 export type CreateItemMutationOptions = Apollo.BaseMutationOptions<CreateItemMutation, CreateItemMutationVariables>;
+export const UpdateItemDocument = gql`
+  mutation updateItem($id: Int!, $name: String!, $content: String!) {
+    updateItem(id: $id, name: $name, content: $content) {
+      name
+    }
+  }
+`;
+export type UpdateItemMutationFn = Apollo.MutationFunction<UpdateItemMutation, UpdateItemMutationVariables>;
+
+/**
+ * __useUpdateItemMutation__
+ *
+ * To run a mutation, you first call `useUpdateItemMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateItemMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateItemMutation, { data, loading, error }] = useUpdateItemMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      name: // value for 'name'
+ *      content: // value for 'content'
+ *   },
+ * });
+ */
+export function useUpdateItemMutation(
+  baseOptions?: Apollo.MutationHookOptions<UpdateItemMutation, UpdateItemMutationVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useMutation<UpdateItemMutation, UpdateItemMutationVariables>(UpdateItemDocument, options);
+}
+export type UpdateItemMutationHookResult = ReturnType<typeof useUpdateItemMutation>;
+export type UpdateItemMutationResult = Apollo.MutationResult<UpdateItemMutation>;
+export type UpdateItemMutationOptions = Apollo.BaseMutationOptions<UpdateItemMutation, UpdateItemMutationVariables>;
+export const GetEditItemDocument = gql`
+  query getEditItem($id: Int!) {
+    getItem(id: $id) {
+      name
+      content
+    }
+  }
+`;
+
+/**
+ * __useGetEditItemQuery__
+ *
+ * To run a query within a React component, call `useGetEditItemQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetEditItemQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetEditItemQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetEditItemQuery(baseOptions: Apollo.QueryHookOptions<GetEditItemQuery, GetEditItemQueryVariables>) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useQuery<GetEditItemQuery, GetEditItemQueryVariables>(GetEditItemDocument, options);
+}
+export function useGetEditItemLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<GetEditItemQuery, GetEditItemQueryVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useLazyQuery<GetEditItemQuery, GetEditItemQueryVariables>(GetEditItemDocument, options);
+}
+export type GetEditItemQueryHookResult = ReturnType<typeof useGetEditItemQuery>;
+export type GetEditItemLazyQueryHookResult = ReturnType<typeof useGetEditItemLazyQuery>;
+export type GetEditItemQueryResult = Apollo.QueryResult<GetEditItemQuery, GetEditItemQueryVariables>;
