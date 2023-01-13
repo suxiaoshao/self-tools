@@ -142,7 +142,39 @@ impl Collection {
         if !CollectionModel::exists(id, conn)? {
             return Err(GraphqlError::NotFound("目录", id));
         }
-        let collection = CollectionModel::update(id, name, description, conn)?;
+        //
+        let CollectionModel {
+            parent_id,
+            path: old_path,
+            ..
+        } = CollectionModel::find_one(id, conn)?;
+        // 目标子目录是否存在
+        let path = match parent_id {
+            None => {
+                let collection_path = format!("/{}/", name);
+                // 子目录已存在
+                if CollectionModel::exists_by_path(&collection_path, conn)?
+                    && collection_path != old_path
+                {
+                    return Err(GraphqlError::AlreadyExists(collection_path));
+                }
+                collection_path
+            }
+            Some(id) => {
+                let CollectionModel {
+                    path: parent_path, ..
+                } = CollectionModel::find_one(id, conn)?;
+                let collection_path = format!("{}{}/", parent_path, name);
+                // 子目录已存在
+                if CollectionModel::exists_by_path(&collection_path, conn)?
+                    && collection_path != old_path
+                {
+                    return Err(GraphqlError::AlreadyExists(collection_path));
+                }
+                collection_path
+            }
+        };
+        let collection = CollectionModel::update(id, name, description, &path, conn)?;
         Ok(collection.into())
     }
 }

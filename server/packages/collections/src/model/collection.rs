@@ -77,6 +77,7 @@ impl CollectionModel {
         id: i64,
         name: &str,
         description: Option<&str>,
+        path: &str,
         conn: &mut PgConnection,
     ) -> GraphqlResult<Self> {
         let now = time::OffsetDateTime::now_utc();
@@ -85,6 +86,7 @@ impl CollectionModel {
                 collection::name.eq(name),
                 collection::description.eq(description),
                 collection::update_time.eq(now),
+                collection::path.eq(path),
             ))
             .get_result(conn)?;
         Ok(collection)
