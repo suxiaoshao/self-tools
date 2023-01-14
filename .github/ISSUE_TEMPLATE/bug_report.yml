@@ -28,6 +28,7 @@ body:
         - FE
         - DB
         - devops
+        - docs
     validations:
       required: true
   - type: textarea

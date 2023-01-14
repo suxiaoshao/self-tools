@@ -28,6 +28,7 @@ body:
         - label: FE
         - label: DB
         - label: devops
+        - label: docs
   - type: textarea
     id: requirement
     attributes:
