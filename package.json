@@ -1,0 +1,17 @@
+{
+  "name": "self-tools",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "commit": "git-cz"
+  },
+  "devDependencies": {
+    "git-cz": "^4.9.0",
+    "husky": "^8.0.3",
+    "lint-staged": "^13.1.0"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
