@@ -1,7 +1,7 @@
 name: Tech Request
 description: File a tech request
 title: "[Tech]: "
-labels: ["Tech"]
+labels: ["tech"]
 assignees:
   - suxiaoshao
 body:
@@ -47,10 +47,6 @@ body:
       label: Objectives
     validations:
       required: true
-  - type: markdown
-    attributes:
-      value: |
-        Your solutions and suggestions
   - type: input
     id: contact
     attributes:
@@ -59,7 +55,3 @@ body:
       placeholder: ex. email@example.com
     validations:
       required: false
-  - type: markdown
-    attributes:
-      value: |
-        Anything else you want to say
