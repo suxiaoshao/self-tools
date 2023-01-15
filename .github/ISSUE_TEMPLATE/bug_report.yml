@@ -16,6 +16,7 @@ body:
         - collections
         - bookmarks
         - others
+        - all
     validations:
       required: true
   - type: dropdown
@@ -24,9 +25,9 @@ body:
       label: Component
       description: Which component has a problem?
       options:
-        - BE
-        - FE
-        - DB
+        - server
+        - web
+        - database
         - devops
         - docs
     validations:

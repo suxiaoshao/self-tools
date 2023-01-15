@@ -16,6 +16,7 @@ body:
         - collections
         - bookmarks
         - others
+        - all
     validations:
       required: true
   - type: checkboxes
@@ -24,9 +25,9 @@ body:
       label: Component
       description: Which component has a feature request?
       options:
-        - label: BE
-        - label: FE
-        - label: DB
+        - label: server
+        - label: web
+        - label: database
         - label: devops
         - label: docs
   - type: textarea
