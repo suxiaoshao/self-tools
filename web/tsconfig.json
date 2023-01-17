@@ -4,7 +4,7 @@
     "useDefineForClassFields": true,
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
     "allowJs": false,
-    "skipLibCheck": false,
+    "skipLibCheck": true,
     "esModuleInterop": false,
     "allowSyntheticDefaultImports": true,
     "strict": true,
@@ -21,6 +21,6 @@
       "@collections/*": ["./collections/src/*"]
     }
   },
-  "include": ["packages/*/src", "packages/*/vite.config.js", "common/*/src"],
+  "include": ["packages/*/src", "packages/*/vite.config.ts", "common/*/src"],
   "exclude": ["./**/node_modules"]
 }

@@ -62,11 +62,25 @@ body:
       label: Relevant log output
       description: Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks.
       render: zsh
+  - type: textarea
+    id: solutions_and_suggestions
+    attributes:
+      label: Your solutions and suggestions
+      description: Please describe your solutions and suggestions.
+    validations:
+      required: false
   - type: input
     id: contact
     attributes:
       label: Contact Details
       description: How can we get in touch with you if we need more info?
       placeholder: ex. email@example.com
+    validations:
+      required: false
+  - type: textarea
+    id: anything_else
+    attributes:
+      label: Anything else
+      description: Please provide any other information that may be helpful.
     validations:
       required: false

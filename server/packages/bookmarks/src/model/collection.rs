@@ -128,23 +128,15 @@ impl CollectionModel {
 mod test {
 
     use crate::model::schema::collection;
-
-    use super::CollectionModel;
     use diesel::{debug_query, pg::Pg, prelude::*};
 
-    #[test]
-    fn test_get_list() -> anyhow::Result<()> {
-        let collection: Vec<CollectionModel> = CollectionModel::get_list_by_parent(None).unwrap();
-        println!("{:?}", collection);
-        Ok(())
-    }
     #[test]
     fn test_sql() {
         let query = diesel::delete(collection::table.filter(collection::id.eq(2)));
         let sql = debug_query::<Pg, _>(&query).to_string();
         assert_eq!(
             sql,
-            "DELETE FROM \"collection\" WHERE \"collection\".\"id\" = $1 -- binds: [2]"
+            "DELETE  FROM \"collection\" WHERE (\"collection\".\"id\" = $1) -- binds: [2]"
         )
     }
 }

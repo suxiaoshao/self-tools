@@ -1,5 +1,6 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-cd web && pnpm run format && pnpm run eslint && cd ..
-cd server && cargo clippy --all && cd ..
+cd web && pnpm run lint && cd ..
+cd server && cargo clippy --all
+cargo test --all && cd ..
