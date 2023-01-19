@@ -1,0 +1,53 @@
+name: ci
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  git-clone:
+    runs-on: ubuntu-latest
+    steps:
+      - name: git clone
+        uses: actions/checkout@v3
+  web-install:
+    needs: git-clone
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: lts
+      - name: Install dependencies
+        run: cd web && pnpm install
+  server-install:
+    needs: git-clone
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+  web-lint:
+    needs: web-install
+    runs-on: ubuntu-latest
+    steps:
+      - name: Lint
+        run: cd web && pnpm lint
+  server-lint:
+    needs: server-install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions-rs/cargo@v1
+        with:
+          command: clippy
+          args: --all
+  server-test:
+    needs: server-install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --all
