@@ -10,6 +10,7 @@ jobs:
     steps:
       - name: git clone
         uses: actions/checkout@v3
+      - run: ls
   web-install:
     needs: git-clone
     runs-on: ubuntu-latest
@@ -19,7 +20,7 @@ jobs:
         with:
           node-version: lts/*
       - name: Install dependencies
-        working-directory: ./web
+        working-directory: web
         run: pnpm install
   server-install:
     needs: git-clone
