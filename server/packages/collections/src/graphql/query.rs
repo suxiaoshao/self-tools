@@ -49,7 +49,7 @@ impl QueryRoot {
             return Ok(List::new(data, total));
         }
         // 目录 & 记录
-        if offset < collection_count && collection_count < offset_plus_imit {
+        if offset <= collection_count && collection_count < offset_plus_imit {
             let mut data = vec![];
             Collection::get_list_parent_id(id, offset, collection_count - offset)?
                 .into_iter()
