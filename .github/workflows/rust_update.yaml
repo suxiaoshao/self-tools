@@ -5,6 +5,9 @@ on:
   push:
     branches:
       - main
+    paths:
+      - docker/rust.Dockerfile
+      - .github/workflows/rust_update.yaml
 jobs:
   build:
     runs-on: ubuntu-latest
