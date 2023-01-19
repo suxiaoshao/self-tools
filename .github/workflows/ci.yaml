@@ -35,22 +35,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Lint
-        working-directory: ./web
+        working-directory: web
         run: pnpm lint
   server-lint:
     needs: server-install
     runs-on: ubuntu-latest
     steps:
-      - uses: actions-rs/cargo@v1
-        with:
-          command: clippy
-          args: --all --manifest-path ./server/Cargo.toml
+      - name: server Lint
+        working-directory: server
+        run: cargo clippy --all
   server-test:
     needs: server-install
     runs-on: ubuntu-latest
     steps:
-      - uses: actions-rs/cargo@v1
-        with:
-          working-directory: ./server
-          command: test
-          args: --all --manifest-path ./server/Cargo.toml
+      - name: server test
+        working-directory: server
+        run: cargo test --all
