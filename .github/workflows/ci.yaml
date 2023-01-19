@@ -5,16 +5,11 @@ on:
       - main
 
 jobs:
-  git-clone:
+  web:
     runs-on: ubuntu-latest
     steps:
       - name: git clone
         uses: actions/checkout@v3
-      - run: ls
-  web-install:
-    needs: git-clone
-    runs-on: ubuntu-latest
-    steps:
       - name: Install Node.js
         uses: actions/setup-node@v3
         with:
@@ -22,33 +17,22 @@ jobs:
       - name: Install dependencies
         working-directory: web
         run: pnpm install
-  server-install:
-    needs: git-clone
+      - name: Lint
+        working-directory: web
+        run: pnpm lint
+  server:
     runs-on: ubuntu-latest
     steps:
+      - name: git clone
+        uses: actions/checkout@v3
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           override: true
-  web-lint:
-    needs: web-install
-    runs-on: ubuntu-latest
-    steps:
-      - name: Lint
-        working-directory: web
-        run: pnpm lint
-  server-lint:
-    needs: server-install
-    runs-on: ubuntu-latest
-    steps:
       - name: server Lint
         working-directory: server
         run: cargo clippy --all
-  server-test:
-    needs: server-install
-    runs-on: ubuntu-latest
-    steps:
       - name: server test
         working-directory: server
         run: cargo test --all
