@@ -8,18 +8,18 @@ use scraper::{Html, Selector};
 
 use crate::{
     errors::NovelResult,
-    implement::{parse_image_src, parse_inner_html, parse_text, text_from_url},
+    implement::{parse_image_src, parse_text, text_from_url},
     novel::NovelFn,
 };
 
 use super::chapter::QDChapter;
 
 static SELECTOR_NOVEL_NAME: Lazy<Selector> =
-    Lazy::new(|| Selector::parse("#bookDetailWrapper > div > div > div > h2").unwrap());
+    Lazy::new(|| Selector::parse("h1.header-back-title").unwrap());
 static SELECTOR_NOVEL_DESCRIPTION: Lazy<Selector> =
-    Lazy::new(|| Selector::parse("#bookSummary > content").unwrap());
+    Lazy::new(|| Selector::parse("content.detail__summary__content").unwrap());
 static SELECTOR_NOVEL_IMAGE: Lazy<Selector> =
-    Lazy::new(|| Selector::parse("#bookDetailWrapper > div > div > img").unwrap());
+    Lazy::new(|| Selector::parse("img.detail__header-bg").unwrap());
 
 #[derive(Debug)]
 pub(crate) struct QDNovel {
@@ -36,7 +36,7 @@ impl NovelFn for QDNovel {
     async fn get_novel_data(novel_id: &str) -> NovelResult<Self> {
         let (html, chapter_html) = Self::get_doc(novel_id).await?;
         let html = Html::parse_document(&html);
-        let name = parse_inner_html(&html, &SELECTOR_NOVEL_NAME)?;
+        let name = parse_text(&html, &SELECTOR_NOVEL_NAME)?;
         let description = parse_text(&html, &SELECTOR_NOVEL_DESCRIPTION)?;
         let image = parse_image_src(&html, &SELECTOR_NOVEL_IMAGE)?;
         let image = format!("https:{}", image);

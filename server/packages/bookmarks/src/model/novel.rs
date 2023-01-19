@@ -157,7 +157,7 @@ mod test {
         let sql = debug_query::<Pg, _>(&query).to_string();
         assert_eq!(
             sql,
-            "DELETE FROM \"novel\" WHERE \"novel\".\"id\" = $1 -- binds: [2]"
+            "DELETE  FROM \"novel\" WHERE (\"novel\".\"id\" = $1) -- binds: [2]"
         );
     }
 }
