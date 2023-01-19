@@ -17,7 +17,7 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: lts
+          node-version: lts/*
       - name: Install dependencies
         run: cd web && pnpm install
   server-install:
@@ -29,6 +29,8 @@ jobs:
         with:
           toolchain: stable
           override: true
+      - name: cd
+        run: cd server
   web-lint:
     needs: web-install
     runs-on: ubuntu-latest
