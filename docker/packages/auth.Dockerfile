@@ -5,8 +5,8 @@ COPY ./docker/packages/.cargo /app/.cargo
 RUN --mount=type=cache,target=/usr/local/cargo/registry,id=rust_registry \
     --mount=type=cache,target=/app/target,id=rust_target \
     cd /app \
-    && cargo build --release -p auth\
-    && cp /app/target/auth /app/
+    && cargo build --release -p auth \
+    && cp /app/target/release/auth /app/
 
 FROM ubuntu as prod
 COPY --from=builder ./app/auth /
