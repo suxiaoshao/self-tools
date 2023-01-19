@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 # grpc
-tokio = { version = "1.24.1", features = ["rt-multi-thread", "time", "fs", "macros", "net"] }
+tokio = { version = "1.24.2", features = ["rt-multi-thread", "time", "fs", "macros", "net"] }
 proto = { path = "../../common/proto", features = ["auth_server"]}
 tonic = "0.8.3"
 
