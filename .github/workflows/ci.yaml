@@ -14,9 +14,13 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: lts/*
-      - name: Install dependencies
-        working-directory: web
-        run: pnpm install
+      - uses: pnpm/action-setup@v2
+        name: Install pnpm
+        id: pnpm-install
+        with:
+          version: latest
+          run_install: true
+          cwd: web
       - name: Lint
         working-directory: web
         run: pnpm lint
@@ -30,6 +34,8 @@ jobs:
         with:
           toolchain: stable
           override: true
+      - name: protoc
+        run: apt update && apt upgrade -y && apt install protobuf-compiler -y
       - name: server Lint
         working-directory: server
         run: cargo clippy --all
