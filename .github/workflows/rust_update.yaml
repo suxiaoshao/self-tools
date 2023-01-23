@@ -6,7 +6,7 @@ on:
     branches:
       - main
     paths:
-      - docker/rust.Dockerfile
+      - docker/server/rust/rust.Dockerfile
       - .github/workflows/rust_update.yaml
 jobs:
   build:
@@ -29,5 +29,5 @@ jobs:
         with:
           push: true
           tags: suxiaoshao/rust:latest
-          file: ./docker/rust.Dockerfile
+          file: ./docker/server/rust/rust.Dockerfile
           context: .
