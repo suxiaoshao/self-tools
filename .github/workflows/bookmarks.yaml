@@ -4,11 +4,12 @@ on:
     branches:
       - main
     paths:
-      - docker/packages/bookmarks.Dockerfile
-      - docker/packages/.cargo/**
+      - docker/server/bookmarks.Dockerfile
       - server/packages/bookmarks/**
       - server/common/cors/**
       - server/common/proto/**
+      - server/common/novel_crawler/**
+      - server/.cargo/**
       - .github/workflows/bookmarks.yaml
 
 jobs:
@@ -32,5 +33,5 @@ jobs:
         with:
           push: true
           tags: suxiaoshao/bookmarks:latest
-          file: ./docker/packages/bookmarks.Dockerfile
+          file: ./docker/server/bookmarks.Dockerfile
           context: .

@@ -4,11 +4,11 @@ on:
     branches:
       - main
     paths:
-      - docker/packages/auth.Dockerfile
-      - docker/packages/.cargo/**
+      - docker/server/auth.Dockerfile
       - server/packages/auth/**
       - server/common/errors/**
       - server/common/proto/**
+      - server/.cargo/**
       - .github/workflows/auth.yaml
 
 jobs:
@@ -32,5 +32,5 @@ jobs:
         with:
           push: true
           tags: suxiaoshao/auth:latest
-          file: ./docker/packages/auth.Dockerfile
+          file: ./docker/server/auth.Dockerfile
           context: .

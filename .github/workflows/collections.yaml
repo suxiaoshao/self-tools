@@ -4,11 +4,11 @@ on:
     branches:
       - main
     paths:
-      - docker/packages/collections.Dockerfile
-      - docker/packages/.cargo/**
+      - docker/server/collections.Dockerfile
       - server/packages/collections/**
       - server/common/cors/**
       - server/common/proto/**
+      - server/.cargo/**
       - .github/workflows/collections.yaml
 
 jobs:
@@ -32,5 +32,5 @@ jobs:
         with:
           push: true
           tags: suxiaoshao/collections:latest
-          file: ./docker/packages/collections.Dockerfile
+          file: ./docker/server/collections.Dockerfile
           context: .
