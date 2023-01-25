@@ -1,6 +1,5 @@
 mod errors;
 mod graphql;
-mod middleware;
 mod model;
 mod service;
 
@@ -16,9 +15,10 @@ use axum::{
     routing::post,
     Router, Server,
 };
-use cors::get_cors;
+use errors::GraphqlError;
 use graphql::{mutation::MutationRoot, query::QueryRoot, RootSchema};
 use middleware::auth;
+use middleware::get_cors;
 use model::CONNECTION;
 
 async fn graphql_handler(
@@ -53,7 +53,7 @@ async fn main() -> anyhow::Result<()> {
         .route(
             "/graphql",
             post(graphql_handler)
-                .layer(axum::middleware::from_fn(auth))
+                .layer(axum::middleware::from_fn(auth::<_, GraphqlError>))
                 .get(graphql_playground),
         )
         .with_state(schema)

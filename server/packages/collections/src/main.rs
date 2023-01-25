@@ -15,8 +15,9 @@ use axum::{
     routing::post,
     Router, Server,
 };
-use cors::get_cors;
 use graphql::{mutation::MutationRoot, query::QueryRoot, RootSchema};
+use middleware::get_cors;
+use tracing::{event, span, Level};
 
 async fn graphql_handler(
     State(schema): State<RootSchema>,
@@ -41,6 +42,10 @@ async fn graphql_playground() -> impl IntoResponse {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    tracing_subscriber::fmt::init();
+    let span = span!(Level::INFO, "my span").entered();
+    event!(Level::INFO, "something has happened!");
+    span.exit();
     // 设置跨域
     let cors = get_cors();
     let schema = Schema::build(QueryRoot, MutationRoot, EmptySubscription).finish();

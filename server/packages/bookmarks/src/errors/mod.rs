@@ -1,6 +1,7 @@
 use async_graphql::ErrorExtensionValues;
 use axum::{response::IntoResponse, Json};
 use diesel::r2d2;
+use middleware::Unauthenticated;
 use std::sync::Arc;
 use tonic::{transport, Code, Status};
 
@@ -154,7 +155,11 @@ impl From<diesel::result::Error> for GraphqlError {
         Self::Diesel(error.to_string())
     }
 }
-
+impl From<Unauthenticated> for GraphqlError {
+    fn from(_: Unauthenticated) -> Self {
+        Self::Unauthenticated
+    }
+}
 pub type GraphqlResult<T> = Result<T, GraphqlError>;
 
 impl From<GraphqlError> for async_graphql::Error {

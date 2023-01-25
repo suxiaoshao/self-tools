@@ -1,6 +1,6 @@
 use crate::router::get_router;
 use anyhow::Result;
-use cors::get_cors;
+use middleware::get_cors;
 use std::net::SocketAddr;
 pub mod errors;
 mod router;

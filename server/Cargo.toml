@@ -6,9 +6,9 @@ members = [
     "common/proto",
     "packages/login",
     "common/errors",
-    "common/cors",
     "common/novel_crawler",
-    "packages/collections"
+    "packages/collections",
+    "common/middleware"
 ]
 [profile.release]
 strip = "symbols"

@@ -8,7 +8,7 @@ edition = "2021"
 [dependencies]
 # http
 tokio = { version = "1.24.2", features = ["macros", "rt-multi-thread"] }
-axum = { version = "0.6.2", features = ["json"] }
+axum = { version = "0.6.4", features = ["json"] }
 
 # error
 anyhow = "1.0.68"
@@ -23,4 +23,4 @@ proto={path="../../common/proto/",features=["auth_client"]}
 tonic= "0.8.3"
 
 # cors
-cors = {path="../../common/cors"}
+middleware = { path = "../../common/middleware",features=["cors"] }

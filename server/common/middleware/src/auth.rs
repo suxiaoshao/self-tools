@@ -5,9 +5,12 @@ use axum::{
 };
 use proto::{auth::CheckRequest, middleware::client::login_client};
 
-use crate::errors::GraphqlError;
+pub struct Unauthenticated;
 
-pub async fn auth<B>(req: Request<B>, next: Next<B>) -> Result<Response, GraphqlError> {
+pub async fn auth<B, E>(req: Request<B>, next: Next<B>) -> Result<Response, E>
+where
+    E: From<tonic::transport::Error> + From<tonic::Status> + From<Unauthenticated>,
+{
     let auth_header = req
         .headers()
         .get(http::header::AUTHORIZATION)
@@ -16,7 +19,7 @@ pub async fn auth<B>(req: Request<B>, next: Next<B>) -> Result<Response, Graphql
     let auth = if let Some(auth_header) = auth_header {
         auth_header
     } else {
-        return Err(GraphqlError::Unauthenticated);
+        return Err(Unauthenticated.into());
     }
     .to_string();
     let mut client = login_client(None).await?;
