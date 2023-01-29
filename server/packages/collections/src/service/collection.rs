@@ -51,7 +51,7 @@ impl Collection {
         let conn = &mut CONNECTION.get()?;
         match parent_id {
             None => {
-                let collection_path = format!("/{}/", name);
+                let collection_path = format!("/{name}/");
                 // 子目录已存在
                 if CollectionModel::exists_by_path(&collection_path, conn)? {
                     return Err(GraphqlError::AlreadyExists(collection_path));
@@ -69,7 +69,7 @@ impl Collection {
                 let CollectionModel {
                     path: parent_path, ..
                 } = CollectionModel::find_one(id, conn)?;
-                let collection_path = format!("{}{}/", parent_path, name);
+                let collection_path = format!("{parent_path}{name}/");
                 // 子目录已存在
                 if CollectionModel::exists_by_path(&collection_path, conn)? {
                     return Err(GraphqlError::AlreadyExists(collection_path));
@@ -151,7 +151,7 @@ impl Collection {
         // 目标子目录是否存在
         let path = match parent_id {
             None => {
-                let collection_path = format!("/{}/", name);
+                let collection_path = format!("/{name}/");
                 // 子目录已存在
                 if CollectionModel::exists_by_path(&collection_path, conn)?
                     && collection_path != old_path
@@ -164,7 +164,7 @@ impl Collection {
                 let CollectionModel {
                     path: parent_path, ..
                 } = CollectionModel::find_one(id, conn)?;
-                let collection_path = format!("{}{}/", parent_path, name);
+                let collection_path = format!("{parent_path}{name}/");
                 // 子目录已存在
                 if CollectionModel::exists_by_path(&collection_path, conn)?
                     && collection_path != old_path

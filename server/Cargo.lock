@@ -1180,12 +1180,15 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "axum",
+ "futures",
  "http",
  "nom",
  "proto",
  "rand 0.8.5",
  "tonic",
+ "tower",
  "tower-http",
+ "tracing",
 ]
 
 [[package]]

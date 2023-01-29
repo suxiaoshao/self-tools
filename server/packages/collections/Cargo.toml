@@ -25,7 +25,7 @@ anyhow = "1.0.68"
 thiserror = "1.0.38"
 
 # cors
-middleware = { path = "../../common/middleware",features=["cors"] }
+middleware = { path = "../../common/middleware",features=["cors","trace"] }
 
 # grpc
 proto = { path = "../../common/proto", features = ["auth_client"] }

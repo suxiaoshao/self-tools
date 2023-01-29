@@ -16,7 +16,7 @@ pub(super) struct OpenErrorResponse {
 impl From<OpenError> for OpenErrorResponse {
     fn from(error: OpenError) -> Self {
         OpenErrorResponse {
-            message: format!("{}", error),
+            message: format!("{error}"),
             code: error,
         }
     }

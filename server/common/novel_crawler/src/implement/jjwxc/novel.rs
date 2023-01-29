@@ -53,7 +53,7 @@ pub(crate) struct JJNovel {
 impl NovelFn for JJNovel {
     type Chapter = JJChapter;
     async fn get_novel_data(novel_id: &str) -> NovelResult<Self> {
-        let url = format!("https://www.jjwxc.net/onebook.php?novelid={}", novel_id);
+        let url = format!("https://www.jjwxc.net/onebook.php?novelid={novel_id}");
         let html = get_doc(&url, "gb18030").await?;
         let name = parse_inner_html(&html, &SELECTOR_NOVEL_NAME)?;
         let description = parse_text(&html, &SELECTOR_NOVEL_DESCRIPTION)?;
@@ -142,7 +142,7 @@ mod test {
     async fn jj_novel_test() -> anyhow::Result<()> {
         let novel_id = "1485737";
         let novel = super::JJNovel::get_novel_data(novel_id).await?;
-        println!("{:#?}", novel);
+        println!("{novel:#?}");
         Ok(())
     }
 }

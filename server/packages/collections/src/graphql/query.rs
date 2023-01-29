@@ -17,7 +17,6 @@ impl QueryRoot {
     /// 获取目录详情
     #[graphql(guard = "AuthGuard::default()")]
     async fn get_collection(&self, id: i64) -> GraphqlResult<Collection> {
-        event!(Level::INFO, "get_collection");
         let collection = Collection::get(id)?;
         Ok(collection)
     }

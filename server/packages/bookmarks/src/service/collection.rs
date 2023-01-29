@@ -55,7 +55,7 @@ impl Collection {
     ) -> GraphqlResult<Self> {
         match parent_id {
             None => {
-                let collection_path = format!("/{}/", name);
+                let collection_path = format!("/{name}/");
                 // 子目录已存在
                 if CollectionModel::exists_by_path(&collection_path)? {
                     return Err(GraphqlError::AlreadyExists(collection_path));
@@ -73,7 +73,7 @@ impl Collection {
                 let CollectionModel {
                     path: parent_path, ..
                 } = CollectionModel::find_one(id)?;
-                let collection_path = format!("{}{}/", parent_path, name);
+                let collection_path = format!("{parent_path}{name}/");
                 // 子目录已存在
                 if CollectionModel::exists_by_path(&collection_path)? {
                     return Err(GraphqlError::AlreadyExists(collection_path));

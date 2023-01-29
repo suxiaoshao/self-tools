@@ -1,6 +1,3 @@
-#[cfg(feature = "trace")]
-use rand::{distributions::Alphanumeric, Rng};
-
 #[cfg(feature = "auth")]
 mod auth;
 #[cfg(feature = "cors")]
@@ -11,3 +8,6 @@ mod trace;
 pub use auth::{auth, Unauthenticated};
 #[cfg(feature = "cors")]
 pub use cors::get_cors;
+
+#[cfg(feature = "trace")]
+pub use trace::{TraceLayer, Tracing};
