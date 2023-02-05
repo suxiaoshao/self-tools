@@ -16,7 +16,7 @@ use axum::{
     Router, Server,
 };
 use graphql::{mutation::MutationRoot, query::QueryRoot, RootSchema};
-use middleware::{get_cors, TraceLayer};
+use middleware::{get_cors, trace_layer};
 use tracing::metadata::LevelFilter;
 use tracing_subscriber::{
     fmt, prelude::__tracing_subscriber_SubscriberExt, util::SubscriberInitExt, Layer,
@@ -56,7 +56,7 @@ async fn main() -> anyhow::Result<()> {
         .route("/graphql", post(graphql_handler).get(graphql_playground))
         .with_state(schema)
         .layer(cors)
-        .layer(TraceLayer);
+        .layer(trace_layer());
 
     Server::bind(&"0.0.0.0:8080".parse()?)
         .serve(app.into_make_service())

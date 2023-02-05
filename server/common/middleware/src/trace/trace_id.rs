@@ -1,16 +1,19 @@
-use std::task::{Context, Poll};
+use std::{
+    error::Error,
+    task::{Context, Poll},
+};
 
 use futures::future::BoxFuture;
 use http::{header::HeaderName, HeaderValue, Request, Response};
 use rand::{distributions::Alphanumeric, Rng};
 use tower::{Layer, Service};
-use tracing::Instrument;
+use tracing::{event, Instrument, Level};
 
-pub struct Tracing<S> {
+pub struct TraceId<S> {
     inner: S,
 }
 
-impl<S> Clone for Tracing<S>
+impl<S> Clone for TraceId<S>
 where
     S: Clone,
 {
@@ -21,18 +24,19 @@ where
     }
 }
 
-impl<T> Tracing<T> {
+impl<T> TraceId<T> {
     pub fn new(inner: T) -> Self {
         Self { inner }
     }
 }
 
-impl<B, S, RES> Service<Request<B>> for Tracing<S>
+impl<B, S, RES> Service<Request<B>> for TraceId<S>
 where
     S: Service<Request<B>> + Send + 'static,
     B: 'static,
     S::Future: Send + 'static,
     S: Service<Request<B>, Response = Response<RES>>,
+    S::Error: Error,
 {
     type Response = S::Response;
     type Error = S::Error;
@@ -57,15 +61,31 @@ where
             Some(value) => value.to_str().unwrap().to_string(),
         };
         req.extensions_mut().insert(trace_id.clone());
+        let trace_id2 = trace_id.clone();
         let fut = self.inner.call(req);
-        Box::pin(async move {
-            // `inner` might not be ready since its a clone
-            let res = fut
-                .instrument(tracing::info_span!("request", trace_id))
-                .await;
-            // todo: add trace_id to response
-            res
-        })
+        Box::pin(
+            (async move {
+                event!(Level::INFO, "Request started");
+                // `inner` might not be ready since its a clone
+                let mut res = fut.await;
+                match res.as_mut() {
+                    Ok(res) => {
+                        let headers = res.headers_mut();
+                        headers.append(
+                            HeaderName::from_static("trace_id"),
+                            HeaderValue::from_str(&trace_id.clone()).unwrap(),
+                        );
+                    }
+                    Err(err) => {
+                        let message = err.to_string();
+                        event!(Level::WARN, message, "Error in request");
+                    }
+                }
+                event!(Level::INFO, "Request completed");
+                res
+            })
+            .instrument(tracing::info_span!("request", trace_id = trace_id2)),
+        )
     }
 }
 
@@ -78,12 +98,12 @@ pub fn rand_length(len: usize) -> String {
 }
 
 #[derive(Clone, Copy)]
-pub struct TraceLayer;
+pub struct TraceIdLayer;
 
-impl<S> Layer<S> for TraceLayer {
-    type Service = Tracing<S>;
+impl<S> Layer<S> for TraceIdLayer {
+    type Service = TraceId<S>;
 
-    fn layer(&self, inner: S) -> Tracing<S> {
-        Tracing::new(inner)
+    fn layer(&self, inner: S) -> TraceId<S> {
+        TraceId::new(inner)
     }
 }
