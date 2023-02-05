@@ -62,10 +62,7 @@ mod test {
         assert!(validator.check(&input).is_err());
         // 字符大于255
         let input = "abcdeabcdeabcdeabcdeabcdecabcdeab";
-        let input = format!(
-            "{}{}{}{}{}{}{}{}",
-            input, input, input, input, input, input, input, input
-        );
+        let input = format!("{input}{input}{input}{input}{input}{input}{input}{input}");
         assert!(validator.check(&input).is_err());
     }
 }

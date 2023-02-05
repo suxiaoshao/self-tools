@@ -1,10 +1,9 @@
-use futures::future::BoxFuture;
+use futures::Future;
+use futures_util::ready;
 use http::{Request, Response};
-use std::{
-    error::Error,
-    task::{Context, Poll},
-};
-
+use pin_project_lite::pin_project;
+use std::pin::Pin;
+use std::task::{Context, Poll};
 use tower::{Layer, Service};
 use tracing::{event, Level};
 
@@ -35,45 +34,30 @@ where
     B: 'static,
     S::Future: Send + 'static,
     S: Service<Request<B>, Response = Response<RES>>,
-    S::Error: Error,
 {
     type Response = S::Response;
     type Error = S::Error;
-    type Future = BoxFuture<'static, Result<Self::Response, Self::Error>>;
+    type Future = ResponseFuture<S::Future>;
 
     fn poll_ready(&mut self, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
         self.inner.poll_ready(cx)
     }
 
     fn call(&mut self, req: Request<B>) -> Self::Future {
+        event!(Level::INFO, "Request started");
         let req_header = format!("{:#?}", req.headers());
         let method = req.method().to_string();
         let url = req.uri().to_string();
-        let fut = self.inner.call(req);
-        Box::pin(async move {
-            // `inner` might not be ready since its a clone
-            let res = fut.await;
-            match res.as_ref() {
-                Ok(res) => {
-                    let res_header = format!("{:#?}", res.headers());
-                    let status = res.status().to_string();
-                    event!(
-                        Level::INFO,
-                        "request method: {}, response status: {},request url: {}, request header: {}, response header: {}",
-                        method,
-                        status,
-                        url,
-                        req_header,
-                        res_header,
-                    );
-                }
-                Err(err) => {
-                    let message = err.to_string();
-                    event!(Level::WARN, message, "Error in request");
-                }
-            }
-            res
-        })
+        event!(
+            Level::INFO,
+            "request method: {},request url: {}, request header: {}",
+            method,
+            url,
+            req_header,
+        );
+        ResponseFuture {
+            future: self.inner.call(req),
+        }
     }
 }
 
@@ -85,5 +69,35 @@ impl<S> Layer<S> for TraceLogLayer {
 
     fn layer(&self, inner: S) -> TraceLog<S> {
         TraceLog::new(inner)
+    }
+}
+
+pin_project! {
+    /// Response future for [`SetResponseHeader`].
+    #[derive(Debug)]
+    pub struct ResponseFuture<F> {
+        #[pin]
+        future: F,
+    }
+}
+
+impl<F, ResBody, E> Future for ResponseFuture<F>
+where
+    F: Future<Output = Result<Response<ResBody>, E>>,
+{
+    type Output = F::Output;
+
+    fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+        let this = self.project();
+        let res = ready!(this.future.poll(cx)?);
+        let res_header = format!("{:#?}", res.headers());
+        let status = res.status().to_string();
+        event!(
+            Level::INFO,
+            "response status: {}, response header: {}",
+            status,
+            res_header,
+        );
+        Poll::Ready(Ok(res))
     }
 }

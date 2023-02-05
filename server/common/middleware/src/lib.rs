@@ -10,4 +10,4 @@ pub use auth::{auth, Unauthenticated};
 pub use cors::get_cors;
 
 #[cfg(feature = "trace")]
-pub use trace::trace_layer;
+pub use trace::*;

@@ -191,10 +191,13 @@ dependencies = [
  "anyhow",
  "errors",
  "jsonwebtoken",
+ "middleware",
  "proto",
  "serde",
  "tokio",
  "tonic",
+ "tracing",
+ "tracing-subscriber",
 ]
 
 [[package]]
@@ -309,6 +312,8 @@ dependencies = [
  "thiserror",
  "tokio",
  "tonic",
+ "tracing",
+ "tracing-subscriber",
 ]
 
 [[package]]
@@ -1134,6 +1139,8 @@ dependencies = [
  "thiserror",
  "tokio",
  "tonic",
+ "tracing",
+ "tracing-subscriber",
 ]
 
 [[package]]
@@ -1181,8 +1188,11 @@ dependencies = [
  "anyhow",
  "axum",
  "futures",
+ "futures-util",
  "http",
+ "http-body",
  "nom",
+ "pin-project-lite",
  "proto",
  "rand 0.8.5",
  "tonic",

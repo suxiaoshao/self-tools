@@ -2,16 +2,23 @@ use crate::router::get_router;
 use anyhow::Result;
 use middleware::get_cors;
 use std::net::SocketAddr;
+use tracing::metadata::LevelFilter;
+use tracing_subscriber::{
+    fmt, prelude::__tracing_subscriber_SubscriberExt, util::SubscriberInitExt, Layer,
+};
 pub mod errors;
 mod router;
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    tracing_subscriber::registry()
+        .with(fmt::layer().with_filter(LevelFilter::INFO))
+        .init();
     // 设置跨域
     let cors = get_cors();
 
     // 获取路由
-    let app = get_router().layer(cors);
+    let app = get_router().layer(cors).layer(middleware::trace_layer());
 
     // run our app with hyper
     // `axum::Server` is a re-export of `hyper::Server`

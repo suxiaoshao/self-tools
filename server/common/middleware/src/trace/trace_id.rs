@@ -1,13 +1,12 @@
-use std::{
-    error::Error,
-    task::{Context, Poll},
-};
-
-use futures::future::BoxFuture;
+use futures::Future;
+use futures_util::ready;
 use http::{header::HeaderName, HeaderValue, Request, Response};
+use pin_project_lite::pin_project;
 use rand::{distributions::Alphanumeric, Rng};
+use std::pin::Pin;
+use std::task::{Context, Poll};
 use tower::{Layer, Service};
-use tracing::{event, Instrument, Level};
+use tracing::{instrument::Instrumented, Instrument};
 
 pub struct TraceId<S> {
     inner: S,
@@ -32,15 +31,13 @@ impl<T> TraceId<T> {
 
 impl<B, S, RES> Service<Request<B>> for TraceId<S>
 where
-    S: Service<Request<B>> + Send + 'static,
-    B: 'static,
-    S::Future: Send + 'static,
+    S: Service<Request<B>> + Send,
+    S::Future: 'static,
     S: Service<Request<B>, Response = Response<RES>>,
-    S::Error: Error,
 {
     type Response = S::Response;
     type Error = S::Error;
-    type Future = BoxFuture<'static, Result<Self::Response, Self::Error>>;
+    type Future = Instrumented<ResponseFuture<S::Future>>;
 
     fn poll_ready(&mut self, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
         self.inner.poll_ready(cx)
@@ -61,31 +58,13 @@ where
             Some(value) => value.to_str().unwrap().to_string(),
         };
         req.extensions_mut().insert(trace_id.clone());
-        let trace_id2 = trace_id.clone();
-        let fut = self.inner.call(req);
-        Box::pin(
-            (async move {
-                event!(Level::INFO, "Request started");
-                // `inner` might not be ready since its a clone
-                let mut res = fut.await;
-                match res.as_mut() {
-                    Ok(res) => {
-                        let headers = res.headers_mut();
-                        headers.append(
-                            HeaderName::from_static("trace_id"),
-                            HeaderValue::from_str(&trace_id.clone()).unwrap(),
-                        );
-                    }
-                    Err(err) => {
-                        let message = err.to_string();
-                        event!(Level::WARN, message, "Error in request");
-                    }
-                }
-                event!(Level::INFO, "Request completed");
-                res
-            })
-            .instrument(tracing::info_span!("request", trace_id = trace_id2)),
-        )
+        let span = tracing::info_span!("request", trace_id);
+        let span2 = span.clone();
+        ResponseFuture {
+            future: span2.in_scope(|| self.inner.call(req)),
+            trace_id,
+        }
+        .instrument(span)
     }
 }
 
@@ -105,5 +84,33 @@ impl<S> Layer<S> for TraceIdLayer {
 
     fn layer(&self, inner: S) -> TraceId<S> {
         TraceId::new(inner)
+    }
+}
+
+pin_project! {
+    /// Response future for [`SetResponseHeader`].
+    #[derive(Debug)]
+    pub struct ResponseFuture<F> {
+        #[pin]
+        future: F,
+        trace_id: String,
+    }
+}
+
+impl<F, ResBody, E> Future for ResponseFuture<F>
+where
+    F: Future<Output = Result<Response<ResBody>, E>>,
+{
+    type Output = F::Output;
+
+    fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+        let this = self.project();
+        let mut res = ready!(this.future.poll(cx)?);
+        let headers = res.headers_mut();
+        headers.append(
+            HeaderName::from_static("trace_id"),
+            HeaderValue::from_str(this.trace_id).unwrap(),
+        );
+        Poll::Ready(Ok(res))
     }
 }

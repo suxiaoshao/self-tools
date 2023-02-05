@@ -5,7 +5,6 @@ use tower::{
     layer::util::{Identity, Stack},
     ServiceBuilder,
 };
-
 pub fn trace_layer() -> ServiceBuilder<Stack<TraceLogLayer, Stack<TraceIdLayer, Identity>>> {
     ServiceBuilder::new()
         .layer(TraceIdLayer)

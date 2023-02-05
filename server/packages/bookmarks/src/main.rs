@@ -20,6 +20,10 @@ use graphql::{mutation::MutationRoot, query::QueryRoot, RootSchema};
 use middleware::auth;
 use middleware::get_cors;
 use model::CONNECTION;
+use tracing::metadata::LevelFilter;
+use tracing_subscriber::{
+    fmt, prelude::__tracing_subscriber_SubscriberExt, util::SubscriberInitExt, Layer,
+};
 
 async fn graphql_handler(
     State(schema): State<RootSchema>,
@@ -44,6 +48,9 @@ async fn graphql_playground() -> impl IntoResponse {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    tracing_subscriber::registry()
+        .with(fmt::layer().with_filter(LevelFilter::INFO))
+        .init();
     let _ = &CONNECTION.get()?;
     // 设置跨域
     let cors = get_cors();
@@ -57,7 +64,8 @@ async fn main() -> anyhow::Result<()> {
                 .get(graphql_playground),
         )
         .with_state(schema)
-        .layer(cors);
+        .layer(cors)
+        .layer(middleware::trace_layer());
 
     Server::bind(&"0.0.0.0:8080".parse()?)
         .serve(app.into_make_service())
