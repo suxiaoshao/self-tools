@@ -98,6 +98,7 @@ where
             status,
             res_header,
         );
+        event!(Level::INFO, "Request completed");
         Poll::Ready(Ok(res))
     }
 }

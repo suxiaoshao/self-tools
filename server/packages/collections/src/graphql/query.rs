@@ -1,5 +1,4 @@
 use async_graphql::Object;
-use tracing::{event, Level};
 
 use super::{
     guard::AuthGuard,
@@ -33,7 +32,6 @@ impl QueryRoot {
         id: Option<i64>,
         pagination: Pagination,
     ) -> GraphqlResult<List<ItemAndCollection>> {
-        event!(Level::INFO, "collection_and_item");
         let offset = pagination.offset();
         let offset_plus_imit = pagination.offset_plus_limit();
         let collection_count = Collection::count_parent_id(id)?;
