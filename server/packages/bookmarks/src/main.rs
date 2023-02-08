@@ -3,10 +3,7 @@ mod graphql;
 mod model;
 mod service;
 
-use async_graphql::{
-    http::{playground_source, GraphQLPlaygroundConfig},
-    EmptySubscription, Schema,
-};
+use async_graphql::http::{playground_source, GraphQLPlaygroundConfig};
 use async_graphql_axum::{GraphQLRequest, GraphQLResponse};
 use axum::{
     extract::State,
@@ -16,7 +13,7 @@ use axum::{
     Router, Server,
 };
 use errors::GraphqlError;
-use graphql::{mutation::MutationRoot, query::QueryRoot, RootSchema};
+use graphql::{get_schema, RootSchema};
 use middleware::auth;
 use middleware::get_cors;
 use model::CONNECTION;
@@ -54,7 +51,7 @@ async fn main() -> anyhow::Result<()> {
     let _ = &CONNECTION.get()?;
     // 设置跨域
     let cors = get_cors();
-    let schema = Schema::build(QueryRoot, MutationRoot, EmptySubscription).finish();
+    let schema = get_schema();
 
     let app = Router::new()
         .route(

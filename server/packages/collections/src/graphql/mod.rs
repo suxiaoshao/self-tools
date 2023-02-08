@@ -1,3 +1,4 @@
+use ::middleware::Logger;
 use async_graphql::{EmptySubscription, Schema};
 
 use self::{mutation::MutationRoot, query::QueryRoot};
@@ -12,6 +13,6 @@ mod middleware;
 
 pub fn get_schema() -> RootSchema {
     Schema::build(QueryRoot, MutationRoot, EmptySubscription)
-        .extension(middleware::Logger)
+        .extension(Logger)
         .finish()
 }

@@ -24,10 +24,14 @@ axum={ version = "0.6.4", optional = true }
 proto={path="../proto",optional=true}
 tonic={ version = "0.8.3", optional = true }
 
+# graphql
+async-graphql = { version = "5.0.5", optional = true }
+
 [dev-dependencies]
-anyhow = "1.0.68"
+anyhow = "1.0.69"
 
 [features]
 trace=["rand","tower","http","tracing","futures","http-body","pin-project-lite","futures-util"]
 cors=["http","tower-http","nom"]
 auth=["axum","proto","tonic"]
+graphql-trace=["tracing","async-graphql"]
