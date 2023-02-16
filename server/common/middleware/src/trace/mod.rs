@@ -10,3 +10,4 @@ pub fn trace_layer() -> ServiceBuilder<Stack<TraceLogLayer, Stack<TraceIdLayer, 
         .layer(TraceIdLayer)
         .layer(trace_log::TraceLogLayer)
 }
+pub use self::trace_id::TraceIdExt;

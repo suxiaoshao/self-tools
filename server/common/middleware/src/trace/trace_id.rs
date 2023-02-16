@@ -8,6 +8,9 @@ use std::task::{Context, Poll};
 use tower::{Layer, Service};
 use tracing::{instrument::Instrumented, Instrument};
 
+#[derive(Clone)]
+pub struct TraceIdExt(pub String);
+
 pub struct TraceId<S> {
     inner: S,
 }
@@ -45,19 +48,19 @@ where
 
     fn call(&mut self, mut req: Request<B>) -> Self::Future {
         let headers = req.headers_mut();
-        let trace_id = headers.get("trace_id");
+        let trace_id = headers.get("trace-id");
         let trace_id = match trace_id {
             None => {
                 let trace = rand_length(50);
                 headers.append(
-                    HeaderName::from_static("trace_id"),
+                    HeaderName::from_static("trace-id"),
                     HeaderValue::from_str(&trace).unwrap(),
                 );
                 trace
             }
             Some(value) => value.to_str().unwrap().to_string(),
         };
-        req.extensions_mut().insert(trace_id.clone());
+        req.extensions_mut().insert(TraceIdExt(trace_id.clone()));
         let span = tracing::info_span!("request", trace_id);
         let span2 = span.clone();
         ResponseFuture {
@@ -108,7 +111,7 @@ where
         let mut res = ready!(this.future.poll(cx)?);
         let headers = res.headers_mut();
         headers.append(
-            HeaderName::from_static("trace_id"),
+            HeaderName::from_static("trace-id"),
             HeaderValue::from_str(this.trace_id).unwrap(),
         );
         Poll::Ready(Ok(res))
