@@ -24,6 +24,7 @@ pub(crate) async fn login(
     let Json(LoginInput { username, password }) = json?;
     event!(Level::INFO, "login request: {}", &username);
     let mut client = login_client(None, trace_id).await?;
+    event!(Level::INFO, "rpc login call");
     let LoginReply { auth } = client
         .login(LoginRequest { username, password })
         .await?

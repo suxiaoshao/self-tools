@@ -4,6 +4,7 @@ use axum::{
     response::Response,
 };
 use proto::{auth::CheckRequest, middleware::client::login_client};
+use tracing::{event, Level};
 
 use crate::TraceIdExt;
 
@@ -25,7 +26,10 @@ where
     }
     .to_string();
     let trace_id = req.extensions().get::<TraceIdExt>().cloned().map(|x| x.0);
+    event!(Level::INFO, "rpc login client");
     let mut client = login_client(None, trace_id).await?;
+    event!(Level::INFO, "rpc check call");
     client.check(CheckRequest { auth }).await?;
+    event!(Level::INFO, "rpc check success");
     Ok(next.run(req).await)
 }

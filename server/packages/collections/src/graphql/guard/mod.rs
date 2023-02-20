@@ -1,6 +1,7 @@
 use async_graphql::{async_trait, Context, Guard, Result};
 use middleware::TraceIdExt;
 use proto::{auth::CheckRequest, middleware::client::login_client};
+use tracing::{event, Level};
 
 use crate::{
     errors::{GraphqlError, GraphqlResult},
@@ -26,7 +27,10 @@ async fn check(auth: Option<&Auth>, trace_id: Option<&TraceIdExt>) -> GraphqlRes
         return Err(GraphqlError::Unauthenticated);
     }
     .to_string();
+    event!(Level::INFO, "rpc login client");
     let mut client = login_client(None, trace_id.map(|x| &x.0).cloned()).await?;
+    event!(Level::INFO, "rpc check call");
     client.check(CheckRequest { auth }).await?;
+    event!(Level::INFO, "rpc check success");
     Ok(())
 }

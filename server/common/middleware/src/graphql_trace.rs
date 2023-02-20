@@ -9,7 +9,7 @@ use async_graphql::{
     parser::types::{ExecutableDocument, OperationType, Selection},
     PathSegment, Response, ServerError, ServerResult, ValidationResult, Variables,
 };
-use tracing::Instrument;
+use tracing::{event, Instrument, Level};
 
 pub struct Logger;
 
@@ -41,7 +41,8 @@ impl Extension for TracingExtension {
             .filter(|(_, operation)| operation.node.ty == OperationType::Query)
             .any(|(_, operation)| operation.node.selection_set.node.items.iter().any(|selection| matches!(&selection.node, Selection::Field(field) if field.node.name.node == "__schema")));
         if !is_schema {
-            tracing::info!(
+            event!(
+                Level::INFO,
                 "execute:{}",
                 ctx.stringify_execute_doc(&document, variables)
             );
@@ -56,7 +57,7 @@ impl Extension for TracingExtension {
         let resp = next.run(ctx).await;
         if let Err(errors) = &resp {
             for err in errors {
-                tracing::info!("validation error: {}", err.message);
+                event!(Level::WARN, "validation error: {}", err.message);
             }
         }
         resp
@@ -87,14 +88,14 @@ impl Extension for TracingExtension {
                         }
                     }
 
-                    tracing::info!("error: path={} message={}", path, err.message,);
+                    event!(Level::WARN, "error: path={} message={}", path, err.message,);
                 } else {
-                    tracing::info!("error: message={}", err.message,);
+                    event!(Level::WARN, "error: message={}", err.message,);
                 }
             }
         } else {
             let data = &resp.data;
-            tracing::info!("response: {}", data);
+            event!(Level::INFO, "response: {}", data);
         }
         resp
     }
