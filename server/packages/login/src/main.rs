@@ -2,7 +2,7 @@ use crate::router::get_router;
 use ::middleware::{get_cors, trace_layer};
 use anyhow::Result;
 use std::net::SocketAddr;
-use tracing::metadata::LevelFilter;
+use tracing::{event, metadata::LevelFilter, Level};
 use tracing_subscriber::{
     fmt, prelude::__tracing_subscriber_SubscriberExt, util::SubscriberInitExt, Layer,
 };
@@ -24,6 +24,7 @@ async fn main() -> Result<()> {
     // run our app with hyper
     // `axum::Server` is a re-export of `hyper::Server`
     let addr = SocketAddr::from(([0, 0, 0, 0], 8000));
+    event!(Level::INFO, "server start on {}", addr);
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
         .await?;

@@ -17,7 +17,7 @@ use graphql::{get_schema, RootSchema};
 use middleware::auth;
 use middleware::get_cors;
 use model::CONNECTION;
-use tracing::metadata::LevelFilter;
+use tracing::{event, metadata::LevelFilter, Level};
 use tracing_subscriber::{
     fmt, prelude::__tracing_subscriber_SubscriberExt, util::SubscriberInitExt, Layer,
 };
@@ -63,9 +63,9 @@ async fn main() -> anyhow::Result<()> {
         .with_state(schema)
         .layer(cors)
         .layer(middleware::trace_layer());
-
-    Server::bind(&"0.0.0.0:8080".parse()?)
-        .serve(app.into_make_service())
-        .await?;
+    let addr = "0.0.0.0:8080";
+    event!(Level::INFO, addr, "server start");
+    let addr = addr.parse()?;
+    Server::bind(&addr).serve(app.into_make_service()).await?;
     Ok(())
 }
