@@ -20,7 +20,7 @@ jobs:
         with:
           version: latest
           run_install: true
-          cwd: web
+          dest: web
       - name: Lint
         working-directory: web
         run: pnpm lint
@@ -35,7 +35,7 @@ jobs:
           toolchain: stable
           override: true
       - name: protoc
-        run: sudo apt update && sudo apt upgrade -y &&sudo apt install protobuf-compiler mold clang -y
+        run: sudo apt update && sudo apt install protobuf-compiler mold clang -y
       - name: server Lint
         working-directory: server
         run: cargo clippy --all
