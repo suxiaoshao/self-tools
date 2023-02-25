@@ -6,7 +6,7 @@ use rand::{distributions::Alphanumeric, Rng};
 use std::pin::Pin;
 use std::task::{Context, Poll};
 use tower::{Layer, Service};
-use tracing::{instrument::Instrumented, Instrument};
+use tracing::{event, instrument::Instrumented, Instrument, Level};
 
 #[derive(Clone)]
 pub struct TraceIdExt(pub String);
@@ -54,11 +54,23 @@ where
                 let trace = rand_length(50);
                 headers.append(
                     HeaderName::from_static("trace-id"),
-                    HeaderValue::from_str(&trace).unwrap(),
+                    HeaderValue::from_str(&trace)
+                        .map_err(|err| {
+                            event!(Level::ERROR, "trace_id: {}", err);
+                            err
+                        })
+                        .unwrap(),
                 );
                 trace
             }
-            Some(value) => value.to_str().unwrap().to_string(),
+            Some(value) => value
+                .to_str()
+                .map_err(|err| {
+                    event!(Level::ERROR, "trace_id: {}", err);
+                    err
+                })
+                .unwrap()
+                .to_string(),
         };
         req.extensions_mut().insert(TraceIdExt(trace_id.clone()));
         let span = tracing::info_span!("request", trace_id);
@@ -112,7 +124,12 @@ where
         let headers = res.headers_mut();
         headers.append(
             HeaderName::from_static("trace-id"),
-            HeaderValue::from_str(this.trace_id).unwrap(),
+            HeaderValue::from_str(this.trace_id)
+                .map_err(|err| {
+                    event!(Level::ERROR, "trace_id: {}", err);
+                    err
+                })
+                .unwrap(),
         );
         Poll::Ready(Ok(res))
     }

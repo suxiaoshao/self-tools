@@ -24,6 +24,7 @@ async fn check(auth: Option<&Auth>, trace_id: Option<&TraceIdExt>) -> GraphqlRes
     let auth = if let Some(auth_header) = auth.map(|x| &x.0) {
         auth_header
     } else {
+        event!(Level::WARN, "graphql context 缺少 Auth");
         return Err(GraphqlError::Unauthenticated);
     }
     .to_string();

@@ -1,5 +1,6 @@
 use async_graphql::SimpleObject;
 use std::collections::HashSet;
+use tracing::{event, Level};
 
 use crate::model::collection::CollectionModel;
 use crate::{
@@ -35,6 +36,7 @@ impl Tag {
         //  判断父目录是否存在
         if let Some(id) = collection_id {
             if !CollectionModel::exists(id)? {
+                event!(Level::ERROR, "目录不存在: {}", id);
                 return Err(GraphqlError::NotFound("目录", id));
             }
         }
@@ -45,6 +47,7 @@ impl Tag {
     pub fn delete(id: i64) -> GraphqlResult<Self> {
         // 标签不存在
         if !TagModel::exists(id)? {
+            event!(Level::ERROR, "标签不存在: {}", id);
             return Err(GraphqlError::NotFound("标签", id));
         }
         let deleted_tag = TagModel::delete(id)?;
@@ -62,6 +65,7 @@ impl Tag {
         let database_tags: HashSet<i64> = database_tags.into_iter().map(|tag| tag.id).collect();
         for id in tag_ids {
             if !database_tags.contains(&id) {
+                event!(Level::ERROR, "标签不存在: {}", id);
                 return Err(GraphqlError::NotFound("标签", id));
             }
         }
@@ -89,6 +93,12 @@ impl Tag {
         // 存在不符合的 tags
         for tag in tags {
             if !allow_tags.contains(tag) {
+                event!(
+                    Level::ERROR,
+                    "标签: {} 不属于集合: {:?}",
+                    tag,
+                    collection_id
+                );
                 return Err(GraphqlError::Scope {
                     sub_tag: "标签",
                     sub_value: *tag,
@@ -104,6 +114,7 @@ impl Tag {
         //  判断父目录是否存在
         if let Some(id) = collection_id {
             if !CollectionModel::exists(id)? {
+                event!(Level::ERROR, "目录不存在: {}", id);
                 return Err(GraphqlError::NotFound("目录", id));
             }
         }

@@ -16,11 +16,11 @@ pin-project-lite={ version = "0.2.9", optional = true }
 futures-util = { version = "0.3.26", optional = true }
 
 # cors
-http= { version = "0.2.8", optional = true }
-tower-http= { version = "0.3.5", features = ["cors"], optional = true }
+http= { version = "0.2.9", optional = true }
+tower-http= { version = "0.4.0", features = ["cors"], optional = true }
 nom = { version = "7.1.3", optional = true }
 # auth
-axum={ version = "0.6.6", optional = true }
+axum={ version = "0.6.8", optional = true }
 proto={path="../proto",optional=true}
 tonic={ version = "0.8.3", optional = true }
 

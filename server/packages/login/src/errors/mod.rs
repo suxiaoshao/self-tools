@@ -7,6 +7,7 @@ use serde::Serialize;
 use serde_json::json;
 use std::convert::From;
 use thiserror::Error;
+use tracing::{event, Level};
 
 use self::response::OpenErrorResponse;
 use self::status::OpenStatus;
@@ -53,12 +54,16 @@ pub type OpenResult<T> = Result<T, OpenError>;
 
 impl IntoResponse for OpenError {
     fn into_response(self) -> Response {
-        match serde_json::to_value(OpenErrorResponse::from(self)) {
+        let error_response = OpenErrorResponse::from(self);
+        match serde_json::to_value(&error_response) {
             Ok(e) => Json(e),
-            Err(_) => Json(json!({
-                "code":"UnknownError",
-                "message":"未知错误"
-            })),
+            Err(_) => {
+                event!(Level::ERROR, "json 解析错误: {:?}", error_response);
+                Json(json!({
+                    "code":"UnknownError",
+                    "message":"未知错误"
+                }))
+            }
         }
         .into_response()
     }

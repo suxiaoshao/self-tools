@@ -6,6 +6,7 @@ use crate::{
 };
 use async_graphql::{ComplexObject, SimpleObject};
 use time::OffsetDateTime;
+use tracing::{event, Level};
 
 use super::collection::Collection;
 
@@ -48,6 +49,7 @@ impl Item {
         let conn = &mut CONNECTION.get()?;
         //  判断父目录是否存在
         if !CollectionModel::exists(collection_id, conn)? {
+            event!(Level::WARN, "目录不存在: {}", collection_id);
             return Err(GraphqlError::NotFound("目录", collection_id));
         }
         let new_item = ItemModel::create(&name, &content, collection_id, conn)?;
@@ -57,6 +59,7 @@ impl Item {
     pub fn delete(id: i64) -> GraphqlResult<Self> {
         let conn = &mut CONNECTION.get()?;
         if !ItemModel::exists(id, conn)? {
+            event!(Level::WARN, "记录不存在: {}", id);
             return Err(GraphqlError::NotFound("记录", id));
         }
         let item = ItemModel::delete(id, conn)?;
@@ -66,6 +69,7 @@ impl Item {
     pub fn get(id: i64) -> GraphqlResult<Self> {
         let conn = &mut CONNECTION.get()?;
         if !ItemModel::exists(id, conn)? {
+            event!(Level::WARN, "记录不存在: {}", id);
             return Err(GraphqlError::NotFound("记录", id));
         }
         let item = ItemModel::find_one(id, conn)?;
@@ -75,6 +79,7 @@ impl Item {
     pub fn update(id: i64, name: &str, content: &str) -> GraphqlResult<Self> {
         let conn = &mut CONNECTION.get()?;
         if !ItemModel::exists(id, conn)? {
+            event!(Level::WARN, "记录不存在: {}", id);
             return Err(GraphqlError::NotFound("记录", id));
         }
         let item = ItemModel::update(id, name, content, conn)?;
@@ -89,6 +94,7 @@ impl Item {
         let conn = &mut CONNECTION.get()?;
         //  判断父目录是否存在
         if !CollectionModel::exists(collection_id, conn)? {
+            event!(Level::WARN, "目录不存在: {}", collection_id);
             return Err(GraphqlError::NotFound("目录", collection_id));
         }
         let data = ItemModel::query(collection_id, offset, limit, conn)?
@@ -102,6 +108,7 @@ impl Item {
         let conn = &mut CONNECTION.get()?;
         //  判断父目录是否存在
         if !CollectionModel::exists(collection_id, conn)? {
+            event!(Level::WARN, "目录不存在: {}", collection_id);
             return Err(GraphqlError::NotFound("目录", collection_id));
         }
         ItemModel::count(collection_id, conn)

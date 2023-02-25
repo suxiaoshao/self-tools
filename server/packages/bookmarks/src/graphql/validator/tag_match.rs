@@ -1,4 +1,5 @@
 use async_graphql::{CustomValidator, InputValueError};
+use tracing::{event, Level};
 
 use crate::graphql::input::TagMatch;
 
@@ -7,6 +8,7 @@ pub struct TagMatchValidator;
 impl CustomValidator<TagMatch> for TagMatchValidator {
     fn check(&self, input: &TagMatch) -> Result<(), InputValueError<TagMatch>> {
         if input.match_set.is_empty() {
+            event!(Level::WARN, "至少选择一个标签");
             return Err(InputValueError::custom("至少选择一个标签"));
         }
         Ok(())

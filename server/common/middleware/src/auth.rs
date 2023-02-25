@@ -22,6 +22,7 @@ where
     let auth = if let Some(auth_header) = auth_header {
         auth_header
     } else {
+        event!(Level::WARN, "header 缺少 auth");
         return Err(Unauthenticated.into());
     }
     .to_string();

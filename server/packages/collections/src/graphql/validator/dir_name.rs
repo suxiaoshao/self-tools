@@ -1,4 +1,5 @@
 use async_graphql::{CustomValidator, InputValueError};
+use tracing::{event, Level};
 
 pub struct DirNameValidator;
 
@@ -6,21 +7,26 @@ impl CustomValidator<String> for DirNameValidator {
     fn check(&self, input: &String) -> Result<(), InputValueError<String>> {
         let len = input.chars().count();
         if len > 255 {
+            event!(Level::WARN, "dir:{} 不能大于255字符", input);
             return Err(InputValueError::custom("不能大于255字符"));
         }
         if len < 1 {
+            event!(Level::WARN, "dir:{} 不能小于1个字符", input);
             return Err(InputValueError::custom("不能小于1个字符"));
         }
         if input == "." || input == ".." {
+            event!(Level::WARN, "dir:{} 不能为\"..\" \".\"", input);
             return Err(InputValueError::custom("不能为\"..\" \".\""));
         }
         if input.chars().all(|x| x == ' ') {
+            event!(Level::WARN, "dir:{} 不能为空", input);
             return Err(InputValueError::custom("不能为空"));
         }
         if input
             .chars()
             .any(|x| x == '/' || x == '\n' || x == '\r' || x == '\t')
         {
+            event!(Level::WARN, "dir:{} 不能含有/和换行符等特殊字符", input);
             Err(InputValueError::custom("不能含有/和换行符等特殊字符"))
         } else {
             Ok(())
@@ -62,9 +68,7 @@ mod test {
         assert!(validator.check(&input).is_err());
         // 字符大于255
         let input = "abcdeabcdeabcdeabcdeabcdecabcdeab";
-        let input = format!(
-            "{input}{input}{input}{input}{input}{input}{input}{input}"
-        );
+        let input = format!("{input}{input}{input}{input}{input}{input}{input}{input}");
         assert!(validator.check(&input).is_err());
     }
 }
