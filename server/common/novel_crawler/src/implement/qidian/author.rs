@@ -49,13 +49,13 @@ struct QDAuthor {
 impl AuthorFn for QDAuthor {
     type Novel = QDNovel;
     async fn get_author_data(author_id: &str) -> NovelResult<Self> {
-        let url = format!("https://m.qidian.com/author/{}/", author_id);
+        let url = format!("https://m.qidian.com/author/{author_id}/");
         let image_doc = text_from_url(&url, "utf-8").await?;
         let image_doc = Html::parse_document(&image_doc);
 
         // 图片
         let image = parse_image_src(&image_doc, &SELECTOR_AUTHOR_IMAGE)?;
-        let image = format!("https:{}", image);
+        let image = format!("https:{image}");
         // 其他
         let name = parse_inner_html(&image_doc, &SELECTOR_AUTHOR_NAME)?;
         let description = parse_text(&image_doc, &SELECTOR_AUTHOR_DESCRIPTION)?;
@@ -127,7 +127,7 @@ mod test {
     #[tokio::test]
     async fn jj_author_test() -> anyhow::Result<()> {
         let author = QDAuthor::get_author_data("4362386").await?;
-        println!("{:#?}", author);
+        println!("{author:#?}");
         Ok(())
     }
 }

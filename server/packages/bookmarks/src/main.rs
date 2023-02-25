@@ -1,13 +1,9 @@
 mod errors;
 mod graphql;
-mod middleware;
 mod model;
 mod service;
 
-use async_graphql::{
-    http::{playground_source, GraphQLPlaygroundConfig},
-    EmptySubscription, Schema,
-};
+use async_graphql::http::{playground_source, GraphQLPlaygroundConfig};
 use async_graphql_axum::{GraphQLRequest, GraphQLResponse};
 use axum::{
     extract::State,
@@ -16,10 +12,15 @@ use axum::{
     routing::post,
     Router, Server,
 };
-use cors::get_cors;
-use graphql::{mutation::MutationRoot, query::QueryRoot, RootSchema};
+use errors::GraphqlError;
+use graphql::{get_schema, RootSchema};
 use middleware::auth;
+use middleware::get_cors;
 use model::CONNECTION;
+use tracing::{event, metadata::LevelFilter, Level};
+use tracing_subscriber::{
+    fmt, prelude::__tracing_subscriber_SubscriberExt, util::SubscriberInitExt, Layer,
+};
 
 async fn graphql_handler(
     State(schema): State<RootSchema>,
@@ -44,23 +45,27 @@ async fn graphql_playground() -> impl IntoResponse {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    tracing_subscriber::registry()
+        .with(fmt::layer().with_filter(LevelFilter::INFO))
+        .init();
     let _ = &CONNECTION.get()?;
     // 设置跨域
     let cors = get_cors();
-    let schema = Schema::build(QueryRoot, MutationRoot, EmptySubscription).finish();
+    let schema = get_schema();
 
     let app = Router::new()
         .route(
             "/graphql",
             post(graphql_handler)
-                .layer(axum::middleware::from_fn(auth))
+                .layer(axum::middleware::from_fn(auth::<_, GraphqlError>))
                 .get(graphql_playground),
         )
         .with_state(schema)
-        .layer(cors);
-
-    Server::bind(&"0.0.0.0:8080".parse()?)
-        .serve(app.into_make_service())
-        .await?;
+        .layer(cors)
+        .layer(middleware::trace_layer());
+    let addr = "0.0.0.0:8080";
+    event!(Level::INFO, addr, "server start");
+    let addr = addr.parse()?;
+    Server::bind(&addr).serve(app.into_make_service()).await?;
     Ok(())
 }

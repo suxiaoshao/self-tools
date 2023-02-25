@@ -39,7 +39,7 @@ impl NovelFn for QDNovel {
         let name = parse_text(&html, &SELECTOR_NOVEL_NAME)?;
         let description = parse_text(&html, &SELECTOR_NOVEL_DESCRIPTION)?;
         let image = parse_image_src(&html, &SELECTOR_NOVEL_IMAGE)?;
-        let image = format!("https:{}", image);
+        let image = format!("https:{image}");
         let chapters = parse_chapters(&chapter_html, novel_id)?;
         Ok(Self {
             id: novel_id.to_string(),
@@ -73,8 +73,8 @@ impl NovelFn for QDNovel {
 
 impl QDNovel {
     pub(crate) async fn get_doc(id: &str) -> NovelResult<(String, String)> {
-        let url = format!("https://m.qidian.com/book/{}.html", id);
-        let chapter_url = format!("https://m.qidian.com/book/{}/catalog/", id);
+        let url = format!("https://m.qidian.com/book/{id}.html");
+        let chapter_url = format!("https://m.qidian.com/book/{id}/catalog/");
         let data = tokio::try_join!(
             text_from_url(&url, "utf-8"),
             text_from_url(&chapter_url, "utf-8")
@@ -120,7 +120,7 @@ mod test {
     async fn jj_novel_test() -> anyhow::Result<()> {
         let novel_id = "1029006481";
         let novel = super::QDNovel::get_novel_data(novel_id).await?;
-        println!("{:#?}", novel);
+        println!("{novel:#?}");
         Ok(())
     }
 }

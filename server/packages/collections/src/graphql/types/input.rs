@@ -1,6 +1,6 @@
 use async_graphql::InputObject;
 
-#[derive(InputObject)]
+#[derive(InputObject, Debug)]
 pub struct Pagination {
     #[graphql(validator(minimum = 1))]
     pub page: i64,

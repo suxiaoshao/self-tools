@@ -7,7 +7,7 @@ on:
       - docker/server/login.Dockerfile
       - server/packages/login/**
       - server/common/proto/**
-      - server/common/cors/**
+      - server/common/middleware/**
       - server/.cargo/**
       - .github/workflows/login.yaml
 

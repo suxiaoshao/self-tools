@@ -1,4 +1,5 @@
 use async_graphql::Object;
+use tracing::{event, Level};
 
 use super::{
     guard::AuthGuard,
@@ -65,10 +66,22 @@ impl QueryRoot {
         let id = match id {
             Some(id) => id,
             None => {
+                event!(
+                    Level::ERROR,
+                    "全记录查询时页码太大 pagination: {:?} collection_count + item_count: {}",
+                    pagination,
+                    collection_count + item_count
+                );
                 return Err(GraphqlError::PageSizeTooMore);
             }
         };
         if collection_count + item_count < offset {
+            event!(
+                Level::ERROR,
+                "全记录查询时页码太大 pagination: {:?} collection_count + item_count: {}",
+                pagination,
+                collection_count + item_count
+            );
             return Err(GraphqlError::PageSizeTooMore);
         }
         let data = Item::query(id, offset - collection_count, pagination.page_size)?

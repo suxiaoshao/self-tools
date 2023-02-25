@@ -1,6 +1,7 @@
 use errors::{TonicError, TonicResult};
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use tracing::{event, Level};
 
 use self::env::{env_password, env_secret_key, env_username};
 
@@ -40,20 +41,22 @@ impl Claims {
     }
     /// 管理员 token
     pub fn manager_token(name: String, password: String) -> TonicResult<String> {
-        let currect_username = env_username()?;
-        let currect_password = env_password()?;
-        if name == currect_username.as_str() && password == currect_password.as_str() {
+        let correct_username = env_username()?;
+        let correct_password = env_password()?;
+        if name == correct_username.as_str() && password == correct_password.as_str() {
             Claims::new_token(name, password)
         } else {
+            event!(Level::WARN, "管理员密码错误: {}", name);
             Err(TonicError::PasswordError)
         }
     }
     /// 验证管理员
     pub fn check_manager(auth: String) -> TonicResult<()> {
-        let currect_username = env_username()?;
-        let currect_password = env_password()?;
-        let chaim = jwt_decode::<Self>(&auth)?;
-        if chaim.name != currect_username.as_str() || chaim.password != currect_password.as_str() {
+        let correct_username = env_username()?;
+        let correct_password = env_password()?;
+        let claim = jwt_decode::<Self>(&auth)?;
+        if claim.name != correct_username.as_str() || claim.password != correct_password.as_str() {
+            event!(Level::WARN, "管理员密码错误: {}", claim.name);
             return Err(TonicError::PasswordError);
         };
         Ok(())
@@ -70,8 +73,14 @@ fn jwt_decode<T: DeserializeOwned>(token: &str) -> TonicResult<T> {
     ) {
         Ok(e) => Ok(e.claims),
         Err(e) => Err(match e.kind() {
-            jsonwebtoken::errors::ErrorKind::ExpiredSignature => TonicError::AuthTimeout,
-            _ => TonicError::TokenError,
+            jsonwebtoken::errors::ErrorKind::ExpiredSignature => {
+                event!(Level::WARN, "token 过期: {}", token);
+                TonicError::AuthTimeout
+            }
+            _ => {
+                event!(Level::WARN, "token 错误: {}", token);
+                TonicError::TokenError
+            }
         }),
     }
 }

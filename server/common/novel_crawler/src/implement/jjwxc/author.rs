@@ -44,7 +44,7 @@ struct JJAuthor {
 impl AuthorFn for JJAuthor {
     type Novel = JJNovel;
     async fn get_author_data(author_id: &str) -> NovelResult<Self> {
-        let url = format!("https://www.jjwxc.net/oneauthor.php?authorid={}", author_id);
+        let url = format!("https://www.jjwxc.net/oneauthor.php?authorid={author_id}");
         let image_doc = text_from_url(&url, "gb18030").await?;
         let image_doc = Html::parse_document(&image_doc);
 
@@ -118,7 +118,7 @@ mod test {
     #[tokio::test]
     async fn jj_author_test() -> anyhow::Result<()> {
         let author = JJAuthor::get_author_data("1000001").await?;
-        println!("{:#?}", author);
+        println!("{author:#?}");
         Ok(())
     }
 }

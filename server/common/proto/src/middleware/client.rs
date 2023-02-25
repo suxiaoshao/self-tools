@@ -8,12 +8,13 @@ use crate::middleware::client::service::{Auth, AuthService};
 #[cfg(feature = "auth_client")]
 pub async fn login_client(
     auth: Option<String>,
+    trace_id: Option<String>,
 ) -> Result<LoginClient<AuthService>, tonic::transport::Error> {
     let channel = Channel::from_static("http://auth:80").connect().await?;
 
     let channel = ServiceBuilder::new()
         // Interceptors can be also be applied as middleware
-        .layer(Auth(auth))
+        .layer(Auth { auth, trace_id })
         .service(channel);
     let client = LoginClient::new(channel);
     Ok(client)
@@ -30,13 +31,16 @@ pub mod service {
     use tonic::transport::Channel;
     use tower::{Layer, Service};
 
-    pub struct Auth(pub Option<String>);
+    pub struct Auth {
+        pub auth: Option<String>,
+        pub trace_id: Option<String>,
+    }
 
     impl Layer<Channel> for Auth {
         type Service = AuthService;
 
         fn layer(&self, inner: Channel) -> Self::Service {
-            AuthService::new(inner, self.0.clone())
+            AuthService::new(inner, self.auth.clone(), self.trace_id.clone())
         }
     }
 
@@ -44,11 +48,16 @@ pub mod service {
     pub struct AuthService {
         inner: Channel,
         auth: Option<String>,
+        trace_id: Option<String>,
     }
 
     impl AuthService {
-        fn new(inner: Channel, auth: Option<String>) -> Self {
-            AuthService { inner, auth }
+        fn new(inner: Channel, auth: Option<String>, trace_id: Option<String>) -> Self {
+            AuthService {
+                inner,
+                auth,
+                trace_id,
+            }
         }
     }
 
@@ -68,6 +77,9 @@ pub mod service {
 
             if let Some(auth) = self.auth.as_ref().and_then(|x| x.parse().ok()) {
                 req.headers_mut().insert("authorization", auth);
+            }
+            if let Some(trace_id) = self.trace_id.as_ref().and_then(|x| x.parse().ok()) {
+                req.headers_mut().insert("trace-id", trace_id);
             }
 
             Box::pin(async move {

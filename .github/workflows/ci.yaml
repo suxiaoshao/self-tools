@@ -19,8 +19,10 @@ jobs:
         id: pnpm-install
         with:
           version: latest
-          run_install: true
-          cwd: web
+          run_install: false
+      - name: Install dependencies
+        working-directory: web
+        run: pnpm install
       - name: Lint
         working-directory: web
         run: pnpm lint
@@ -35,7 +37,7 @@ jobs:
           toolchain: stable
           override: true
       - name: protoc
-        run: sudo apt update && sudo apt upgrade -y &&sudo apt install protobuf-compiler mold clang -y
+        run: sudo apt update && sudo apt install protobuf-compiler mold clang -y
       - name: server Lint
         working-directory: server
         run: cargo clippy --all

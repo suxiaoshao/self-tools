@@ -1,6 +1,7 @@
 use async_graphql::ErrorExtensionValues;
 use axum::{response::IntoResponse, Json};
 use diesel::r2d2;
+use middleware::Unauthenticated;
 use std::sync::Arc;
 use tonic::{transport, Code, Status};
 
@@ -51,10 +52,10 @@ impl GraphqlError {
             GraphqlError::Status(status) => status.message().to_string(),
             GraphqlError::Transport => "内部连接错误".to_string(),
             GraphqlError::R2d2(_) => "数据库连接错误".to_string(),
-            GraphqlError::Diesel(data) => format!("数据库错误:{}", data),
+            GraphqlError::Diesel(data) => format!("数据库错误:{data}"),
             GraphqlError::Unauthenticated => "没有发送 token".to_string(),
             GraphqlError::NotFound(tag, id) => format!(r#"{tag}"{id}"不存在"#),
-            GraphqlError::AlreadyExists(name) => format!("{}已存在", name),
+            GraphqlError::AlreadyExists(name) => format!("{name}已存在"),
             GraphqlError::Scope {
                 super_tag,
                 sub_tag,
@@ -154,7 +155,11 @@ impl From<diesel::result::Error> for GraphqlError {
         Self::Diesel(error.to_string())
     }
 }
-
+impl From<Unauthenticated> for GraphqlError {
+    fn from(_: Unauthenticated) -> Self {
+        Self::Unauthenticated
+    }
+}
 pub type GraphqlResult<T> = Result<T, GraphqlError>;
 
 impl From<GraphqlError> for async_graphql::Error {

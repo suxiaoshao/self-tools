@@ -64,7 +64,7 @@ fn inner_port(port: &str) -> IResult<&str, ()> {
 #[cfg(test)]
 mod test {
 
-    use crate::{inner_origin, inner_port};
+    use super::{inner_origin, inner_port};
 
     use super::inner_host;
 

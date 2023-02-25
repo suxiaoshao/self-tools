@@ -52,10 +52,10 @@ impl GraphqlError {
             GraphqlError::Status(status) => status.message().to_string(),
             GraphqlError::Transport => "内部连接错误".to_string(),
             GraphqlError::R2d2(_) => "数据库连接错误".to_string(),
-            GraphqlError::Diesel(data) => format!("数据库错误:{}", data),
+            GraphqlError::Diesel(data) => format!("数据库错误:{data}"),
             GraphqlError::Unauthenticated => "没有发送 token".to_string(),
             GraphqlError::NotFound(tag, id) => format!(r#"{tag}"{id}"不存在"#),
-            GraphqlError::AlreadyExists(name) => format!("{}已存在", name),
+            GraphqlError::AlreadyExists(name) => format!("{name}已存在"),
             GraphqlError::Scope {
                 super_tag,
                 sub_tag,

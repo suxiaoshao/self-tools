@@ -1,5 +1,6 @@
 use async_graphql::Enum;
 use std::io::Write;
+use tracing::{event, Level};
 
 use diesel::{
     deserialize::{self, FromSql, FromSqlRow},
@@ -34,7 +35,14 @@ impl FromSql<super::sql_types::ReadStatus, Pg> for ReadStatus {
             b"read" => Ok(ReadStatus::Read),
             b"unread" => Ok(ReadStatus::Unread),
             b"reading" => Ok(ReadStatus::Reading),
-            _ => Err("Unrecognized enum variant".into()),
+            _ => {
+                event!(
+                    Level::ERROR,
+                    "Unrecognized enum variant {:x?}",
+                    bytes.as_bytes()
+                );
+                Err("Unrecognized enum variant".into())
+            }
         }
     }
 }

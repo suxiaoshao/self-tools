@@ -77,7 +77,7 @@ impl AuthorModel {
     pub fn get_search_list(search_name: String) -> GraphqlResult<Vec<Self>> {
         let conn = &mut super::CONNECTION.get()?;
         let authors = author::table
-            .filter(author::name.like(format!("%{}%", search_name)))
+            .filter(author::name.like(format!("%{search_name}%")))
             .load(conn)?;
         Ok(authors)
     }

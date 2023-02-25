@@ -1,6 +1,7 @@
 use async_graphql::*;
 use diesel::{Connection, PgConnection};
 use time::OffsetDateTime;
+use tracing::{event, Level};
 
 use crate::{
     errors::{GraphqlError, GraphqlResult},
@@ -51,9 +52,10 @@ impl Collection {
         let conn = &mut CONNECTION.get()?;
         match parent_id {
             None => {
-                let collection_path = format!("/{}/", name);
+                let collection_path = format!("/{name}/");
                 // 子目录已存在
                 if CollectionModel::exists_by_path(&collection_path, conn)? {
+                    event!(Level::WARN, "目录已存在: {}", collection_path);
                     return Err(GraphqlError::AlreadyExists(collection_path));
                 }
                 let collection =
@@ -64,14 +66,16 @@ impl Collection {
             Some(id) => {
                 // 父目录不存在
                 if !CollectionModel::exists(id, conn)? {
+                    event!(Level::WARN, "父目录不存在: {}", id);
                     return Err(GraphqlError::NotFound("父目录", id));
                 }
                 let CollectionModel {
                     path: parent_path, ..
                 } = CollectionModel::find_one(id, conn)?;
-                let collection_path = format!("{}{}/", parent_path, name);
+                let collection_path = format!("{parent_path}{name}/");
                 // 子目录已存在
                 if CollectionModel::exists_by_path(&collection_path, conn)? {
+                    event!(Level::WARN, "目录已存在: {}", collection_path);
                     return Err(GraphqlError::AlreadyExists(collection_path));
                 }
                 let collection =
@@ -96,6 +100,7 @@ impl Collection {
     fn delete_inner(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
         // 目录不存在
         if !CollectionModel::exists(id, conn)? {
+            event!(Level::WARN, "目录不存在: {}", id);
             return Err(GraphqlError::NotFound("目录", id));
         }
         // 删除目录下的记录
@@ -112,6 +117,7 @@ impl Collection {
         let conn = &mut CONNECTION.get()?;
         //  判断目录是否存在
         if !CollectionModel::exists(id, conn)? {
+            event!(Level::WARN, "目录不存在: {}", id);
             return Err(GraphqlError::NotFound("目录", id));
         }
         let collection = CollectionModel::find_one(id, conn)?;
@@ -130,6 +136,7 @@ impl Collection {
         let conn = &mut CONNECTION.get()?;
         //  判断目录是否存在
         if !CollectionModel::exists(id, conn)? {
+            event!(Level::WARN, "目录不存在: {}", id);
             return Err(GraphqlError::NotFound("目录", id));
         }
         let collection = CollectionModel::find_one(id, conn)?;
@@ -140,6 +147,7 @@ impl Collection {
         let conn = &mut CONNECTION.get()?;
         //  判断目录是否存在
         if !CollectionModel::exists(id, conn)? {
+            event!(Level::WARN, "目录不存在: {}", id);
             return Err(GraphqlError::NotFound("目录", id));
         }
         //
@@ -151,11 +159,12 @@ impl Collection {
         // 目标子目录是否存在
         let path = match parent_id {
             None => {
-                let collection_path = format!("/{}/", name);
+                let collection_path = format!("/{name}/");
                 // 子目录已存在
                 if CollectionModel::exists_by_path(&collection_path, conn)?
                     && collection_path != old_path
                 {
+                    event!(Level::WARN, "目录已存在: {}", collection_path);
                     return Err(GraphqlError::AlreadyExists(collection_path));
                 }
                 collection_path
@@ -164,11 +173,12 @@ impl Collection {
                 let CollectionModel {
                     path: parent_path, ..
                 } = CollectionModel::find_one(id, conn)?;
-                let collection_path = format!("{}{}/", parent_path, name);
+                let collection_path = format!("{parent_path}{name}/");
                 // 子目录已存在
                 if CollectionModel::exists_by_path(&collection_path, conn)?
                     && collection_path != old_path
                 {
+                    event!(Level::WARN, "目录已存在: {}", collection_path);
                     return Err(GraphqlError::AlreadyExists(collection_path));
                 }
                 collection_path
@@ -191,6 +201,7 @@ impl Collection {
         //  判断父目录是否存在
         if let Some(id) = parent_id {
             if !CollectionModel::exists(id, conn)? {
+                event!(Level::WARN, "目录不存在: {}", id);
                 return Err(GraphqlError::NotFound("目录", id));
             }
         }
@@ -203,6 +214,7 @@ impl Collection {
         //  判断父目录是否存在
         if let Some(id) = parent_id {
             if !CollectionModel::exists(id, conn)? {
+                event!(Level::WARN, "目录不存在: {}", id);
                 return Err(GraphqlError::NotFound("目录", id));
             }
         }

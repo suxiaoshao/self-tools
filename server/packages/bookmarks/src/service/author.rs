@@ -1,4 +1,5 @@
 use async_graphql::SimpleObject;
+use tracing::{event, Level};
 
 use crate::{
     errors::{GraphqlError, GraphqlResult},
@@ -40,6 +41,7 @@ impl Author {
     pub fn delete(id: i64) -> GraphqlResult<Self> {
         // 作者不存在
         if !AuthorModel::exists(id)? {
+            event!(Level::WARN, "作者不存在: {}", id);
             return Err(GraphqlError::NotFound("作者", id));
         }
         let deleted_author = AuthorModel::delete(id)?;
@@ -57,6 +59,7 @@ impl Author {
     pub fn get(id: i64) -> GraphqlResult<Self> {
         // 作者不存在
         if !AuthorModel::exists(id)? {
+            event!(Level::WARN, "作者不存在: {}", id);
             return Err(GraphqlError::NotFound("作者", id));
         }
         let author = AuthorModel::get(id)?;
