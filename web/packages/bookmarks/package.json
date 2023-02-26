@@ -9,12 +9,11 @@
     "generate": "graphql-codegen"
   },
   "dependencies": {
-    "auth": "workspace:auth",
-    "custom-graphql": "workspace:custom-graphql",
-    "custom-table": "workspace:custom-table",
-    "notify": "workspace:notify",
-    "theme": "workspace:theme",
-    "time": "workspace:time"
-  },
-  "devDependencies": {}
+    "auth": "workspace:^1.0.0",
+    "custom-graphql": "workspace:^1.0.0",
+    "custom-table": "workspace:^1.0.0",
+    "notify": "workspace:^1.0.0",
+    "theme": "workspace:^1.0.0",
+    "time": "workspace:^1.0.0"
+  }
 }
