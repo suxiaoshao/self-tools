@@ -1,7 +1,6 @@
 FROM node:lts as builder
-RUN npm config set registry https://registry.npm.taobao.org \
-    && npm install -g pnpm
-COPY ./web /app
+RUN npm install -g pnpm
+COPY . /app
 WORKDIR /app
 COPY ./docker/web/.npmrc /app/.npmrc
 RUN pnpm install \
@@ -9,5 +8,5 @@ RUN pnpm install \
 
 FROM nginx:stable as prod
 COPY ./docker/web/nginx.conf /etc/nginx/nginx.conf
-COPY --from=builder ./app/packages/bookmarks/dist /app/bookmarks
+COPY --from=builder ./app/web/packages/bookmarks/dist /app/bookmarks
 EXPOSE 80

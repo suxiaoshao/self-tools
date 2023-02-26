@@ -1,7 +1,7 @@
 name: rust-update-docker-build
 on:
   schedule:
-    - cron: "15 0 */2 * *"
+    - cron: '15 0 */2 * *'
   push:
     branches:
       - main
