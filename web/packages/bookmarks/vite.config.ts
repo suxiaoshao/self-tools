@@ -8,7 +8,7 @@ export default defineConfig({
     react(),
     checker({
       typescript: true,
-      eslint: { lintCommand: 'eslint --config ../../../.eslintrc.js --ext .jsx --ext .js --ext .ts --ext .tsx .' },
+      eslint: { lintCommand: 'eslint --config ../../.eslintrc.js --ext .jsx --ext .js --ext .ts --ext .tsx .' },
     }),
   ],
   resolve: {

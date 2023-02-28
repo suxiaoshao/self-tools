@@ -21,6 +21,6 @@
       "@collections/*": ["./collections/src/*"]
     }
   },
-  "include": ["web/packages/*/src", "web/packages/*/vite.config.ts", "web/common/*/src"],
-  "exclude": ["./**/node_modules"]
+  "include": ["packages/*/src", "packages/*/vite.config.ts", "common/*/src"],
+  "exclude": ["../**/node_modules"]
 }
