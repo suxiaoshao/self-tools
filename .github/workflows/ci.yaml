@@ -22,6 +22,8 @@ jobs:
           run_install: true
       - name: Lint
         run: pnpm lint
+      - name: Test
+        run: pnpm test
   server:
     runs-on: ubuntu-latest
     steps:

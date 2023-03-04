@@ -42,7 +42,7 @@ export default function Edit({ onChangeCode, code, language, wordWrap, ...props 
   const [edit, setEdit] = useState<editor.IStandaloneCodeEditor | null>(null);
 
   const theme = useTheme();
-  const createEdtior = useCallback(
+  const createEditor = useCallback(
     (html: HTMLElement) => {
       if (createTimes.current === 0) {
         const newEditor = editor.create(html, {
@@ -74,12 +74,12 @@ export default function Edit({ onChangeCode, code, language, wordWrap, ...props 
    * */
   useEffect(() => {
     if (editRef.current !== null && edit === null) {
-      const newEdit = createEdtior(editRef.current);
+      const newEdit = createEditor(editRef.current);
       if (newEdit !== null) {
         setEdit(newEdit);
       }
     }
-  }, [createEdtior, edit]);
+  }, [createEditor, edit]);
   /**
    * props.readonly 改变时修改编辑器的只读属性
    * */
