@@ -8,9 +8,9 @@
     "format": "prettier --config ./web/.prettierrc.js --ignore-path ./web/.prettierignore --write .",
     "eslint": "eslint --config ./web/.eslintrc.js --ignore-path ./web/.eslintignore --ext .jsx --ext .js --ext .ts --ext .tsx ./web",
     "tslint": "tsc --build ./web/tsconfig.json",
-    "test": "vitest run -c ./web/vitest.config.ts",
-    "test:watch": "vitest -c ./web/vitest.config.ts",
-    "test:coverage": "vitest run --coverage -c ./web/vitest.config.ts",
+    "test": "TZ=UTC  vitest run -c ./web/vitest.config.ts",
+    "test:watch": "TZ=UTC  vitest -c ./web/vitest.config.ts",
+    "test:coverage": "TZ=UTC  vitest run --coverage -c ./web/vitest.config.ts",
     "build": "pnpm --filter './web/packages/*' run build",
     "commit": "git-cz",
     "prepare": "husky install"
