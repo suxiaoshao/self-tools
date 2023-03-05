@@ -10,16 +10,16 @@
     "generate": "graphql-codegen"
   },
   "dependencies": {
-    "auth": "workspace:auth",
-    "custom-graphql": "workspace:custom-graphql",
-    "custom-table": "workspace:custom-table",
-    "edit": "workspace:edit",
-    "markdown-to-jsx": "^7.1.8",
-    "notify": "workspace:notify",
+    "auth": "workspace:^1.0.0",
+    "custom-graphql": "workspace:^1.0.0",
+    "custom-table": "workspace:^1.0.0",
+    "edit": "workspace:^1.0.0",
+    "markdown-to-jsx": "^7.1.9",
+    "notify": "workspace:^1.0.0",
     "prism-themes": "^1.9.0",
     "prismjs": "^1.29.0",
-    "theme": "workspace:theme",
-    "time": "workspace:time"
+    "theme": "workspace:^1.0.0",
+    "time": "workspace:^1.0.0"
   },
   "devDependencies": {
     "@types/prismjs": "^1.26.0"

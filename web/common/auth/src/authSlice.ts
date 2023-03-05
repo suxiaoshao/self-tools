@@ -1,12 +1,16 @@
-import { AnyAction, configureStore, createSlice, PayloadAction, ThunkAction } from '@reduxjs/toolkit';
+import { AnyAction, createSlice, Dispatch, PayloadAction, ThunkAction, ThunkDispatch } from '@reduxjs/toolkit';
 import { enqueueSnackbar } from 'notify';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
+
+export interface AuthSliceType {
+  value: string | null;
+}
 
 export const authSlice = createSlice({
   name: 'auth',
   initialState: {
     value: window.localStorage.getItem('auth'),
-  },
+  } as AuthSliceType,
   reducers: {
     setAuth: (state, action: PayloadAction<string | null>) => {
       state.value = action.payload;
@@ -59,13 +63,16 @@ export const selectAuth = (state: RootState) => state.auth.value;
 
 export default authSlice.reducer;
 
-const store = configureStore({
-  reducer: {
-    auth: authSlice.reducer,
+export type RootState = {
+  auth: AuthSliceType;
+};
+export type AppDispatch = ThunkDispatch<
+  {
+    auth: AuthSliceType;
   },
-});
-
-export type RootState = ReturnType<typeof store.getState>;
-export type AppDispatch = typeof store.dispatch;
+  undefined,
+  AnyAction
+> &
+  Dispatch<AnyAction>;
 export const useAppDispatch = () => useDispatch<AppDispatch>();
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;

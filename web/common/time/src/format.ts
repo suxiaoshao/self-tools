@@ -7,5 +7,5 @@ export function format(timestamp?: string | number | Date | Dayjs | null | undef
   }
   const time = dayjs(timestamp);
 
-  return time.format('YYYY-M-D HH:mm:ss');
+  return time.format('YYYY-MM-DD HH:mm:ss');
 }

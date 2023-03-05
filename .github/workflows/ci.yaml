@@ -19,13 +19,11 @@ jobs:
         id: pnpm-install
         with:
           version: latest
-          run_install: false
-      - name: Install dependencies
-        working-directory: web
-        run: pnpm install
+          run_install: true
       - name: Lint
-        working-directory: web
         run: pnpm lint
+      - name: Test
+        run: pnpm test
   server:
     runs-on: ubuntu-latest
     steps:
