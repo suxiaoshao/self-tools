@@ -1,6 +1,6 @@
 import { Box, IconButton } from '@mui/material';
 import { useCollectionAndItemsQuery } from '../../graphql';
-import { CustomTable, useCustomTable, usePage, usePageWithTotal } from 'custom-table';
+import { CustomTable, getCoreRowModel, useCustomTable, usePage, usePageWithTotal } from 'custom-table';
 import { Refresh } from '@mui/icons-material';
 import CreateCollectionButton from './components/CreateCollectionButton';
 import AncestorsPath from './components/AncestorsPath';
@@ -18,7 +18,7 @@ export default function Home() {
   const page = usePageWithTotal(pageState, total);
 
   const columns = useTableColumns(refetch);
-  const tableInstance = useCustomTable({ columns, data: data ?? [] });
+  const tableInstance = useCustomTable({ columns, data: data ?? [], getCoreRowModel: getCoreRowModel() });
 
   return (
     <Box sx={{ width: '100%', height: '100%', p: 2, display: 'flex', flexDirection: 'column' }}>

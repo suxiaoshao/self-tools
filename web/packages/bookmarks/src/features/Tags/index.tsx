@@ -4,7 +4,7 @@ import CollectionSelect from '../../components/CollectionSelect';
 import { CreateTagMutationVariables, GetTagsQuery, useDeleteTagMutation, useGetTagsQuery } from '../../graphql';
 import { Refresh } from '@mui/icons-material';
 import { useMemo } from 'react';
-import { CustomColumnArray, CustomTable, TableActions, useCustomTable } from 'custom-table';
+import { CustomColumnArray, CustomTable, getCoreRowModel, TableActions, useCustomTable } from 'custom-table';
 import { format } from 'time';
 import CreateTagButton from './components/CreateTagButton';
 
@@ -17,24 +17,26 @@ export default function Tags() {
   const columns = useMemo<CustomColumnArray<GetTagsQuery['queryTags'][0]>>(
     () => [
       {
-        Header: '名字',
+        header: '名字',
         id: 'name',
-        accessor: 'name',
+        accessorKey: 'name',
       },
       {
-        Header: '创建时间',
+        header: '创建时间',
         id: 'createTime',
-        accessor: ({ createTime }) => format(createTime),
+        accessorFn: ({ createTime }) => format(createTime),
+        cell: (context) => context.getValue(),
       },
       {
-        Header: '更新时间',
+        header: '更新时间',
         id: 'updateTime',
-        accessor: ({ updateTime }) => format(updateTime),
+        accessorFn: ({ updateTime }) => format(updateTime),
+        cell: (context) => context.getValue(),
       },
       {
-        Header: '操作',
+        header: '操作',
         id: 'action',
-        accessor: ({ id }) => (
+        accessorFn: ({ id }) => (
           <TableActions>
             {(onClose) => [
               {
@@ -49,11 +51,12 @@ export default function Tags() {
           </TableActions>
         ),
         cellProps: { padding: 'none' },
+        cell: (context) => context.getValue(),
       },
     ],
     [deleteTag, refetch],
   );
-  const tableInstance = useCustomTable({ columns, data: queryTags ?? [] });
+  const tableInstance = useCustomTable({ columns, data: queryTags ?? [], getCoreRowModel: getCoreRowModel() });
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', p: 2 }}>

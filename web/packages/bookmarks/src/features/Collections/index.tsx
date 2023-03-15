@@ -1,7 +1,7 @@
 import { Box, IconButton, Link } from '@mui/material';
 import { GetCollectionsQuery, useDeleteCollectionMutation, useGetCollectionsQuery } from '../../graphql';
 import { useMemo } from 'react';
-import { CustomColumnArray, TableActions, CustomTable, useCustomTable } from 'custom-table';
+import { CustomColumnArray, TableActions, CustomTable, useCustomTable, getCoreRowModel } from 'custom-table';
 import { format } from 'time';
 import { Refresh } from '@mui/icons-material';
 import CreateCollectionButton from './components/CreateCollectionButton';
@@ -17,41 +17,45 @@ export default function Home() {
   const columns = useMemo<CustomColumnArray<GetCollectionsQuery['getCollections'][0]>>(
     () => [
       {
-        Header: '名字',
+        header: '名字',
         id: 'name',
-        accessor: ({ name, id }) => (
+        accessorFn: ({ name, id }) => (
           <Link component={RouterLink} to={{ search: createSearchParams({ parentId: id.toString() }).toString() }}>
             {name}
           </Link>
         ),
+        cell: (context) => context.getValue(),
       },
       {
-        Header: '路径',
+        header: '路径',
         id: 'path',
-        accessor: 'path',
+        accessorKey: 'path',
       },
       {
-        Header: '描述',
+        header: '描述',
         id: 'description',
-        accessor: ({ description }) => description ?? '-',
+        accessorFn: ({ description }) => description ?? '-',
         cellProps: {
           align: 'center',
         },
+        cell: (context) => context.getValue(),
       },
       {
-        Header: '创建时间',
+        header: '创建时间',
         id: 'createTime',
-        accessor: ({ createTime }) => format(createTime),
+        accessorFn: ({ createTime }) => format(createTime),
+        cell: (context) => context.getValue(),
       },
       {
-        Header: '更新时间',
+        header: '更新时间',
         id: 'updateTime',
-        accessor: ({ updateTime }) => format(updateTime),
+        accessorFn: ({ updateTime }) => format(updateTime),
+        cell: (context) => context.getValue(),
       },
       {
-        Header: '操作',
+        header: '操作',
         id: 'action',
-        accessor: ({ id }) => (
+        accessorFn: ({ id }) => (
           <TableActions>
             {(onClose) => [
               {
@@ -66,11 +70,12 @@ export default function Home() {
           </TableActions>
         ),
         cellProps: { padding: 'none' },
+        cell: (context) => context.getValue(),
       },
     ],
     [deleteCollection, refetch],
   );
-  const tableInstance = useCustomTable({ columns, data: getCollections ?? [] });
+  const tableInstance = useCustomTable({ columns, data: getCollections ?? [], getCoreRowModel: getCoreRowModel() });
 
   return (
     <Box sx={{ width: '100%', height: '100%', p: 2, display: 'flex', flexDirection: 'column' }}>
