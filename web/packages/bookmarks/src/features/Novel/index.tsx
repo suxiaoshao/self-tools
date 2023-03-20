@@ -1,6 +1,7 @@
 import { Refresh } from '@mui/icons-material';
 import { Box, IconButton } from '@mui/material';
 import { CustomColumnArray, CustomTable, getCoreRowModel, TableActions, useCustomTable } from 'custom-table';
+import { useI18n } from 'i18n';
 import { useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { format } from 'time';
@@ -14,15 +15,16 @@ export default function Novel() {
   const form = watch();
   const { data: { queryNovels } = {}, refetch } = useGetNovelsQuery({ variables: form });
   const [deleteNovel] = useDeleteNovelMutation();
+  const t = useI18n();
   const columns = useMemo<CustomColumnArray<GetNovelsQuery['queryNovels'][0]>>(
     () => [
       {
-        header: '名字',
+        header: t('name'),
         id: 'name',
         accessorKey: 'name',
       },
       {
-        header: '描述',
+        header: t('description'),
         id: 'description',
         accessorFn: ({ description }) => description ?? '-',
         cellProps: {
@@ -31,25 +33,25 @@ export default function Novel() {
         cell: (context) => context.getValue(),
       },
       {
-        header: '创建时间',
+        header: t('create_time'),
         id: 'createTime',
         accessorFn: ({ createTime }) => format(createTime),
         cell: (context) => context.getValue(),
       },
       {
-        header: '更新时间',
+        header: t('update_time'),
         id: 'updateTime',
         accessorFn: ({ updateTime }) => format(updateTime),
         cell: (context) => context.getValue(),
       },
       {
-        header: '操作',
+        header: t('actions'),
         id: 'action',
         accessorFn: ({ id }) => (
           <TableActions>
             {(onClose) => [
               {
-                text: '删除',
+                text: t('delete'),
                 onClick: async () => {
                   await deleteNovel({ variables: { id } });
                   onClose();
@@ -63,7 +65,7 @@ export default function Novel() {
         cell: (context) => context.getValue(),
       },
     ],
-    [deleteNovel, refetch],
+    [deleteNovel, refetch, t],
   );
   const tableInstance = useCustomTable({ columns, data: queryNovels ?? [], getCoreRowModel: getCoreRowModel() });
   return (

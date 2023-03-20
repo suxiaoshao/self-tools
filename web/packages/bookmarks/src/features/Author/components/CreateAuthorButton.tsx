@@ -2,6 +2,7 @@ import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextFie
 import { useState } from 'react';
 import { CreateAuthorMutationVariables, useCreateAuthorMutation } from '../../../graphql';
 import { SubmitHandler, useForm } from 'react-hook-form';
+import { useI18n } from 'i18n';
 
 export interface CreateAuthorButtonProps {
   refetch: () => void;
@@ -22,30 +23,49 @@ export default function CreateAuthorButton({ refetch }: CreateAuthorButtonProps)
   const handleClose = () => {
     setOpen(false);
   };
+  const t = useI18n();
   return (
     <>
       <Button sx={{ ml: 1 }} color="primary" size="large" variant="contained" onClick={() => setOpen(true)}>
-        添加作者
+        {t('add_author')}
       </Button>
       <Dialog PaperProps={{ sx: { maxWidth: 700 } }} open={open} onClose={handleClose}>
         <Box sx={{ width: 500 }} onSubmit={handleSubmit(onSubmit)} component="form">
-          <DialogTitle>新建标签</DialogTitle>
+          <DialogTitle>{t('create_author')}</DialogTitle>
           <DialogContent>
-            <TextField variant="standard" required fullWidth label="作者名" {...register('name', { required: true })} />
-            <TextField variant="standard" required fullWidth label="头像" {...register('avatar', { required: true })} />
-            <TextField variant="standard" required fullWidth label="链接" {...register('url', { required: true })} />
             <TextField
               variant="standard"
               required
               fullWidth
-              label="描述"
+              label={t('author_name')}
+              {...register('name', { required: true })}
+            />
+            <TextField
+              variant="standard"
+              required
+              fullWidth
+              label={t('avatar')}
+              {...register('avatar', { required: true })}
+            />
+            <TextField
+              variant="standard"
+              required
+              fullWidth
+              label={t('link')}
+              {...register('url', { required: true })}
+            />
+            <TextField
+              variant="standard"
+              required
+              fullWidth
+              label={t('description')}
               {...register('description', { required: true })}
             />
           </DialogContent>
 
           <DialogActions>
-            <Button onClick={handleClose}>取消</Button>
-            <Button type="submit">提交</Button>
+            <Button onClick={handleClose}>{t('cancel')}</Button>
+            <Button type="submit">{t('submit')}</Button>
           </DialogActions>
         </Box>
       </Dialog>

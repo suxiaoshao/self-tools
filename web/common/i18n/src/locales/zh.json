@@ -41,5 +41,21 @@
   "logout": "登出",
   "login": "登录",
   "username": "用户名",
-  "password": "密码"
+  "password": "密码",
+  "tag_manage": "标签管理",
+  "author_manage": "作者管理",
+  "avatar": "头像",
+  "add_author": "添加作者",
+  "create_author": "创建作者",
+  "author_name": "作者名称",
+  "link": "链接",
+  "empty_collection": "空集合",
+  "add_novel": "添加小说",
+  "create_novel": "创建小说",
+  "novel_name": "小说名称",
+  "tags": "标签",
+  "author": "作者",
+  "add_tag": "添加标签",
+  "create_tag": "创建标签",
+  "tag_name": "标签名称"
 }

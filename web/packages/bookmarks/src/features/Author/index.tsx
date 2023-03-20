@@ -12,6 +12,7 @@ import { GetAuthorsQuery, useDeleteAuthorMutation, useGetAuthorsQuery } from '..
 import CreateAuthorButton from './components/CreateAuthorButton';
 import { useMemo } from 'react';
 import { format } from 'time';
+import { useI18n } from 'i18n';
 
 type TableItem = GetAuthorsQuery['queryAuthors'][0];
 
@@ -19,6 +20,7 @@ const columnHelper = createCustomColumnHelper<TableItem>();
 export default function Author() {
   const { data: { queryAuthors } = {}, refetch } = useGetAuthorsQuery();
   const [deleteAuthor] = useDeleteAuthorMutation();
+  const t = useI18n();
   const columns = useMemo<CustomColumnArray<TableItem>>(
     () =>
       [
@@ -29,18 +31,18 @@ export default function Author() {
             </Link>
           ),
           {
-            header: '名字',
+            header: t('name'),
             id: 'name',
             cell: (context) => context.getValue(),
           },
         ),
         columnHelper.accessor(({ avatar }) => <Avatar src={avatar} />, {
-          header: '头像',
+          header: t('avatar'),
           id: 'avatar',
           cell: (context) => context.getValue(),
         }),
         {
-          header: '描述',
+          header: t('description'),
           id: 'description',
           accessorFn: ({ description }) => (
             <Typography variant="body2" noWrap>
@@ -55,25 +57,25 @@ export default function Author() {
           cell: (context) => context.getValue(),
         },
         {
-          header: '创建时间',
+          header: t('create_time'),
           id: 'createTime',
           accessorFn: ({ createTime }) => format(createTime),
           cell: (context) => context.getValue(),
         },
         {
-          header: '更新时间',
+          header: t('update_time'),
           id: 'updateTime',
           accessorFn: ({ updateTime }) => format(updateTime),
           cell: (context) => context.getValue(),
         },
         {
-          header: '操作',
+          header: t('actions'),
           id: 'action',
           accessorFn: ({ id }) => (
             <TableActions>
               {(onClose) => [
                 {
-                  text: '删除',
+                  text: t('delete'),
                   onClick: async () => {
                     await deleteAuthor({ variables: { id } });
                     onClose();
@@ -87,7 +89,7 @@ export default function Author() {
           cell: (context) => context.getValue(),
         },
       ] as CustomColumnArray<TableItem>,
-    [deleteAuthor, refetch],
+    [deleteAuthor, refetch, t],
   );
   const tableInstance = useCustomTable({ columns, data: queryAuthors ?? [], getCoreRowModel: getCoreRowModel() });
 

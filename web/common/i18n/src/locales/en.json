@@ -41,5 +41,21 @@
   "logout": "Logout",
   "login": "Login",
   "username": "Username",
-  "password": "Password"
+  "password": "Password",
+  "tag_manage": "Tag Manage",
+  "author_manage": "Author Manage",
+  "avatar": "Avatar",
+  "add_author": "Add Author",
+  "create_author": "Create Author",
+  "author_name": "Author Name",
+  "link": "Link",
+  "empty_collection": "Empty Collection",
+  "add_novel": "Add Novel",
+  "create_novel": "Create Novel",
+  "novel_name": "Novel Name",
+  "tags": "Tags",
+  "author": "Author",
+  "add_tag": "Add Tag",
+  "create_tag": "Create Tag",
+  "tag_name": "Tag Name"
 }

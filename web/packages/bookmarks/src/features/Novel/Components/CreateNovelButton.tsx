@@ -1,4 +1,5 @@
 import { Button, Dialog, Box, DialogTitle, DialogContent, TextField, DialogActions } from '@mui/material';
+import { useI18n } from 'i18n';
 import { useState } from 'react';
 import { useForm, SubmitHandler, Controller } from 'react-hook-form';
 import AuthorSelect from '../../../components/AuthorSelect';
@@ -28,21 +29,28 @@ export default function CreateNovelButton({ refetch, collectionId }: CreateNovel
   const handleClose = () => {
     setOpen(false);
   };
+  const t = useI18n();
   return (
     <>
       <Button sx={{ ml: 1 }} color="primary" size="large" variant="contained" onClick={() => setOpen(true)}>
-        添加小说
+        {t('add_novel')}
       </Button>
       <Dialog PaperProps={{ sx: { maxWidth: 700 } }} open={open} onClose={handleClose}>
         <Box sx={{ width: 500 }} onSubmit={handleSubmit(onSubmit)} component="form">
-          <DialogTitle>新建小说</DialogTitle>
+          <DialogTitle>{t('create_novel')}</DialogTitle>
           <DialogContent>
-            <TextField required sx={{ mt: 1 }} fullWidth label="小说名" {...register('name', { required: true })} />
             <TextField
               required
               sx={{ mt: 1 }}
               fullWidth
-              label="描述"
+              label={t('novel_name')}
+              {...register('name', { required: true })}
+            />
+            <TextField
+              required
+              sx={{ mt: 1 }}
+              fullWidth
+              label={t('description')}
               {...register('description', { required: true })}
             />
             <Controller
@@ -59,8 +67,8 @@ export default function CreateNovelButton({ refetch, collectionId }: CreateNovel
           </DialogContent>
 
           <DialogActions>
-            <Button onClick={handleClose}>取消</Button>
-            <Button type="submit">提交</Button>
+            <Button onClick={handleClose}>{t('cancel')}</Button>
+            <Button type="submit">{t('submit')}</Button>
           </DialogActions>
         </Box>
       </Dialog>

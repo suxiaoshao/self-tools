@@ -1,4 +1,5 @@
 import { Button, Dialog, Box, DialogTitle, DialogContent, DialogActions, TextField } from '@mui/material';
+import { useI18n } from 'i18n';
 import { useState } from 'react';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { CreateCollectionMutationVariables, useCreateCollectionMutation } from '../../../graphql';
@@ -27,22 +28,35 @@ export default function CreateCollectionButton({ refetch }: CreateCollectButtonP
   const handleClose = () => {
     setOpen(false);
   };
+  const t = useI18n();
   return (
     <>
       <Button color="primary" size="large" variant="contained" onClick={() => setOpen(true)}>
-        添加集合
+        {t('add_collection')}
       </Button>
       <Dialog PaperProps={{ sx: { maxWidth: 700 } }} open={open} onClose={handleClose}>
         <Box sx={{ width: 500 }} onSubmit={handleSubmit(onSubmit)} component="form">
-          <DialogTitle>新建集合</DialogTitle>
+          <DialogTitle>{t('create_collection')}</DialogTitle>
           <DialogContent>
-            <TextField variant="standard" required fullWidth label="集合名" {...register('name', { required: true })} />
-            <TextField sx={{ mt: 1 }} variant="standard" fullWidth label="描述" {...register('description')} />
+            <TextField
+              variant="standard"
+              required
+              fullWidth
+              label={t('collection_name')}
+              {...register('name', { required: true })}
+            />
+            <TextField
+              sx={{ mt: 1 }}
+              variant="standard"
+              fullWidth
+              label={t('description')}
+              {...register('description')}
+            />
           </DialogContent>
 
           <DialogActions>
-            <Button onClick={handleClose}>取消</Button>
-            <Button type="submit">提交</Button>
+            <Button onClick={handleClose}>{t('cancel')}</Button>
+            <Button type="submit">{t('submit')}</Button>
           </DialogActions>
         </Box>
       </Dialog>

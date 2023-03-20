@@ -1,4 +1,5 @@
 import { Box, BoxProps, Breadcrumbs, Button, Link } from '@mui/material';
+import { useI18n } from 'i18n';
 import { FocusEventHandler } from 'react';
 import { useGetCollectionAncestorsQuery, useGetCollectionSelectQuery } from '../../graphql';
 import CustomSelector from '../CustomSelector';
@@ -15,11 +16,12 @@ export default function CollectionSelect({ onChange, onBlur, value, sx, ...props
     skip: value === undefined || value === null,
   });
   const { data: { getCollections } = {} } = useGetCollectionSelectQuery({ variables: { parentId: value } });
+  const t = useI18n();
   return (
     <Box {...props} sx={{ display: 'flex', alignItems: 'center', ...sx }}>
       <Breadcrumbs>
         <Link underline="hover" onClick={() => onChange({ target: { value: null } }, null)}>
-          根目录
+          {t('root')}
         </Link>
         {getCollection &&
           getCollection.ancestors.map(({ name, id }) => (
@@ -33,7 +35,7 @@ export default function CollectionSelect({ onChange, onBlur, value, sx, ...props
           value={value}
           render={(onClick) => (
             <Button size="large" onClick={onClick} variant="outlined">
-              {getCollection?.name ?? '空集合'}
+              {getCollection?.name ?? t('empty_collection')}
             </Button>
           )}
         >
