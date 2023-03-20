@@ -22,13 +22,7 @@ import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import { ThemeSliceType, updateColor, useAppDispatch, useAppSelector } from './themeSlice';
 import { string, object } from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
-
-const createColorSchema = object({
-  color: string()
-    .required('主题色不能为空')
-    .matches(/^#[0-9a-fA-F]{6}$/, '主题色格式不正确'),
-  colorSetting: string().required('主题模式不能为空').equals(['light', 'dark', 'system']),
-});
+import { useI18n } from 'i18n';
 
 export default function ThemeDrawerItem() {
   // 控制 dialog
@@ -38,6 +32,13 @@ export default function ThemeDrawerItem() {
   };
   type FormData = Pick<ThemeSliceType, 'colorSetting' | 'color'>;
   const theme = useAppSelector((state) => state.theme);
+  const t = useI18n();
+  const createColorSchema = object({
+    color: string()
+      .required(t('cannot_empty'))
+      .matches(/^#[0-9a-fA-F]{6}$/, t('color_format_error')),
+    colorSetting: string().required(t('cannot_empty')).equals(['light', 'dark', 'system']),
+  });
   const {
     register,
     handleSubmit,
@@ -59,14 +60,14 @@ export default function ThemeDrawerItem() {
         <ListItemIcon>
           <Palette />
         </ListItemIcon>
-        <ListItemText>主题设置</ListItemText>
+        <ListItemText>{t('theme_setting')}</ListItemText>
       </ListItemButton>
       <Dialog PaperProps={{ sx: { maxWidth: 700 } }} open={open} onClose={handleClose}>
         <Box sx={{ width: 500 }} onSubmit={handleSubmit(onSubmit)} component="form">
-          <DialogTitle>主题设置</DialogTitle>
+          <DialogTitle>{t('theme_setting')}</DialogTitle>
           <DialogContent>
             <FormControl error={errors.colorSetting && true}>
-              <FormLabel id="color-setting">选择模式</FormLabel>
+              <FormLabel id="color-setting">{t('select_mode')}</FormLabel>
               <Controller
                 name="colorSetting"
                 control={control}
@@ -80,9 +81,9 @@ export default function ThemeDrawerItem() {
                       field.onChange(newValue);
                     }}
                   >
-                    <FormControlLabel value="light" control={<Radio />} label="亮色" />
-                    <FormControlLabel value="dark" control={<Radio />} label="暗色" />
-                    <FormControlLabel value="system" control={<Radio />} label="跟随系统" />
+                    <FormControlLabel value="light" control={<Radio />} label={t('light')} />
+                    <FormControlLabel value="dark" control={<Radio />} label={t('dark')} />
+                    <FormControlLabel value="system" control={<Radio />} label={t('system')} />
                   </RadioGroup>
                 )}
               />
@@ -92,15 +93,15 @@ export default function ThemeDrawerItem() {
             <TextField
               error={errors.color && true}
               helperText={errors.color?.message}
-              label="主题色"
+              label={t('theme_color')}
               variant="standard"
               fullWidth
               {...register('color', { required: true })}
             />
           </DialogContent>
           <DialogActions>
-            <Button onClick={handleClose}>取消</Button>
-            <Button type="submit">提交</Button>
+            <Button onClick={handleClose}>{t('cancel')}</Button>
+            <Button type="submit">{t('submit')}</Button>
           </DialogActions>
         </Box>
       </Dialog>

@@ -19,6 +19,7 @@ import { useEffect, useState } from 'react';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import CustomEdit from '../../../components/CustomEdit';
 import { CreateItemMutationVariables } from '../../../graphql';
+import { useI18n } from 'i18n';
 export type ItemFormData = Omit<CreateItemMutationVariables, 'collectionId'>;
 
 export interface ItemFormProps {
@@ -54,6 +55,7 @@ export default function ItemForm({
   const handleAlignment = (event: React.MouseEvent<HTMLElement>, newAlignment: 'edit' | 'preview' | null) => {
     setAlignment(newAlignment);
   };
+  const t = useI18n();
   return (
     <Dialog fullScreen open={open} onClose={handleClose}>
       <Box sx={{ height: '100%' }} onSubmit={handleSubmit(onSubmit)} component="form">
@@ -63,10 +65,10 @@ export default function ItemForm({
               <Close />
             </IconButton>
             <Typography sx={{ ml: 2, flex: 1 }} variant="h6" component="div">
-              {mode === 'create' ? '新建项目' : '修改项目'}
+              {mode === 'create' ? t('create_item') : t('modify_item')}
             </Typography>
             <Button autoFocus type="submit" color="inherit">
-              提交
+              {t('submit')}
             </Button>
           </Toolbar>
         </AppBar>
@@ -79,7 +81,13 @@ export default function ItemForm({
             padding: 2,
           }}
         >
-          <TextField variant="standard" required fullWidth label="项目名" {...register('name', { required: true })} />
+          <TextField
+            variant="standard"
+            required
+            fullWidth
+            label={t('item_name')}
+            {...register('name', { required: true })}
+          />
 
           <Controller
             control={control}
@@ -89,7 +97,7 @@ export default function ItemForm({
               <>
                 <Box sx={{ display: 'flex', alignItems: 'center', mt: 2 }}>
                   <FormLabel sx={{ flex: 1 }} required>
-                    内容
+                    {t('content')}
                   </FormLabel>
                   <ToggleButtonGroup
                     color="primary"

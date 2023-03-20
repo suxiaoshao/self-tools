@@ -6,19 +6,22 @@ import { ApolloProvider } from '@apollo/client';
 import { getClient } from 'custom-graphql';
 import { Provider } from 'react-redux';
 import store from './app/store';
+import I18next from 'i18n';
 
 function App() {
   return (
     <Provider store={store}>
-      <CustomTheme>
-        <SnackbarProvider>
-          <ApolloProvider client={getClient('https://collections.sushao.top/graphql')}>
-            <BrowserRouter>
-              <AppRouter />
-            </BrowserRouter>
-          </ApolloProvider>
-        </SnackbarProvider>
-      </CustomTheme>
+      <I18next>
+        <CustomTheme>
+          <SnackbarProvider>
+            <ApolloProvider client={getClient('https://collections.sushao.top/graphql')}>
+              <BrowserRouter>
+                <AppRouter />
+              </BrowserRouter>
+            </ApolloProvider>
+          </SnackbarProvider>
+        </CustomTheme>
+      </I18next>
     </Provider>
   );
 }

@@ -1,4 +1,5 @@
 import { Breadcrumbs, LinearProgress, Link } from '@mui/material';
+import { useI18n } from 'i18n';
 import { createSearchParams, Link as RouterLink } from 'react-router-dom';
 import { useGetCollectionAncestorsQuery } from '../../../graphql';
 import useParentId from '../hooks/useParentId';
@@ -9,6 +10,8 @@ export default function AncestorsPath() {
     variables: { id: parentId ?? 0 },
     skip: parentId === null,
   });
+  const t = useI18n();
+
   return (
     <>
       {getCollection && (
@@ -20,7 +23,7 @@ export default function AncestorsPath() {
             }}
             underline="hover"
           >
-            根目录
+            {t('root')}
           </Link>
           {getCollection.ancestors.map(({ name, id }) => (
             <Link

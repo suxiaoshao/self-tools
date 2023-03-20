@@ -11,6 +11,7 @@ import useDialog from '../../../hooks/useDialog';
 import { MenuItem } from '@mui/material';
 import CollectionForm, { CollectionFormData } from './CollectionForm';
 import ItemForm, { ItemFormData } from '../../Item/Components/ItemForm';
+import { useI18n } from 'i18n';
 
 export type TableActionsProps = CollectionAndItem & {
   refetch: () => void;
@@ -31,13 +32,14 @@ export default function Actions({ id, refetch, __typename, ...data }: TableActio
     await updateItem({ variables: { id, name, content } });
     refetch();
   };
+  const t = useI18n();
 
   return (
     <>
       <TableActions>
         {(onClose) => [
           {
-            text: '删除',
+            text: t('delete'),
             onClick: async () => {
               if (__typename === 'Collection') {
                 await deleteCollection({ variables: { id } });
@@ -58,7 +60,7 @@ export default function Actions({ id, refetch, __typename, ...data }: TableActio
               handleOpen();
             }}
           >
-            编辑
+            {t('edit')}
           </MenuItem>,
         ]}
       </TableActions>
