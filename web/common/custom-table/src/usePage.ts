@@ -12,7 +12,7 @@ export interface PageState {
 export function usePage({
   initPageIndex = 1,
   initPageSize = 20,
-  pageSizeOptions = [5, 10, 20, 50, 100],
+  pageSizeOptions: initPageSizeOptions = [5, 10, 20, 50, 100],
 }: {
   initPageSize?: number;
   initPageIndex?: number;
@@ -20,9 +20,14 @@ export function usePage({
 } = {}): PageState {
   const [pageIndex, setPage] = useState(initPageIndex);
   const [pageSize, setPageSize] = useState(initPageSize);
+  const [pageSizeOptions] = useState(initPageSizeOptions);
+
   const offset = useMemo(() => (pageIndex - 1) * pageSize, [pageIndex, pageSize]);
   const limit = useMemo(() => pageSize, [pageSize]);
-  return { pageIndex, setPage, offset, limit, pageSize, setPageSize, pageSizeOptions };
+  return useMemo(
+    () => ({ pageIndex, setPage, offset, limit, pageSize, setPageSize, pageSizeOptions }),
+    [limit, offset, pageIndex, pageSize, pageSizeOptions],
+  );
 }
 
 /** 表格需要的 page 数据 */

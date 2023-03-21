@@ -4,9 +4,10 @@ import CollectionSelect from '../../components/CollectionSelect';
 import { CreateTagMutationVariables, GetTagsQuery, useDeleteTagMutation, useGetTagsQuery } from '../../graphql';
 import { Refresh } from '@mui/icons-material';
 import { useMemo } from 'react';
-import { CustomColumnArray, CustomTable, TableActions, useCustomTable } from 'custom-table';
+import { CustomColumnArray, CustomTable, getCoreRowModel, TableActions, useCustomTable } from 'custom-table';
 import { format } from 'time';
 import CreateTagButton from './components/CreateTagButton';
+import { useI18n } from 'i18n';
 
 export default function Tags() {
   type FormData = CreateTagMutationVariables;
@@ -14,31 +15,34 @@ export default function Tags() {
   const collectionId = watch('collectionId');
   const { data: { queryTags } = {}, refetch } = useGetTagsQuery({ variables: { collectionId } });
   const [deleteTag] = useDeleteTagMutation();
+  const t = useI18n();
   const columns = useMemo<CustomColumnArray<GetTagsQuery['queryTags'][0]>>(
     () => [
       {
-        Header: '名字',
+        header: t('name'),
         id: 'name',
-        accessor: 'name',
+        accessorKey: 'name',
       },
       {
-        Header: '创建时间',
+        header: t('create_time'),
         id: 'createTime',
-        accessor: ({ createTime }) => format(createTime),
+        accessorFn: ({ createTime }) => format(createTime),
+        cell: (context) => context.getValue(),
       },
       {
-        Header: '更新时间',
+        header: t('update_time'),
         id: 'updateTime',
-        accessor: ({ updateTime }) => format(updateTime),
+        accessorFn: ({ updateTime }) => format(updateTime),
+        cell: (context) => context.getValue(),
       },
       {
-        Header: '操作',
+        header: t('actions'),
         id: 'action',
-        accessor: ({ id }) => (
+        accessorFn: ({ id }) => (
           <TableActions>
             {(onClose) => [
               {
-                text: '删除',
+                text: t('delete'),
                 onClick: async () => {
                   await deleteTag({ variables: { id } });
                   onClose();
@@ -49,11 +53,12 @@ export default function Tags() {
           </TableActions>
         ),
         cellProps: { padding: 'none' },
+        cell: (context) => context.getValue(),
       },
     ],
-    [deleteTag, refetch],
+    [deleteTag, refetch, t],
   );
-  const tableInstance = useCustomTable({ columns, data: queryTags ?? [] });
+  const tableInstance = useCustomTable({ columns, data: queryTags ?? [], getCoreRowModel: getCoreRowModel() });
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', p: 2 }}>

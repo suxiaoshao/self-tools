@@ -117,7 +117,7 @@ mod test {
     use crate::novel::NovelFn;
 
     #[tokio::test]
-    async fn jj_novel_test() -> anyhow::Result<()> {
+    async fn qd_novel_test() -> anyhow::Result<()> {
         let novel_id = "1029006481";
         let novel = super::QDNovel::get_novel_data(novel_id).await?;
         println!("{novel:#?}");

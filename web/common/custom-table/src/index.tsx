@@ -11,12 +11,12 @@ import {
   TableFooter,
 } from '@mui/material';
 import TablePaginationActions from '@mui/material/TablePagination/TablePaginationActions';
-import { TableInstance } from 'react-table';
+import { Table as TableType, flexRender } from '@tanstack/react-table';
 import { CustomColumn } from './useCustomTable';
 import { PageWithTotal } from './usePage';
 
 export interface CustomTableProps<D extends object> extends Omit<TableContainerProps, 'ref'> {
-  tableInstance: TableInstance<D>;
+  tableInstance: TableType<D>;
   page?: PageWithTotal;
   containerProps?: TableContainerProps;
 }
@@ -27,7 +27,7 @@ export function CustomTable<D extends object>({
   containerProps,
   ...tableProps
 }: CustomTableProps<D>): JSX.Element {
-  const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = tableInstance;
+  const { getHeaderGroups, getRowModel } = tableInstance;
   return (
     <TableContainer
       sx={{
@@ -40,26 +40,23 @@ export function CustomTable<D extends object>({
       component={Paper}
       {...containerProps}
     >
-      <Table {...tableProps} {...getTableProps()}>
+      <Table {...tableProps}>
         <TableHead>
           {
             // Loop over the header rows
-            headerGroups.map((headerGroup) => (
+            getHeaderGroups().map((headerGroup) => (
               // Apply the header row props
-              <TableRow {...headerGroup.getHeaderGroupProps()} key={headerGroup.getHeaderGroupProps().key}>
+              <TableRow key={headerGroup.id}>
                 {
                   // Loop over the headers in each row
-                  headerGroup.headers.map((column) => {
-                    const headerColumn = column as CustomColumn<D>;
+                  headerGroup.headers.map((header) => {
+                    const headerColumn = header as CustomColumn<D>;
                     const headerProps = headerColumn.headerCellProps ?? headerColumn.cellProps ?? {};
 
                     return (
                       // Apply the header cell props
-                      <TableCell {...column.getHeaderProps()} {...headerProps} key={column.getHeaderProps().key}>
-                        {
-                          // Render the header
-                          column.render('Header')
-                        }
+                      <TableCell colSpan={header.colSpan} {...headerProps} key={header.id}>
+                        {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
                       </TableCell>
                     );
                   })
@@ -69,27 +66,24 @@ export function CustomTable<D extends object>({
           }
         </TableHead>
         {/* Apply the table body props */}
-        <TableBody sx={{ flex: '1 1 0' }} {...getTableBodyProps()}>
+        <TableBody sx={{ flex: '1 1 0' }}>
           {
             // Loop over the table rows
-            rows.map((row) => {
+            getRowModel().rows.map((row) => {
               // Prepare the row for display
-              prepareRow(row);
+
               return (
                 // Apply the row props
-                <TableRow {...row.getRowProps()} key={row.getRowProps().key}>
+                <TableRow key={row.id}>
                   {
                     // Loop over the rows cells
-                    row.cells.map((cell) => {
+                    row.getVisibleCells().map((cell) => {
                       const column = cell.column as CustomColumn<D>;
 
                       // Apply the cell props
                       return (
-                        <TableCell {...cell.getCellProps()} {...column.cellProps} key={cell.getCellProps().key}>
-                          {
-                            // Render the cell contents
-                            cell.render('Cell')
-                          }
+                        <TableCell {...column.cellProps} key={cell.id}>
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
                         </TableCell>
                       );
                     })
@@ -128,3 +122,5 @@ export * from './usePage';
 
 export * from './TableActions';
 export * from './useCustomTable';
+
+export { getCoreRowModel } from '@tanstack/react-table';

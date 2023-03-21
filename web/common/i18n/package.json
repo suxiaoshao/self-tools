@@ -1,13 +1,14 @@
 {
-  "name": "custom-table",
+  "name": "i18n",
   "version": "1.0.0",
   "description": "",
   "main": "src/index.tsx",
-  "types": "src/index.tsx",
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@tanstack/react-table": "^8.7.9"
+    "i18next": "^22.4.12",
+    "react-i18next": "^12.2.0",
+    "types": "workspace:*"
   }
 }

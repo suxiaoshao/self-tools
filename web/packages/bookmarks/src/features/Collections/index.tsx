@@ -1,61 +1,67 @@
 import { Box, IconButton, Link } from '@mui/material';
 import { GetCollectionsQuery, useDeleteCollectionMutation, useGetCollectionsQuery } from '../../graphql';
 import { useMemo } from 'react';
-import { CustomColumnArray, TableActions, CustomTable, useCustomTable } from 'custom-table';
+import { CustomColumnArray, TableActions, CustomTable, useCustomTable, getCoreRowModel } from 'custom-table';
 import { format } from 'time';
 import { Refresh } from '@mui/icons-material';
 import CreateCollectionButton from './components/CreateCollectionButton';
 import { Link as RouterLink, createSearchParams } from 'react-router-dom';
 import AncestorsPath from './components/AncestorsPath';
 import useParentId from './components/useParentId';
+import { useI18n } from 'i18n';
 
 export default function Home() {
   const parentId = useParentId();
   const { data: { getCollections } = {}, refetch } = useGetCollectionsQuery({ variables: { parentId } });
   const [deleteCollection] = useDeleteCollectionMutation();
+  const t = useI18n();
 
   const columns = useMemo<CustomColumnArray<GetCollectionsQuery['getCollections'][0]>>(
     () => [
       {
-        Header: '名字',
+        header: t('name'),
         id: 'name',
-        accessor: ({ name, id }) => (
+        accessorFn: ({ name, id }) => (
           <Link component={RouterLink} to={{ search: createSearchParams({ parentId: id.toString() }).toString() }}>
             {name}
           </Link>
         ),
+        cell: (context) => context.getValue(),
       },
       {
-        Header: '路径',
+        header: t('path'),
         id: 'path',
-        accessor: 'path',
+        accessorKey: 'path',
       },
       {
-        Header: '描述',
+        header: t('description'),
         id: 'description',
-        accessor: ({ description }) => description ?? '-',
+        accessorFn: ({ description }) => description ?? '-',
         cellProps: {
           align: 'center',
         },
+        cell: (context) => context.getValue(),
       },
       {
-        Header: '创建时间',
+        header: t('create_time'),
         id: 'createTime',
-        accessor: ({ createTime }) => format(createTime),
+        accessorFn: ({ createTime }) => format(createTime),
+        cell: (context) => context.getValue(),
       },
       {
-        Header: '更新时间',
+        header: t('update_time'),
         id: 'updateTime',
-        accessor: ({ updateTime }) => format(updateTime),
+        accessorFn: ({ updateTime }) => format(updateTime),
+        cell: (context) => context.getValue(),
       },
       {
-        Header: '操作',
+        header: t('actions'),
         id: 'action',
-        accessor: ({ id }) => (
+        accessorFn: ({ id }) => (
           <TableActions>
             {(onClose) => [
               {
-                text: '删除',
+                text: t('delete'),
                 onClick: async () => {
                   await deleteCollection({ variables: { id } });
                   onClose();
@@ -66,11 +72,12 @@ export default function Home() {
           </TableActions>
         ),
         cellProps: { padding: 'none' },
+        cell: (context) => context.getValue(),
       },
     ],
-    [deleteCollection, refetch],
+    [deleteCollection, refetch, t],
   );
-  const tableInstance = useCustomTable({ columns, data: getCollections ?? [] });
+  const tableInstance = useCustomTable({ columns, data: getCollections ?? [], getCoreRowModel: getCoreRowModel() });
 
   return (
     <Box sx={{ width: '100%', height: '100%', p: 2, display: 'flex', flexDirection: 'column' }}>

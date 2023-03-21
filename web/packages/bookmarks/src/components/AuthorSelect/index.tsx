@@ -8,6 +8,7 @@ import {
   SelectChangeEvent,
   TextField,
 } from '@mui/material';
+import { useI18n } from 'i18n';
 import { FocusEventHandler, useEffect, useMemo, useState } from 'react';
 import { debounceTime, Subject } from 'rxjs';
 import { SearchAuthorQuery, useSearchAuthorQuery } from '../../graphql';
@@ -33,6 +34,7 @@ export default function AuthorSelect({ onBlur, onChange, sx, value, ...props }: 
       key.unsubscribe();
     };
   }, [event]);
+  const t = useI18n();
   return (
     <Autocomplete<SearchAuthorQuery['queryAuthors'][0], false, false, false>
       sx={sx}
@@ -47,7 +49,7 @@ export default function AuthorSelect({ onBlur, onChange, sx, value, ...props }: 
       getOptionLabel={({ name }) => name}
       loading={loading}
       renderInput={(params) => (
-        <TextField {...params} onChange={(e) => event.next(e.target.value)} label="作者" fullWidth />
+        <TextField {...params} onChange={(e) => event.next(e.target.value)} label={t('author')} fullWidth />
       )}
       renderOption={(props, { name, avatar }) => (
         <MenuItem {...props}>

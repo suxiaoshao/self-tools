@@ -9,6 +9,7 @@ import {
   Select,
   SelectChangeEvent,
 } from '@mui/material';
+import { useI18n } from 'i18n';
 import { FocusEventHandler, useMemo } from 'react';
 import { useAllowTagsQuery } from '../../graphql';
 
@@ -41,16 +42,17 @@ export default function TagsSelect({ collectionId, value, onChange, onBlur, sx, 
       return value;
     }
   }, [value]);
+  const t = useI18n();
 
   return (
     <FormControl {...props} sx={sx}>
-      <InputLabel>标签</InputLabel>
+      <InputLabel>{t('tags')}</InputLabel>
       <Select
         multiple
         value={formValue}
         onChange={onChange}
         onBlur={onBlur}
-        input={<OutlinedInput label="标签" />}
+        input={<OutlinedInput label={t('tags')} />}
         renderValue={(selected) => (
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
             {selected?.map((value) => (

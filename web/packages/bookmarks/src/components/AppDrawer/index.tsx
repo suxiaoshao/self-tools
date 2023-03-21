@@ -4,8 +4,10 @@ import { Outlet } from 'react-router-dom';
 import RouterItem from './RouterItem';
 import { AuthDrawerItem } from 'auth';
 import { ThemeDrawerItem } from 'theme';
+import { I18nDrawerItem, useI18n } from 'i18n';
 
 export default function AppDrawer(): JSX.Element {
+  const t = useI18n();
   const width = 250;
   return (
     <Box sx={{ display: 'flex', height: '100%' }}>
@@ -18,19 +20,20 @@ export default function AppDrawer(): JSX.Element {
         square
       >
         <List sx={{ width }}>
-          <RouterItem text="工作区" icon={<Book />} matchPaths={['/']} toPath="/" />
+          <RouterItem text={t('workspace')} icon={<Book />} matchPaths={['/']} toPath="/" />
           <RouterItem
-            text="集合管理"
+            text={t('collection_manage')}
             icon={<CollectionsBookmark />}
             matchPaths={['/collections']}
             toPath="/collections"
           />
-          <RouterItem text="标签管理" icon={<Tag />} matchPaths={['/tags']} toPath="/tags" />
-          <RouterItem text="作者管理" icon={<People />} matchPaths={['/authors']} toPath="/authors" />
+          <RouterItem text={t('tag_manage')} icon={<Tag />} matchPaths={['/tags']} toPath="/tags" />
+          <RouterItem text={t('author_manage')} icon={<People />} matchPaths={['/authors']} toPath="/authors" />
         </List>
         <Divider />
         <List sx={{ width }}>
           <ThemeDrawerItem />
+          <I18nDrawerItem />
           <AuthDrawerItem />
         </List>
       </Box>

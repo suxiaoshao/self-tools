@@ -2,6 +2,7 @@ import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextFie
 import { useState } from 'react';
 import { CreateTagMutationVariables, useCreateTagMutation } from '../../../graphql';
 import { SubmitHandler, useForm } from 'react-hook-form';
+import { useI18n } from 'i18n';
 
 export interface CreateTagButtonProps {
   refetch: () => void;
@@ -25,21 +26,28 @@ export default function CreateTagButton({ refetch, collectionId }: CreateTagButt
   const handleClose = () => {
     setOpen(false);
   };
+  const t = useI18n();
   return (
     <>
       <Button sx={{ ml: 1 }} color="primary" size="large" variant="contained" onClick={() => setOpen(true)}>
-        添加标签
+        {t('add_tag')}
       </Button>
       <Dialog PaperProps={{ sx: { maxWidth: 700 } }} open={open} onClose={handleClose}>
         <Box sx={{ width: 500 }} onSubmit={handleSubmit(onSubmit)} component="form">
-          <DialogTitle>新建标签</DialogTitle>
+          <DialogTitle>{t('create_tag')}</DialogTitle>
           <DialogContent>
-            <TextField variant="standard" required fullWidth label="标签名" {...register('name', { required: true })} />
+            <TextField
+              variant="standard"
+              required
+              fullWidth
+              label={t('tag_name')}
+              {...register('name', { required: true })}
+            />
           </DialogContent>
 
           <DialogActions>
-            <Button onClick={handleClose}>取消</Button>
-            <Button type="submit">提交</Button>
+            <Button onClick={handleClose}>{t('cancel')}</Button>
+            <Button type="submit">{t('submit')}</Button>
           </DialogActions>
         </Box>
       </Dialog>

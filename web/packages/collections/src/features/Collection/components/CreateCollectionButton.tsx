@@ -1,4 +1,5 @@
 import { Button } from '@mui/material';
+import { useI18n } from 'i18n';
 import { useCreateCollectionMutation } from '../../../graphql';
 import useDialog from '../../../hooks/useDialog';
 import useParentId from '../hooks/useParentId';
@@ -19,10 +20,11 @@ export default function CreateCollectionButton({ refetch }: CreateCollectButtonP
     refetch();
   };
   const { open, handleClose, handleOpen } = useDialog();
+  const t = useI18n();
   return (
     <>
       <Button color="primary" size="large" variant="contained" onClick={handleOpen}>
-        添加集合
+        {t('add_collection')}
       </Button>
       <CollectionForm handleClose={handleClose} open={open} afterSubmit={afterSubmit} />
     </>

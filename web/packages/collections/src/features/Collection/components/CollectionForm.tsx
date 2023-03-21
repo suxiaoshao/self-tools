@@ -1,4 +1,5 @@
 import { Dialog, Box, DialogTitle, DialogContent, TextField, DialogActions, Button } from '@mui/material';
+import { useI18n } from 'i18n';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { CreateCollectionMutationVariables } from '../../../graphql';
 export type CollectionFormData = Omit<CreateCollectionMutationVariables, 'parentId'>;
@@ -24,25 +25,32 @@ export default function CollectionForm({
     await afterSubmit?.(data);
     handleClose();
   };
+  const t = useI18n();
 
   return (
     <Dialog PaperProps={{ sx: { maxWidth: 700 } }} open={open} onClose={handleClose}>
       <Box sx={{ width: 500 }} onSubmit={handleSubmit(onSubmit)} component="form">
-        <DialogTitle>{mode === 'create' ? '新建集合' : '修改集合'}</DialogTitle>
+        <DialogTitle>{mode === 'create' ? t('create_collection') : t('modify_collection')}</DialogTitle>
         <DialogContent>
-          <TextField variant="standard" required fullWidth label="集合名" {...register('name', { required: true })} />
+          <TextField
+            variant="standard"
+            required
+            fullWidth
+            label={t('collection_name')}
+            {...register('name', { required: true })}
+          />
           <TextField
             sx={{ mt: 1 }}
             variant="standard"
             fullWidth
-            label="描述"
+            label={t('description')}
             {...register('description', { setValueAs: (value) => value || null })}
           />
         </DialogContent>
 
         <DialogActions>
-          <Button onClick={handleClose}>取消</Button>
-          <Button type="submit">提交</Button>
+          <Button onClick={handleClose}>{t('cancel')}</Button>
+          <Button type="submit">{t('submit')}</Button>
         </DialogActions>
       </Box>
     </Dialog>

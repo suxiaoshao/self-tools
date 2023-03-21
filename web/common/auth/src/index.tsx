@@ -4,6 +4,7 @@ import { LockOutlined } from '@mui/icons-material';
 import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { login, LoginForm, selectAuth, useAppDispatch, useAppSelector } from './authSlice';
+import { useI18n } from 'i18n';
 
 export { default as authReducer, login, logout } from './authSlice';
 
@@ -29,6 +30,7 @@ export default function Login() {
   const onSubmit: SubmitHandler<LoginForm> = async (data) => {
     dispatch(login(data));
   };
+  const t = useI18n();
   return (
     <Box sx={{ width: '100%', height: '100%' }}>
       <Container component="main" maxWidth="xs">
@@ -44,7 +46,7 @@ export default function Login() {
             <LockOutlined />
           </Avatar>
           <Typography component="h1" variant="h5">
-            登录
+            {t('login')}
           </Typography>
           <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate sx={{ mt: 1 }}>
             <TextField
@@ -52,7 +54,7 @@ export default function Login() {
               required
               fullWidth
               id="username"
-              label="用户名"
+              label={t('username')}
               autoComplete="username"
               autoFocus
               {...register('username', { required: true })}
@@ -61,14 +63,14 @@ export default function Login() {
               margin="normal"
               required
               fullWidth
-              label="密码"
+              label={t('password')}
               type="password"
               id="password"
               autoComplete="current-password"
               {...register('password', { required: true })}
             />
             <Button type="submit" fullWidth variant="contained" sx={{ mt: 3, mb: 2 }}>
-              登录
+              {t('login')}
             </Button>
           </Box>
         </Box>

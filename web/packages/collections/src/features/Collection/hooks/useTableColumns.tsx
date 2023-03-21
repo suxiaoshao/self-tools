@@ -6,60 +6,71 @@ import { format } from 'time';
 import Name from '../components/Name';
 import Actions from '../components/Actions';
 import { Article, Folder } from '@mui/icons-material';
+import { useI18n } from 'i18n';
 
-const Typename = ({ __typename }: { __typename: CollectionAndItem['__typename'] }) =>
-  __typename === 'Collection' ? (
-    <Chip icon={<Folder />} variant="outlined" label="集合" color="primary" />
+const Typename = ({ __typename }: { __typename: CollectionAndItem['__typename'] }) => {
+  const t = useI18n();
+  return __typename === 'Collection' ? (
+    <Chip icon={<Folder />} variant="outlined" label={t('collection')} color="primary" />
   ) : (
-    <Chip icon={<Article />} variant="outlined" label="条目" color="secondary" />
+    <Chip icon={<Article />} variant="outlined" label={t('item')} color="secondary" />
   );
+};
 
 export type CollectionAndItem = CollectionAndItemsQuery['collectionAndItem']['data'][0];
 
 export default function useTableColumns(refetch: () => void) {
+  const t = useI18n();
   const columns = useMemo<CustomColumnArray<CollectionAndItemsQuery['collectionAndItem']['data'][0]>>(
     () => [
       {
-        Header: '类型',
+        header: t('type'),
         id: '__typename',
-        accessor: ({ __typename }) => <Typename __typename={__typename} />,
+        accessorFn: ({ __typename }) => <Typename __typename={__typename} />,
+        cell: (context) => context.getValue(),
       },
       {
-        Header: '名字',
+        header: t('name'),
         id: 'name',
-        accessor: (item) => <Name {...item} />,
+        accessorFn: (item) => <Name {...item} />,
+        cell: (context) => context.getValue(),
       },
       {
-        Header: '路径',
+        header: t('name'),
         id: 'path',
-        accessor: (data) => (data.__typename === 'Collection' ? data.path : '-'),
+        accessorFn: (data) => (data.__typename === 'Collection' ? data.path : '-'),
+        cell: (context) => context.getValue(),
       },
       {
-        Header: '描述',
+        header: t('description'),
         id: 'description',
-        accessor: (data) => (data.__typename === 'Collection' ? data.description ?? '-' : '-'),
+        accessorFn: (data) => (data.__typename === 'Collection' ? data.description ?? '-' : '-'),
         cellProps: {
           align: 'center',
         },
+        cell: (context) => context.getValue(),
       },
       {
-        Header: '创建时间',
+        header: t('create_time'),
         id: 'createTime',
-        accessor: ({ createTime }) => format(createTime),
+        accessorFn: ({ createTime }) => format(createTime),
+        cell: (context) => context.getValue(),
       },
       {
-        Header: '更新时间',
+        header: t('update_time'),
         id: 'updateTime',
-        accessor: ({ updateTime }) => format(updateTime),
+        accessorFn: ({ updateTime }) => format(updateTime),
+        cell: (context) => context.getValue(),
       },
       {
-        Header: '操作',
+        header: t('actions'),
         id: 'action',
-        accessor: (item) => <Actions {...item} refetch={refetch} />,
+        accessorFn: (item) => <Actions {...item} refetch={refetch} />,
         cellProps: { padding: 'none' },
+        cell: (context) => context.getValue(),
       },
     ],
-    [refetch],
+    [refetch, t],
   );
   return columns;
 }
