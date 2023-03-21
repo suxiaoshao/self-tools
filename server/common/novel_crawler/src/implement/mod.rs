@@ -17,10 +17,14 @@ async fn text_from_url(url: &str, charset: &str) -> NovelResult<String> {
 }
 
 fn parse_image_src(html: &Html, selector: &Selector) -> NovelResult<String> {
+    parse_attr(html, selector, "src")
+}
+
+fn parse_attr(html: &Html, selector: &Selector, attr: &str) -> NovelResult<String> {
     let element_ref = html.select(selector).next().ok_or(NovelError::ParseError)?;
     let url = element_ref
         .value()
-        .attr("src")
+        .attr(attr)
         .ok_or(NovelError::ParseError)?
         .to_string();
     Ok(url)

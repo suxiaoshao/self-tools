@@ -11,29 +11,21 @@ use scraper::{ElementRef, Html, Selector};
 use crate::{
     author::AuthorFn,
     errors::{NovelError, NovelResult},
-    implement::{parse_image_src, parse_inner_html, parse_text, text_from_url},
+    implement::{parse_attr, parse_inner_html, parse_text, text_from_url},
     novel::NovelFn,
 };
 
 use super::novel::QDNovel;
 
 static SELECTOR_AUTHOR_NAME: Lazy<Selector> = Lazy::new(|| {
-    Selector::parse("body > div.page.page-god-detail > div > div.module.module-merge.god-detail-x > div > div.book-title-x > h1")
-        .unwrap()
+    Selector::parse("#appContentWrap > div > div > div > div[class^=authorName] > h1").unwrap()
 });
-static SELECTOR_AUTHOR_DESCRIPTION: Lazy<Selector> = Lazy::new(|| {
-    Selector::parse(
-        "body > div.page.page-god-detail > div > div.module.module-merge.god-detail-x > div > p",
-    )
-    .unwrap()
-});
-static SELECTOR_AUTHOR_IMAGE: Lazy<Selector> = Lazy::new(|| {
-    Selector::parse("body > div.page.page-god-detail > div > div.module.module-merge.god-detail-x > div > div.book-author-vv > img")
-        .unwrap()
-});
+static SELECTOR_AUTHOR_DESCRIPTION: Lazy<Selector> =
+    Lazy::new(|| Selector::parse("#appContentWrap > div > div > div > p").unwrap());
+static SELECTOR_AUTHOR_IMAGE: Lazy<Selector> =
+    Lazy::new(|| Selector::parse("#appContentWrap > div > div > div > div > img").unwrap());
 static SELECTOR_NOVEL_URLS: Lazy<Selector> = Lazy::new(|| {
-    Selector::parse("body > div.page.page-god-detail > div > div:nth-child(5) > ol > li > a")
-        .unwrap()
+    Selector::parse("#appContentWrap > div > div > div > div[class^=allBookListItem] > a").unwrap()
 });
 
 #[derive(Debug)]
@@ -54,7 +46,7 @@ impl AuthorFn for QDAuthor {
         let image_doc = Html::parse_document(&image_doc);
 
         // 图片
-        let image = parse_image_src(&image_doc, &SELECTOR_AUTHOR_IMAGE)?;
+        let image = parse_attr(&image_doc, &SELECTOR_AUTHOR_IMAGE, "data-src")?;
         let image = format!("https:{image}");
         // 其他
         let name = parse_inner_html(&image_doc, &SELECTOR_AUTHOR_NAME)?;
@@ -104,8 +96,8 @@ fn map_url(element_ref: ElementRef) -> NovelResult<String> {
 fn novel_id(input: &str) -> IResult<&str, String> {
     let (input, (_, data, _, _)) = all_consuming(tuple((
         tag("//m.qidian.com/book/"),
-        take_until(".html"),
-        tag(".html"),
+        take_until("/"),
+        tag("/"),
         eof,
     )))(input)?;
     Ok((input, data.to_string()))
@@ -117,15 +109,15 @@ mod test {
 
     #[test]
     fn novel_id_test() -> anyhow::Result<()> {
-        let input = "//m.qidian.com/book/1027339371.html";
+        let input = "//m.qidian.com/book/1026909178/";
         let (input, id) = novel_id(input)?;
-        assert_eq!(id, "1027339371");
+        assert_eq!(id, "1026909178");
         assert_eq!(input, "");
         Ok(())
     }
 
     #[tokio::test]
-    async fn jj_author_test() -> anyhow::Result<()> {
+    async fn qd_author_test() -> anyhow::Result<()> {
         let author = QDAuthor::get_author_data("4362386").await?;
         println!("{author:#?}");
         Ok(())
