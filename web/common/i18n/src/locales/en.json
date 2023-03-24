@@ -57,5 +57,6 @@
   "author": "Author",
   "add_tag": "Add Tag",
   "create_tag": "Create Tag",
-  "tag_name": "Tag Name"
+  "tag_name": "Tag Name",
+  "login_with_webauthn": "Login with WebAuthn"
 }

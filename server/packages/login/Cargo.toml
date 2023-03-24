@@ -7,16 +7,16 @@ edition = "2021"
 
 [dependencies]
 # http
-tokio = { version = "1.25.0", features = ["macros", "rt-multi-thread"] }
-axum = { version = "0.6.8", features = ["json"] }
+tokio = { version = "1.26.0", features = ["macros", "rt-multi-thread"] }
+axum = { version = "0.6.11", features = ["json"] }
 
 # error
-anyhow = "1.0.69"
-thiserror = "1.0.38"
+anyhow = "1.0.70"
+thiserror = "1.0.40"
 
 # json
-serde = { version = "1.0.152", features = ["derive"] }
-serde_json= "1.0.93"
+serde = { version = "1.0.158", features = ["derive"] }
+serde_json= "1.0.94"
 
 # grpc
 proto={path="../../common/proto/",features=["auth_client"]}

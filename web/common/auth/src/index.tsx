@@ -1,7 +1,7 @@
 import { Avatar, Box, Button, Container, TextField, Typography } from '@mui/material';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { LockOutlined } from '@mui/icons-material';
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { login, LoginForm, selectAuth, useAppDispatch, useAppSelector } from './authSlice';
 import { useI18n } from 'i18n';
@@ -31,6 +31,61 @@ export default function Login() {
     dispatch(login(data));
   };
   const t = useI18n();
+  const onClickWebauthn = useCallback(async () => {
+    const data = await navigator.credentials.create({
+      publicKey: {
+        challenge: stringToUint8Array('123'),
+        rp: {
+          name: 'self tool', // todo i18n
+        },
+        pubKeyCredParams: [
+          {
+            type: 'public-key',
+            alg: -7,
+          },
+          {
+            type: 'public-key',
+            alg: -8,
+          },
+          {
+            type: 'public-key',
+            alg: -36,
+          },
+          {
+            type: 'public-key',
+            alg: -37,
+          },
+          {
+            type: 'public-key',
+            alg: -38,
+          },
+          {
+            type: 'public-key',
+            alg: -39,
+          },
+          {
+            type: 'public-key',
+            alg: -257,
+          },
+          {
+            type: 'public-key',
+            alg: -258,
+          },
+          {
+            type: 'public-key',
+            alg: -259,
+          },
+        ],
+        user: {
+          displayName: 'Admin', // todo i18n
+          name: 'admin', // todo i18n
+          id: stringToUint8Array(''),
+        },
+        timeout: 60000,
+      },
+    });
+    console.log(data);
+  }, []);
   return (
     <Box sx={{ width: '100%', height: '100%' }}>
       <Container component="main" maxWidth="xs">
@@ -69,8 +124,11 @@ export default function Login() {
               autoComplete="current-password"
               {...register('password', { required: true })}
             />
-            <Button type="submit" fullWidth variant="contained" sx={{ mt: 3, mb: 2 }}>
+            <Button type="submit" fullWidth variant="contained" sx={{ mt: 3 }} color="secondary">
               {t('login')}
+            </Button>
+            <Button fullWidth variant="contained" sx={{ mt: 3 }} onClick={onClickWebauthn}>
+              {t('login_with_webauthn')}
             </Button>
           </Box>
         </Box>
@@ -80,3 +138,13 @@ export default function Login() {
 }
 
 export { default as AuthDrawerItem } from './AuthDrawerItem';
+
+function stringToUint8Array(str: string) {
+  const arr = [];
+  for (let i = 0, j = str.length; i < j; ++i) {
+    arr.push(str.charCodeAt(i));
+  }
+
+  const tmpUint8Array = new Uint8Array(arr);
+  return tmpUint8Array;
+}
