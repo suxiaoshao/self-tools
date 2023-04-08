@@ -101,9 +101,11 @@ importers:
     specifiers:
       i18n: workspace:*
       notify: workspace:^1.0.0
+      types: workspace:*
     dependencies:
       i18n: link:../i18n
       notify: link:../notify
+      types: link:../types
 
   web/common/custom-graphql:
     specifiers:

@@ -16,4 +16,10 @@ export default defineConfig({
       '@collections': '/src',
     },
   },
+  server: {
+    host: true,
+    hmr: {
+      path: '/__hmr',
+    },
+  },
 });

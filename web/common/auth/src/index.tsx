@@ -36,51 +36,36 @@ export default function Login() {
       publicKey: {
         challenge: stringToUint8Array('123'),
         rp: {
-          name: 'self tool', // todo i18n
+          name: 'collections.sushao.top',
         },
         pubKeyCredParams: [
           {
             type: 'public-key',
             alg: -7,
           },
-          {
-            type: 'public-key',
-            alg: -8,
-          },
-          {
-            type: 'public-key',
-            alg: -36,
-          },
-          {
-            type: 'public-key',
-            alg: -37,
-          },
-          {
-            type: 'public-key',
-            alg: -38,
-          },
-          {
-            type: 'public-key',
-            alg: -39,
-          },
-          {
-            type: 'public-key',
-            alg: -257,
-          },
-          {
-            type: 'public-key',
-            alg: -258,
-          },
-          {
-            type: 'public-key',
-            alg: -259,
-          },
         ],
         user: {
           displayName: 'Admin', // todo i18n
           name: 'admin', // todo i18n
-          id: stringToUint8Array(''),
+          id: stringToUint8Array('admin'),
         },
+        timeout: 60000,
+      },
+    });
+    console.log(data);
+  }, []);
+  const onClickWebauthn2 = useCallback(async () => {
+    console.log(222);
+    const data = await navigator.credentials.get({
+      publicKey: {
+        challenge: stringToUint8Array('123'),
+        rpId: 'collections.sushao.top',
+        allowCredentials: [
+          {
+            type: 'public-key',
+            id: stringToUint8Array('admin'),
+          },
+        ],
         timeout: 60000,
       },
     });
@@ -128,6 +113,9 @@ export default function Login() {
               {t('login')}
             </Button>
             <Button fullWidth variant="contained" sx={{ mt: 3 }} onClick={onClickWebauthn}>
+              {t('login_with_webauthn')}
+            </Button>
+            <Button fullWidth variant="contained" sx={{ mt: 3 }} onClick={onClickWebauthn2}>
               {t('login_with_webauthn')}
             </Button>
           </Box>

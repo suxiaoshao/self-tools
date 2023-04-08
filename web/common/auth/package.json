@@ -9,6 +9,7 @@
   "license": "ISC",
   "dependencies": {
     "notify": "workspace:^1.0.0",
-    "i18n": "workspace:*"
+    "i18n": "workspace:*",
+    "types": "workspace:*"
   }
 }
