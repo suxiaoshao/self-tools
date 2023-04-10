@@ -9,7 +9,7 @@
   "license": "ISC",
   "dependencies": {
     "@material/material-color-utilities": "0.2.4",
-    "@mui/system": "^5.11.13",
+    "@mui/system": "^5.11.16",
     "i18n": "workspace:*"
   }
 }
