@@ -1,9 +1,9 @@
 import 'monaco-editor/esm/vs/editor/editor.main';
-import JsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker';
-import EditorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
-import TsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker';
-import CssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker';
-import HtmlWorker from 'monaco-editor/esm/vs/language/html/html.worker?worker';
+import JsonWorker from 'monaco-editor/esm/vs/language/json/json.worker';
+import EditorWorker from 'monaco-editor/esm/vs/editor/editor.worker';
+import TsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker';
+import CssWorker from 'monaco-editor/esm/vs/language/css/css.worker';
+import HtmlWorker from 'monaco-editor/esm/vs/language/html/html.worker';
 import { editor } from 'monaco-editor';
 import monankai from 'monaco-themes/themes/Dracula.json';
 

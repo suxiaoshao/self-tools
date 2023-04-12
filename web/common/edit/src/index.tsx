@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import './init';
 import { editor } from 'monaco-editor';
 import { Box, BoxProps, useTheme } from '@mui/material';
-import { MonacoMarkdownExtension } from 'monaco-markdown';
+// import { MonacoMarkdownExtension } from 'monaco-markdown';
 
 /**
  * @author sushao
@@ -57,10 +57,10 @@ export default function Edit({ onChangeCode, code, language, wordWrap, ...props 
           fontLigatures: true,
           wordWrap,
         });
-        if (language === 'markdown') {
-          const extension = new MonacoMarkdownExtension();
-          extension.activate(newEditor as Parameters<typeof extension.activate>[0]);
-        }
+        // if (language === 'markdown') {
+        //   const extension = new MonacoMarkdownExtension();
+        //   extension.activate(newEditor as Parameters<typeof extension.activate>[0]);
+        // }
         createTimes.current++;
         return newEditor;
       } else {

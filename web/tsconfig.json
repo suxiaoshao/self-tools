@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ESNext",
     "useDefineForClassFields": true,
-    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "lib": ["DOM", "DOM.Iterable", "ESNext", "WebWorker"],
     "allowJs": false,
     "skipLibCheck": true,
     "esModuleInterop": false,
@@ -15,12 +15,12 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
-    "types": ["vite/client"],
+    "types": ["./config/init.d.ts"],
     "paths": {
       "@bookmarks/*": ["./bookmarks/src/*"],
       "@collections/*": ["./collections/src/*"]
     }
   },
-  "include": ["packages/*/src", "packages/*/vite.config.ts", "common/*/src", "config"],
+  "include": ["packages/*/src", "common/*/src", "config"],
   "exclude": ["../**/node_modules"]
 }

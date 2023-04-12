@@ -20,7 +20,7 @@ const config = defineConfig({
     ],
   },
   devServer: {
-    port: 3000,
+    port: 3002,
     host: '0.0.0.0',
     allowedHosts: 'all',
     historyApiFallback: true,
