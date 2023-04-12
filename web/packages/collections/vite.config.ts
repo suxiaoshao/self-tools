@@ -16,4 +16,15 @@ export default defineConfig({
       '@collections': '/src',
     },
   },
+  server: {
+    cors: true,
+    host: true,
+    origin: 'https://collections.sushao.top',
+    hmr: { path: '/__hmr' },
+  },
+  preview: {
+    port: 5173,
+    cors: true,
+    host: true,
+  },
 });

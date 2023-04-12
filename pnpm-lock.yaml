@@ -241,6 +241,12 @@ importers:
 
   web/packages/collections:
     dependencies:
+      '@garfish/bridge-react':
+        specifier: ^1.14.3
+        version: 1.14.3(react-dom@18.2.0)(react@18.2.0)
+      '@garfish/bridge-react-v18':
+        specifier: ^1.14.3
+        version: 1.14.3(react-dom@18.2.0)(react@18.2.0)
       auth:
         specifier: workspace:^1.0.0
         version: link:../../common/auth
@@ -279,11 +285,33 @@ importers:
         specifier: ^1.26.0
         version: 1.26.0
 
+  web/packages/common:
+    dependencies:
+      auth:
+        specifier: workspace:^1.0.0
+        version: link:../../common/auth
+      garfish:
+        specifier: ^1.14.3
+        version: 1.14.3
+      i18n:
+        specifier: workspace:^1.0.0
+        version: link:../../common/i18n
+      notify:
+        specifier: workspace:^1.0.0
+        version: link:../../common/notify
+      theme:
+        specifier: workspace:^1.0.0
+        version: link:../../common/theme
+
 packages:
 
   /@adobe/css-tools@4.2.0:
     resolution: {integrity: sha512-E09FiIft46CmH5Qnjb0wsW54/YQd69LsxeKUOWawmws1XWvyFGURnAChH0mlr7YPFR1ofwvUQfcL0J3lMxXqPA==}
     dev: true
+
+  /@alioth-org/es-module-lexer@1.1.0:
+    resolution: {integrity: sha512-2GrWjl8Whptm2Za2Zx+z8dm8Dz62hLWy1KPYEyplil4m28c6OR900iHNrYAYXS9QFCO1tqMABrl1daj6Mt66QQ==}
+    dev: false
 
   /@ampproject/remapping@2.2.1:
     resolution: {integrity: sha512-lFMjJTrFL3j7L9yBxwYfCq2k6qqwHyzuUl/XBnif78PWTJYyL/dfowQHWE3sp6U6ZzqWiiIZnpTMO96zhkjwtg==}
@@ -1288,6 +1316,98 @@ packages:
     resolution: {integrity: sha512-CnD7zLItIzt86q4Sj3kZUiLcBk1dSk81qcqgMGaZe7SQ1P8hFNxhMl5AZthK1zrDM5m74VVhaOpuMGIL4gagaA==}
     dev: false
 
+  /@garfish/bridge-react-v18@1.14.3(react-dom@18.2.0)(react@18.2.0):
+    resolution: {integrity: sha512-ihl2Y7Aq50xOo3HBWrTU5Qse+Ec87PBGYUGFM3KQhfCy7bCYG62G+vomvSejkv0LDHcQTiWpt3SpQQQAiO8Ujw==}
+    peerDependencies:
+      react: '=18'
+      react-dom: '=18'
+    dependencies:
+      '@garfish/utils': 1.14.3
+      react: 18.2.0
+      react-dom: 18.2.0(react@18.2.0)
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
+
+  /@garfish/bridge-react@1.14.3(react-dom@18.2.0)(react@18.2.0):
+    resolution: {integrity: sha512-fBafndK31kqUWvgcylFzazkYQe0lkqei/HZ7Hs8DEWjEMtC//o9Gg3U+ssYPk0w5ETo2WUOWL9b+z1Fx2BlO0A==}
+    peerDependencies:
+      react: '>=16'
+      react-dom: '>=16'
+    dependencies:
+      '@garfish/utils': 1.14.3
+      react: 18.2.0
+      react-dom: 18.2.0(react@18.2.0)
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
+
+  /@garfish/browser-snapshot@1.14.3:
+    resolution: {integrity: sha512-ZdALN42fbGyu3lM0eNz3hV75To1UWQmZtSTEL2eVzGeqOg/ZmhroB09Bvo/KIQe7ee5GYnu/+6HqpYxpRWTVfg==}
+    dependencies:
+      '@garfish/core': 1.14.3
+      '@garfish/utils': 1.14.3
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
+
+  /@garfish/browser-vm@1.14.3:
+    resolution: {integrity: sha512-NDs6x4Q/v/xJwwktEbC/hNC4fA85EgrIdCAGvgc5IibJlK2rDJveI5Sg5fN0Ntn3I5X2tbf4I+XQSL0SSFrrpw==}
+    dependencies:
+      '@garfish/core': 1.14.3
+      '@garfish/hooks': 1.14.3
+      '@garfish/loader': 1.14.3
+      '@garfish/utils': 1.14.3
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
+
+  /@garfish/core@1.14.3:
+    resolution: {integrity: sha512-ZH95CoBLiCTcHMmu8zz8YPay1i5jU/7IMeLTACGZ4HCAzY0z8xbHGGpc2+fQg1WR7fIPCPJjLg7gcMcyW/h6yw==}
+    dependencies:
+      '@alioth-org/es-module-lexer': 1.1.0
+      '@garfish/hooks': 1.14.3
+      '@garfish/loader': 1.14.3
+      '@garfish/utils': 1.14.3
+      eventemitter2: 6.4.9
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
+
+  /@garfish/hooks@1.14.3:
+    resolution: {integrity: sha512-YjT40wyOh+fwnG3JkgLLI2Dw2qV6xrEyoBFQYxVOhAtMRAg27FzcjXyOuIe+Yd+QXE+Cl3q3JVfjBqGQOE5TYg==}
+    dependencies:
+      '@garfish/utils': 1.14.3
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
+
+  /@garfish/loader@1.14.3:
+    resolution: {integrity: sha512-of+/yeovw46eN/aIXh5BxO7dnj4nE4e/3pgOucmtEF9T4xRz3m1WixW+Uz7gcZL0oEZdjwbpkIVXzelMhhsu1g==}
+    dependencies:
+      '@garfish/hooks': 1.14.3
+      '@garfish/utils': 1.14.3
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
+
+  /@garfish/router@1.14.3:
+    resolution: {integrity: sha512-oiVQ796T0U55BhR/hXa1mTmLsCej9Xno0vdm2M2123XKhKzpPUid8BYFuWOZ9zsG10ullKUenIBuKu7jE0s+Jg==}
+    dependencies:
+      '@garfish/core': 1.14.3
+      '@garfish/utils': 1.14.3
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
+
+  /@garfish/utils@1.14.3:
+    resolution: {integrity: sha512-p6KxcJLJAcgwagzltaBH46PfWw0hI/v8Sr7zzKvGvFA7gyGR6FvKqbxxTDRotkncgKJ16jfyDSPJ1d9Hq6tnmw==}
+    dependencies:
+      debug: 4.3.4
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
+
   /@graphql-codegen/cli@3.3.0(@babel/core@7.21.4)(@types/node@18.15.11)(graphql@16.6.0):
     resolution: {integrity: sha512-KRQoAG0stor/ztMsBxHqxnwQzcM1DEZigwzah1LFej8bh6TT1WpUt37zt6PH0EdlMpelmeN3keY4Pq6GMd4ADw==}
     hasBin: true
@@ -1724,7 +1844,7 @@ packages:
       graphql: ^14.0.0 || ^15.0.0 || ^16.0.0 || ^17.0.0
     dependencies:
       graphql: 16.6.0
-      tslib: 2.4.1
+      tslib: 2.5.0
     dev: true
 
   /@graphql-tools/prisma-loader@7.2.69(@types/node@18.15.11)(graphql@16.6.0):
@@ -1767,7 +1887,7 @@ packages:
       '@ardatan/relay-compiler': 12.0.0(graphql@16.6.0)
       '@graphql-tools/utils': 9.2.1(graphql@16.6.0)
       graphql: 16.6.0
-      tslib: 2.4.1
+      tslib: 2.5.0
     transitivePeerDependencies:
       - encoding
       - supports-color
@@ -3543,7 +3663,6 @@ packages:
         optional: true
     dependencies:
       ms: 2.1.2
-    dev: true
 
   /decamelize@1.2.0:
     resolution: {integrity: sha512-z2S+W9X73hAUUki+N+9Za2lBlun89zigOyGrsax+KUQ6wKW4ZoWpEYBkGhQjwAjjDCkWxhY0VKEhk8wzY7F5cA==}
@@ -4015,6 +4134,10 @@ packages:
     engines: {node: '>=0.10.0'}
     dev: true
 
+  /eventemitter2@6.4.9:
+    resolution: {integrity: sha512-JEPTiaOt9f04oa6NOkc4aH+nVp5I3wEjpHbIPqfgCdD5v5bUzy7xQqwcVO2aDQgOWhI28da57HksMrzK9HlRxg==}
+    dev: false
+
   /execa@7.1.1:
     resolution: {integrity: sha512-wH0eMf/UXckdUYnO21+HDztteVv05rq2GXksxT4fCGeHkBhw1DROXh40wcjMcRqDOWE7iPJ4n3M7e2+YFP+76Q==}
     engines: {node: ^14.18.0 || ^16.14.0 || >=18.0.0}
@@ -4259,6 +4382,18 @@ packages:
   /functions-have-names@1.2.3:
     resolution: {integrity: sha512-xckBUXyTIqT97tq2x2AMb+g163b5JFysYk0x4qxNFwbfQkmNZoiRHb6sPzI9/QV33WeuvVYBUIiD4NzNIyqaRQ==}
     dev: true
+
+  /garfish@1.14.3:
+    resolution: {integrity: sha512-01NsfgSOBGZinPPzhRIGKbAbeJmkhVlxrdrE7E/ALSdsE11YEfc37uBDfO6ZBOA3K1kK+KtjDuMYj6ShRAogHw==}
+    dependencies:
+      '@garfish/browser-snapshot': 1.14.3
+      '@garfish/browser-vm': 1.14.3
+      '@garfish/core': 1.14.3
+      '@garfish/router': 1.14.3
+      '@garfish/utils': 1.14.3
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
 
   /gensync@1.0.0-beta.2:
     resolution: {integrity: sha512-3hN7NaskYvMDLQY55gnW3NQ+mesEAepTqlg+VEbj7zzqEMBVNhzcGYYeqFo/TlYz6eQiFcp1HcsCZO+nGgS8zg==}
@@ -5418,7 +5553,6 @@ packages:
 
   /ms@2.1.2:
     resolution: {integrity: sha512-sGkPx+VjMtmA6MX27oA4FBFELFCZZ4S4XqeGOXCv68tT+jb3vk/RyaKWP0PTKyWtmLSM0b+adUTEvbs1PEaH2w==}
-    dev: true
 
   /mute-stream@0.0.8:
     resolution: {integrity: sha512-nnbWWOkoWyUsTjKrhgD0dcz22mdkSnpYqbEjIm2nhwhuxlSkpywJmBo8h0ZqJdkp73mb90SssHkN4rsRaBAfAA==}
