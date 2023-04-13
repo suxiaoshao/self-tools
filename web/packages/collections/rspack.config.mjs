@@ -17,7 +17,6 @@ const config = defineConfig({
     library: `${packageName}-[name]`,
     libraryTarget: 'umd',
     jsonpFunction: `webpackJsonp_${packageName}`,
-    // publicPath: './',
   },
   module: {
     rules: [
@@ -39,6 +38,8 @@ const config = defineConfig({
     client: {
       webSocketURL: {
         port: 443,
+        hostname: 'collections.sushao.top',
+        protocol: 'wss',
       },
     },
     headers: {

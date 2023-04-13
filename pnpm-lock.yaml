@@ -235,9 +235,6 @@ importers:
 
   web/packages/collections:
     dependencies:
-      auth:
-        specifier: workspace:^1.0.0
-        version: link:../../common/auth
       custom-graphql:
         specifier: workspace:^1.0.0
         version: link:../../common/custom-graphql
