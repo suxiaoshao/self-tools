@@ -15,7 +15,7 @@ function App() {
         <CustomTheme>
           <SnackbarProvider>
             <ApolloProvider client={getClient('https://collections.sushao.top/graphql')}>
-              <BrowserRouter>
+              <BrowserRouter basename="/collections">
                 <AppRouter />
               </BrowserRouter>
             </ApolloProvider>

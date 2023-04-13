@@ -8,8 +8,7 @@ export default function AppRouter() {
   return (
     <Routes>
       <Route path="/" element={<AppDrawer />}>
-        <Route index element={<>home</>} />
-        <Route path="collections" element={<div id="micro"></div>} />
+        <Route path="/collections/*" />
       </Route>
       <Route path="login" element={<Login />} />
     </Routes>

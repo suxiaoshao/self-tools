@@ -1,4 +1,4 @@
-import { Book, CollectionsBookmark } from '@mui/icons-material';
+import { CollectionsBookmark } from '@mui/icons-material';
 import { Box, Divider, List, Paper } from '@mui/material';
 import { Outlet } from 'react-router-dom';
 import RouterItem from './RouterItem';
@@ -20,7 +20,6 @@ export default function AppDrawer(): JSX.Element {
         square
       >
         <List sx={{ width }}>
-          <RouterItem text={t('workspace')} icon={<Book />} matchPaths={['/']} toPath="/" />
           <RouterItem
             text={t('collection_manage')}
             icon={<CollectionsBookmark />}
@@ -38,6 +37,7 @@ export default function AppDrawer(): JSX.Element {
 
       <Box sx={{ flex: '1 1 0' }}>
         <Outlet />
+        <Box sx={{ width: '100%', height: '100%' }} id="micro"></Box>
       </Box>
     </Box>
   );

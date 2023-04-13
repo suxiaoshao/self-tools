@@ -1,5 +1,7 @@
 import { defineConfig } from '@rspack/cli';
 
+const packageName = 'collections';
+
 const config = defineConfig({
   entry: {
     main: './src/main.tsx',
@@ -10,6 +12,12 @@ const config = defineConfig({
         template: './index.html',
       },
     ],
+  },
+  output: {
+    library: `${packageName}-[name]`,
+    libraryTarget: 'umd',
+    jsonpFunction: `webpackJsonp_${packageName}`,
+    // publicPath: './',
   },
   module: {
     rules: [
@@ -32,6 +40,11 @@ const config = defineConfig({
       webSocketURL: {
         port: 443,
       },
+    },
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
+      'Access-Control-Allow-Headers': 'X-Requested-With, content-type, Authorization',
     },
   },
   plugins: [],
