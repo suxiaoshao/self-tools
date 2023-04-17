@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom';
 import Login, { useLogin } from 'auth';
 import AppDrawer from './AppDrawer';
+import Home from '../features/Home';
 
 export default function AppRouter() {
   useLogin();
@@ -8,9 +9,10 @@ export default function AppRouter() {
   return (
     <Routes>
       <Route path="/" element={<AppDrawer />}>
+        <Route path="/" element={<Home />} />
         <Route path="/collections/*" />
+        <Route path="login" element={<Login />} />
       </Route>
-      <Route path="login" element={<Login />} />
     </Routes>
   );
 }

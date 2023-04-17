@@ -2,12 +2,14 @@ import { AnyAction, configureStore, ThunkAction } from '@reduxjs/toolkit';
 import { authReducer } from 'auth';
 import { themeReducer } from 'theme';
 import { i18nReducer } from 'i18n';
+import menuReducer from '../features/Menu/menuSlice';
 
 const store = configureStore({
   reducer: {
     auth: authReducer,
     theme: themeReducer,
     i18n: i18nReducer,
+    menu: menuReducer,
   },
 });
 export default store;

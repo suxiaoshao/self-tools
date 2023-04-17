@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
-import { registerMicroApps } from 'qiankun';
+import { init } from './micro';
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
@@ -9,11 +9,4 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   </React.StrictMode>,
 );
 
-registerMicroApps([
-  {
-    name: 'collections',
-    entry: { scripts: ['https://collections.sushao.top/main.js'] },
-    container: '#micro',
-    activeRule: '/collections',
-  },
-]);
+init();

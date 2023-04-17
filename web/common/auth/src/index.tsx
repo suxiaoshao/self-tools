@@ -32,7 +32,15 @@ export default function Login() {
   };
   const t = useI18n();
   return (
-    <Box sx={{ width: '100%', height: '100%' }}>
+    <Box
+      sx={{
+        width: '100vw',
+        height: '100vh',
+        position: 'fixed',
+        left: 0,
+        background: (theme) => theme.palette.background.default,
+      }}
+    >
       <Container component="main" maxWidth="xs">
         <Box
           sx={{

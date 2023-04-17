@@ -37,7 +37,9 @@ export default function I18next({ children }: I18nextProps) {
 
 export { default as i18nReducer } from './i18nSlice';
 
-export function useI18n(): (key: keyof typeof en) => string {
+export type I18nKey = keyof typeof en;
+
+export function useI18n(): (key: I18nKey) => string {
   const trans = useTranslation();
   return useMemo(() => trans.t, [trans]);
 }

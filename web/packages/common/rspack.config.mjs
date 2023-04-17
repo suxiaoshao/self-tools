@@ -11,6 +11,9 @@ const config = defineConfig({
       },
     ],
   },
+  output: {
+    publicPath: 'https://sushao.top/',
+  },
   module: {
     rules: [
       {
@@ -27,6 +30,8 @@ const config = defineConfig({
     client: {
       webSocketURL: {
         port: 443,
+        hostname: 'sushao.top',
+        protocol: 'wss',
       },
     },
   },

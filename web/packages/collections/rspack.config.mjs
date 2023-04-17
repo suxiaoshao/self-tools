@@ -12,21 +12,19 @@ const config = defineConfig({
         template: './index.html',
       },
     ],
+    copy: { patterns: [{ from: './public', to: './' }] },
   },
   output: {
     library: `${packageName}-[name]`,
     libraryTarget: 'umd',
     jsonpFunction: `webpackJsonp_${packageName}`,
+    publicPath: 'https://collections.sushao.top/',
   },
   module: {
     rules: [
       {
         test: /\.svg$/,
         type: 'asset',
-      },
-      {
-        test: /\.worker$/,
-        use: { loader: 'worker-loader' },
       },
     ],
   },

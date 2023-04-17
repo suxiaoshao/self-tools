@@ -1,10 +1,11 @@
-import { CollectionsBookmark } from '@mui/icons-material';
+import { Home } from '@mui/icons-material';
 import { Box, Divider, List, Paper } from '@mui/material';
 import { Outlet } from 'react-router-dom';
 import RouterItem from './RouterItem';
 import { AuthDrawerItem } from 'auth';
 import { ThemeDrawerItem } from 'theme';
 import { I18nDrawerItem, useI18n } from 'i18n';
+import DrawerMenu from '../../features/Menu';
 
 export default function AppDrawer(): JSX.Element {
   const t = useI18n();
@@ -20,12 +21,8 @@ export default function AppDrawer(): JSX.Element {
         square
       >
         <List sx={{ width }}>
-          <RouterItem
-            text={t('collection_manage')}
-            icon={<CollectionsBookmark />}
-            matchPaths={['/collections']}
-            toPath="/collections"
-          />
+          <RouterItem text={t('home')} icon={<Home />} matchPaths={['/']} toPath="/" />
+          <DrawerMenu />
         </List>
         <Divider />
         <List sx={{ width }}>

@@ -57,5 +57,6 @@
   "author": "作者",
   "add_tag": "添加标签",
   "create_tag": "创建标签",
-  "tag_name": "标签名称"
+  "tag_name": "标签名称",
+  "home": "首页"
 }
