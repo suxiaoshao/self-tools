@@ -1,9 +1,7 @@
 {
   "name": "collection",
   "entry": {
-    "scripts": [
-      "https://collections.sushao.top/main.js"
-    ]
+    "scripts": ["https://collections.sushao.top/main.js"]
   },
   "activeRule": "/collections",
   "menu": [

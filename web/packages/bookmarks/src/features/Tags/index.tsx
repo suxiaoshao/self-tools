@@ -1,9 +1,9 @@
 import { Box, IconButton } from '@mui/material';
 import { Controller, useForm } from 'react-hook-form';
 import CollectionSelect from '../../components/CollectionSelect';
-import { CreateTagMutationVariables, GetTagsQuery, useDeleteTagMutation, useGetTagsQuery } from '../../graphql';
+import { CreateTagMutationVariables, GetTagsQuery, useDeleteTagMutation, useGetTagsLazyQuery } from '../../graphql';
 import { Refresh } from '@mui/icons-material';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { CustomColumnArray, CustomTable, getCoreRowModel, TableActions, useCustomTable } from 'custom-table';
 import { format } from 'time';
 import CreateTagButton from './components/CreateTagButton';
@@ -11,10 +11,15 @@ import { useI18n } from 'i18n';
 
 export default function Tags() {
   type FormData = CreateTagMutationVariables;
-  const { control, watch } = useForm<FormData>();
-  const collectionId = watch('collectionId');
-  const { data: { queryTags } = {}, refetch } = useGetTagsQuery({ variables: { collectionId } });
+  const { control, handleSubmit } = useForm<FormData>();
+  const [getTags, { data, refetch }] = useGetTagsLazyQuery();
   const [deleteTag] = useDeleteTagMutation();
+  const onSearch = useCallback(
+    ({ collectionId }: FormData) => {
+      getTags({ variables: { collectionId } });
+    },
+    [getTags],
+  );
   const t = useI18n();
   const columns = useMemo<CustomColumnArray<GetTagsQuery['queryTags'][0]>>(
     () => [
@@ -58,24 +63,33 @@ export default function Tags() {
     ],
     [deleteTag, refetch, t],
   );
-  const tableInstance = useCustomTable({ columns, data: queryTags ?? [], getCoreRowModel: getCoreRowModel() });
+  const tableInstance = useCustomTable({ columns, data: data?.queryTags ?? [], getCoreRowModel: getCoreRowModel() });
 
-  return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', p: 2 }}>
-      <Box
-        sx={{
-          flex: '0 0 auto',
-          marginBottom: 2,
-          display: 'flex',
-        }}
-      >
-        <Controller control={control} name="collectionId" render={({ field }) => <CollectionSelect {...field} />} />
-        <CreateTagButton refetch={refetch} collectionId={collectionId} />
-        <IconButton sx={{ marginLeft: 'auto' }} onClick={() => refetch()}>
-          <Refresh />
-        </IconButton>
+  return useMemo(
+    () => (
+      <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', p: 2 }}>
+        <Box
+          sx={{
+            flex: '0 0 auto',
+            marginBottom: 2,
+            display: 'flex',
+          }}
+        >
+          <Controller
+            rules={{ required: true }}
+            control={control}
+            name="collectionId"
+            render={({ field }) => <CollectionSelect {...field} />}
+          />
+          {/* todo */}
+          {/* <CreateTagButton refetch={refetch} collectionId={collectionId} /> */}
+          <IconButton sx={{ marginLeft: 'auto' }} onClick={handleSubmit(onSearch)}>
+            <Refresh />
+          </IconButton>
+        </Box>
+        <CustomTable tableInstance={tableInstance} />
       </Box>
-      <CustomTable tableInstance={tableInstance} />
-    </Box>
+    ),
+    [control, handleSubmit, onSearch, tableInstance],
   );
 }

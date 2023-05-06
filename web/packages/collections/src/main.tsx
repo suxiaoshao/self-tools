@@ -9,7 +9,7 @@ let root: ReactDOM.Root | null = null;
  * 通常我们可以在这里做一些全局变量的初始化，比如不会在 unmount 阶段被销毁的应用级别的缓存等。
  */
 export async function bootstrap() {
-  console.log('react app bootstraped');
+  console.log('react app bootstrapped');
 }
 
 /**
