@@ -1,5 +1,5 @@
 import { Entry } from 'qiankun';
-import { Enum } from '../../../../common/types/src';
+import { Enum } from 'types';
 
 export interface MainAppConfig {
   apps: { name: string; configPath: string }[];

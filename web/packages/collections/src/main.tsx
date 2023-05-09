@@ -1,6 +1,9 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
+import { MicroState } from 'common';
+import store from './app/store';
+import { setTheme } from './app/features/themeSlice';
 
 let root: ReactDOM.Root | null = null;
 
@@ -12,10 +15,21 @@ export async function bootstrap() {
   console.log('react app bootstrapped');
 }
 
+interface Props {
+  state: MicroState;
+  container?: HTMLElement;
+  onGlobalStateChange: (callback: (state: MicroState, prev: MicroState) => void) => void;
+}
+
 /**
  * 应用每次进入都会调用 mount 方法，通常我们在这里触发应用的渲染方法
  */
-export async function mount(props: any) {
+export async function mount(props: Props) {
+  console.log('react app mount', props);
+  store.dispatch(setTheme(props.state.theme));
+  props.onGlobalStateChange((state: MicroState) => {
+    store.dispatch(setTheme(state.theme));
+  });
   root = ReactDOM.createRoot(props.container ?? (document.getElementById('micro') as HTMLElement));
   root.render(
     <React.StrictMode>

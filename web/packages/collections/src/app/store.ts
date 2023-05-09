@@ -1,11 +1,11 @@
 import { AnyAction, configureStore, ThunkAction } from '@reduxjs/toolkit';
-import { themeReducer } from 'theme';
 import { i18nReducer } from 'i18n';
+import { themeSlice } from './features/themeSlice';
 
 const store = configureStore({
   reducer: {
-    theme: themeReducer,
     i18n: i18nReducer,
+    theme: themeSlice.reducer,
   },
 });
 export default store;

@@ -1,14 +1,13 @@
 {
   "name": "collections",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "rspack serve",
     "build": "rspack build"
   },
   "dependencies": {
-    "@emotion/cache": "^11.10.7",
     "custom-graphql": "workspace:^1.0.0",
     "custom-table": "workspace:^1.0.0",
     "edit": "workspace:^1.0.0",
@@ -17,8 +16,8 @@
     "notify": "workspace:^1.0.0",
     "prism-themes": "^1.9.0",
     "prismjs": "^1.29.0",
-    "theme": "workspace:^1.0.0",
-    "time": "workspace:^1.0.0"
+    "time": "workspace:^1.0.0",
+    "common": "workspace:^1.0.0"
   },
   "devDependencies": {
     "@types/prismjs": "^1.26.0"

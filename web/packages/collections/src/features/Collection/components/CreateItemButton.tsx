@@ -25,7 +25,12 @@ export default function CreateItemButton({ refetch, collectionId }: CreateItemBu
       <Button color="secondary" sx={{ ml: 2 }} size="large" variant="contained" onClick={handleOpen}>
         {t('add_item')}
       </Button>
-      <ItemForm afterSubmit={afterSubmit} open={open} handleClose={handleClose} />
+      <ItemForm
+        afterSubmit={afterSubmit}
+        open={open}
+        handleClose={handleClose}
+        initialValues={{ content: '> 苏少好帅', name: '' }}
+      />
     </>
   );
 }

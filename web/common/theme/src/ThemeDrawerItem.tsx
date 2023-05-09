@@ -10,12 +10,12 @@ import {
   FormControlLabel,
   FormHelperText,
   FormLabel,
+  InputBase,
   ListItemButton,
   ListItemIcon,
   ListItemText,
   Radio,
   RadioGroup,
-  TextField,
 } from '@mui/material';
 import { useState } from 'react';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
@@ -66,7 +66,7 @@ export default function ThemeDrawerItem() {
         <Box sx={{ width: 500 }} onSubmit={handleSubmit(onSubmit)} component="form">
           <DialogTitle>{t('theme_setting')}</DialogTitle>
           <DialogContent>
-            <FormControl error={errors.colorSetting && true}>
+            <FormControl fullWidth error={errors.colorSetting && true}>
               <FormLabel id="color-setting">{t('select_mode')}</FormLabel>
               <Controller
                 name="colorSetting"
@@ -90,14 +90,12 @@ export default function ThemeDrawerItem() {
 
               <FormHelperText id="color-setting">{errors.colorSetting?.message}</FormHelperText>
             </FormControl>
-            <TextField
-              error={errors.color && true}
-              helperText={errors.color?.message}
-              label={t('theme_color')}
-              variant="standard"
-              fullWidth
-              {...register('color', { required: true })}
-            />
+            <FormControl error={errors.colorSetting && true}>
+              <FormLabel id="color">{t('theme_color')}</FormLabel>
+              <InputBase type="color" {...register('color', { required: true })} />
+
+              <FormHelperText id="color">{errors.color?.message}</FormHelperText>
+            </FormControl>
           </DialogContent>
           <DialogActions>
             <Button onClick={handleClose}>{t('cancel')}</Button>
