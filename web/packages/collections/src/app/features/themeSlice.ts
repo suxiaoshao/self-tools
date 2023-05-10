@@ -13,7 +13,7 @@ function getInitData(): ThemeSliceType {
 }
 
 export const themeSlice = createSlice({
-  name: 'i18n',
+  name: 'theme',
   initialState: getInitData(),
   reducers: {
     setTheme: (state, action: PayloadAction<MicroTheme>) => {

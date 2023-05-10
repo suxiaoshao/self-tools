@@ -47,3 +47,5 @@ export function useI18n(): (key: I18nKey) => string {
 export { default as I18nDrawerItem } from './I18nDrawerItem';
 
 export { default as i18next } from 'i18next';
+
+export { default as i18n } from 'i18next';

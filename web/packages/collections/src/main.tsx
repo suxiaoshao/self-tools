@@ -4,6 +4,7 @@ import App from './App';
 import { MicroState } from 'common';
 import store from './app/store';
 import { setTheme } from './app/features/themeSlice';
+import { setLang } from './app/features/i18nSlice';
 
 let root: ReactDOM.Root | null = null;
 
@@ -27,8 +28,10 @@ interface Props {
 export async function mount(props: Props) {
   console.log('react app mount', props);
   store.dispatch(setTheme(props.state.theme));
+  store.dispatch(setLang(props.state.lang));
   props.onGlobalStateChange((state: MicroState) => {
     store.dispatch(setTheme(state.theme));
+    store.dispatch(setLang(state.lang));
   });
   root = ReactDOM.createRoot(props.container ?? (document.getElementById('micro') as HTMLElement));
   root.render(

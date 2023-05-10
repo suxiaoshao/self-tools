@@ -4,6 +4,7 @@ import store from '../app/store';
 import { MenuItem, setMenu } from '../features/Menu/menuSlice';
 import { selectMuiTheme } from 'theme/src/themeSlice';
 import { youThemeToMuiTheme } from 'theme/src/youTheme';
+import { selectLang } from 'i18n/src/i18nSlice';
 export async function init() {
   const config = await loadConfig();
   const apps = config.map<RegistrableApp<ObjectType>>((app) => ({
@@ -29,11 +30,13 @@ export type MicroTheme = ReturnType<typeof youThemeToMuiTheme>;
 
 export interface MicroState {
   theme: MicroTheme;
+  lang: string;
 }
 
 function getMicroState(): MicroState {
   const state = store.getState();
   return {
     theme: selectMuiTheme(state),
+    lang: selectLang(state),
   };
 }

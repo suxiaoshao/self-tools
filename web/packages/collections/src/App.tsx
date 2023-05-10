@@ -5,25 +5,29 @@ import { ApolloProvider } from '@apollo/client';
 import { getClient } from 'custom-graphql';
 import { Provider } from 'react-redux';
 import store from './app/store';
-import I18next from 'i18n';
+import { i18n } from 'i18n';
 import { ThemeProvider, createTheme } from '@mui/material';
 import { useAppSelector } from './app/hooks';
 import { SelectTheme } from './app/features/themeSlice';
+import { useEffect } from 'react';
+import { SelectLang } from './app/features/i18nSlice';
 
 function InnerApp() {
   const theme = useAppSelector(SelectTheme);
+  const lang = useAppSelector(SelectLang);
+  useEffect(() => {
+    i18n.changeLanguage(lang);
+  }, [lang]);
   return (
-    <I18next>
-      <ThemeProvider theme={createTheme(theme)}>
-        <SnackbarProvider>
-          <ApolloProvider client={getClient('https://collections.sushao.top/graphql')}>
-            <BrowserRouter basename="/collections">
-              <AppRouter />
-            </BrowserRouter>
-          </ApolloProvider>
-        </SnackbarProvider>
-      </ThemeProvider>
-    </I18next>
+    <ThemeProvider theme={createTheme(theme)}>
+      <SnackbarProvider>
+        <ApolloProvider client={getClient('https://collections.sushao.top/graphql')}>
+          <BrowserRouter basename="/collections">
+            <AppRouter />
+          </BrowserRouter>
+        </ApolloProvider>
+      </SnackbarProvider>
+    </ThemeProvider>
   );
 }
 
