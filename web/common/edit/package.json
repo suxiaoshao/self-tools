@@ -8,7 +8,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "monaco-editor": "^0.38.0",
+    "monaco-editor": "^0.39.0",
     "monaco-markdown": "^0.0.12",
     "monaco-themes": "^0.4.4"
   }

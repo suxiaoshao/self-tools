@@ -5,7 +5,6 @@ import {
   ListItemAvatar,
   ListItemText,
   MenuItem,
-  SelectChangeEvent,
   TextField,
 } from '@mui/material';
 import { useI18n } from 'i18n';
@@ -18,7 +17,7 @@ export interface TagsSelectProps
     AutocompleteProps<SearchAuthorQuery['queryAuthors'][0], false, false, false>,
     'name' | 'onChange' | 'onBlur' | 'value' | 'renderInput' | 'options'
   > {
-  onChange: (event: SelectChangeEvent<number>, value: number | null | undefined) => void;
+  onChange: (value: number) => void;
   onBlur: FocusEventHandler<HTMLInputElement> | undefined;
   value: number | null | undefined;
 }
@@ -41,8 +40,9 @@ export default function AuthorSelect({ onBlur, onChange, sx, value, ...props }: 
       onBlur={onBlur}
       value={queryAuthors?.find((author) => author.id === value)}
       onChange={(event: React.SyntheticEvent, newValue) => {
-        event.target = { value: newValue?.id, ...event.target } as unknown as EventTarget;
-        onChange(event as SelectChangeEvent<number>, newValue?.id);
+        if (newValue?.id) {
+          onChange(newValue?.id);
+        }
       }}
       isOptionEqualToValue={(option, value) => option.id === value.id}
       options={queryAuthors ?? []}

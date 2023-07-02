@@ -1,6 +1,13 @@
 import { Refresh } from '@mui/icons-material';
 import { Box, IconButton } from '@mui/material';
-import { CustomColumnArray, CustomTable, getCoreRowModel, TableActions, useCustomTable } from 'custom-table';
+import {
+  CustomColumnArray,
+  CustomTable,
+  CustomTableOptions,
+  getCoreRowModel,
+  TableActions,
+  useCustomTable,
+} from 'custom-table';
 import { useI18n } from 'i18n';
 import { useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
@@ -9,6 +16,8 @@ import CollectionSelect from '../../components/CollectionSelect';
 import { GetNovelsQuery, GetNovelsQueryVariables, useDeleteNovelMutation, useGetNovelsQuery } from '../../graphql';
 import CreateNovelButton from './Components/CreateNovelButton';
 
+type Data = GetNovelsQuery['queryNovels'][0];
+
 export default function Novel() {
   type FormData = GetNovelsQueryVariables;
   const { control, watch } = useForm<FormData>({ defaultValues: {} });
@@ -16,7 +25,7 @@ export default function Novel() {
   const { data: { queryNovels } = {}, refetch } = useGetNovelsQuery({ variables: form });
   const [deleteNovel] = useDeleteNovelMutation();
   const t = useI18n();
-  const columns = useMemo<CustomColumnArray<GetNovelsQuery['queryNovels'][0]>>(
+  const columns = useMemo<CustomColumnArray<Data>>(
     () => [
       {
         header: t('name'),
@@ -67,26 +76,27 @@ export default function Novel() {
     ],
     [deleteNovel, refetch, t],
   );
-  const tableInstance = useCustomTable({ columns, data: queryNovels ?? [], getCoreRowModel: getCoreRowModel() });
-  return useMemo(
-    () => (
-      <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', p: 2 }}>
-        <Box
-          sx={{
-            flex: '0 0 auto',
-            marginBottom: 2,
-            display: 'flex',
-          }}
-        >
-          <Controller control={control} name="collectionId" render={({ field }) => <CollectionSelect {...field} />} />
-          <CreateNovelButton collectionId={form.collectionId} refetch={refetch} />
-          <IconButton sx={{ marginLeft: 'auto' }} onClick={() => refetch()}>
-            <Refresh />
-          </IconButton>
-        </Box>
-        <CustomTable tableInstance={tableInstance} />
+  const tableOptions = useMemo<CustomTableOptions<Data>>(
+    () => ({ columns, data: queryNovels ?? [], getCoreRowModel: getCoreRowModel() }),
+    [columns, queryNovels],
+  );
+  const tableInstance = useCustomTable(tableOptions);
+  return (
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', p: 2 }}>
+      <Box
+        sx={{
+          flex: '0 0 auto',
+          marginBottom: 2,
+          display: 'flex',
+        }}
+      >
+        <Controller control={control} name="collectionId" render={({ field }) => <CollectionSelect {...field} />} />
+        <CreateNovelButton collectionId={form.collectionId} refetch={refetch} />
+        <IconButton sx={{ marginLeft: 'auto' }} onClick={() => refetch()}>
+          <Refresh />
+        </IconButton>
       </Box>
-    ),
-    [control, form.collectionId, refetch, tableInstance],
+      <CustomTable tableInstance={tableInstance} />
+    </Box>
   );
 }

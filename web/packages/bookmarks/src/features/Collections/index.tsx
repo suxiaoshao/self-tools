@@ -1,7 +1,14 @@
 import { Box, IconButton, Link } from '@mui/material';
 import { GetCollectionsQuery, useDeleteCollectionMutation, useGetCollectionsQuery } from '../../graphql';
 import { useMemo } from 'react';
-import { CustomColumnArray, TableActions, CustomTable, useCustomTable, getCoreRowModel } from 'custom-table';
+import {
+  CustomColumnArray,
+  TableActions,
+  CustomTable,
+  useCustomTable,
+  getCoreRowModel,
+  CustomTableOptions,
+} from 'custom-table';
 import { format } from 'time';
 import { Refresh } from '@mui/icons-material';
 import CreateCollectionButton from './components/CreateCollectionButton';
@@ -10,13 +17,15 @@ import AncestorsPath from './components/AncestorsPath';
 import useParentId from './components/useParentId';
 import { useI18n } from 'i18n';
 
+type Data = GetCollectionsQuery['getCollections'][0];
+
 export default function Home() {
   const parentId = useParentId();
   const { data: { getCollections } = {}, refetch } = useGetCollectionsQuery({ variables: { parentId } });
   const [deleteCollection] = useDeleteCollectionMutation();
   const t = useI18n();
 
-  const columns = useMemo<CustomColumnArray<GetCollectionsQuery['getCollections'][0]>>(
+  const columns = useMemo<CustomColumnArray<Data>>(
     () => [
       {
         header: t('name'),
@@ -77,7 +86,11 @@ export default function Home() {
     ],
     [deleteCollection, refetch, t],
   );
-  const tableInstance = useCustomTable({ columns, data: getCollections ?? [], getCoreRowModel: getCoreRowModel() });
+  const tableOptions = useMemo<CustomTableOptions<Data>>(
+    () => ({ columns, data: getCollections ?? [], getCoreRowModel: getCoreRowModel() }),
+    [columns, getCollections],
+  );
+  const tableInstance = useCustomTable(tableOptions);
 
   return (
     <Box sx={{ width: '100%', height: '100%', p: 2, display: 'flex', flexDirection: 'column' }}>

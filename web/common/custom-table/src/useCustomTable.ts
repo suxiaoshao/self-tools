@@ -26,8 +26,8 @@ export type CustomTableOptions<T extends RowData> = Omit<TableOptions<T>, 'colum
   columns: CustomColumnArray<T>;
 };
 
-export function useCustomTable<D extends RowData>({ columns, ...options }: CustomTableOptions<D>): Table<D> {
-  return useReactTable({ columns, ...options });
+export function useCustomTable<D extends RowData>(options: CustomTableOptions<D>): Table<D> {
+  return useReactTable(options);
 }
 
 export function createCustomColumnHelper<TData extends RowData>(): CustomColumnHelper<TData> {

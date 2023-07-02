@@ -6,7 +6,7 @@ import CustomSelector from '../CustomSelector';
 import React from 'react';
 
 export interface CollectionSelectProps extends Omit<BoxProps, 'name' | 'onChange' | 'onBlur' | 'value'> {
-  onChange: (event: { target: { value: number | null | undefined } }, newValue: number | null | undefined) => void;
+  onChange: (newValue: number | null | undefined) => void;
   onBlur: FocusEventHandler<HTMLInputElement> | undefined;
   value: number | null | undefined;
 }
@@ -33,17 +33,17 @@ function CollectionSelect(
   return (
     <Box {...props} sx={{ display: 'flex', alignItems: 'center', ...sx }}>
       <Breadcrumbs>
-        <Link underline="hover" onClick={() => onChange({ target: { value: null } }, null)}>
+        <Link underline="hover" onClick={() => onChange(null)}>
           {t('root')}
         </Link>
         {getCollection &&
           getCollection.ancestors.map(({ name, id }) => (
-            <Link underline="hover" key={id} onClick={() => onChange({ target: { value: id } }, id)}>
+            <Link underline="hover" key={id} onClick={() => onChange(id)}>
               {name}
             </Link>
           ))}
         <CustomSelector<number | null | undefined>
-          onChange={onChange}
+          onChange={(_, newValue) => onChange(newValue)}
           onBlur={onBlur}
           value={value}
           render={(onClick) => (

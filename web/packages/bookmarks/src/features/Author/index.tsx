@@ -4,6 +4,7 @@ import {
   createCustomColumnHelper,
   CustomColumnArray,
   CustomTable,
+  CustomTableOptions,
   getCoreRowModel,
   TableActions,
   useCustomTable,
@@ -91,7 +92,11 @@ export default function Author() {
       ] as CustomColumnArray<TableItem>,
     [deleteAuthor, refetch, t],
   );
-  const tableInstance = useCustomTable({ columns, data: queryAuthors ?? [], getCoreRowModel: getCoreRowModel() });
+  const tableOptions = useMemo<CustomTableOptions<TableItem>>(
+    () => ({ columns, data: queryAuthors ?? [], getCoreRowModel: getCoreRowModel() }),
+    [columns, queryAuthors],
+  );
+  const tableInstance = useCustomTable(tableOptions);
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', p: 2 }}>
