@@ -19,28 +19,29 @@ export default function Home() {
   const page = usePageWithTotal(pageState, total);
 
   const columns = useTableColumns(refetch);
-  const tableInstance = useCustomTable({ columns, data: data ?? [], getCoreRowModel: getCoreRowModel() });
+  const tableOptions = useMemo(
+    () => ({ columns, data: data ?? [], getCoreRowModel: getCoreRowModel() }),
+    [columns, data],
+  );
+  const tableInstance = useCustomTable(tableOptions);
 
-  return useMemo(
-    () => (
-      <Box sx={{ width: '100%', height: '100%', p: 2, display: 'flex', flexDirection: 'column' }}>
-        <AncestorsPath />
-        <Box
-          sx={{
-            flex: '0 0 auto',
-            marginBottom: 2,
-            display: 'flex',
-          }}
-        >
-          <CreateCollectionButton refetch={refetch} />
-          {id && <CreateItemButton refetch={refetch} collectionId={id} />}
-          <IconButton sx={{ marginLeft: 'auto' }} onClick={() => refetch()}>
-            <Refresh />
-          </IconButton>
-        </Box>
-        <CustomTable tableInstance={tableInstance} page={page} />
+  return (
+    <Box sx={{ width: '100%', height: '100%', p: 2, display: 'flex', flexDirection: 'column' }}>
+      <AncestorsPath />
+      <Box
+        sx={{
+          flex: '0 0 auto',
+          marginBottom: 2,
+          display: 'flex',
+        }}
+      >
+        <CreateCollectionButton refetch={refetch} />
+        {id && <CreateItemButton refetch={refetch} collectionId={id} />}
+        <IconButton sx={{ marginLeft: 'auto' }} onClick={() => refetch()}>
+          <Refresh />
+        </IconButton>
       </Box>
-    ),
-    [id, page, refetch, tableInstance],
+      <CustomTable tableInstance={tableInstance} page={page} />
+    </Box>
   );
 }

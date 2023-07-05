@@ -35,6 +35,7 @@ export default function Author() {
             header: t('name'),
             id: 'name',
             cell: (context) => context.getValue(),
+            meta: {},
           },
         ),
         columnHelper.accessor(({ avatar }) => <Avatar src={avatar} />, {

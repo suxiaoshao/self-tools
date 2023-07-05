@@ -13,7 +13,7 @@ tokio = { version = "1.29.1", features = ["macros", "rt-multi-thread"] }
 async-graphql = "5.0.10"
 axum = { version = "0.6.18", features = ["headers"] }
 async-graphql-axum = "5.0.10"
-serde_json = "1.0.99"
+serde_json = "1.0.100"
 
 
 # database
@@ -23,7 +23,7 @@ once_cell = "1.18.0"
 
 # error
 anyhow = "1.0.71"
-thiserror = "1.0.40"
+thiserror = "1.0.41"
 
 # cors
 middleware = { path = "../../common/middleware",features=["cors","auth","trace","graphql-trace"] }

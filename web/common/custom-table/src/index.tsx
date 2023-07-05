@@ -50,7 +50,7 @@ export function CustomTable<D extends object>({
                 {
                   // Loop over the headers in each row
                   headerGroup.headers.map((header) => {
-                    const headerColumn = header as CustomColumn<D>;
+                    const headerColumn = header.column.columnDef as CustomColumn<D>;
                     const headerProps = headerColumn.headerCellProps ?? headerColumn.cellProps ?? {};
 
                     return (
@@ -78,7 +78,7 @@ export function CustomTable<D extends object>({
                   {
                     // Loop over the rows cells
                     row.getVisibleCells().map((cell) => {
-                      const column = cell.column as CustomColumn<D>;
+                      const column = cell.column.columnDef as CustomColumn<D>;
 
                       // Apply the cell props
                       return (
