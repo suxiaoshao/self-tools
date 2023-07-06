@@ -11,7 +11,6 @@
     "custom-graphql": "workspace:^1.0.0",
     "custom-table": "workspace:^1.0.0",
     "notify": "workspace:^1.0.0",
-    "theme": "workspace:^1.0.0",
     "time": "workspace:^1.0.0",
     "i18n": "workspace:^1.0.0",
     "common": "workspace:^1.0.0"

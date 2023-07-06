@@ -1,9 +1,7 @@
 {
   "name": "bookmarks",
   "entry": {
-    "scripts": [
-      "https://bookmarks.sushao.top/main.js"
-    ]
+    "scripts": ["https://bookmarks.sushao.top/main.js"]
   },
   "activeRule": "/bookmarks",
   "menu": [
