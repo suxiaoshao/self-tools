@@ -5,7 +5,7 @@ import { CreateTagMutationVariables, GetTagsQuery, useDeleteTagMutation, useGetT
 import { Search } from '@mui/icons-material';
 import { useCallback, useMemo } from 'react';
 import {
-  CustomColumnArray,
+  CustomColumnDefArray,
   CustomTable,
   CustomTableOptions,
   getCoreRowModel,
@@ -37,7 +37,7 @@ export default function Tags() {
   );
   const collectionId = useWatch({ control, name: 'collectionId' });
   const t = useI18n();
-  const columns = useMemo<CustomColumnArray<Data>>(
+  const columns = useMemo<CustomColumnDefArray<Data>>(
     () => [
       {
         header: t('name'),

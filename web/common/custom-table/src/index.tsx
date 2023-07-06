@@ -12,7 +12,7 @@ import {
 } from '@mui/material';
 import TablePaginationActions from '@mui/material/TablePagination/TablePaginationActions';
 import { Table as TableType, flexRender } from '@tanstack/react-table';
-import { CustomColumn } from './useCustomTable';
+import { CustomColumnDef } from './useCustomTable';
 import { PageWithTotal } from './usePage';
 
 export interface CustomTableProps<D extends object> extends Omit<TableContainerProps, 'ref'> {
@@ -50,7 +50,7 @@ export function CustomTable<D extends object>({
                 {
                   // Loop over the headers in each row
                   headerGroup.headers.map((header) => {
-                    const headerColumn = header.column.columnDef as CustomColumn<D>;
+                    const headerColumn = header.column.columnDef as CustomColumnDef<D>;
                     const headerProps = headerColumn.headerCellProps ?? headerColumn.cellProps ?? {};
 
                     return (
@@ -78,7 +78,7 @@ export function CustomTable<D extends object>({
                   {
                     // Loop over the rows cells
                     row.getVisibleCells().map((cell) => {
-                      const column = cell.column.columnDef as CustomColumn<D>;
+                      const column = cell.column.columnDef as CustomColumnDef<D>;
 
                       // Apply the cell props
                       return (

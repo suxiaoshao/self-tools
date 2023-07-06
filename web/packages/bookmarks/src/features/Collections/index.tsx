@@ -2,7 +2,7 @@ import { Box, IconButton, Link } from '@mui/material';
 import { GetCollectionsQuery, useDeleteCollectionMutation, useGetCollectionsQuery } from '../../graphql';
 import { useMemo } from 'react';
 import {
-  CustomColumnArray,
+  CustomColumnDefArray,
   TableActions,
   CustomTable,
   useCustomTable,
@@ -25,7 +25,7 @@ export default function Home() {
   const [deleteCollection] = useDeleteCollectionMutation();
   const t = useI18n();
 
-  const columns = useMemo<CustomColumnArray<Data>>(
+  const columns = useMemo<CustomColumnDefArray<Data>>(
     () => [
       {
         header: t('name'),

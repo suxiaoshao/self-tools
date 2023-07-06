@@ -2,7 +2,7 @@ import { Avatar, Box, IconButton, Link, Typography } from '@mui/material';
 import { Refresh } from '@mui/icons-material';
 import {
   createCustomColumnHelper,
-  CustomColumnArray,
+  CustomColumnDefArray,
   CustomTable,
   CustomTableOptions,
   getCoreRowModel,
@@ -22,7 +22,7 @@ export default function Author() {
   const { data: { queryAuthors } = {}, refetch } = useGetAuthorsQuery();
   const [deleteAuthor] = useDeleteAuthorMutation();
   const t = useI18n();
-  const columns = useMemo<CustomColumnArray<TableItem>>(
+  const columns = useMemo<CustomColumnDefArray<TableItem>>(
     () =>
       [
         columnHelper.accessor(
@@ -90,7 +90,7 @@ export default function Author() {
           cellProps: { padding: 'none' },
           cell: (context) => context.getValue(),
         },
-      ] as CustomColumnArray<TableItem>,
+      ] as CustomColumnDefArray<TableItem>,
     [deleteAuthor, refetch, t],
   );
   const tableOptions = useMemo<CustomTableOptions<TableItem>>(

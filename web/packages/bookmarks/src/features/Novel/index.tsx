@@ -1,7 +1,7 @@
 import { Refresh } from '@mui/icons-material';
 import { Box, IconButton } from '@mui/material';
 import {
-  CustomColumnArray,
+  CustomColumnDefArray,
   CustomTable,
   CustomTableOptions,
   getCoreRowModel,
@@ -25,7 +25,7 @@ export default function Novel() {
   const { data: { queryNovels } = {}, refetch } = useGetNovelsQuery({ variables: form });
   const [deleteNovel] = useDeleteNovelMutation();
   const t = useI18n();
-  const columns = useMemo<CustomColumnArray<Data>>(
+  const columns = useMemo<CustomColumnDefArray<Data>>(
     () => [
       {
         header: t('name'),

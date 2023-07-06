@@ -1,7 +1,7 @@
 import { Chip } from '@mui/material';
 import { CollectionAndItemsQuery } from '../../../graphql';
 import { useMemo } from 'react';
-import { CustomColumnArray } from 'custom-table';
+import { CustomColumnDefArray } from 'custom-table';
 import { format } from 'time';
 import Name from '../components/Name';
 import Actions from '../components/Actions';
@@ -21,7 +21,7 @@ export type CollectionAndItem = CollectionAndItemsQuery['collectionAndItem']['da
 
 export default function useTableColumns(refetch: () => void) {
   const t = useI18n();
-  const columns = useMemo<CustomColumnArray<CollectionAndItemsQuery['collectionAndItem']['data'][0]>>(
+  const columns = useMemo<CustomColumnDefArray<CollectionAndItemsQuery['collectionAndItem']['data'][0]>>(
     () => [
       {
         header: t('type'),
