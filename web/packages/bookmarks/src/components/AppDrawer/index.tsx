@@ -2,7 +2,6 @@ import { Tag, People, CollectionsBookmark, Book } from '@mui/icons-material';
 import { Box, Divider, List, Paper } from '@mui/material';
 import { Outlet } from 'react-router-dom';
 import RouterItem from './RouterItem';
-import { AuthDrawerItem } from 'auth';
 import { ThemeDrawerItem } from 'theme';
 import { I18nDrawerItem, useI18n } from 'i18n';
 
@@ -34,7 +33,6 @@ export default function AppDrawer(): JSX.Element {
         <List sx={{ width }}>
           <ThemeDrawerItem />
           <I18nDrawerItem />
-          <AuthDrawerItem />
         </List>
       </Box>
 

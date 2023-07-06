@@ -1,13 +1,31 @@
-import { ExpandLess, ExpandMore, Home } from '@mui/icons-material';
+import { ExpandLess, ExpandMore } from '@mui/icons-material';
 import RouterItem from '../../components/AppDrawer/RouterItem';
 import { Menu } from '../../micro/config';
 import { useState } from 'react';
-import { Collapse, List, ListItemButton, ListItemButtonProps, ListItemIcon, ListItemText } from '@mui/material';
+import { Avatar, Collapse, List, ListItemButton, ListItemButtonProps, ListItemIcon, ListItemText } from '@mui/material';
 import { I18nKey, useI18n } from 'i18n';
 
 export interface MenuItemProps extends ListItemButtonProps {
   menu: Menu;
   parentsPath?: string;
+}
+
+function stringToColor(string: string) {
+  let hash = 0;
+  let i;
+
+  for (i = 0; i < string.length; i += 1) {
+    hash = string.charCodeAt(i) + ((hash << 5) - hash);
+  }
+
+  let color = '#';
+
+  for (i = 0; i < 3; i += 1) {
+    const value = (hash >> (i * 8)) & 0xff;
+    color += `00${value.toString(16)}`.slice(-2);
+  }
+
+  return color;
 }
 
 export default function MenuItem({ menu, parentsPath, ...props }: MenuItemProps) {
@@ -23,7 +41,7 @@ export default function MenuItem({ menu, parentsPath, ...props }: MenuItemProps)
         <>
           <ListItemButton {...props} onClick={handleClick}>
             <ListItemIcon>
-              <Home />
+              <Avatar sx={{ bgcolor: stringToColor(menu.name) }}>{menu.name[0]}</Avatar>
             </ListItemIcon>
             <ListItemText primary={t(menu.name as I18nKey)} />
             {open ? <ExpandLess /> : <ExpandMore />}
@@ -43,7 +61,11 @@ export default function MenuItem({ menu, parentsPath, ...props }: MenuItemProps)
         <RouterItem
           {...props}
           key={path}
-          icon={<Home />}
+          icon={
+            <ListItemIcon>
+              <Avatar sx={{ bgcolor: stringToColor(menu.name) }}>{menu.name[0]}</Avatar>
+            </ListItemIcon>
+          }
           matchPaths={[path]}
           text={t(menu.name as I18nKey)}
           toPath={path}

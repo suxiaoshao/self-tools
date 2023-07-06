@@ -15,5 +15,8 @@ export interface AppConfig {
 export type Menu = { name: string; path: Enum<'path', string> | Enum<'menu', Menu[]> };
 
 export default {
-  apps: [{ name: 'collections', configPath: 'https://collections.sushao.top/config.json' }],
+  apps: [
+    { name: 'collections', configPath: 'https://collections.sushao.top/config.json' },
+    { name: 'bookmarks', configPath: 'https://bookmarks.sushao.top/config.json' },
+  ],
 } satisfies MainAppConfig;

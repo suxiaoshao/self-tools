@@ -1,4 +1,5 @@
 import { defineConfig } from '@rspack/cli';
+const packageName = 'bookmarks';
 
 const config = defineConfig({
   entry: {
@@ -10,6 +11,7 @@ const config = defineConfig({
         template: './index.html',
       },
     ],
+    copy: { patterns: [{ from: './public', to: './' }] },
   },
   module: {
     rules: [
@@ -27,8 +29,21 @@ const config = defineConfig({
     client: {
       webSocketURL: {
         port: 443,
+        hostname: 'bookmarks.sushao.top',
+        protocol: 'wss',
       },
     },
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
+      'Access-Control-Allow-Headers': 'X-Requested-With, content-type, Authorization',
+    },
+  },
+  output: {
+    library: `${packageName}-[name]`,
+    libraryTarget: 'umd',
+    jsonpFunction: `webpackJsonp_${packageName}`,
+    publicPath: 'https://bookmarks.sushao.top/',
   },
 });
 export default config;

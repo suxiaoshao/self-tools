@@ -218,9 +218,9 @@ importers:
 
   web/packages/bookmarks:
     dependencies:
-      auth:
+      common:
         specifier: workspace:^1.0.0
-        version: link:../../common/auth
+        version: link:../common
       custom-graphql:
         specifier: workspace:^1.0.0
         version: link:../../common/custom-graphql

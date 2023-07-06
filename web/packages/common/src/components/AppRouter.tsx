@@ -11,6 +11,7 @@ export default function AppRouter() {
       <Route path="/" element={<AppDrawer />}>
         <Route path="/" element={<Home />} />
         <Route path="/collections/*" />
+        <Route path="/bookmarks/*" />
         <Route path="login" element={<Login />} />
       </Route>
     </Routes>
