@@ -8,7 +8,7 @@
     "build": "rspack build"
   },
   "dependencies": {
-    "common": "workspace:^1.0.0",
+    "portal": "workspace:^1.0.0",
     "custom-graphql": "workspace:^1.0.0",
     "custom-table": "workspace:^1.0.0",
     "edit": "workspace:^1.0.0",

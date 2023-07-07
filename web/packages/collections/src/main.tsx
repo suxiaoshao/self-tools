@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
-import { MicroState } from 'common';
+import { MicroState } from 'portal';
 import store from './app/store';
 import { setTheme } from './app/features/themeSlice';
 import { setLang } from './app/features/i18nSlice';

@@ -197,9 +197,6 @@ importers:
 
   web/packages/bookmarks:
     dependencies:
-      common:
-        specifier: workspace:^1.0.0
-        version: link:../common
       custom-graphql:
         specifier: workspace:^1.0.0
         version: link:../../common/custom-graphql
@@ -212,15 +209,15 @@ importers:
       notify:
         specifier: workspace:^1.0.0
         version: link:../../common/notify
+      portal:
+        specifier: workspace:^1.0.0
+        version: link:../portal
       time:
         specifier: workspace:^1.0.0
         version: link:../../common/time
 
   web/packages/collections:
     dependencies:
-      common:
-        specifier: workspace:^1.0.0
-        version: link:../common
       custom-graphql:
         specifier: workspace:^1.0.0
         version: link:../../common/custom-graphql
@@ -239,6 +236,9 @@ importers:
       notify:
         specifier: workspace:^1.0.0
         version: link:../../common/notify
+      portal:
+        specifier: workspace:^1.0.0
+        version: link:../portal
       prism-themes:
         specifier: ^1.9.0
         version: 1.9.0
@@ -253,7 +253,7 @@ importers:
         specifier: ^1.26.0
         version: 1.26.0
 
-  web/packages/common:
+  web/packages/portal:
     dependencies:
       '@material/material-color-utilities':
         specifier: 0.2.7

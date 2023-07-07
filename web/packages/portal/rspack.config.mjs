@@ -38,7 +38,7 @@ const config = defineConfig({
   },
   resolve: {
     alias: {
-      '@common': resolve(process.cwd(), './src'),
+      '@portal': resolve(process.cwd(), './src'),
     },
   },
 });

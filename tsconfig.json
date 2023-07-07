@@ -17,7 +17,7 @@
     "jsx": "react-jsx",
     "types": ["./web/config/init.d.ts"],
     "paths": {
-      "@common/*": ["./web/packages/common/src/*"],
+      "@portal/*": ["./web/packages/portal/src/*"],
       "@bookmarks/*": ["./web/packages/bookmarks/src/*"],
       "@collections/*": ["./web/packages/collections/src/*"]
     }
