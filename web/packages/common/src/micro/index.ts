@@ -2,9 +2,9 @@ import { MicroAppStateActions, ObjectType, RegistrableApp, initGlobalState, regi
 import { loadConfig } from './fetchConfig';
 import store from '../app/store';
 import { MenuItem, setMenu } from '../features/Menu/menuSlice';
-import { selectMuiTheme } from 'theme/src/themeSlice';
-import { youThemeToMuiTheme } from 'theme/src/youTheme';
 import { selectLang } from 'i18n/src/i18nSlice';
+import { youThemeToMuiTheme } from '../features/Theme/utils/youTheme';
+import { selectMuiTheme } from '../features/Theme/themeSlice';
 export async function init() {
   const config = await loadConfig();
   const apps = config.map<RegistrableApp<ObjectType>>((app) => ({

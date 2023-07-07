@@ -2,10 +2,10 @@ import { Home } from '@mui/icons-material';
 import { Box, Divider, List, Paper } from '@mui/material';
 import { Outlet } from 'react-router-dom';
 import RouterItem from './RouterItem';
-import { ThemeDrawerItem } from 'theme';
 import { I18nDrawerItem, useI18n } from 'i18n';
 import DrawerMenu from '../../features/Menu';
 import { AuthDrawerItem } from '../../features/Auth';
+import { ThemeDrawerItem } from '../../features/Theme';
 
 export default function AppDrawer(): JSX.Element {
   const t = useI18n();

@@ -1,4 +1,6 @@
 import { defineConfig } from '@rspack/cli';
+import { resolve } from 'path';
+
 const packageName = 'bookmarks';
 
 const config = defineConfig({
@@ -44,6 +46,11 @@ const config = defineConfig({
     libraryTarget: 'umd',
     jsonpFunction: `webpackJsonp_${packageName}`,
     publicPath: 'https://bookmarks.sushao.top/',
+  },
+  resolve: {
+    alias: {
+      '@bookmarks': resolve(process.cwd(), './src'),
+    },
   },
 });
 export default config;

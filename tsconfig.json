@@ -15,12 +15,13 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
-    "types": ["./config/init.d.ts"],
+    "types": ["./web/config/init.d.ts"],
     "paths": {
-      "@bookmarks/*": ["./bookmarks/src/*"],
-      "@collections/*": ["./collections/src/*"]
+      "@common/*": ["./web/packages/common/src/*"],
+      "@bookmarks/*": ["./web/packages/bookmarks/src/*"],
+      "@collections/*": ["./web/packages/collections/src/*"]
     }
   },
-  "include": ["packages/*/src", "common/*/src", "config"],
-  "exclude": ["../**/node_modules"]
+  "include": ["./web/packages/*/src", "./web/common/*/src", "./web/config"],
+  "exclude": ["./**/node_modules"]
 }

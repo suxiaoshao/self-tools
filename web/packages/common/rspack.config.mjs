@@ -1,4 +1,5 @@
 import { defineConfig } from '@rspack/cli';
+import { resolve } from 'path';
 
 const config = defineConfig({
   entry: {
@@ -33,6 +34,11 @@ const config = defineConfig({
         hostname: 'sushao.top',
         protocol: 'wss',
       },
+    },
+  },
+  resolve: {
+    alias: {
+      '@common': resolve(process.cwd(), './src'),
     },
   },
 });

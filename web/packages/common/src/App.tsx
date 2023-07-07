@@ -1,5 +1,4 @@
 import { BrowserRouter } from 'react-router-dom';
-import { CustomTheme } from 'theme';
 import AppRouter from './components/AppRouter';
 import { SnackbarProvider } from 'notify';
 import { Provider } from 'react-redux';
@@ -8,6 +7,7 @@ import I18next from 'i18n';
 import './micro';
 import { useEffect } from 'react';
 import { start } from 'qiankun';
+import { CustomTheme } from './features/Theme';
 
 function App() {
   useEffect(() => {

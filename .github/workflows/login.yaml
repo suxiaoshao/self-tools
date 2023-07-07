@@ -8,7 +8,7 @@ on:
       - server/packages/login/**
       - server/common/proto/**
       - server/common/middleware/**
-      - server/.cargo/**
+      - .cargo/**
       - .github/workflows/login.yaml
 
 jobs:

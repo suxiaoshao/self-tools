@@ -1,4 +1,5 @@
 import { defineConfig } from '@rspack/cli';
+import { resolve } from 'path';
 
 const packageName = 'collections';
 
@@ -47,5 +48,10 @@ const config = defineConfig({
     },
   },
   plugins: [],
+  resolve: {
+    alias: {
+      '@collections': resolve(process.cwd(), './src'),
+    },
+  },
 });
 export default config;

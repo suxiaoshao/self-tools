@@ -1,0 +1,14 @@
+[workspace]
+
+members = [
+    "./server/packages/*",
+    # "packages/auth",
+    # "common/proto",
+    # "packages/login",
+    # "common/errors",
+    # "common/novel_crawler",
+    # "packages/collections",
+    "./server/common/*",
+]
+[profile.release]
+strip = "symbols"

@@ -187,18 +187,6 @@ importers:
         specifier: ^3.0.1
         version: 3.0.1(csstype@3.1.2)(react-dom@18.2.0)(react@18.2.0)
 
-  web/common/theme:
-    dependencies:
-      '@material/material-color-utilities':
-        specifier: 0.2.7
-        version: 0.2.7
-      '@mui/system':
-        specifier: ^5.13.7
-        version: 5.13.7(@emotion/react@11.11.1)(@emotion/styled@11.11.0)(@types/react@18.2.14)(react@18.2.0)
-      i18n:
-        specifier: workspace:*
-        version: link:../i18n
-
   web/common/time:
     dependencies:
       dayjs:
@@ -267,6 +255,9 @@ importers:
 
   web/packages/common:
     dependencies:
+      '@material/material-color-utilities':
+        specifier: 0.2.7
+        version: 0.2.7
       i18n:
         specifier: workspace:^1.0.0
         version: link:../../common/i18n
@@ -276,9 +267,6 @@ importers:
       qiankun:
         specifier: ^2.10.11
         version: 2.10.11
-      theme:
-        specifier: workspace:^1.0.0
-        version: link:../../common/theme
       types:
         specifier: workspace:^1.0.0
         version: link:../../common/types

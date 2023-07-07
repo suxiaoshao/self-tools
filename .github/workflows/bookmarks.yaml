@@ -9,7 +9,7 @@ on:
       - server/common/middleware/**
       - server/common/proto/**
       - server/common/novel_crawler/**
-      - server/.cargo/**
+      - .cargo/**
       - .github/workflows/bookmarks.yaml
 
 jobs:
