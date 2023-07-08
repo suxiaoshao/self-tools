@@ -37,8 +37,6 @@ jobs:
       - name: protoc
         run: sudo apt update && sudo apt install protobuf-compiler mold clang -y
       - name: server Lint
-        working-directory: server
         run: cargo clippy --all
       - name: server test
-        working-directory: server
         run: cargo test --all

@@ -19,8 +19,6 @@ import {
   SxProps,
   Theme,
 } from '@mui/material';
-import { hexFromArgb, selectActiveYouTheme } from 'theme';
-import { useAppSelector } from '../../app/hooks';
 
 export interface MarkdownProps extends BoxProps {
   value: string;
@@ -140,7 +138,6 @@ function MyTable(props: { children: JSX.Element }) {
 }
 
 function MyBlockquote(props: { children: JSX.Element }) {
-  const youTheme = useAppSelector(selectActiveYouTheme);
   return (
     <Box
       sx={{
@@ -148,8 +145,8 @@ function MyBlockquote(props: { children: JSX.Element }) {
         mb: 2,
         p: 1,
         borderRadius: 2,
-        background: hexFromArgb(youTheme.onTertiary),
-        color: hexFromArgb(youTheme.tertiary),
+        background: 'var(--you-on-tertiary)',
+        color: 'var(--you-tertiary)',
       }}
     >
       {props.children}

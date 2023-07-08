@@ -1,14 +1,4 @@
-import {
-  Box,
-  Chip,
-  FormControl,
-  FormControlProps,
-  InputLabel,
-  MenuItem,
-  OutlinedInput,
-  Select,
-  SelectChangeEvent,
-} from '@mui/material';
+import { Box, Chip, FormControl, FormControlProps, InputLabel, MenuItem, OutlinedInput, Select } from '@mui/material';
 import { useI18n } from 'i18n';
 import { FocusEventHandler, useMemo } from 'react';
 import { useAllowTagsQuery } from '../../graphql';
@@ -26,7 +16,7 @@ const MenuProps = {
 
 export interface TagsSelectProps extends Omit<FormControlProps, 'name' | 'onChange' | 'onBlur' | 'value'> {
   collectionId: number | null | undefined;
-  onChange: (event: SelectChangeEvent<number[]>, child: React.ReactNode) => void;
+  onChange: (event: number) => void;
   onBlur: FocusEventHandler<HTMLInputElement> | undefined;
   value: number[] | number | null | undefined;
 }
@@ -50,7 +40,11 @@ export default function TagsSelect({ collectionId, value, onChange, onBlur, sx, 
       <Select
         multiple
         value={formValue}
-        onChange={onChange}
+        onChange={(e) => {
+          if (typeof e.target.value === 'number') {
+            onChange(e.target.value);
+          }
+        }}
         onBlur={onBlur}
         input={<OutlinedInput label={t('tags')} />}
         renderValue={(selected) => (

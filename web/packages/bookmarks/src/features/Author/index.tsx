@@ -2,8 +2,9 @@ import { Avatar, Box, IconButton, Link, Typography } from '@mui/material';
 import { Refresh } from '@mui/icons-material';
 import {
   createCustomColumnHelper,
-  CustomColumnArray,
+  CustomColumnDefArray,
   CustomTable,
+  CustomTableOptions,
   getCoreRowModel,
   TableActions,
   useCustomTable,
@@ -21,7 +22,7 @@ export default function Author() {
   const { data: { queryAuthors } = {}, refetch } = useGetAuthorsQuery();
   const [deleteAuthor] = useDeleteAuthorMutation();
   const t = useI18n();
-  const columns = useMemo<CustomColumnArray<TableItem>>(
+  const columns = useMemo<CustomColumnDefArray<TableItem>>(
     () =>
       [
         columnHelper.accessor(
@@ -34,6 +35,7 @@ export default function Author() {
             header: t('name'),
             id: 'name',
             cell: (context) => context.getValue(),
+            meta: {},
           },
         ),
         columnHelper.accessor(({ avatar }) => <Avatar src={avatar} />, {
@@ -88,10 +90,14 @@ export default function Author() {
           cellProps: { padding: 'none' },
           cell: (context) => context.getValue(),
         },
-      ] as CustomColumnArray<TableItem>,
+      ] as CustomColumnDefArray<TableItem>,
     [deleteAuthor, refetch, t],
   );
-  const tableInstance = useCustomTable({ columns, data: queryAuthors ?? [], getCoreRowModel: getCoreRowModel() });
+  const tableOptions = useMemo<CustomTableOptions<TableItem>>(
+    () => ({ columns, data: queryAuthors ?? [], getCoreRowModel: getCoreRowModel() }),
+    [columns, queryAuthors],
+  );
+  const tableInstance = useCustomTable(tableOptions);
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', p: 2 }}>

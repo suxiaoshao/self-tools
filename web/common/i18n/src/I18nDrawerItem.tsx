@@ -79,7 +79,7 @@ export default function I18nDrawerItem() {
                     aria-labelledby="color-setting"
                     {...field}
                     onChange={(event, newValue) => {
-                      field.onChange(newValue);
+                      field.onChange(newValue as 'custom' | 'system');
                     }}
                   >
                     <FormControlLabel value="custom" control={<Radio />} label={t('custom')} />
@@ -103,7 +103,7 @@ export default function I18nDrawerItem() {
                       aria-labelledby="color-setting"
                       {...field}
                       onChange={(event, newValue) => {
-                        field.onChange(newValue);
+                        field.onChange(newValue as 'en' | 'zh');
                       }}
                     >
                       <FormControlLabel value="zh" control={<Radio />} label={t('chinese')} />

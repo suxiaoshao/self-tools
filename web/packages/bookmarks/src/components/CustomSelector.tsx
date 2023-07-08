@@ -1,5 +1,5 @@
 import { Menu, MenuItem } from '@mui/material';
-import React from 'react';
+import React, { useImperativeHandle } from 'react';
 import { useState, MouseEvent, ReactNode, Key, FocusEventHandler, FocusEvent, ForwardedRef } from 'react';
 
 export interface CustomSelectorProps<T> {
@@ -12,7 +12,7 @@ export interface CustomSelectorProps<T> {
 
 function CustomSelector<T>(
   { children, onBlur, onChange, render, value }: CustomSelectorProps<T>,
-  ref: ForwardedRef<HTMLDivElement>,
+  ref: ForwardedRef<HTMLDivElement | null>,
 ): JSX.Element {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
@@ -23,11 +23,13 @@ function CustomSelector<T>(
     setAnchorEl(null);
     onBlur?.(undefined as unknown as FocusEvent<HTMLInputElement>);
   };
+  const [sourceRef, setSourceRef] = useState<HTMLDivElement | null>(null);
+  useImperativeHandle<HTMLDivElement | null, HTMLDivElement | null>(ref, () => sourceRef, [sourceRef]);
 
   return (
     <>
       {render?.(handleClick)}
-      <Menu anchorEl={anchorEl} open={open} onClose={handleClose} ref={ref}>
+      <Menu anchorEl={anchorEl} open={open} onClose={handleClose} ref={setSourceRef}>
         {children?.map(({ value: itemValue, label, key }) => (
           <MenuItem
             onClick={() => {

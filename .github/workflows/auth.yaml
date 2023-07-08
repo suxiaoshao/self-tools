@@ -8,7 +8,7 @@ on:
       - server/packages/auth/**
       - server/common/errors/**
       - server/common/proto/**
-      - server/.cargo/**
+      - .cargo/**
       - .github/workflows/auth.yaml
 
 jobs:

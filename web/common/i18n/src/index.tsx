@@ -37,7 +37,9 @@ export default function I18next({ children }: I18nextProps) {
 
 export { default as i18nReducer } from './i18nSlice';
 
-export function useI18n(): (key: keyof typeof en) => string {
+export type I18nKey = keyof typeof en;
+
+export function useI18n(): (key: I18nKey) => string {
   const trans = useTranslation();
   return useMemo(() => trans.t, [trans]);
 }
@@ -45,3 +47,5 @@ export function useI18n(): (key: keyof typeof en) => string {
 export { default as I18nDrawerItem } from './I18nDrawerItem';
 
 export { default as i18next } from 'i18next';
+
+export { default as i18n } from 'i18next';

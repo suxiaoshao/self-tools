@@ -1,26 +1,24 @@
 {
   "name": "collections",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
-    "generate": "graphql-codegen"
+    "dev": "rspack serve",
+    "build": "rspack build"
   },
   "dependencies": {
-    "auth": "workspace:^1.0.0",
+    "@garfish/bridge-react-v18": "^1.16.2",
     "custom-graphql": "workspace:^1.0.0",
     "custom-table": "workspace:^1.0.0",
     "edit": "workspace:^1.0.0",
-    "markdown-to-jsx": "^7.1.9",
+    "i18n": "workspace:^1.0.0",
+    "markdown-to-jsx": "^7.2.1",
     "notify": "workspace:^1.0.0",
+    "portal": "workspace:^1.0.0",
     "prism-themes": "^1.9.0",
     "prismjs": "^1.29.0",
-    "theme": "workspace:^1.0.0",
-    "time": "workspace:^1.0.0",
-    "i18n": "workspace:^1.0.0"
+    "time": "workspace:^1.0.0"
   },
   "devDependencies": {
     "@types/prismjs": "^1.26.0"

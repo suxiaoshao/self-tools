@@ -1,9 +1,11 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
+import { reactBridge } from '@garfish/bridge-react-v18';
 import App from './App';
+import Error from '@bookmarks/components/Error';
 
-ReactDOM.createRoot(document.getElementById('root') ?? document.body).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-);
+export const provider = reactBridge({
+  // 根组件, bridge 会默认传递 basename、dom、props 等信息到根组件
+  rootComponent: App,
+  // 设置应用的 errorBoundary
+  errorBoundary: () => <Error />,
+  el: '#root',
+});

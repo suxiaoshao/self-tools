@@ -3,18 +3,17 @@
   "private": true,
   "version": "0.0.0",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
+    "dev": "rspack serve",
+    "build": "rspack build",
     "generate": "graphql-codegen"
   },
   "dependencies": {
-    "auth": "workspace:^1.0.0",
     "custom-graphql": "workspace:^1.0.0",
     "custom-table": "workspace:^1.0.0",
     "notify": "workspace:^1.0.0",
-    "theme": "workspace:^1.0.0",
     "time": "workspace:^1.0.0",
-    "i18n": "workspace:^1.0.0"
+    "i18n": "workspace:^1.0.0",
+    "portal": "workspace:^1.0.0",
+    "@garfish/bridge-react-v18": "^1.16.2"
   }
 }

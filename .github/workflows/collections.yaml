@@ -8,7 +8,7 @@ on:
       - server/packages/collections/**
       - server/common/middleware/**
       - server/common/proto/**
-      - server/.cargo/**
+      - .cargo/**
       - .github/workflows/collections.yaml
 
 jobs:

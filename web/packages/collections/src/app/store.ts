@@ -1,13 +1,11 @@
 import { AnyAction, configureStore, ThunkAction } from '@reduxjs/toolkit';
-import { authReducer } from 'auth';
-import { themeReducer } from 'theme';
-import { i18nReducer } from 'i18n';
+import { themeSlice } from './features/themeSlice';
+import { i18nSlice } from './features/i18nSlice';
 
 const store = configureStore({
   reducer: {
-    auth: authReducer,
-    theme: themeReducer,
-    i18n: i18nReducer,
+    i18n: i18nSlice.reducer,
+    theme: themeSlice.reducer,
   },
 });
 export default store;

@@ -8,7 +8,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "auth": "workspace:^1.0.0",
     "notify": "workspace:^1.0.0"
   }
 }

@@ -3,5 +3,5 @@
 
 pnpm run lint
 pnpm run test
-cd server && cargo clippy --all
-cargo test --all && cd ..
+cargo clippy --all
+cargo test --all

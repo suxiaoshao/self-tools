@@ -1,0 +1,21 @@
+{
+  "name": "collections",
+  "entry": "https://collections.sushao.top",
+  "activeRule": "/collections",
+  "menu": [
+    {
+      "name": "home",
+      "path": {
+        "tag": "path",
+        "value": "/"
+      }
+    },
+    {
+      "name": "collection",
+      "path": {
+        "tag": "path",
+        "value": "/collections"
+      }
+    }
+  ]
+}

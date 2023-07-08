@@ -1,10 +1,6 @@
-use nom::{
-    bytes::complete::{tag, take_until},
-    sequence::tuple,
-    IResult,
-};
 use once_cell::sync::Lazy;
 use scraper::{Html, Selector};
+use serde::{Deserialize, Serialize};
 
 use crate::{
     errors::NovelResult,
@@ -20,6 +16,8 @@ static SELECTOR_NOVEL_DESCRIPTION: Lazy<Selector> =
     Lazy::new(|| Selector::parse("content.detail__summary__content").unwrap());
 static SELECTOR_NOVEL_IMAGE: Lazy<Selector> =
     Lazy::new(|| Selector::parse("img.detail__header-bg").unwrap());
+static SELECTOR_NOVEL_CHAPTERS: Lazy<Selector> =
+    Lazy::new(|| Selector::parse("#vite-plugin-ssr_pageContext").unwrap());
 
 #[derive(Debug)]
 pub(crate) struct QDNovel {
@@ -41,6 +39,7 @@ impl NovelFn for QDNovel {
         let image = parse_image_src(&html, &SELECTOR_NOVEL_IMAGE)?;
         let image = format!("https:{image}");
         let chapters = parse_chapters(&chapter_html, novel_id)?;
+        dbg!(&chapters);
         Ok(Self {
             id: novel_id.to_string(),
             name,
@@ -84,27 +83,57 @@ impl QDNovel {
 }
 
 fn parse_chapters(html: &str, novel_id: &str) -> NovelResult<Vec<QDChapter>> {
-    fn parse_json(input: &str) -> IResult<&str, &str> {
-        let (input, (_, _, data)) = tuple((
-            take_until("g_data.volumes = "),
-            tag("g_data.volumes = "),
-            take_until(";"),
-        ))(input)?;
-        Ok((input, data))
+    let html = Html::parse_document(html);
+    let data = html
+        .select(&SELECTOR_NOVEL_CHAPTERS)
+        .next()
+        .unwrap()
+        .inner_html();
+    #[derive(Serialize, Deserialize)]
+    pub struct Data {
+        #[serde(rename = "pageContext")]
+        page_context: PageContext,
     }
-    let (_, data) = parse_json(html)?;
-    #[derive(serde::Deserialize, Debug)]
-    struct Data {
+
+    #[derive(Serialize, Deserialize)]
+    struct PageContext {
+        #[serde(rename = "pageProps")]
+        page_props: PageProps,
+    }
+
+    #[derive(Serialize, Deserialize)]
+    struct PageProps {
+        #[serde(rename = "pageData")]
+        page_data: PageData,
+    }
+
+    #[derive(Serialize, Deserialize)]
+    struct PageData {
+        #[serde(rename = "vs")]
+        vs: Vec<V>,
+    }
+
+    #[derive(Serialize, Deserialize)]
+    pub struct V {
+        #[serde(rename = "cs")]
         cs: Vec<Chapter>,
     }
-    #[derive(serde::Deserialize, Debug)]
-    struct Chapter {
-        id: i32,
+
+    #[derive(Serialize, Deserialize)]
+    pub struct Chapter {
         #[serde(rename = "cN")]
         name: String,
+
+        #[serde(rename = "id")]
+        id: i64,
     }
-    let data: Vec<Data> = serde_json::from_str(data)?;
+
+    let data: Data = serde_json::from_str(&data)?;
     let data = data
+        .page_context
+        .page_props
+        .page_data
+        .vs
         .into_iter()
         .flat_map(|d| d.cs)
         .map(|Chapter { id, name }| QDChapter::new(novel_id.to_string(), id.to_string(), name))

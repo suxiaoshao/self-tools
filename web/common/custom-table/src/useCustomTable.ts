@@ -18,16 +18,16 @@ export type CustomExtendsType = {
   cellProps?: TableCellProps;
   headerCellProps?: TableCellProps;
 };
-export type CustomColumn<T extends RowData, TValue = unknown> = ColumnDef<T, TValue> & CustomExtendsType;
+export type CustomColumnDef<T extends RowData, TValue = unknown> = ColumnDef<T, TValue> & CustomExtendsType;
 
-export type CustomColumnArray<T extends RowData> = CustomColumn<T>[];
+export type CustomColumnDefArray<T extends RowData> = CustomColumnDef<T>[];
 
 export type CustomTableOptions<T extends RowData> = Omit<TableOptions<T>, 'columns'> & {
-  columns: CustomColumnArray<T>;
+  columns: CustomColumnDefArray<T>;
 };
 
-export function useCustomTable<D extends RowData>({ columns, ...options }: CustomTableOptions<D>): Table<D> {
-  return useReactTable({ columns, ...options });
+export function useCustomTable<D extends RowData>(options: CustomTableOptions<D>): Table<D> {
+  return useReactTable(options);
 }
 
 export function createCustomColumnHelper<TData extends RowData>(): CustomColumnHelper<TData> {
@@ -48,7 +48,7 @@ export type CustomColumnHelper<TData extends RowData> = {
       ? DisplayColumnDef<TData, TValue>
       : IdentifiedColumnDef<TData, TValue>) &
       CustomExtendsType,
-  ) => CustomColumn<TData, TValue>;
-  display: (column: DisplayColumnDef<TData>) => CustomColumn<TData, unknown> & CustomExtendsType;
-  group: (column: GroupColumnDef<TData>) => CustomColumn<TData, unknown> & CustomExtendsType;
+  ) => CustomColumnDef<TData, TValue>;
+  display: (column: DisplayColumnDef<TData>) => CustomColumnDef<TData, unknown> & CustomExtendsType;
+  group: (column: GroupColumnDef<TData>) => CustomColumnDef<TData, unknown> & CustomExtendsType;
 };

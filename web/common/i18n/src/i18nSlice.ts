@@ -13,7 +13,7 @@ const getLang = (data: I18nSliceType) => {
   return data.systemLang;
 };
 
-function getInitDate(): I18nSliceType {
+function getInitData(): I18nSliceType {
   const langMode = window.localStorage.getItem('langMode') ?? 'system';
   const customLang = (window.localStorage.getItem('customLang') ?? 'en') as I18nSliceType['customLang'];
   window.localStorage.setItem('langMode', langMode);
@@ -27,7 +27,7 @@ function getInitDate(): I18nSliceType {
 
 export const i18nSlice = createSlice({
   name: 'i18n',
-  initialState: getInitDate(),
+  initialState: getInitData(),
   reducers: {
     setLangSetting: (state, action: { payload: Pick<I18nSliceType, 'customLang' | 'langMode'> }) => {
       state.langMode = action.payload.langMode;

@@ -1,0 +1,35 @@
+{
+  "name": "bookmarks",
+  "entry": "https://bookmarks.sushao.top",
+  "activeRule": "/bookmarks",
+  "menu": [
+    {
+      "name": "workspace",
+      "path": {
+        "tag": "path",
+        "value": "/"
+      }
+    },
+    {
+      "name": "collection_manage",
+      "path": {
+        "tag": "path",
+        "value": "/collections"
+      }
+    },
+    {
+      "name": "tag_manage",
+      "path": {
+        "tag": "path",
+        "value": "/tags"
+      }
+    },
+    {
+      "name": "author_manage",
+      "path": {
+        "tag": "path",
+        "value": "/authors"
+      }
+    }
+  ]
+}

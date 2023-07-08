@@ -19,5 +19,5 @@ COPY ./docker/test/config.toml /usr/local/cargo
 RUN cargo install cargo-watch
 RUN cargo install cargo-cache
 
-COPY ./server /app
+COPY ./ /app
 VOLUME [ "/app/target","/usr/local/cargo/registry","/root/.zsh_history" ]
