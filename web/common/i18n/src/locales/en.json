@@ -59,5 +59,6 @@
   "create_tag": "Create Tag",
   "tag_name": "Tag Name",
   "home": "Home",
-  "bookmark": "Bookmarks"
+  "bookmarks": "Bookmarks",
+  "collections": "Collections"
 }

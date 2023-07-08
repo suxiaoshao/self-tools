@@ -1,6 +1,8 @@
 import { defineConfig } from '@rspack/cli';
 import { resolve } from 'path';
 
+const isDevelopment = process.env.NODE_ENV !== 'production';
+
 const config = defineConfig({
   entry: {
     main: './src/main.tsx',
@@ -11,8 +13,12 @@ const config = defineConfig({
         template: './index.html',
       },
     ],
+    banner: 'portal',
   },
   output: {
+    clean: isDevelopment ? false : true,
+    filename: '[name].[contenthash].js',
+    chunkFilename: '[name].[contenthash].js',
     publicPath: 'https://sushao.top/',
   },
   module: {

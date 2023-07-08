@@ -16,7 +16,7 @@
     "prepare": "husky install"
   },
   "dependencies": {
-    "@apollo/client": "^3.7.16",
+    "@apollo/client": "^3.7.17",
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
     "@fontsource/roboto": "^5.0.4",
@@ -42,7 +42,7 @@
     "@rspack/cli": "0.2.5-canary-7886e38-20230706011015",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^14.0.0",
-    "@types/node": "^20.4.0",
+    "@types/node": "^20.4.1",
     "@types/react": "^18.2.14",
     "@types/react-dom": "^18.2.6",
     "@types/react-router-dom": "^5.3.3",

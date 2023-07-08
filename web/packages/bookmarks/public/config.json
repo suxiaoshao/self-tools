@@ -1,6 +1,6 @@
 {
   "name": "bookmarks",
-  "entry": "https://bookmarks.sushao.top/main.js",
+  "entry": "https://bookmarks.sushao.top",
   "activeRule": "/bookmarks",
   "menu": [
     {
