@@ -34,7 +34,25 @@ export default function AppDrawer(): JSX.Element {
 
       <Box sx={{ flex: '1 1 0' }}>
         <Outlet />
-        <Box sx={{ width: '100%', height: '100%' }} id="micro"></Box>
+        <Box
+          sx={{
+            width: '100%',
+            height: '100%',
+            '& > *': {
+              width: '100%',
+              height: '100%',
+            },
+            '& div[__garfishmockhtml__]': {
+              width: '100%',
+              height: '100%',
+            },
+            '& div[__garfishmockbody__]': {
+              width: '100%',
+              height: '100%',
+            },
+          }}
+          id="micro"
+        ></Box>
       </Box>
     </Box>
   );

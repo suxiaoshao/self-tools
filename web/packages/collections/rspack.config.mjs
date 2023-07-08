@@ -1,7 +1,7 @@
 import { defineConfig } from '@rspack/cli';
 import { resolve } from 'path';
 
-const packageName = 'collections';
+const isDevelopment = process.env.NODE_ENV !== 'production';
 
 const config = defineConfig({
   entry: {
@@ -14,11 +14,17 @@ const config = defineConfig({
       },
     ],
     copy: { patterns: [{ from: './public', to: './' }] },
+    banner: 'Micro collections',
   },
   output: {
-    library: `${packageName}-[name]`,
+    // 开发环境设置 true 将会导致热更新失效
+    clean: isDevelopment ? false : true,
+    filename: '[name].[contenthash].js',
+    chunkFilename: '[name].[contenthash].js',
+    // 需要配置成 umd 规范
     libraryTarget: 'umd',
-    jsonpFunction: `webpackJsonp_${packageName}`,
+    // 修改不规范的代码格式，避免逃逸沙箱
+    globalObject: 'window',
     publicPath: 'https://collections.sushao.top/',
   },
   module: {

@@ -1,8 +1,6 @@
 {
-  "name": "collection",
-  "entry": {
-    "scripts": ["https://collections.sushao.top/main.js"]
-  },
+  "name": "collections",
+  "entry": "https://collections.sushao.top",
   "activeRule": "/collections",
   "menu": [
     {

@@ -8,13 +8,15 @@
     "build": "rspack build"
   },
   "dependencies": {
-    "portal": "workspace:^1.0.0",
+    "@garfish/bridge-react": "^1.0.0",
+    "@garfish/bridge-react-v18": "^1.16.2",
     "custom-graphql": "workspace:^1.0.0",
     "custom-table": "workspace:^1.0.0",
     "edit": "workspace:^1.0.0",
     "i18n": "workspace:^1.0.0",
     "markdown-to-jsx": "^7.2.1",
     "notify": "workspace:^1.0.0",
+    "portal": "workspace:^1.0.0",
     "prism-themes": "^1.9.0",
     "prismjs": "^1.29.0",
     "time": "workspace:^1.0.0"

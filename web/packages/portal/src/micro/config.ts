@@ -1,4 +1,3 @@
-import { Entry } from 'qiankun';
 import { Enum } from 'types';
 
 export interface MainAppConfig {
@@ -9,7 +8,7 @@ export interface AppConfig {
   name: string;
   menu: Menu[];
   activeRule: string;
-  entry: Entry;
+  entry: string;
 }
 
 export type Menu = { name: string; path: Enum<'path', string> | Enum<'menu', Menu[]> };

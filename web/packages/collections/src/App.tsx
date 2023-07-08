@@ -11,8 +11,9 @@ import { useAppSelector } from './app/hooks';
 import { SelectTheme } from './app/features/themeSlice';
 import { useEffect } from 'react';
 import { SelectLang } from './app/features/i18nSlice';
+import React from 'react';
 
-function InnerApp() {
+function InnerApp({ basename }: { basename: string }) {
   const theme = useAppSelector(SelectTheme);
   const lang = useAppSelector(SelectLang);
   useEffect(() => {
@@ -22,7 +23,7 @@ function InnerApp() {
     <ThemeProvider theme={createTheme(theme)}>
       <SnackbarProvider>
         <ApolloProvider client={getClient('https://collections.sushao.top/graphql')}>
-          <BrowserRouter basename="/collections">
+          <BrowserRouter basename={basename}>
             <AppRouter />
           </BrowserRouter>
         </ApolloProvider>
@@ -31,11 +32,13 @@ function InnerApp() {
   );
 }
 
-function App() {
+function App({ basename }: { basename: string }) {
   return (
-    <Provider store={store}>
-      <InnerApp />
-    </Provider>
+    <React.StrictMode>
+      <Provider store={store}>
+        <InnerApp basename={basename} />
+      </Provider>
+    </React.StrictMode>
   );
 }
 
