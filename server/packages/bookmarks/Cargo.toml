@@ -13,7 +13,7 @@ tokio = { version = "1.29.1", features = ["macros", "rt-multi-thread"] }
 async-graphql = "5.0.10"
 axum = { version = "0.6.18", features = ["headers"] }
 async-graphql-axum = "5.0.10"
-serde_json = "1.0.100"
+serde_json = "1.0.102"
 
 
 # database
