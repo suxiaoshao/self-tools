@@ -1,4 +1,5 @@
 use async_graphql::InputObject;
+use time::OffsetDateTime;
 
 #[derive(InputObject, Debug)]
 pub struct Pagination {
@@ -15,4 +16,10 @@ impl Pagination {
     pub fn offset_plus_limit(&self) -> i64 {
         self.offset() + self.page_size
     }
+}
+
+#[derive(InputObject, Debug)]
+pub struct TimeRange {
+    pub start: OffsetDateTime,
+    pub end: OffsetDateTime,
 }

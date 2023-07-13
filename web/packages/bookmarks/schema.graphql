@@ -1,4 +1,4 @@
-# This file was generated based on ".graphqlconfig". Do not edit manually.
+# This file was generated. Do not edit manually.
 
 schema {
   query: QueryRoot
@@ -35,7 +35,7 @@ type MutationRoot {
   "创建目录"
   createCollection(description: String, name: String!, parentId: Int): Collection!
   "创建小说"
-  createNovel(authorId: Int!, collectionId: Int, description: String!, name: String!, tags: [Int!]!): Novel!
+  createNovel(data: CreateNovelInput!): Novel!
   "创建标签"
   createTag(collectionId: Int, name: String!): Tag!
   "删除作者"
@@ -49,11 +49,14 @@ type MutationRoot {
 }
 
 type Novel {
+  author: Author!
+  collection: Collection
   createTime: Int!
   description: String!
   id: Int!
   name: String!
   status: ReadStatus!
+  tags: [Tag!]!
   updateTime: Int!
 }
 
@@ -84,6 +87,15 @@ enum ReadStatus {
   READ
   READING
   UNREAD
+}
+
+input CreateNovelInput {
+  authorId: Int!
+  collectionId: Int
+  description: String!
+  name: String!
+  tags: [Int!]!
+  url: String!
 }
 
 input TagMatch {

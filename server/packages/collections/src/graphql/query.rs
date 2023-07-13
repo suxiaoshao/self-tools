@@ -3,7 +3,7 @@ use tracing::{event, Level};
 
 use super::{
     guard::AuthGuard,
-    types::{ItemAndCollection, List, Pagination},
+    types::{ItemAndCollection, List, Pagination,TimeRange},
 };
 use crate::{
     errors::{GraphqlError, GraphqlResult},
@@ -32,6 +32,8 @@ impl QueryRoot {
         &self,
         id: Option<i64>,
         pagination: Pagination,
+        create_time: Option<TimeRange>,
+        update_time: Option<TimeRange>,
     ) -> GraphqlResult<List<ItemAndCollection>> {
         let offset = pagination.offset();
         let offset_plus_limit = pagination.offset_plus_limit();
