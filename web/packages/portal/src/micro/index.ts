@@ -1,10 +1,10 @@
 import { loadConfig } from './fetchConfig';
 import store from '../app/store';
 import { MenuItem, setMenu } from '../features/Menu/menuSlice';
-import { youThemeToMuiTheme } from '../features/Theme/utils/youTheme';
 import Garfish, { interfaces } from 'garfish';
 import { selectLang } from 'i18n/src/i18nSlice';
 import { selectMuiTheme } from '@portal/features/Theme/themeSlice';
+import { MicroState } from 'types';
 export async function init() {
   // load config
   const config = await loadConfig();
@@ -25,20 +25,14 @@ export async function init() {
 
   // init menu
   const menu = config.map<MenuItem>((app) => ({
-    menu: { name: app.name, path: { tag: 'menu', value: app.menu } },
+    menu: { name: app.name, path: { tag: 'menu', value: app.menu }, icon: app.icon },
     parentsPath: app.activeRule,
+    icon: app.icon,
   }));
   store.dispatch(setMenu(menu));
   store.subscribe(() => {
     Garfish.channel.emit('propsChange', getMicroState());
   });
-}
-
-export type MicroTheme = ReturnType<typeof youThemeToMuiTheme>;
-
-export interface MicroState {
-  theme: MicroTheme;
-  lang: string;
 }
 
 function getMicroState(): MicroState {

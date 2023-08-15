@@ -13,8 +13,6 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
 
 init();
 
-export type { MicroState, MicroTheme } from './micro';
-
 declare global {
   interface Window {
     Garfish: typeof Garfish;

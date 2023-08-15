@@ -8,14 +8,17 @@
       "path": {
         "tag": "path",
         "value": "/"
-      }
+      },
+      "icon": "🏠"
     },
     {
       "name": "collection",
       "path": {
         "tag": "path",
         "value": "/collections"
-      }
+      },
+      "icon": "📁"
     }
-  ]
+  ],
+  "icon": "📦"
 }

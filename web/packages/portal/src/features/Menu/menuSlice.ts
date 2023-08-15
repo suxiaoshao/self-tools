@@ -2,7 +2,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { Menu } from '../../micro/config';
 import { RootState } from '../../app/store';
 
-export type MenuItem = { menu: Menu; parentsPath: string };
+export type MenuItem = { menu: Menu; parentsPath: string; icon: string };
 
 export interface MenuSliceType {
   value: MenuItem[];

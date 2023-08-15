@@ -12,7 +12,7 @@ import { SelectTheme, setTheme } from './app/features/themeSlice';
 import { useCallback, useEffect } from 'react';
 import { SelectLang, setLang } from './app/features/i18nSlice';
 import React from 'react';
-import { MicroState } from 'portal';
+import { MicroState } from 'types';
 
 function InnerApp({ basename, props: { lang, theme } }: AppProps) {
   const dispatch = useAppDispatch();

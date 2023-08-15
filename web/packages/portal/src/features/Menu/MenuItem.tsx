@@ -10,24 +10,6 @@ export interface MenuItemProps extends ListItemButtonProps {
   parentsPath?: string;
 }
 
-function stringToColor(string: string) {
-  let hash = 0;
-  let i;
-
-  for (i = 0; i < string.length; i += 1) {
-    hash = string.charCodeAt(i) + ((hash << 5) - hash);
-  }
-
-  let color = '#';
-
-  for (i = 0; i < 3; i += 1) {
-    const value = (hash >> (i * 8)) & 0xff;
-    color += `00${value.toString(16)}`.slice(-2);
-  }
-
-  return color;
-}
-
 export default function MenuItem({ menu, parentsPath, ...props }: MenuItemProps) {
   const [open, setOpen] = useState(false);
   const handleClick = () => {
@@ -41,7 +23,7 @@ export default function MenuItem({ menu, parentsPath, ...props }: MenuItemProps)
         <>
           <ListItemButton {...props} onClick={handleClick}>
             <ListItemIcon>
-              <Avatar sx={{ bgcolor: stringToColor(menu.name) }}>{menu.name[0]}</Avatar>
+              <Avatar sx={{ bgcolor: 'transparent' }}>{menu.icon}</Avatar>
             </ListItemIcon>
             <ListItemText primary={t(menu.name as I18nKey)} />
             {open ? <ExpandLess /> : <ExpandMore />}
@@ -63,7 +45,7 @@ export default function MenuItem({ menu, parentsPath, ...props }: MenuItemProps)
           key={path}
           icon={
             <ListItemIcon>
-              <Avatar sx={{ bgcolor: stringToColor(menu.name) }}>{menu.name[0]}</Avatar>
+              <Avatar sx={{ bgcolor: 'transparent' }}>{menu.icon}</Avatar>
             </ListItemIcon>
           }
           matchPaths={[path]}

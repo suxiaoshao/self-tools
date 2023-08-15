@@ -5,7 +5,7 @@ export default defineConfig({
     setupFiles: ['./web/config/test/testSetup.ts'],
     coverage: {
       reporter: ['text'],
-      provider: 'c8',
+      provider: 'v8',
     },
   },
 });

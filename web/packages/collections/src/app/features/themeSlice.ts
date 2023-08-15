@@ -1,6 +1,6 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
-import { MicroTheme } from 'portal';
 import { RootState } from '../store';
+import { MicroTheme } from 'types';
 
 export type ThemeSliceType = {
   value?: MicroTheme | undefined;
