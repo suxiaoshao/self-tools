@@ -9,7 +9,6 @@
   "license": "ISC",
   "dependencies": {
     "monaco-editor": "^0.41.0",
-    "monaco-markdown": "^0.0.12",
     "monaco-themes": "^0.4.4"
   }
 }
