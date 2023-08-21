@@ -162,9 +162,6 @@ importers:
       monaco-editor:
         specifier: ^0.41.0
         version: 0.41.0
-      monaco-markdown:
-        specifier: ^0.0.12
-        version: 0.0.12
       monaco-themes:
         specifier: ^0.4.4
         version: 0.4.4
@@ -6760,19 +6757,8 @@ packages:
       ufo: 1.2.0
     dev: true
 
-  /monaco-editor@0.30.1:
-    resolution: {integrity: sha512-B/y4+b2O5G2gjuxIFtCE2EkM17R2NM7/3F8x0qcPsqy4V83bitJTIO4TIeZpYlzu/xy6INiY/+84BEm6+7Cmzg==}
-    dev: false
-
   /monaco-editor@0.41.0:
     resolution: {integrity: sha512-1o4olnZJsiLmv5pwLEAmzHTE/5geLKQ07BrGxlF4Ri/AXAc2yyDGZwHjiTqD8D/ROKUZmwMA28A+yEowLNOEcA==}
-    dev: false
-
-  /monaco-markdown@0.0.12:
-    resolution: {integrity: sha512-KkGheL2pUazZJY2DfBqpHuMQOjILkbYGNtF5MzpT3ZWupKjunkpL7ByKTllBQGKKcVNt5nuRHl7YsKFskWlc6Q==}
-    dependencies:
-      monaco-editor: 0.30.1
-      string-similarity: 3.0.0
     dev: false
 
   /monaco-themes@0.4.4:
@@ -8119,11 +8105,6 @@ packages:
   /string-env-interpolation@1.0.1:
     resolution: {integrity: sha512-78lwMoCcn0nNu8LszbP1UA7g55OeE4v7rCeWnM5B453rnNr4aq+5it3FEYtZrSEiMvHZOZ9Jlqb0OD0M2VInqg==}
     dev: true
-
-  /string-similarity@3.0.0:
-    resolution: {integrity: sha512-7kS7LyTp56OqOI2BDWQNVnLX/rCxIQn+/5M0op1WV6P8Xx6TZNdajpuqQdiJ7Xx+p1C5CsWMvdiBp9ApMhxzEQ==}
-    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
-    dev: false
 
   /string-width@4.2.3:
     resolution: {integrity: sha512-wKyQRQpjJ0sIp62ErSZdGsjMJWsap5oRNihHhu6G7JVO/9jIB6UyevL+tXuOqrng8j/cxKTWyWUwvSTriiZz/g==}
