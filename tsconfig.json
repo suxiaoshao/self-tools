@@ -22,6 +22,6 @@
       "@collections/*": ["./web/packages/collections/src/*"]
     }
   },
-  "include": ["./web/packages/*/src", "./web/common/*/src", "./web/config"],
+  "include": ["./web/packages/*/src", "./web/common/*/src", "./web/config", "./vitest.config.ts"],
   "exclude": ["./**/node_modules"]
 }

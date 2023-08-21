@@ -3,7 +3,7 @@ use tracing::{event, Level};
 
 use super::{
     guard::AuthGuard,
-    types::{ItemAndCollection, List, Pagination},
+    types::{ItemAndCollection, List, Pagination,TimeRange},
 };
 use crate::{
     errors::{GraphqlError, GraphqlResult},
@@ -32,9 +32,11 @@ impl QueryRoot {
         &self,
         id: Option<i64>,
         pagination: Pagination,
+        create_time: Option<TimeRange>,
+        update_time: Option<TimeRange>,
     ) -> GraphqlResult<List<ItemAndCollection>> {
         let offset = pagination.offset();
-        let offset_plus_imit = pagination.offset_plus_limit();
+        let offset_plus_limit = pagination.offset_plus_limit();
         let collection_count = Collection::count_parent_id(id)?;
         let item_count = match id {
             Some(id) => Item::count(id)?,
@@ -42,7 +44,7 @@ impl QueryRoot {
         };
         let total = collection_count + item_count;
         // 全目录
-        if offset_plus_imit <= collection_count {
+        if offset_plus_limit <= collection_count {
             let data = Collection::get_list_parent_id(id, offset, pagination.page_size)?
                 .into_iter()
                 .map(ItemAndCollection::Collection)
@@ -50,13 +52,13 @@ impl QueryRoot {
             return Ok(List::new(data, total));
         }
         // 目录 & 记录
-        if offset <= collection_count && collection_count < offset_plus_imit {
+        if offset <= collection_count && collection_count < offset_plus_limit {
             let mut data = vec![];
             Collection::get_list_parent_id(id, offset, collection_count - offset)?
                 .into_iter()
                 .for_each(|x| data.push(ItemAndCollection::Collection(x)));
             if let Some(id) = id {
-                Item::query(id, 0, offset_plus_imit - collection_count)?
+                Item::query(id, 0, offset_plus_limit - collection_count)?
                     .into_iter()
                     .for_each(|x| data.push(ItemAndCollection::Item(x)));
             }

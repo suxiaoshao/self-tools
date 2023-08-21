@@ -1,0 +1,9 @@
+schema: schema.graphql
+extensions:
+  endpoints:
+    GraphQL schema:
+      url: https://collections.sushao.top/graphql
+      headers:
+        Authorization: ${AUTH_TOKEN_ENV}
+        user-agent: JS GraphQL
+      introspect: false

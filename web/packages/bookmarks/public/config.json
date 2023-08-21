@@ -8,28 +8,33 @@
       "path": {
         "tag": "path",
         "value": "/"
-      }
+      },
+      "icon": "👷"
     },
     {
       "name": "collection_manage",
       "path": {
         "tag": "path",
         "value": "/collections"
-      }
+      },
+      "icon": "📁"
     },
     {
       "name": "tag_manage",
       "path": {
         "tag": "path",
         "value": "/tags"
-      }
+      },
+      "icon": "🏷️"
     },
     {
       "name": "author_manage",
       "path": {
         "tag": "path",
         "value": "/authors"
-      }
+      },
+      "icon": "👨‍💻"
     }
-  ]
+  ],
+  "icon": "📖"
 }

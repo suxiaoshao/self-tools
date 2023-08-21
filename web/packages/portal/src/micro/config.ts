@@ -9,9 +9,10 @@ export interface AppConfig {
   menu: Menu[];
   activeRule: string;
   entry: string;
+  icon: string;
 }
 
-export type Menu = { name: string; path: Enum<'path', string> | Enum<'menu', Menu[]> };
+export type Menu = { name: string; path: Enum<'path', string> | Enum<'menu', Menu[]>; icon: string };
 
 export default {
   apps: [
