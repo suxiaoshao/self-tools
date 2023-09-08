@@ -7,7 +7,7 @@
     "build": "rspack build"
   },
   "dependencies": {
-    "@garfish/bridge-react-v18": "^1.16.2",
+    "@garfish/bridge-react-v18": "^1.16.3",
     "custom-graphql": "workspace:^1.0.0",
     "custom-table": "workspace:^1.0.0",
     "edit": "workspace:^1.0.0",

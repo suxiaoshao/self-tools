@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, afterEach, it, expect } from '@jest/globals';
 import { format } from './format';
 import timezoneMock from 'timezone-mock';
 describe('format', () => {

@@ -1,7 +1,7 @@
 import { useSnackbar } from 'notistack';
 import { render, waitFor, screen, cleanup } from '@testing-library/react';
 import { enqueueSnackbar, SnackbarProvider } from '.';
-import { afterEach, expect, describe, it } from 'vitest';
+import { describe, afterEach, it, expect } from '@jest/globals';
 
 describe('notify', () => {
   afterEach(() => {
@@ -30,6 +30,6 @@ describe('notify', () => {
     expect(screen.getByText('test')).toBeTruthy();
     await waitFor(() => screen.getByText('test').click());
     expect(screen.getByText('test click')).toBeTruthy();
-    expect(screen.getByText('test click')).toBeTruthy();
+    expect(screen.getByText('test click')).toHaveTextContent('test click');
   });
 });
