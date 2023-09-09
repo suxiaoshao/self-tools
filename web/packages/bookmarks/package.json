@@ -8,12 +8,12 @@
     "generate": "graphql-codegen"
   },
   "dependencies": {
+    "@garfish/bridge-react-v18": "^1.16.3",
     "custom-graphql": "workspace:^1.0.0",
     "custom-table": "workspace:^1.0.0",
+    "i18n": "workspace:^1.0.0",
     "notify": "workspace:^1.0.0",
     "time": "workspace:^1.0.0",
-    "i18n": "workspace:^1.0.0",
-    "types": "workspace:^1.0.0",
-    "@garfish/bridge-react-v18": "^1.16.2"
+    "types": "workspace:^1.0.0"
   }
 }

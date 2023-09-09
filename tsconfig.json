@@ -15,13 +15,13 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
-    "types": ["./web/config/init.d.ts"],
+    "types": [],
     "paths": {
       "@portal/*": ["./web/packages/portal/src/*"],
       "@bookmarks/*": ["./web/packages/bookmarks/src/*"],
       "@collections/*": ["./web/packages/collections/src/*"]
     }
   },
-  "include": ["./web/packages/*/src", "./web/common/*/src", "./web/config", "./vitest.config.ts"],
+  "include": ["./web/packages/*/src", "./web/common/*/src", "./web/config", "./jest.config.ts"],
   "exclude": ["./**/node_modules"]
 }

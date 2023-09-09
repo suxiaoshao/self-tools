@@ -19,8 +19,8 @@ import {
 } from '@mui/material';
 import { useState } from 'react';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
-import { ThemeSliceType, updateColor, useAppDispatch, useAppSelector } from '../themeSlice';
-import { string, object } from 'yup';
+import { updateColor, useAppDispatch, useAppSelector } from '../themeSlice';
+import { string, object, InferType } from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useI18n } from 'i18n';
 
@@ -30,15 +30,16 @@ export default function ThemeDrawerItem() {
   const handleClose = () => {
     setOpen(false);
   };
-  type FormData = Pick<ThemeSliceType, 'colorSetting' | 'color'>;
+
   const theme = useAppSelector((state) => state.theme);
   const t = useI18n();
   const createColorSchema = object({
     color: string()
       .required(t('cannot_empty'))
       .matches(/^#[0-9a-fA-F]{6}$/, t('color_format_error')),
-    colorSetting: string().required(t('cannot_empty')).equals(['light', 'dark', 'system']),
+    colorSetting: string().oneOf(['light', 'dark', 'system']).required(t('cannot_empty')),
   });
+  type FormData = InferType<typeof createColorSchema>;
   const {
     register,
     handleSubmit,

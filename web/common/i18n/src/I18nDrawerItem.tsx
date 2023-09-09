@@ -18,23 +18,23 @@ import {
 } from '@mui/material';
 import { useState } from 'react';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
-import { useAppDispatch, useAppSelector, setLangSetting, I18nSliceType } from './i18nSlice';
-import { string, object } from 'yup';
+import { useAppDispatch, useAppSelector, setLangSetting } from './i18nSlice';
+import { string, object, InferType } from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useI18n } from '.';
 
 export default function I18nDrawerItem() {
   const t = useI18n();
   const createColorSchema = object({
-    langMode: string().required(t('cannot_empty')).equals(['custom', 'system']),
-    customLang: string().required(t('cannot_empty')).equals(['en', 'zh']),
+    langMode: string().oneOf(['custom', 'system']).required(t('cannot_empty')),
+    customLang: string().oneOf(['en', 'zh']).required(t('cannot_empty')),
   });
+  type FormData = InferType<typeof createColorSchema>;
   // 控制 dialog
   const [open, setOpen] = useState(false);
   const handleClose = () => {
     setOpen(false);
   };
-  type FormData = Pick<I18nSliceType, 'customLang' | 'langMode'>;
   const i18n = useAppSelector((state) => state.i18n);
   const {
     handleSubmit,
