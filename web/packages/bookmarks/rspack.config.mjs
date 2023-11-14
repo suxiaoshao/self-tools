@@ -1,5 +1,20 @@
+/*
+ * @Author: suxiaoshao suxiaoshao@gmail.com
+ * @Date: 2023-07-10 16:34:52
+ * @LastEditors: suxiaoshao suxiaoshao@gmail.com
+ * @LastEditTime: 2023-11-13 18:49:44
+ * @FilePath: /tauri/Users/weijie.su/Documents/code/self/self-tools/web/packages/bookmarks/rspack.config.mjs
+ */
 import { defineConfig } from '@rspack/cli';
-import { resolve } from 'path';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
+import { BannerPlugin, CopyRspackPlugin } from '@rspack/core';
+import ReactRefreshPlugin from '@rspack/plugin-react-refresh';
+import HtmlPlugin from '@rspack/plugin-html';
+import MonacoWebpackPlugin from 'monaco-editor-webpack-plugin';
+
+export const __filename = fileURLToPath(import.meta.url);
+export const __dirname = dirname(__filename);
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
 
@@ -7,20 +22,33 @@ const config = defineConfig({
   entry: {
     main: './src/main.tsx',
   },
-  builtins: {
-    html: [
-      {
-        template: './index.html',
-      },
-    ],
-    copy: { patterns: [{ from: './public', to: './' }] },
-    banner: 'Micro bookmarks',
-  },
   module: {
     rules: [
       {
         test: /\.svg$/,
         type: 'asset',
+      },
+      {
+        test: /\.tsx?$/,
+        use: {
+          loader: 'builtin:swc-loader',
+          options: {
+            sourceMap: true,
+            jsc: {
+              parser: {
+                syntax: 'typescript',
+                tsx: true,
+              },
+              transform: {
+                react: {
+                  runtime: 'automatic',
+                  development: isDevelopment,
+                  refresh: isDevelopment,
+                },
+              },
+            },
+          },
+        },
       },
     ],
   },
@@ -53,9 +81,26 @@ const config = defineConfig({
     globalObject: 'window',
     publicPath: 'https://bookmarks.sushao.top/',
   },
+  plugins: [
+    ...(isDevelopment ? [new ReactRefreshPlugin()] : []),
+    new HtmlPlugin.default({
+      template: './index.html',
+      chunks: ['main'],
+    }),
+    new BannerPlugin({ banner: 'Micro bookmarks' }),
+    new CopyRspackPlugin({ patterns: [{ from: './public', to: './' }] }),
+    new MonacoWebpackPlugin(),
+  ],
   resolve: {
-    alias: {
-      '@bookmarks': resolve(process.cwd(), './src'),
+    tsConfig: {
+      configFile: resolve(__dirname, '../../../tsconfig.json'),
+      references: 'auto',
+    },
+  },
+  experiments: {
+    rspackFuture: {
+      newResolver: true,
+      disableTransformByDefault: true,
     },
   },
 });

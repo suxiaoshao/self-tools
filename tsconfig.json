@@ -5,7 +5,7 @@
     "lib": ["DOM", "DOM.Iterable", "ESNext", "WebWorker"],
     "allowJs": false,
     "skipLibCheck": true,
-    "esModuleInterop": false,
+    "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "strict": true,
     "forceConsistentCasingInFileNames": true,
@@ -15,13 +15,22 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
-    "types": [],
+    "types": ["node"],
     "paths": {
       "@portal/*": ["./web/packages/portal/src/*"],
       "@bookmarks/*": ["./web/packages/bookmarks/src/*"],
       "@collections/*": ["./web/packages/collections/src/*"]
-    }
+    },
+    "baseUrl": "."
   },
-  "include": ["./web/packages/*/src", "./web/common/*/src", "./web/config", "./jest.config.ts"],
+  "include": [
+    "./web/packages/*/src",
+    "./web/common/*/src",
+    "./web/config",
+    "./jest.config.ts",
+    "./web/packages/*/rspack.config.ts",
+    "web/packages/portal/rspack.config./ts",
+    "web/packages/portal/rspack.config.mjs"
+  ],
   "exclude": ["./**/node_modules"]
 }

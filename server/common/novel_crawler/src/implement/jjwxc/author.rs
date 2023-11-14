@@ -18,18 +18,13 @@ use crate::{
 
 use super::novel::JJNovel;
 
-static SELECTOR_AUTHOR_NAME: Lazy<Selector> = Lazy::new(|| {
-    Selector::parse("body > table:nth-child(23) > tbody > tr > td:nth-child(1) > table > tbody > tr:nth-child(2) > td > table > tbody > tr:nth-child(1) > td:nth-child(2) > table > tbody > tr > td:nth-child(1) > font > b > span").unwrap()
-});
-static SELECTOR_AUTHOR_DESCRIPTION: Lazy<Selector> = Lazy::new(|| {
-    Selector::parse("body > table:nth-child(23) > tbody > tr > td:nth-child(1) > table > tbody > tr:nth-child(2) > td > table > tbody > tr:nth-child(1) > td:nth-child(2) > span").unwrap()
-});
-static SELECTOR_AUTHOR_IMAGE: Lazy<Selector> = Lazy::new(|| {
-    Selector::parse("body > table:nth-child(23) > tbody > tr > td:nth-child(1) > table > tbody > tr:nth-child(2) > td > table > tbody > tr:nth-child(1) > td:nth-child(1) > div:nth-child(1) > img").unwrap()
-});
-static SELECTOR_NOVEL_URLS: Lazy<Selector> = Lazy::new(|| {
-    Selector::parse("body > table:nth-child(2N+27) > tbody > tr > td a:not([target])").unwrap()
-});
+static SELECTOR_AUTHOR_NAME: Lazy<Selector> = Lazy::new(|| Selector::parse("font > b").unwrap());
+static SELECTOR_AUTHOR_DESCRIPTION: Lazy<Selector> =
+    Lazy::new(|| Selector::parse("[itemprop=description]").unwrap());
+static SELECTOR_AUTHOR_IMAGE: Lazy<Selector> =
+    Lazy::new(|| Selector::parse(".authordefaultimage").unwrap());
+static SELECTOR_NOVEL_URLS: Lazy<Selector> =
+    Lazy::new(|| Selector::parse("a[href^=\"onebook.php?novelid=\"]").unwrap());
 
 #[derive(Debug)]
 struct JJAuthor {
@@ -57,7 +52,6 @@ impl AuthorFn for JJAuthor {
             .select(&SELECTOR_NOVEL_URLS)
             .map(map_url)
             .collect::<NovelResult<Vec<_>>>()?;
-
         Ok(Self {
             id: author_id.to_string(),
             name,
@@ -97,8 +91,11 @@ fn map_url(element_ref: ElementRef) -> NovelResult<String> {
 }
 
 fn novel_id(input: &str) -> IResult<&str, String> {
-    let (input, (_, data, _)) =
-        all_consuming(tuple((tag("/book2/"), take_while(|_| true), eof)))(input)?;
+    let (input, (_, data, _)) = all_consuming(tuple((
+        tag("onebook.php?novelid="),
+        take_while(|_| true),
+        eof,
+    )))(input)?;
     Ok((input, data.to_string()))
 }
 
@@ -108,9 +105,9 @@ mod test {
 
     #[test]
     fn novel_id_test() -> anyhow::Result<()> {
-        let input = "/book2/369639";
+        let input = "onebook.php?novelid=1789677";
         let (input, id) = novel_id(input)?;
-        assert_eq!(id, "369639");
+        assert_eq!(id, "1789677");
         assert_eq!(input, "");
         Ok(())
     }

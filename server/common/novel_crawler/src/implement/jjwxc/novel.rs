@@ -26,12 +26,8 @@ static SELECTOR_NOVEL_NAME: Lazy<Selector> = Lazy::new(|| {
 });
 static SELECTOR_NOVEL_DESCRIPTION: Lazy<Selector> =
     Lazy::new(|| Selector::parse("#novelintro > font").unwrap());
-static SELECTOR_NOVEL_IMAGE: Lazy<Selector> = Lazy::new(|| {
-    Selector::parse(
-        "body > table:nth-child(23) > tbody > tr > td:nth-child(1) > div:nth-child(2) > img",
-    )
-    .unwrap()
-});
+static SELECTOR_NOVEL_IMAGE: Lazy<Selector> =
+    Lazy::new(|| Selector::parse("img.noveldefaultimage").unwrap());
 
 static SELECTOR_CHAPTER_URLS: Lazy<Selector> = Lazy::new(|| {
     Selector::parse(

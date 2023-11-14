@@ -7,19 +7,19 @@ edition = "2021"
 
 [dependencies]
 # http
-reqwest = { version = "0.11.20", features = ["gzip"] }
+reqwest = { version = "0.11.22", features = ["gzip"] }
 # html
 scraper = "0.17.1"
 once_cell = "1.18.0"
 nom = "7.1.3"
-serde = { version = "1.0.188", features = ["derive"] }
-serde_json = "1.0.105"
+serde = { version = "1.0.192", features = ["derive"] }
+serde_json = "1.0.108"
 # async trait support
-async-trait = "0.1.73"
-tokio = { version = "1.32.0", default-features = false, features = ["macros"] }
-futures = "0.3.28"
+async-trait = "0.1.74"
+tokio = { version = "1.34.0", default-features = false, features = ["macros"] }
+futures = "0.3.29"
 # 错误处理
-thiserror = "1.0.48"
+thiserror = "1.0.50"
 
 [dev-dependencies]
 anyhow = "1.0.75"
