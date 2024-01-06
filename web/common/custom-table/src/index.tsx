@@ -55,7 +55,7 @@ export function CustomTable<D extends object>({
 
                     return (
                       // Apply the header cell props
-                      <TableCell colSpan={header.colSpan} {...headerProps} key={header.id}>
+                      <TableCell colSpan={header.colSpan} key={header.id} {...headerProps}>
                         {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
                       </TableCell>
                     );
@@ -82,7 +82,7 @@ export function CustomTable<D extends object>({
 
                       // Apply the cell props
                       return (
-                        <TableCell {...column.cellProps} key={cell.id}>
+                        <TableCell key={cell.id} {...column.cellProps}>
                           {flexRender(cell.column.columnDef.cell, cell.getContext())}
                         </TableCell>
                       );

@@ -1,3 +1,10 @@
+/*
+ * @Author: suxiaoshao suxiaoshao@gmail.com
+ * @Date: 2024-01-06 01:30:13
+ * @LastEditors: suxiaoshao suxiaoshao@gmail.com
+ * @LastEditTime: 2024-01-07 04:49:44
+ * @FilePath: /self-tools/web/common/notify/src/index.tsx
+ */
 import { IconButton } from '@mui/material';
 import { OptionsObject, SnackbarMessage, useSnackbar, SnackbarProvider as SourceSnackbarProvider } from 'notistack';
 import { ReactNode, useEffect, useRef } from 'react';
@@ -24,7 +31,7 @@ export function SnackbarProvider({ children }: { children: ReactNode }): JSX.Ele
   const ref = useRef<SourceSnackbarProvider>(null);
   function InnerUseComponent() {
     useSnackbarInit();
-    return <>{children}</>;
+    return children;
   }
   return (
     <SourceSnackbarProvider
