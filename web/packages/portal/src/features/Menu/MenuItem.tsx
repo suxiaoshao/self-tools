@@ -1,3 +1,10 @@
+/*
+ * @Author: suxiaoshao suxiaoshao@gmail.com
+ * @Date: 2024-01-06 01:30:13
+ * @LastEditors: suxiaoshao suxiaoshao@gmail.com
+ * @LastEditTime: 2024-01-07 04:50:12
+ * @FilePath: /self-tools/web/packages/portal/src/features/Menu/MenuItem.tsx
+ */
 import { ExpandLess, ExpandMore } from '@mui/icons-material';
 import RouterItem from '../../components/AppDrawer/RouterItem';
 import { Menu } from '../../micro/config';
@@ -41,8 +48,8 @@ export default function MenuItem({ menu, parentsPath, ...props }: MenuItemProps)
       const path = parentsPath ? `${parentsPath}${menu.path.value}` : menu.path.value;
       return (
         <RouterItem
-          {...props}
           key={path}
+          {...props}
           icon={
             <ListItemIcon>
               <Avatar sx={{ bgcolor: 'transparent' }}>{menu.icon}</Avatar>
