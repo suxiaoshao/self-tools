@@ -10,8 +10,8 @@ query getNovels($collectionId: Int, $readStatus: ReadStatus, $tagMatch: TagMatch
   }
 }
 
-mutation createNovel($collectionId: Int, $name: String!, $description: String!, $tags: [Int!]!, $authorId: Int!) {
-  createNovel(collectionId: $collectionId, name: $name, description: $description, tags: $tags, authorId: $authorId) {
+mutation createNovel($data: CreateNovelInput!) {
+  createNovel(data: $data) {
     id
   }
 }

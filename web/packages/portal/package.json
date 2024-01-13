@@ -9,10 +9,11 @@
   },
   "dependencies": {
     "@material/material-color-utilities": "0.2.7",
-    "garfish": "^1.17.2",
     "i18n": "workspace:^1.0.0",
     "notify": "workspace:^1.0.0",
-    "types": "workspace:^1.0.0"
+    "types": "workspace:^1.0.0",
+    "collections": "workspace:^1.0.0",
+    "bookmarks": "workspace:^1.0.0"
   },
   "main": "src/main.tsx"
 }

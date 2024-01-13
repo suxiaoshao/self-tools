@@ -2,13 +2,12 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2023-07-10 16:34:52
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2023-11-13 18:33:10
+ * @LastEditTime: 2024-01-14 03:11:02
  * @FilePath: /tauri/Users/weijie.su/Documents/code/self/self-tools/web/packages/portal/rspack.config.ts
  */
 import { defineConfig } from '@rspack/cli';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { BannerPlugin } from '@rspack/core';
 import ReactRefreshPlugin from '@rspack/plugin-react-refresh';
 import HtmlPlugin from '@rspack/plugin-html';
 export const __filename = fileURLToPath(import.meta.url);
@@ -22,9 +21,6 @@ const config = defineConfig({
   },
   output: {
     clean: isDevelopment ? false : true,
-    filename: '[name].[contenthash].js',
-    chunkFilename: '[name].[contenthash].js',
-    publicPath: 'https://sushao.top/',
   },
   module: {
     rules: [
@@ -58,16 +54,8 @@ const config = defineConfig({
   },
   devServer: {
     port: 3000,
-    host: '0.0.0.0',
     allowedHosts: 'all',
     historyApiFallback: true,
-    client: {
-      webSocketURL: {
-        port: 443,
-        hostname: 'sushao.top',
-        protocol: 'wss',
-      },
-    },
   },
   plugins: [
     ...(isDevelopment ? [new ReactRefreshPlugin()] : []),
@@ -75,7 +63,6 @@ const config = defineConfig({
       template: './index.html',
       chunks: ['main'],
     }),
-    new BannerPlugin({ banner: 'portal' }),
   ],
   resolve: {
     tsConfig: {

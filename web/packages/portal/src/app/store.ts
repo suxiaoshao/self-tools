@@ -1,6 +1,5 @@
 import { AnyAction, configureStore, ThunkAction } from '@reduxjs/toolkit';
 import { i18nReducer } from 'i18n';
-import menuReducer from '../features/Menu/menuSlice';
 import { authReducer } from '@portal/features/Auth';
 import { themeReducer } from '@portal/features/Theme';
 
@@ -9,7 +8,6 @@ const store = configureStore({
     auth: authReducer,
     theme: themeReducer,
     i18n: i18nReducer,
-    menu: menuReducer,
   },
 });
 export default store;

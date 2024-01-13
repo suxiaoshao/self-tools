@@ -19,7 +19,7 @@ import { useI18n } from 'i18n';
 
 type Data = GetCollectionsQuery['getCollections'][0];
 
-export default function Home() {
+export default function Collections() {
   const parentId = useParentId();
   const { data: { getCollections } = {}, refetch } = useGetCollectionsQuery({ variables: { parentId } });
   const [deleteCollection] = useDeleteCollectionMutation();

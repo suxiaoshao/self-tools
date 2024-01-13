@@ -5,25 +5,27 @@ export type InputMaybe<T> = Maybe<T>;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
 export type MakeOptional<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]?: Maybe<T[SubKey]> };
 export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]: Maybe<T[SubKey]> };
+export type MakeEmpty<T extends { [key: string]: unknown }, K extends keyof T> = { [_ in K]?: never };
+export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
 const defaultOptions = {} as const;
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
-  ID: string;
-  String: string;
-  Boolean: boolean;
-  Int: number;
-  Float: number;
+  ID: { input: string; output: string };
+  String: { input: string; output: string };
+  Boolean: { input: boolean; output: boolean };
+  Int: { input: number; output: number };
+  Float: { input: number; output: number };
 };
 
 export type Author = {
   __typename?: 'Author';
-  avatar: Scalars['String'];
-  createTime: Scalars['Int'];
-  description: Scalars['String'];
-  id: Scalars['Int'];
-  name: Scalars['String'];
-  updateTime: Scalars['Int'];
-  url: Scalars['String'];
+  avatar: Scalars['String']['output'];
+  createTime: Scalars['Int']['output'];
+  description: Scalars['String']['output'];
+  id: Scalars['Int']['output'];
+  name: Scalars['String']['output'];
+  updateTime: Scalars['Int']['output'];
+  url: Scalars['String']['output'];
 };
 
 export type Collection = {
@@ -32,13 +34,22 @@ export type Collection = {
   ancestors: Array<Collection>;
   /** 获取子列表 */
   children: Array<Collection>;
-  createTime: Scalars['Int'];
-  description?: Maybe<Scalars['String']>;
-  id: Scalars['Int'];
-  name: Scalars['String'];
-  parentId?: Maybe<Scalars['Int']>;
-  path: Scalars['String'];
-  updateTime: Scalars['Int'];
+  createTime: Scalars['Int']['output'];
+  description?: Maybe<Scalars['String']['output']>;
+  id: Scalars['Int']['output'];
+  name: Scalars['String']['output'];
+  parentId?: Maybe<Scalars['Int']['output']>;
+  path: Scalars['String']['output'];
+  updateTime: Scalars['Int']['output'];
+};
+
+export type CreateNovelInput = {
+  authorId: Scalars['Int']['input'];
+  collectionId?: InputMaybe<Scalars['Int']['input']>;
+  description: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+  tags: Array<Scalars['Int']['input']>;
+  url: Scalars['String']['input'];
 };
 
 export type MutationRoot = {
@@ -62,55 +73,54 @@ export type MutationRoot = {
 };
 
 export type MutationRootCreateAuthorArgs = {
-  avatar: Scalars['String'];
-  description: Scalars['String'];
-  name: Scalars['String'];
-  url: Scalars['String'];
+  avatar: Scalars['String']['input'];
+  description: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+  url: Scalars['String']['input'];
 };
 
 export type MutationRootCreateCollectionArgs = {
-  description?: InputMaybe<Scalars['String']>;
-  name: Scalars['String'];
-  parentId?: InputMaybe<Scalars['Int']>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  name: Scalars['String']['input'];
+  parentId?: InputMaybe<Scalars['Int']['input']>;
 };
 
 export type MutationRootCreateNovelArgs = {
-  authorId: Scalars['Int'];
-  collectionId?: InputMaybe<Scalars['Int']>;
-  description: Scalars['String'];
-  name: Scalars['String'];
-  tags: Array<Scalars['Int']>;
+  data: CreateNovelInput;
 };
 
 export type MutationRootCreateTagArgs = {
-  collectionId?: InputMaybe<Scalars['Int']>;
-  name: Scalars['String'];
+  collectionId?: InputMaybe<Scalars['Int']['input']>;
+  name: Scalars['String']['input'];
 };
 
 export type MutationRootDeleteAuthorArgs = {
-  id: Scalars['Int'];
+  id: Scalars['Int']['input'];
 };
 
 export type MutationRootDeleteCollectionArgs = {
-  id: Scalars['Int'];
+  id: Scalars['Int']['input'];
 };
 
 export type MutationRootDeleteNovelArgs = {
-  id: Scalars['Int'];
+  id: Scalars['Int']['input'];
 };
 
 export type MutationRootDeleteTagArgs = {
-  id: Scalars['Int'];
+  id: Scalars['Int']['input'];
 };
 
 export type Novel = {
   __typename?: 'Novel';
-  createTime: Scalars['Int'];
-  description: Scalars['String'];
-  id: Scalars['Int'];
-  name: Scalars['String'];
+  author: Author;
+  collection?: Maybe<Collection>;
+  createTime: Scalars['Int']['output'];
+  description: Scalars['String']['output'];
+  id: Scalars['Int']['output'];
+  name: Scalars['String']['output'];
   status: ReadStatus;
-  updateTime: Scalars['Int'];
+  tags: Array<Tag>;
+  updateTime: Scalars['Int']['output'];
 };
 
 export type QueryRoot = {
@@ -130,30 +140,30 @@ export type QueryRoot = {
 };
 
 export type QueryRootGetCollectionArgs = {
-  id: Scalars['Int'];
+  id: Scalars['Int']['input'];
 };
 
 export type QueryRootGetCollectionsArgs = {
-  parentId?: InputMaybe<Scalars['Int']>;
+  parentId?: InputMaybe<Scalars['Int']['input']>;
 };
 
 export type QueryRootGetNovelArgs = {
-  id: Scalars['Int'];
+  id: Scalars['Int']['input'];
 };
 
 export type QueryRootQueryAuthorsArgs = {
-  searchName?: InputMaybe<Scalars['String']>;
+  searchName?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type QueryRootQueryNovelsArgs = {
-  collectionId?: InputMaybe<Scalars['Int']>;
+  collectionId?: InputMaybe<Scalars['Int']['input']>;
   readStatus?: InputMaybe<ReadStatus>;
   tagMatch?: InputMaybe<TagMatch>;
 };
 
 export type QueryRootQueryTagsArgs = {
-  collectionId?: InputMaybe<Scalars['Int']>;
-  deepSearch?: InputMaybe<Scalars['Boolean']>;
+  collectionId?: InputMaybe<Scalars['Int']['input']>;
+  deepSearch?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export enum ReadStatus {
@@ -164,20 +174,20 @@ export enum ReadStatus {
 
 export type Tag = {
   __typename?: 'Tag';
-  collectionId?: Maybe<Scalars['Int']>;
-  createTime: Scalars['Int'];
-  id: Scalars['Int'];
-  name: Scalars['String'];
-  updateTime: Scalars['Int'];
+  collectionId?: Maybe<Scalars['Int']['output']>;
+  createTime: Scalars['Int']['output'];
+  id: Scalars['Int']['output'];
+  name: Scalars['String']['output'];
+  updateTime: Scalars['Int']['output'];
 };
 
 export type TagMatch = {
-  fullMatch: Scalars['Boolean'];
-  matchSet: Array<Scalars['Int']>;
+  fullMatch: Scalars['Boolean']['input'];
+  matchSet: Array<Scalars['Int']['input']>;
 };
 
 export type SearchAuthorQueryVariables = Exact<{
-  searchName?: InputMaybe<Scalars['String']>;
+  searchName?: InputMaybe<Scalars['String']['input']>;
 }>;
 
 export type SearchAuthorQuery = {
@@ -186,7 +196,7 @@ export type SearchAuthorQuery = {
 };
 
 export type GetCollectionSelectQueryVariables = Exact<{
-  parentId?: InputMaybe<Scalars['Int']>;
+  parentId?: InputMaybe<Scalars['Int']['input']>;
 }>;
 
 export type GetCollectionSelectQuery = {
@@ -195,7 +205,7 @@ export type GetCollectionSelectQuery = {
 };
 
 export type AllowTagsQueryVariables = Exact<{
-  collectionId?: InputMaybe<Scalars['Int']>;
+  collectionId?: InputMaybe<Scalars['Int']['input']>;
 }>;
 
 export type AllowTagsQuery = {
@@ -220,16 +230,16 @@ export type GetAuthorsQuery = {
 };
 
 export type DeleteAuthorMutationVariables = Exact<{
-  id: Scalars['Int'];
+  id: Scalars['Int']['input'];
 }>;
 
 export type DeleteAuthorMutation = { __typename?: 'MutationRoot'; deleteAuthor: { __typename?: 'Author'; id: number } };
 
 export type CreateAuthorMutationVariables = Exact<{
-  avatar: Scalars['String'];
-  description: Scalars['String'];
-  name: Scalars['String'];
-  url: Scalars['String'];
+  avatar: Scalars['String']['input'];
+  description: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+  url: Scalars['String']['input'];
 }>;
 
 export type CreateAuthorMutation = {
@@ -258,7 +268,7 @@ export type AuthorAllFragment = {
 };
 
 export type GetCollectionsQueryVariables = Exact<{
-  parentId?: InputMaybe<Scalars['Int']>;
+  parentId?: InputMaybe<Scalars['Int']['input']>;
 }>;
 
 export type GetCollectionsQuery = {
@@ -275,7 +285,7 @@ export type GetCollectionsQuery = {
 };
 
 export type DeleteCollectionMutationVariables = Exact<{
-  id: Scalars['Int'];
+  id: Scalars['Int']['input'];
 }>;
 
 export type DeleteCollectionMutation = {
@@ -284,9 +294,9 @@ export type DeleteCollectionMutation = {
 };
 
 export type CreateCollectionMutationVariables = Exact<{
-  parentId?: InputMaybe<Scalars['Int']>;
-  name: Scalars['String'];
-  description?: InputMaybe<Scalars['String']>;
+  parentId?: InputMaybe<Scalars['Int']['input']>;
+  name: Scalars['String']['input'];
+  description?: InputMaybe<Scalars['String']['input']>;
 }>;
 
 export type CreateCollectionMutation = {
@@ -295,7 +305,7 @@ export type CreateCollectionMutation = {
 };
 
 export type GetCollectionAncestorsQueryVariables = Exact<{
-  id: Scalars['Int'];
+  id: Scalars['Int']['input'];
 }>;
 
 export type GetCollectionAncestorsQuery = {
@@ -309,7 +319,7 @@ export type GetCollectionAncestorsQuery = {
 };
 
 export type GetNovelsQueryVariables = Exact<{
-  collectionId?: InputMaybe<Scalars['Int']>;
+  collectionId?: InputMaybe<Scalars['Int']['input']>;
   readStatus?: InputMaybe<ReadStatus>;
   tagMatch?: InputMaybe<TagMatch>;
 }>;
@@ -328,24 +338,20 @@ export type GetNovelsQuery = {
 };
 
 export type CreateNovelMutationVariables = Exact<{
-  collectionId?: InputMaybe<Scalars['Int']>;
-  name: Scalars['String'];
-  description: Scalars['String'];
-  tags: Array<Scalars['Int']> | Scalars['Int'];
-  authorId: Scalars['Int'];
+  data: CreateNovelInput;
 }>;
 
 export type CreateNovelMutation = { __typename?: 'MutationRoot'; createNovel: { __typename?: 'Novel'; id: number } };
 
 export type DeleteNovelMutationVariables = Exact<{
-  id: Scalars['Int'];
+  id: Scalars['Int']['input'];
 }>;
 
 export type DeleteNovelMutation = { __typename?: 'MutationRoot'; deleteNovel: { __typename?: 'Novel'; id: number } };
 
 export type CreateTagMutationVariables = Exact<{
-  name: Scalars['String'];
-  collectionId?: InputMaybe<Scalars['Int']>;
+  name: Scalars['String']['input'];
+  collectionId?: InputMaybe<Scalars['Int']['input']>;
 }>;
 
 export type CreateTagMutation = {
@@ -354,7 +360,7 @@ export type CreateTagMutation = {
 };
 
 export type GetTagsQueryVariables = Exact<{
-  collectionId?: InputMaybe<Scalars['Int']>;
+  collectionId?: InputMaybe<Scalars['Int']['input']>;
 }>;
 
 export type GetTagsQuery = {
@@ -370,7 +376,7 @@ export type GetTagsQuery = {
 };
 
 export type DeleteTagMutationVariables = Exact<{
-  id: Scalars['Int'];
+  id: Scalars['Int']['input'];
 }>;
 
 export type DeleteTagMutation = { __typename?: 'MutationRoot'; deleteTag: { __typename?: 'Tag'; id: number } };
@@ -425,8 +431,15 @@ export function useSearchAuthorLazyQuery(
   const options = { ...defaultOptions, ...baseOptions };
   return Apollo.useLazyQuery<SearchAuthorQuery, SearchAuthorQueryVariables>(SearchAuthorDocument, options);
 }
+export function useSearchAuthorSuspenseQuery(
+  baseOptions?: Apollo.SuspenseQueryHookOptions<SearchAuthorQuery, SearchAuthorQueryVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useSuspenseQuery<SearchAuthorQuery, SearchAuthorQueryVariables>(SearchAuthorDocument, options);
+}
 export type SearchAuthorQueryHookResult = ReturnType<typeof useSearchAuthorQuery>;
 export type SearchAuthorLazyQueryHookResult = ReturnType<typeof useSearchAuthorLazyQuery>;
+export type SearchAuthorSuspenseQueryHookResult = ReturnType<typeof useSearchAuthorSuspenseQuery>;
 export type SearchAuthorQueryResult = Apollo.QueryResult<SearchAuthorQuery, SearchAuthorQueryVariables>;
 export const GetCollectionSelectDocument = gql`
   query getCollectionSelect($parentId: Int) {
@@ -471,8 +484,18 @@ export function useGetCollectionSelectLazyQuery(
     options,
   );
 }
+export function useGetCollectionSelectSuspenseQuery(
+  baseOptions?: Apollo.SuspenseQueryHookOptions<GetCollectionSelectQuery, GetCollectionSelectQueryVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useSuspenseQuery<GetCollectionSelectQuery, GetCollectionSelectQueryVariables>(
+    GetCollectionSelectDocument,
+    options,
+  );
+}
 export type GetCollectionSelectQueryHookResult = ReturnType<typeof useGetCollectionSelectQuery>;
 export type GetCollectionSelectLazyQueryHookResult = ReturnType<typeof useGetCollectionSelectLazyQuery>;
+export type GetCollectionSelectSuspenseQueryHookResult = ReturnType<typeof useGetCollectionSelectSuspenseQuery>;
 export type GetCollectionSelectQueryResult = Apollo.QueryResult<
   GetCollectionSelectQuery,
   GetCollectionSelectQueryVariables
@@ -512,8 +535,15 @@ export function useAllowTagsLazyQuery(
   const options = { ...defaultOptions, ...baseOptions };
   return Apollo.useLazyQuery<AllowTagsQuery, AllowTagsQueryVariables>(AllowTagsDocument, options);
 }
+export function useAllowTagsSuspenseQuery(
+  baseOptions?: Apollo.SuspenseQueryHookOptions<AllowTagsQuery, AllowTagsQueryVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useSuspenseQuery<AllowTagsQuery, AllowTagsQueryVariables>(AllowTagsDocument, options);
+}
 export type AllowTagsQueryHookResult = ReturnType<typeof useAllowTagsQuery>;
 export type AllowTagsLazyQueryHookResult = ReturnType<typeof useAllowTagsLazyQuery>;
+export type AllowTagsSuspenseQueryHookResult = ReturnType<typeof useAllowTagsSuspenseQuery>;
 export type AllowTagsQueryResult = Apollo.QueryResult<AllowTagsQuery, AllowTagsQueryVariables>;
 export const GetAuthorsDocument = gql`
   query getAuthors {
@@ -549,8 +579,15 @@ export function useGetAuthorsLazyQuery(
   const options = { ...defaultOptions, ...baseOptions };
   return Apollo.useLazyQuery<GetAuthorsQuery, GetAuthorsQueryVariables>(GetAuthorsDocument, options);
 }
+export function useGetAuthorsSuspenseQuery(
+  baseOptions?: Apollo.SuspenseQueryHookOptions<GetAuthorsQuery, GetAuthorsQueryVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useSuspenseQuery<GetAuthorsQuery, GetAuthorsQueryVariables>(GetAuthorsDocument, options);
+}
 export type GetAuthorsQueryHookResult = ReturnType<typeof useGetAuthorsQuery>;
 export type GetAuthorsLazyQueryHookResult = ReturnType<typeof useGetAuthorsLazyQuery>;
+export type GetAuthorsSuspenseQueryHookResult = ReturnType<typeof useGetAuthorsSuspenseQuery>;
 export type GetAuthorsQueryResult = Apollo.QueryResult<GetAuthorsQuery, GetAuthorsQueryVariables>;
 export const DeleteAuthorDocument = gql`
   mutation deleteAuthor($id: Int!) {
@@ -673,8 +710,15 @@ export function useGetCollectionsLazyQuery(
   const options = { ...defaultOptions, ...baseOptions };
   return Apollo.useLazyQuery<GetCollectionsQuery, GetCollectionsQueryVariables>(GetCollectionsDocument, options);
 }
+export function useGetCollectionsSuspenseQuery(
+  baseOptions?: Apollo.SuspenseQueryHookOptions<GetCollectionsQuery, GetCollectionsQueryVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useSuspenseQuery<GetCollectionsQuery, GetCollectionsQueryVariables>(GetCollectionsDocument, options);
+}
 export type GetCollectionsQueryHookResult = ReturnType<typeof useGetCollectionsQuery>;
 export type GetCollectionsLazyQueryHookResult = ReturnType<typeof useGetCollectionsLazyQuery>;
+export type GetCollectionsSuspenseQueryHookResult = ReturnType<typeof useGetCollectionsSuspenseQuery>;
 export type GetCollectionsQueryResult = Apollo.QueryResult<GetCollectionsQuery, GetCollectionsQueryVariables>;
 export const DeleteCollectionDocument = gql`
   mutation deleteCollection($id: Int!) {
@@ -813,8 +857,18 @@ export function useGetCollectionAncestorsLazyQuery(
     options,
   );
 }
+export function useGetCollectionAncestorsSuspenseQuery(
+  baseOptions?: Apollo.SuspenseQueryHookOptions<GetCollectionAncestorsQuery, GetCollectionAncestorsQueryVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useSuspenseQuery<GetCollectionAncestorsQuery, GetCollectionAncestorsQueryVariables>(
+    GetCollectionAncestorsDocument,
+    options,
+  );
+}
 export type GetCollectionAncestorsQueryHookResult = ReturnType<typeof useGetCollectionAncestorsQuery>;
 export type GetCollectionAncestorsLazyQueryHookResult = ReturnType<typeof useGetCollectionAncestorsLazyQuery>;
+export type GetCollectionAncestorsSuspenseQueryHookResult = ReturnType<typeof useGetCollectionAncestorsSuspenseQuery>;
 export type GetCollectionAncestorsQueryResult = Apollo.QueryResult<
   GetCollectionAncestorsQuery,
   GetCollectionAncestorsQueryVariables
@@ -861,12 +915,19 @@ export function useGetNovelsLazyQuery(
   const options = { ...defaultOptions, ...baseOptions };
   return Apollo.useLazyQuery<GetNovelsQuery, GetNovelsQueryVariables>(GetNovelsDocument, options);
 }
+export function useGetNovelsSuspenseQuery(
+  baseOptions?: Apollo.SuspenseQueryHookOptions<GetNovelsQuery, GetNovelsQueryVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useSuspenseQuery<GetNovelsQuery, GetNovelsQueryVariables>(GetNovelsDocument, options);
+}
 export type GetNovelsQueryHookResult = ReturnType<typeof useGetNovelsQuery>;
 export type GetNovelsLazyQueryHookResult = ReturnType<typeof useGetNovelsLazyQuery>;
+export type GetNovelsSuspenseQueryHookResult = ReturnType<typeof useGetNovelsSuspenseQuery>;
 export type GetNovelsQueryResult = Apollo.QueryResult<GetNovelsQuery, GetNovelsQueryVariables>;
 export const CreateNovelDocument = gql`
-  mutation createNovel($collectionId: Int, $name: String!, $description: String!, $tags: [Int!]!, $authorId: Int!) {
-    createNovel(collectionId: $collectionId, name: $name, description: $description, tags: $tags, authorId: $authorId) {
+  mutation createNovel($data: CreateNovelInput!) {
+    createNovel(data: $data) {
       id
     }
   }
@@ -886,11 +947,7 @@ export type CreateNovelMutationFn = Apollo.MutationFunction<CreateNovelMutation,
  * @example
  * const [createNovelMutation, { data, loading, error }] = useCreateNovelMutation({
  *   variables: {
- *      collectionId: // value for 'collectionId'
- *      name: // value for 'name'
- *      description: // value for 'description'
- *      tags: // value for 'tags'
- *      authorId: // value for 'authorId'
+ *      data: // value for 'data'
  *   },
  * });
  */
@@ -1011,8 +1068,15 @@ export function useGetTagsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<Ge
   const options = { ...defaultOptions, ...baseOptions };
   return Apollo.useLazyQuery<GetTagsQuery, GetTagsQueryVariables>(GetTagsDocument, options);
 }
+export function useGetTagsSuspenseQuery(
+  baseOptions?: Apollo.SuspenseQueryHookOptions<GetTagsQuery, GetTagsQueryVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useSuspenseQuery<GetTagsQuery, GetTagsQueryVariables>(GetTagsDocument, options);
+}
 export type GetTagsQueryHookResult = ReturnType<typeof useGetTagsQuery>;
 export type GetTagsLazyQueryHookResult = ReturnType<typeof useGetTagsLazyQuery>;
+export type GetTagsSuspenseQueryHookResult = ReturnType<typeof useGetTagsSuspenseQuery>;
 export type GetTagsQueryResult = Apollo.QueryResult<GetTagsQuery, GetTagsQueryVariables>;
 export const DeleteTagDocument = gql`
   mutation deleteTag($id: Int!) {
