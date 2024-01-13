@@ -1,3 +1,11 @@
+/*
+ * @Author: suxiaoshao suxiaoshao@gmail.com
+ * @Date: 2024-01-06 01:30:13
+ * @LastEditors: suxiaoshao suxiaoshao@gmail.com
+ * @LastEditTime: 2024-01-14 03:12:52
+ * @FilePath: /self-tools/web/packages/portal/src/components/AppDrawer/index.tsx
+ * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
+ */
 import { Home } from '@mui/icons-material';
 import { Box, Divider, List, Paper } from '@mui/material';
 import { Outlet } from 'react-router-dom';
@@ -34,25 +42,6 @@ export default function AppDrawer(): JSX.Element {
 
       <Box sx={{ flex: '1 1 0' }}>
         <Outlet />
-        <Box
-          sx={{
-            width: '100%',
-            height: '100%',
-            '& > *': {
-              width: '100%',
-              height: '100%',
-            },
-            '& div[__garfishmockhtml__]': {
-              width: '100%',
-              height: '100%',
-            },
-            '& div[__garfishmockbody__]': {
-              width: '100%',
-              height: '100%',
-            },
-          }}
-          id="micro"
-        ></Box>
       </Box>
     </Box>
   );

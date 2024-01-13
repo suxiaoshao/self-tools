@@ -1,3 +1,10 @@
+/*
+ * @Author: suxiaoshao suxiaoshao@gmail.com
+ * @Date: 2024-01-06 01:30:13
+ * @LastEditors: suxiaoshao suxiaoshao@gmail.com
+ * @LastEditTime: 2024-01-14 02:59:01
+ * @FilePath: /self-tools/web/common/custom-graphql/src/index.tsx
+ */
 import { ApolloClient, createHttpLink, DefaultOptions, from, InMemoryCache } from '@apollo/client';
 import { onError } from '@apollo/client/link/error';
 import { enqueueSnackbar } from 'notify';
@@ -15,7 +22,7 @@ const errorLink = onError(({ graphQLErrors, networkError }) => {
     graphQLErrors.forEach(({ message, locations, path, extensions }) => {
       enqueueSnackbar(message);
       console.log(`[GraphQL error]: Message: ${message}, Location: ${locations}, Path: ${path}
-source: ${extensions['source']}`);
+source: ${extensions?.['source']}`);
     });
   }
   if (networkError) {

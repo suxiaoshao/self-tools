@@ -1,3 +1,10 @@
+/*
+ * @Author: suxiaoshao suxiaoshao@gmail.com
+ * @Date: 2024-01-06 01:30:13
+ * @LastEditors: suxiaoshao suxiaoshao@gmail.com
+ * @LastEditTime: 2024-01-14 03:09:39
+ * @FilePath: /self-tools/web/packages/collections/src/features/Collection/index.tsx
+ */
 import { Box, IconButton } from '@mui/material';
 import { useCollectionAndItemsQuery } from '../../graphql';
 import { CustomTable, getCoreRowModel, useCustomTable, usePage, usePageWithTotal } from 'custom-table';
@@ -9,7 +16,7 @@ import useTableColumns from './hooks/useTableColumns';
 import CreateItemButton from './components/CreateItemButton';
 import { useMemo } from 'react';
 
-export default function Home() {
+export default function Collection() {
   const id = useParentId();
   const pageState = usePage();
   const { data: { collectionAndItem: { data, total } } = { collectionAndItem: {} }, refetch } =

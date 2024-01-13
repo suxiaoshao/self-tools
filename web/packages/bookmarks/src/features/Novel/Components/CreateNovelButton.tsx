@@ -1,3 +1,11 @@
+/*
+ * @Author: suxiaoshao suxiaoshao@gmail.com
+ * @Date: 2024-01-06 01:30:13
+ * @LastEditors: suxiaoshao suxiaoshao@gmail.com
+ * @LastEditTime: 2024-01-14 03:31:58
+ * @FilePath: /self-tools/web/packages/bookmarks/src/features/Novel/Components/CreateNovelButton.tsx
+ * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
+ */
 import { Button, Dialog, Box, DialogTitle, DialogContent, TextField, DialogActions } from '@mui/material';
 import { useI18n } from 'i18n';
 import { useState } from 'react';
@@ -13,14 +21,14 @@ export interface CreateNovelButtonProps {
 }
 
 export default function CreateNovelButton({ refetch, collectionId }: CreateNovelButtonProps) {
-  type FormData = Omit<CreateNovelMutationVariables, 'collectionId'>;
+  type FormData = Omit<CreateNovelMutationVariables['data'], 'collectionId'>;
   // 表单控制
   const { handleSubmit, register, control } = useForm<FormData>({ defaultValues: { tags: [] } });
 
   const [createNovel] = useCreateNovelMutation();
 
   const onSubmit: SubmitHandler<FormData> = async ({ ...formData }) => {
-    await createNovel({ variables: { ...formData, collectionId } });
+    await createNovel({ variables: { data: { ...formData, collectionId } } });
     refetch();
     handleClose();
   };
@@ -53,6 +61,7 @@ export default function CreateNovelButton({ refetch, collectionId }: CreateNovel
               label={t('description')}
               {...register('description', { required: true })}
             />
+            <TextField required sx={{ mt: 1 }} fullWidth label={t('link')} {...register('url', { required: true })} />
             <Controller
               control={control}
               name="tags"
