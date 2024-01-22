@@ -6,22 +6,20 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-# grpc
-tokio = { version = "1.35.1", features = ["rt-multi-thread", "time", "fs", "macros", "net"] }
-proto = { path = "../../common/proto", features = ["auth_server"]}
-tonic = "0.9.2"
+
+# Thrift
+thrift = { path = "../../common/thrift" }
+volo = "0.9.0"
+volo-thrift = "0.9.2"
+tokio = { version = "1.35.1", features = ["full"] }
 
 # jwt
-jsonwebtoken = "8.3.0"
+jsonwebtoken = "9.2.0"
 serde = { version = "1.0.195", features = ["derive"] }
-
-# error
-errors= { path = "../../common/errors", features=["jsonwebtoken"]}
-anyhow= "1.0.79"
-
-# middleware
-middleware={ path = "../../common/middleware", features=["trace"]}
 
 # log
 tracing = "0.1.40"
 tracing-subscriber = "0.3.18"
+
+# errors
+anyhow = { version = "1.0.79", features = [] }

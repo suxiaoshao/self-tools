@@ -35,7 +35,6 @@ struct JJAuthor {
     novel_ids: Vec<String>,
 }
 
-#[async_trait::async_trait]
 impl AuthorFn for JJAuthor {
     type Novel = JJNovel;
     async fn get_author_data(author_id: &str) -> NovelResult<Self> {

@@ -19,16 +19,16 @@
     "paths": {
       "@portal/*": ["./web/packages/portal/src/*"],
       "@bookmarks/*": ["./web/packages/bookmarks/src/*"],
-      "@collections/*": ["./web/packages/collections/src/*"]
+      "@collections/*": ["./web/packages/collections/src/*"],
     },
-    "baseUrl": "."
+    "baseUrl": ".",
   },
   "include": [
     "./web/packages/*/src",
     "./web/common/*/src",
     "./web/config",
     "./jest.config.ts",
-    "./web/packages/*/rsbuild.config.ts"
+    "./web/packages/*/rsbuild.config.ts",
   ],
-  "exclude": ["./**/node_modules"]
+  "exclude": ["./**/node_modules"],
 }

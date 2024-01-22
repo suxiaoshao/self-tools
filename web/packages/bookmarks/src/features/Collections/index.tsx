@@ -21,7 +21,7 @@ type Data = GetCollectionsQuery['getCollections'][0];
 
 export default function Collections() {
   const parentId = useParentId();
-  const { data: { getCollections } = {}, refetch } = useGetCollectionsQuery({ variables: { parentId } });
+  const { data, refetch } = useGetCollectionsQuery({ variables: { parentId } });
   const [deleteCollection] = useDeleteCollectionMutation();
   const t = useI18n();
 
@@ -87,8 +87,8 @@ export default function Collections() {
     [deleteCollection, refetch, t],
   );
   const tableOptions = useMemo<CustomTableOptions<Data>>(
-    () => ({ columns, data: getCollections ?? [], getCoreRowModel: getCoreRowModel() }),
-    [columns, getCollections],
+    () => ({ columns, data: data?.getCollections ?? [], getCoreRowModel: getCoreRowModel() }),
+    [columns, data?.getCollections],
   );
   const tableInstance = useCustomTable(tableOptions);
 

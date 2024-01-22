@@ -1,3 +1,10 @@
+/*
+ * @Author: suxiaoshao suxiaoshao@gmail.com
+ * @Date: 2024-01-06 01:30:13
+ * @LastEditors: suxiaoshao suxiaoshao@gmail.com
+ * @LastEditTime: 2024-01-23 00:25:08
+ * @FilePath: /self-tools/web/packages/bookmarks/src/components/CollectionSelect/index.tsx
+ */
 import { Box, BoxProps, Breadcrumbs, Button, Link } from '@mui/material';
 import { useI18n } from 'i18n';
 import { FocusEventHandler, ForwardedRef, useImperativeHandle } from 'react';
@@ -19,7 +26,7 @@ function CollectionSelect(
     variables: { id: value ?? 0 },
     skip: value === undefined || value === null,
   });
-  const { data: { getCollections } = {} } = useGetCollectionSelectQuery({ variables: { parentId: value } });
+  const { data } = useGetCollectionSelectQuery({ variables: { parentId: value } });
   const t = useI18n();
   const [sourceRef, setSourceRef] = React.useState<HTMLButtonElement | null>(null);
   useImperativeHandle<HTMLButtonElement | null, HTMLButtonElement | null>(
@@ -53,7 +60,7 @@ function CollectionSelect(
           )}
         >
           {[
-            ...(getCollections?.map(({ id, name }) => ({ value: id, label: name, key: id })) ?? []),
+            ...(data?.getCollections?.map(({ id, name }) => ({ value: id, label: name, key: id })) ?? []),
             ...(getCollection
               ? [
                   {

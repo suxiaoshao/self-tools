@@ -2,7 +2,7 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-01-06 01:30:13
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-01-14 02:37:05
+ * @LastEditTime: 2024-01-21 22:53:48
  * @FilePath: /self-tools/web/packages/portal/src/components/AppRouter.tsx
  */
 import { Routes, Route } from 'react-router-dom';
@@ -15,7 +15,7 @@ import { Menu } from 'types';
 function MenuRouter({ path }: Menu) {
   switch (path.tag) {
     case 'path':
-      return <Route path={path.value.path} element={path.value.element} />;
+      return <Route key={path.value.path} path={path.value.path} element={path.value.element} />;
     case 'menu':
       return (
         <>
@@ -39,7 +39,6 @@ export default function AppRouter() {
             {item.getMenu().map((menu) => MenuRouter(menu))}
           </Route>
         ))}
-        <Route path="/bookmarks/*" />
         <Route path="login" element={<Login />} />
       </Route>
     </Routes>

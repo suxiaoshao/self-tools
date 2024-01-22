@@ -22,7 +22,7 @@ export default function Novel() {
   type FormData = GetNovelsQueryVariables;
   const { control, watch } = useForm<FormData>({ defaultValues: {} });
   const form = watch();
-  const { data: { queryNovels } = {}, refetch } = useGetNovelsQuery({ variables: form });
+  const { data, refetch } = useGetNovelsQuery({ variables: form });
   const [deleteNovel] = useDeleteNovelMutation();
   const t = useI18n();
   const columns = useMemo<CustomColumnDefArray<Data>>(
@@ -77,8 +77,8 @@ export default function Novel() {
     [deleteNovel, refetch, t],
   );
   const tableOptions = useMemo<CustomTableOptions<Data>>(
-    () => ({ columns, data: queryNovels ?? [], getCoreRowModel: getCoreRowModel() }),
-    [columns, queryNovels],
+    () => ({ columns, data: data?.queryNovels ?? [], getCoreRowModel: getCoreRowModel() }),
+    [columns, data?.queryNovels],
   );
   const tableInstance = useCustomTable(tableOptions);
   return (
