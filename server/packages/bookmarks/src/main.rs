@@ -2,7 +2,7 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-01-06 01:30:13
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-01-22 18:38:37
+ * @LastEditTime: 2024-01-23 01:34:13
  * @FilePath: /self-tools/server/packages/bookmarks/src/main.rs
  */
 mod errors;
@@ -11,8 +11,10 @@ mod model;
 mod router;
 mod service;
 
-use axum::Server;
+use std::net::SocketAddr;
+
 use middleware::{get_cors, trace_layer};
+use tokio::net::TcpListener;
 use tracing::{event, metadata::LevelFilter, Level};
 use tracing_subscriber::{
     fmt, prelude::__tracing_subscriber_SubscriberExt, util::SubscriberInitExt, Layer,
@@ -31,7 +33,9 @@ async fn main() -> anyhow::Result<()> {
 
     let addr = "0.0.0.0:8080";
     event!(Level::INFO, addr, "server start");
-    let addr = addr.parse()?;
-    Server::bind(&addr).serve(app.into_make_service()).await?;
+    let addr: SocketAddr = addr.parse()?;
+    let listener = TcpListener::bind(addr).await?;
+
+    axum::serve(listener, app).await?;
     Ok(())
 }
