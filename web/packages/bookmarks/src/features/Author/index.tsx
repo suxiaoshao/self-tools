@@ -19,7 +19,7 @@ type TableItem = GetAuthorsQuery['queryAuthors'][0];
 
 const columnHelper = createCustomColumnHelper<TableItem>();
 export default function Author() {
-  const { data: { queryAuthors } = {}, refetch } = useGetAuthorsQuery();
+  const { data, refetch } = useGetAuthorsQuery();
   const [deleteAuthor] = useDeleteAuthorMutation();
   const t = useI18n();
   const columns = useMemo<CustomColumnDefArray<TableItem>>(
@@ -94,8 +94,8 @@ export default function Author() {
     [deleteAuthor, refetch, t],
   );
   const tableOptions = useMemo<CustomTableOptions<TableItem>>(
-    () => ({ columns, data: queryAuthors ?? [], getCoreRowModel: getCoreRowModel() }),
-    [columns, queryAuthors],
+    () => ({ columns, data: data?.queryAuthors ?? [], getCoreRowModel: getCoreRowModel() }),
+    [columns, data?.queryAuthors],
   );
   const tableInstance = useCustomTable(tableOptions);
 

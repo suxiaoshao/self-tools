@@ -2,7 +2,7 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-01-06 01:30:13
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-01-23 00:02:08
+ * @LastEditTime: 2024-01-22 23:55:53
  * @FilePath: /self-tools/server/packages/collections/src/graphql/guard/mod.rs
  */
 use async_graphql::{async_trait, Context, Guard, Result};

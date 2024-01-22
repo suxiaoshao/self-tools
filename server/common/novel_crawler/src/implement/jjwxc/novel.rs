@@ -45,7 +45,6 @@ pub(crate) struct JJNovel {
     chapters: Vec<JJChapter>,
 }
 
-#[async_trait::async_trait]
 impl NovelFn for JJNovel {
     type Chapter = JJChapter;
     async fn get_novel_data(novel_id: &str) -> NovelResult<Self> {

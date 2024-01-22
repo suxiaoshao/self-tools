@@ -2,14 +2,10 @@ use async_graphql::ErrorExtensionValues;
 use axum::{response::IntoResponse, Json};
 use diesel::r2d2;
 use std::sync::Arc;
-use tonic::{transport, Code, Status};
+use thrift::auth::ItemServiceCheckException;
 
 #[derive(Debug)]
 pub enum GraphqlError {
-    /// grpc 错误
-    Status(Status),
-    /// grpc 链接错误
-    Transport,
     /// 数据库连接池
     R2d2(String),
     /// 数据库操作错误
@@ -28,6 +24,16 @@ pub enum GraphqlError {
         super_value: Option<i64>,
     },
     PageSizeTooMore,
+    Jwt,
+    PasswordError,
+    AuthTimeout,
+    TokenError,
+    PasswordNotSet,
+    SecretKeyNotSet,
+    UsernameNotSet,
+    /// thrift 错误
+    Thrift(String),
+    ClientError(&'static thrift::ClientError),
 }
 
 impl IntoResponse for GraphqlError {
@@ -49,8 +55,6 @@ impl IntoResponse for GraphqlError {
 impl GraphqlError {
     pub fn message(&self) -> String {
         match self {
-            GraphqlError::Status(status) => status.message().to_string(),
-            GraphqlError::Transport => "内部连接错误".to_string(),
             GraphqlError::R2d2(_) => "数据库连接错误".to_string(),
             GraphqlError::Diesel(data) => format!("数据库错误:{data}"),
             GraphqlError::Unauthenticated => "没有发送 token".to_string(),
@@ -72,30 +76,19 @@ impl GraphqlError {
                 }
             ),
             GraphqlError::PageSizeTooMore => "页码太大".to_string(),
+            GraphqlError::Jwt => "jwt 解析错误".to_string(),
+            GraphqlError::PasswordError => "密码错误".to_string(),
+            GraphqlError::AuthTimeout => "登陆过期".to_string(),
+            GraphqlError::TokenError => "token 错误".to_string(),
+            GraphqlError::PasswordNotSet => "密码未设置".to_string(),
+            GraphqlError::SecretKeyNotSet => "select key未设置".to_string(),
+            GraphqlError::UsernameNotSet => "username未设置".to_string(),
+            GraphqlError::Thrift(data) => format!("thrift 错误:{data}"),
+            GraphqlError::ClientError(data) => format!("thrift client错误:{data}"),
         }
     }
     pub fn code(&self) -> &str {
         match self {
-            GraphqlError::Status(status) => match status.code() {
-                Code::Ok => "Ok",
-                Code::Cancelled => "Cancelled",
-                Code::Unknown => "Unknown",
-                Code::InvalidArgument => "InvalidArgument",
-                Code::DeadlineExceeded => "DeadlineExceeded",
-                Code::NotFound => "NotFound",
-                Code::AlreadyExists => "AlreadyExists",
-                Code::PermissionDenied => "PermissionDenied",
-                Code::ResourceExhausted => "ResourceExhausted",
-                Code::FailedPrecondition => "FailedPrecondition",
-                Code::Aborted => "Aborted",
-                Code::OutOfRange => "OutOfRange",
-                Code::Unimplemented => "Unimplemented",
-                Code::Internal => "Internal",
-                Code::Unavailable => "Unavailable",
-                Code::DataLoss => "DataLoss",
-                Code::Unauthenticated => "Unauthenticated",
-            },
-            GraphqlError::Transport => "Transport",
             GraphqlError::R2d2(_) => "FailedPrecondition",
             GraphqlError::Diesel(_) => "Internal",
             GraphqlError::Unauthenticated => "Unauthenticated",
@@ -103,6 +96,15 @@ impl GraphqlError {
             | GraphqlError::AlreadyExists(_)
             | GraphqlError::Scope { .. } => "InvalidArgument",
             GraphqlError::PageSizeTooMore => "InvalidArgument",
+            GraphqlError::Jwt => "Jwt",
+            GraphqlError::PasswordError => "PasswordError",
+            GraphqlError::AuthTimeout => "AuthTimeout",
+            GraphqlError::TokenError => "TokenError",
+            GraphqlError::PasswordNotSet => "PasswordNotSet",
+            GraphqlError::SecretKeyNotSet => "SecretKeyNotSet",
+            GraphqlError::UsernameNotSet => "UsernameNotSet",
+            GraphqlError::Thrift(_) => "Thrift",
+            GraphqlError::ClientError(_) => "ThriftClient",
         }
     }
 }
@@ -110,10 +112,6 @@ impl GraphqlError {
 impl Clone for GraphqlError {
     fn clone(&self) -> Self {
         match self {
-            GraphqlError::Status(status) => {
-                Self::Status(Status::new(status.code(), status.message()))
-            }
-            GraphqlError::Transport => Self::Transport,
             GraphqlError::R2d2(data) => Self::R2d2(data.clone()),
             GraphqlError::Diesel(data) => Self::Diesel(data.clone()),
             GraphqlError::Unauthenticated => Self::Unauthenticated,
@@ -131,19 +129,16 @@ impl Clone for GraphqlError {
                 super_value: *super_value,
             },
             GraphqlError::PageSizeTooMore => Self::PageSizeTooMore,
+            GraphqlError::Jwt => Self::Jwt,
+            GraphqlError::PasswordError => Self::PasswordError,
+            GraphqlError::AuthTimeout => Self::AuthTimeout,
+            GraphqlError::TokenError => Self::TokenError,
+            GraphqlError::PasswordNotSet => Self::PasswordNotSet,
+            GraphqlError::SecretKeyNotSet => Self::SecretKeyNotSet,
+            GraphqlError::UsernameNotSet => Self::UsernameNotSet,
+            GraphqlError::Thrift(data) => Self::Thrift(data.clone()),
+            GraphqlError::ClientError(data) => Self::ClientError(data),
         }
-    }
-}
-
-impl From<transport::Error> for GraphqlError {
-    fn from(_: transport::Error) -> Self {
-        Self::Transport
-    }
-}
-
-impl From<Status> for GraphqlError {
-    fn from(error: Status) -> Self {
-        Self::Status(error)
     }
 }
 
@@ -156,6 +151,34 @@ impl From<r2d2::PoolError> for GraphqlError {
 impl From<diesel::result::Error> for GraphqlError {
     fn from(error: diesel::result::Error) -> Self {
         Self::Diesel(error.to_string())
+    }
+}
+
+impl From<volo_thrift::error::ResponseError<ItemServiceCheckException>> for GraphqlError {
+    fn from(value: volo_thrift::error::ResponseError<ItemServiceCheckException>) -> Self {
+        match value {
+            volo_thrift::ResponseError::UserException(ItemServiceCheckException::Err(
+                thrift::auth::AuthError { code },
+            )) => match code {
+                thrift::auth::AuthErrorCode::Jwt => Self::Jwt,
+                thrift::auth::AuthErrorCode::PasswordError => Self::PasswordError,
+                thrift::auth::AuthErrorCode::AuthTimeout => Self::AuthTimeout,
+                thrift::auth::AuthErrorCode::TokenError => Self::TokenError,
+                thrift::auth::AuthErrorCode::PasswordNotSet => Self::PasswordNotSet,
+                thrift::auth::AuthErrorCode::SecretKeyNotSet => Self::SecretKeyNotSet,
+                thrift::auth::AuthErrorCode::UsernameNotSet => Self::UsernameNotSet,
+            },
+            volo_thrift::ResponseError::Application(x) => Self::Thrift(x.to_string()),
+            volo_thrift::ResponseError::Transport(x) => Self::Thrift(x.to_string()),
+            volo_thrift::ResponseError::Protocol(x) => Self::Thrift(x.to_string()),
+            volo_thrift::ResponseError::Basic(x) => Self::Thrift(x.to_string()),
+        }
+    }
+}
+
+impl From<&'static thrift::ClientError> for GraphqlError {
+    fn from(value: &'static thrift::ClientError) -> Self {
+        Self::ClientError(value)
     }
 }
 

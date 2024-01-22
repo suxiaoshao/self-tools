@@ -37,7 +37,6 @@ struct QDAuthor {
     novel_ids: Vec<String>,
 }
 
-#[async_trait::async_trait]
 impl AuthorFn for QDAuthor {
     type Novel = QDNovel;
     async fn get_author_data(author_id: &str) -> NovelResult<Self> {

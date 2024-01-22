@@ -28,7 +28,6 @@ pub(crate) struct QDNovel {
     chapters: Vec<QDChapter>,
 }
 
-#[async_trait::async_trait]
 impl NovelFn for QDNovel {
     type Chapter = QDChapter;
     async fn get_novel_data(novel_id: &str) -> NovelResult<Self> {

@@ -16,15 +16,15 @@ thiserror = "1.0.56"
 
 # json
 serde = { version = "1.0.195", features = ["derive"] }
-serde_json= "1.0.111"
-
-# grpc
-proto={path="../../common/proto/",features=["auth_client"]}
-tonic= "0.9.2"
+serde_json = "1.0.111"
 
 # cors
-middleware = { path = "../../common/middleware",features=["cors","trace"] }
+middleware = { path = "../../common/middleware", features = ["cors", "trace"] }
 
 # log
 tracing = "0.1.40"
 tracing-subscriber = "0.3.18"
+
+# thrift
+thrift = { path = "../../common/thrift" }
+volo-thrift = "0.9.2"

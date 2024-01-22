@@ -1,6 +1,12 @@
+/*
+ * @Author: suxiaoshao suxiaoshao@gmail.com
+ * @Date: 2024-01-06 01:30:13
+ * @LastEditors: suxiaoshao suxiaoshao@gmail.com
+ * @LastEditTime: 2024-01-22 06:55:13
+ * @FilePath: /self-tools/server/common/novel_crawler/src/author.rs
+ */
 use crate::{errors::NovelResult, novel::NovelFn};
 
-#[async_trait::async_trait]
 pub(crate) trait AuthorFn: Sized {
     type Novel: NovelFn;
     async fn get_author_data(author_id: &str) -> NovelResult<Self>;

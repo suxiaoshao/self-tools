@@ -1,3 +1,10 @@
+/*
+ * @Author: suxiaoshao suxiaoshao@gmail.com
+ * @Date: 2024-01-06 01:30:13
+ * @LastEditors: suxiaoshao suxiaoshao@gmail.com
+ * @LastEditTime: 2024-01-22 18:26:09
+ * @FilePath: /self-tools/server/packages/collections/src/graphql/mutation.rs
+ */
 use async_graphql::Object;
 
 use super::{guard::AuthGuard, validator::DirNameValidator};
@@ -55,6 +62,7 @@ impl MutationRoot {
         Ok(deleted_item)
     }
     /// 修改记录
+    #[graphql(guard = "AuthGuard::default()")]
     async fn update_item(&self, id: i64, name: String, content: String) -> GraphqlResult<Item> {
         let updated_item = Item::update(id, &name, &content)?;
         Ok(updated_item)

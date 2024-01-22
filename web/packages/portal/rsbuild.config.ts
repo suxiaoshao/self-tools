@@ -2,7 +2,7 @@
  * @Author: suxiaoshao suxiaoshao@gamil.com
  * @Date: 2023-12-18 22:35:51
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-01-14 03:37:55
+ * @LastEditTime: 2024-01-21 22:53:14
  */
 import { defineConfig } from '@rsbuild/core';
 import { pluginReact } from '@rsbuild/plugin-react';
