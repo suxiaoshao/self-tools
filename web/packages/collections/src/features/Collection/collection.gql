@@ -1,5 +1,5 @@
-query collectionAndItems($id: Int, $pagination: Pagination!) {
-  collectionAndItem(id: $id, pagination: $pagination) {
+query collectionAndItems($query: CollectionItemQuery!) {
+  collectionAndItem(query: $query) {
     data {
       ... on Collection {
         name

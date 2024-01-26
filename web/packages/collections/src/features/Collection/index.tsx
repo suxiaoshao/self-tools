@@ -2,7 +2,7 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-01-06 01:30:13
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-01-14 03:09:39
+ * @LastEditTime: 2024-01-26 13:27:19
  * @FilePath: /self-tools/web/packages/collections/src/features/Collection/index.tsx
  */
 import { Box, IconButton } from '@mui/material';
@@ -19,10 +19,10 @@ import { useMemo } from 'react';
 export default function Collection() {
   const id = useParentId();
   const pageState = usePage();
-  const { data: { collectionAndItem: { data, total } } = { collectionAndItem: {} }, refetch } =
-    useCollectionAndItemsQuery({
-      variables: { id, pagination: { page: pageState.pageIndex, pageSize: pageState.pageSize } },
-    });
+  const { data: sourceData, refetch } = useCollectionAndItemsQuery({
+    variables: { query: { id, pagination: { page: pageState.pageIndex, pageSize: pageState.pageSize } } },
+  });
+  const { data, total } = sourceData?.collectionAndItem ?? {};
   const page = usePageWithTotal(pageState, total);
 
   const columns = useTableColumns(refetch);

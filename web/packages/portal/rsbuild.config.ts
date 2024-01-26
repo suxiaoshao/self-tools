@@ -2,7 +2,7 @@
  * @Author: suxiaoshao suxiaoshao@gamil.com
  * @Date: 2023-12-18 22:35:51
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-01-21 22:53:14
+ * @LastEditTime: 2024-01-26 14:18:47
  */
 import { defineConfig } from '@rsbuild/core';
 import { pluginReact } from '@rsbuild/plugin-react';
@@ -18,16 +18,15 @@ export default defineConfig({
     entry: {
       index: './src/main.tsx',
     },
+    alias: {
+      '@portal': './src',
+      '@bookmarks': '../bookmarks/src',
+      '@collections': '../collections/src',
+    },
   },
   tools: {
-    rspack: {
-      plugins: [new MonacoWebpackPlugin()],
-      resolve: {
-        tsConfig: {
-          configFile: resolve(__dirname, '../../../tsconfig.json'),
-          references: 'auto',
-        },
-      },
+    bundlerChain: (chain) => {
+      chain.plugin('monaco').use(MonacoWebpackPlugin);
     },
   },
 });

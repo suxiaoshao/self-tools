@@ -1,4 +1,4 @@
-use crate::errors::GraphqlResult;
+use crate::{errors::GraphqlResult, graphql::types::TimeRange};
 
 use super::schema::item;
 use diesel::prelude::*;
@@ -85,25 +85,92 @@ impl ItemModel {
     /// 查询记录
     pub fn query(
         collection_id: i64,
+        create_time: Option<TimeRange>,
+        update_time: Option<TimeRange>,
         offset: i64,
         limit: i64,
         conn: &mut PgConnection,
     ) -> GraphqlResult<Vec<Self>> {
-        // 获取数据
-        let data = item::table
-            .filter(item::collection_id.eq(collection_id))
-            .offset(offset)
-            .limit(limit)
-            .load(conn)?;
-        Ok(data)
+        match (create_time, update_time) {
+            (None, None) => {
+                let data = item::table
+                    .filter(item::collection_id.eq(collection_id))
+                    .offset(offset)
+                    .limit(limit)
+                    .load(conn)?;
+                Ok(data)
+            }
+            (None, Some(update_time)) => {
+                let data = item::table
+                    .filter(item::collection_id.eq(collection_id))
+                    .filter(item::update_time.between(update_time.start, update_time.end))
+                    .offset(offset)
+                    .limit(limit)
+                    .load(conn)?;
+                Ok(data)
+            }
+            (Some(create_time), None) => {
+                let data = item::table
+                    .filter(item::collection_id.eq(collection_id))
+                    .filter(item::create_time.between(create_time.start, create_time.end))
+                    .offset(offset)
+                    .limit(limit)
+                    .load(conn)?;
+                Ok(data)
+            }
+            (Some(create_time), Some(update_time)) => {
+                let data = item::table
+                    .filter(item::collection_id.eq(collection_id))
+                    .filter(item::create_time.between(create_time.start, create_time.end))
+                    .filter(item::update_time.between(update_time.start, update_time.end))
+                    .offset(offset)
+                    .limit(limit)
+                    .load(conn)?;
+                Ok(data)
+            }
+        }
     }
     /// 查询记录数量
-    pub fn count(collection_id: i64, conn: &mut PgConnection) -> GraphqlResult<i64> {
-        let count = item::table
-            .filter(item::collection_id.eq(collection_id))
-            .count()
-            .get_result(conn)?;
-        Ok(count)
+    pub fn count(
+        collection_id: i64,
+        create_time: Option<TimeRange>,
+        update_time: Option<TimeRange>,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<i64> {
+        match (create_time, update_time) {
+            (None, None) => {
+                let count = item::table
+                    .filter(item::collection_id.eq(collection_id))
+                    .count()
+                    .get_result(conn)?;
+                Ok(count)
+            }
+            (None, Some(update_time)) => {
+                let count = item::table
+                    .filter(item::collection_id.eq(collection_id))
+                    .filter(item::update_time.between(update_time.start, update_time.end))
+                    .count()
+                    .get_result(conn)?;
+                Ok(count)
+            }
+            (Some(create_time), None) => {
+                let count = item::table
+                    .filter(item::collection_id.eq(collection_id))
+                    .filter(item::create_time.between(create_time.start, create_time.end))
+                    .count()
+                    .get_result(conn)?;
+                Ok(count)
+            }
+            (Some(create_time), Some(update_time)) => {
+                let count = item::table
+                    .filter(item::collection_id.eq(collection_id))
+                    .filter(item::create_time.between(create_time.start, create_time.end))
+                    .filter(item::update_time.between(update_time.start, update_time.end))
+                    .count()
+                    .get_result(conn)?;
+                Ok(count)
+            }
+        }
     }
     /// 根据 collection_id 删除记录
     pub fn delete_by_collection_id(
