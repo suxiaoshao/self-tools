@@ -91,27 +91,23 @@ impl Item {
     }
 }
 
-pub struct ItemQueryRunner;
+pub struct ItemQueryRunner {
+    query: CollectionItemQuery,
+    count: i64,
+}
 
-/// collection_id 相关
-impl Queryable for ItemQueryRunner {
-    type Item = ItemAndCollection;
-
-    type Error = GraphqlError;
-
-    type Query = CollectionItemQuery;
-
-    async fn len(&self, query: &Self::Query) -> Result<i64, Self::Error> {
-        let Self::Query {
+impl ItemQueryRunner {
+    pub async fn new(query: CollectionItemQuery) -> GraphqlResult<Self> {
+        let CollectionItemQuery {
             id,
             create_time,
             update_time,
             ..
-        } = *query;
+        } = query;
         let collection_id = match id {
             Some(id) => id,
             None => {
-                return Ok(0);
+                return Ok(Self { query, count: 0 });
             }
         };
         let conn = &mut CONNECTION.get()?;
@@ -120,22 +116,30 @@ impl Queryable for ItemQueryRunner {
             event!(Level::WARN, "目录不存在: {}", collection_id);
             return Err(GraphqlError::NotFound("目录", collection_id));
         }
-        ItemModel::count(collection_id, create_time, update_time, conn)
+        let count = ItemModel::count(collection_id, create_time, update_time, conn)?;
+        Ok(Self { query, count })
+    }
+}
+
+/// collection_id 相关
+impl Queryable for ItemQueryRunner {
+    type Item = ItemAndCollection;
+
+    type Error = GraphqlError;
+
+    async fn len(&self) -> Result<i64, Self::Error> {
+        Ok(self.count)
     }
 
-    async fn query<P: Paginate>(
-        &self,
-        query: &Self::Query,
-        pagination: P,
-    ) -> Result<Vec<Self::Item>, Self::Error> {
+    async fn query<P: Paginate>(&self, pagination: P) -> Result<Vec<Self::Item>, Self::Error> {
         let offset = pagination.offset();
-        let Self::Query {
+        let CollectionItemQuery {
             id,
             create_time,
             update_time,
             pagination: source_pagination,
-        } = *query;
-        let len = self.len(query).await?;
+        } = self.query;
+        let len = self.len().await?;
         if len < offset {
             event!(
                 Level::ERROR,

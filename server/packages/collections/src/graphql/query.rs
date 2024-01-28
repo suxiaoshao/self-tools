@@ -2,7 +2,7 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-01-06 01:30:13
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-01-26 13:11:36
+ * @LastEditTime: 2024-01-27 10:30:58
  * @FilePath: /self-tools/server/packages/collections/src/graphql/query.rs
  */
 use async_graphql::Object;
@@ -42,9 +42,12 @@ impl QueryRoot {
         &self,
         query: CollectionItemQuery,
     ) -> GraphqlResult<List<ItemAndCollection>> {
-        let runner = QueryStack::new(CollectionQueryRunner).add_query(ItemQueryRunner);
-        let data = runner.query(&query, query.pagination).await?;
-        let total = runner.len(&query).await?;
+        let (collection_runner, item_runner) = tokio::try_join!(
+            CollectionQueryRunner::new(query),
+            ItemQueryRunner::new(query),
+        )?;
+        let runner = QueryStack::new(collection_runner).add_query(item_runner);
+        let (data, total) = tokio::try_join!(runner.query(query.pagination), runner.len())?;
         Ok(List::new(data, total))
     }
 }

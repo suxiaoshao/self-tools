@@ -2,7 +2,7 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-01-26 06:08:25
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-01-26 13:58:52
+ * @LastEditTime: 2024-01-27 10:28:25
  * @FilePath: /self-tools/server/packages/collections/src/common/mod.rs
  */
 use std::{cmp::Ordering, fmt::Debug};
@@ -43,13 +43,8 @@ impl Offset {
 pub trait Queryable {
     type Item;
     type Error;
-    type Query;
-    async fn len(&self, query: &Self::Query) -> Result<i64, Self::Error>;
-    async fn query<P: Paginate>(
-        &self,
-        query: &Self::Query,
-        pagination: P,
-    ) -> Result<Vec<Self::Item>, Self::Error>;
+    async fn len(&self) -> Result<i64, Self::Error>;
+    async fn query<P: Paginate>(&self, pagination: P) -> Result<Vec<Self::Item>, Self::Error>;
 }
 
 pub struct QueryStack<T, P> {
@@ -57,17 +52,14 @@ pub struct QueryStack<T, P> {
     right: P,
 }
 
-impl<I, E, Q, T> QueryStack<T, ()>
+impl<I, E, T> QueryStack<T, ()>
 where
-    T: Queryable<Item = I, Error = E, Query = Q>,
+    T: Queryable<Item = I, Error = E>,
 {
     pub fn new(left: T) -> Self {
         Self { left, right: () }
     }
-    pub fn add_query<P: Queryable<Item = I, Error = E, Query = Q>>(
-        self,
-        right: P,
-    ) -> QueryStack<T, P> {
+    pub fn add_query<P: Queryable<Item = I, Error = E>>(self, right: P) -> QueryStack<T, P> {
         QueryStack {
             left: self.left,
             right,
@@ -75,13 +67,13 @@ where
     }
 }
 
-impl<I, E, Q, T, P> QueryStack<T, P>
+impl<I, E, T, P> QueryStack<T, P>
 where
-    T: Queryable<Item = I, Error = E, Query = Q>,
-    P: Queryable<Item = I, Error = E, Query = Q>,
+    T: Queryable<Item = I, Error = E>,
+    P: Queryable<Item = I, Error = E>,
 {
     #[allow(dead_code)]
-    pub fn add_query<X: Queryable<Item = I, Error = E, Query = Q>>(
+    pub fn add_query<X: Queryable<Item = I, Error = E>>(
         self,
         right: X,
     ) -> QueryStack<T, QueryStack<P, X>> {
@@ -95,69 +87,59 @@ where
     }
 }
 
-impl<I, E, Q, T> Queryable for QueryStack<T, ()>
+impl<I, E, T> Queryable for QueryStack<T, ()>
 where
-    T: Queryable<Item = I, Error = E, Query = Q>,
+    T: Queryable<Item = I, Error = E>,
 {
     type Item = I;
 
     type Error = E;
 
-    type Query = Q;
-
-    async fn len(&self, query: &Self::Query) -> Result<i64, Self::Error> {
-        self.left.len(query).await
+    async fn len(&self) -> Result<i64, Self::Error> {
+        self.left.len().await
     }
 
-    async fn query<P: Paginate>(
-        &self,
-        query: &Self::Query,
-        pagination: P,
-    ) -> Result<Vec<Self::Item>, Self::Error> {
-        self.left.query(query, pagination).await
+    async fn query<P: Paginate>(&self, pagination: P) -> Result<Vec<Self::Item>, Self::Error> {
+        self.left.query(pagination).await
     }
 }
 
-impl<I, E, Q, T, P> Queryable for QueryStack<T, P>
+impl<I, E, T, P> Queryable for QueryStack<T, P>
 where
-    T: Queryable<Item = I, Error = E, Query = Q>,
-    P: Queryable<Item = I, Error = E, Query = Q>,
+    T: Queryable<Item = I, Error = E>,
+    P: Queryable<Item = I, Error = E>,
 {
     type Item = I;
 
     type Error = E;
 
-    type Query = Q;
-
-    async fn len(&self, query: &Self::Query) -> Result<i64, Self::Error> {
-        let left_len = self.left.len(query).await?;
-        let right_len = self.right.len(query).await?;
+    async fn len(&self) -> Result<i64, Self::Error> {
+        let (left_len, right_len) = tokio::try_join!(self.left.len(), self.right.len())?;
         Ok(left_len + right_len)
     }
 
     async fn query<Pagination: Paginate>(
         &self,
-        query: &Self::Query,
         pagination: Pagination,
     ) -> Result<Vec<Self::Item>, Self::Error> {
-        let left_len = self.left.len(query).await?;
+        let left_len = self.left.len().await?;
         let offset = pagination.offset();
         let offset_plus_limit = pagination.offset_plus_limit();
         match (left_len.cmp(&offset), left_len.cmp(&offset_plus_limit)) {
             (_, Ordering::Greater | Ordering::Equal) => {
-                let left = self.left.query(query, pagination).await?;
+                let left = self.left.query(pagination).await?;
                 Ok(left)
             }
             (Ordering::Less | Ordering::Equal, _) => {
                 let right_offset = Offset::new(offset - left_len, pagination.limit());
-                let right = self.right.query(query, right_offset).await?;
+                let right = self.right.query(right_offset).await?;
                 Ok(right)
             }
             (Ordering::Greater, Ordering::Less) => {
                 let left_offset = Offset::new(offset, left_len - offset);
                 let right_offset = Offset::new(0, offset_plus_limit - left_len);
-                let mut left = self.left.query(query, left_offset).await?;
-                let right = self.right.query(query, right_offset).await?;
+                let (mut left, right) =
+                    tokio::try_join!(self.left.query(left_offset), self.right.query(right_offset))?;
                 left.extend(right);
                 Ok(left)
             }

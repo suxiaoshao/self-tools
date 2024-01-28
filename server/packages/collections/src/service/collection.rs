@@ -191,23 +191,19 @@ impl Collection {
     }
 }
 
-pub struct CollectionQueryRunner;
+pub struct CollectionQueryRunner {
+    query: CollectionItemQuery,
+    count: i64,
+}
 
-/// parent id 相关
-impl Queryable for CollectionQueryRunner {
-    type Item = ItemAndCollection;
-
-    type Error = GraphqlError;
-
-    type Query = CollectionItemQuery;
-
-    async fn len(&self, query: &Self::Query) -> Result<i64, Self::Error> {
-        let Self::Query {
+impl CollectionQueryRunner {
+    pub async fn new(query: CollectionItemQuery) -> GraphqlResult<Self> {
+        let CollectionItemQuery {
             id,
             create_time,
             update_time,
             ..
-        } = *query;
+        } = query;
         let conn = &mut CONNECTION.get()?;
         //  判断父目录是否存在
         if let Some(id) = id {
@@ -217,21 +213,40 @@ impl Queryable for CollectionQueryRunner {
             }
         }
         let count = CollectionModel::get_count_by_parent(id, create_time, update_time, conn)?;
-        Ok(count)
+        Ok(Self { query, count })
+    }
+}
+
+/// parent id 相关
+impl Queryable for CollectionQueryRunner {
+    type Item = ItemAndCollection;
+
+    type Error = GraphqlError;
+
+    async fn len(&self) -> Result<i64, Self::Error> {
+        Ok(self.count)
     }
 
-    async fn query<P: Paginate>(
-        &self,
-        query: &Self::Query,
-        pagination: P,
-    ) -> Result<Vec<Self::Item>, Self::Error> {
-        let Self::Query {
+    async fn query<P: Paginate>(&self, pagination: P) -> Result<Vec<Self::Item>, Self::Error> {
+        let CollectionItemQuery {
             id,
             create_time,
             update_time,
-            ..
-        } = *query;
+            pagination: source_pagination,
+        } = self.query;
         let offset = pagination.offset();
+        let len = self.len().await?;
+        if len < offset {
+            event!(
+                Level::ERROR,
+                "全记录查询时页码太大 pagination: {:?} len: {} offset: {} offset_pagination: {:?}",
+                source_pagination,
+                len,
+                offset,
+                pagination
+            );
+            return Err(GraphqlError::PageSizeTooMore);
+        }
         let limit = pagination.limit();
         let conn = &mut CONNECTION.get()?;
         //  判断父目录是否存在
