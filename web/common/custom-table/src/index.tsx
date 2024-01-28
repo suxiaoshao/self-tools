@@ -9,6 +9,7 @@ import {
   TableContainerProps,
   TablePagination,
   TableFooter,
+  Box,
 } from '@mui/material';
 import TablePaginationActions from '@mui/material/TablePagination/TablePaginationActions';
 import { Table as TableType, flexRender } from '@tanstack/react-table';
@@ -31,11 +32,11 @@ export function CustomTable<D extends object>({
   return (
     <TableContainer
       sx={{
-        overflow: 'hidden',
         flex: '1 1 0',
         display: 'flex',
         flexDirection: 'column',
         maxHeight: '100%',
+        overflowY: 'auto',
       }}
       component={Paper}
       {...containerProps}
@@ -99,9 +100,10 @@ export function CustomTable<D extends object>({
               <TablePagination
                 count={page.total}
                 rowsPerPage={page.pageSize}
-                page={page.pageIndex}
+                page={page.pageIndex - 1}
                 onPageChange={(_, p) => {
-                  page.setPage(p);
+                  console.log('onPageChange', p);
+                  page.setPage(p + 1);
                 }}
                 ActionsComponent={TablePaginationActions}
                 rowsPerPageOptions={page.pageSizeOptions}

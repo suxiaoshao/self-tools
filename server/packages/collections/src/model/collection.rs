@@ -1,4 +1,4 @@
-use crate::errors::GraphqlResult;
+use crate::{errors::GraphqlResult, graphql::types::TimeRange};
 
 use super::schema::collection;
 use diesel::prelude::*;
@@ -130,22 +130,80 @@ impl CollectionModel {
     /// 获取父目录下的目录
     pub fn list_parent_with_page(
         parent_id: Option<i64>,
+        create_time: Option<TimeRange>,
+        update_time: Option<TimeRange>,
         offset: i64,
         limit: i64,
         conn: &mut PgConnection,
     ) -> GraphqlResult<Vec<Self>> {
-        match parent_id {
-            Some(parent_id) => {
+        match (parent_id, create_time, update_time) {
+            (None, None, None) => {
                 let collections = collection::table
-                    .filter(collection::parent_id.eq(parent_id))
+                    .filter(collection::parent_id.is_null())
                     .offset(offset)
                     .limit(limit)
                     .load(conn)?;
                 Ok(collections)
             }
-            None => {
+            (None, None, Some(update_time)) => {
                 let collections = collection::table
                     .filter(collection::parent_id.is_null())
+                    .filter(collection::update_time.between(update_time.start, update_time.end))
+                    .offset(offset)
+                    .limit(limit)
+                    .load(conn)?;
+                Ok(collections)
+            }
+            (None, Some(create_time), None) => {
+                let collections = collection::table
+                    .filter(collection::parent_id.is_null())
+                    .filter(collection::create_time.between(create_time.start, create_time.end))
+                    .offset(offset)
+                    .limit(limit)
+                    .load(conn)?;
+                Ok(collections)
+            }
+            (None, Some(create_time), Some(update_time)) => {
+                let collections = collection::table
+                    .filter(collection::parent_id.is_null())
+                    .filter(collection::create_time.between(create_time.start, create_time.end))
+                    .filter(collection::update_time.between(update_time.start, update_time.end))
+                    .offset(offset)
+                    .limit(limit)
+                    .load(conn)?;
+                Ok(collections)
+            }
+            (Some(id), None, None) => {
+                let collections = collection::table
+                    .filter(collection::parent_id.eq(id))
+                    .offset(offset)
+                    .limit(limit)
+                    .load(conn)?;
+                Ok(collections)
+            }
+            (Some(id), None, Some(update_time)) => {
+                let collections = collection::table
+                    .filter(collection::parent_id.eq(id))
+                    .filter(collection::update_time.between(update_time.start, update_time.end))
+                    .offset(offset)
+                    .limit(limit)
+                    .load(conn)?;
+                Ok(collections)
+            }
+            (Some(id), Some(create_time), None) => {
+                let collections = collection::table
+                    .filter(collection::parent_id.eq(id))
+                    .filter(collection::create_time.between(create_time.start, create_time.end))
+                    .offset(offset)
+                    .limit(limit)
+                    .load(conn)?;
+                Ok(collections)
+            }
+            (Some(id), Some(create_time), Some(update_time)) => {
+                let collections = collection::table
+                    .filter(collection::parent_id.eq(id))
+                    .filter(collection::create_time.between(create_time.start, create_time.end))
+                    .filter(collection::update_time.between(update_time.start, update_time.end))
                     .offset(offset)
                     .limit(limit)
                     .load(conn)?;
@@ -156,19 +214,71 @@ impl CollectionModel {
     /// 获取父目录下的目录数量
     pub fn get_count_by_parent(
         parent_id: Option<i64>,
+        create_time: Option<TimeRange>,
+        update_time: Option<TimeRange>,
         conn: &mut PgConnection,
     ) -> GraphqlResult<i64> {
-        match parent_id {
-            Some(parent_id) => {
+        match (parent_id, create_time, update_time) {
+            (None, None, None) => {
                 let count = collection::table
-                    .filter(collection::parent_id.eq(parent_id))
+                    .filter(collection::parent_id.is_null())
                     .count()
                     .get_result(conn)?;
                 Ok(count)
             }
-            None => {
+            (None, None, Some(update_time)) => {
                 let count = collection::table
                     .filter(collection::parent_id.is_null())
+                    .filter(collection::update_time.between(update_time.start, update_time.end))
+                    .count()
+                    .get_result(conn)?;
+                Ok(count)
+            }
+            (None, Some(create_time), None) => {
+                let count = collection::table
+                    .filter(collection::parent_id.is_null())
+                    .filter(collection::create_time.between(create_time.start, create_time.end))
+                    .count()
+                    .get_result(conn)?;
+                Ok(count)
+            }
+            (None, Some(create_time), Some(update_time)) => {
+                let count = collection::table
+                    .filter(collection::parent_id.is_null())
+                    .filter(collection::create_time.between(create_time.start, create_time.end))
+                    .filter(collection::update_time.between(update_time.start, update_time.end))
+                    .count()
+                    .get_result(conn)?;
+                Ok(count)
+            }
+            (Some(id), None, None) => {
+                let count = collection::table
+                    .filter(collection::parent_id.eq(id))
+                    .count()
+                    .get_result(conn)?;
+                Ok(count)
+            }
+            (Some(id), None, Some(update_time)) => {
+                let count = collection::table
+                    .filter(collection::parent_id.eq(id))
+                    .filter(collection::update_time.between(update_time.start, update_time.end))
+                    .count()
+                    .get_result(conn)?;
+                Ok(count)
+            }
+            (Some(id), Some(create_time), None) => {
+                let count = collection::table
+                    .filter(collection::parent_id.eq(id))
+                    .filter(collection::create_time.between(create_time.start, create_time.end))
+                    .count()
+                    .get_result(conn)?;
+                Ok(count)
+            }
+            (Some(id), Some(create_time), Some(update_time)) => {
+                let count = collection::table
+                    .filter(collection::parent_id.eq(id))
+                    .filter(collection::create_time.between(create_time.start, create_time.end))
+                    .filter(collection::update_time.between(update_time.start, update_time.end))
                     .count()
                     .get_result(conn)?;
                 Ok(count)

@@ -2,7 +2,7 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-01-06 01:30:13
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-01-14 02:59:01
+ * @LastEditTime: 2024-01-29 02:15:47
  * @FilePath: /self-tools/web/common/custom-graphql/src/index.tsx
  */
 import { ApolloClient, createHttpLink, DefaultOptions, from, InMemoryCache } from '@apollo/client';
@@ -58,4 +58,5 @@ export const getClient = (url: string) =>
     link: from([errorLink, authLink, getHttpLink(url)]),
     cache: new InMemoryCache(),
     defaultOptions,
+    connectToDevTools: process.env.NODE_ENV === 'development',
   });

@@ -1,9 +1,13 @@
-use crate::model::collection::CollectionModel;
-use crate::model::item::ItemModel;
+use crate::{
+    common::{Paginate, Queryable},
+    graphql::types::CollectionItemQuery,
+    model::collection::CollectionModel,
+};
 use crate::{
     errors::{GraphqlError, GraphqlResult},
     model::CONNECTION,
 };
+use crate::{graphql::types::ItemAndCollection, model::item::ItemModel};
 use async_graphql::{ComplexObject, SimpleObject};
 use time::OffsetDateTime;
 use tracing::{event, Level};
@@ -87,30 +91,83 @@ impl Item {
     }
 }
 
-/// collection_id 相关
-impl Item {
-    /// 选择记录
-    pub fn query(collection_id: i64, offset: i64, limit: i64) -> GraphqlResult<Vec<Self>> {
+pub struct ItemQueryRunner {
+    query: CollectionItemQuery,
+    count: i64,
+}
+
+impl ItemQueryRunner {
+    pub async fn new(query: CollectionItemQuery) -> GraphqlResult<Self> {
+        let CollectionItemQuery {
+            id,
+            create_time,
+            update_time,
+            ..
+        } = query;
+        let collection_id = match id {
+            Some(id) => id,
+            None => {
+                return Ok(Self { query, count: 0 });
+            }
+        };
         let conn = &mut CONNECTION.get()?;
         //  判断父目录是否存在
         if !CollectionModel::exists(collection_id, conn)? {
             event!(Level::WARN, "目录不存在: {}", collection_id);
             return Err(GraphqlError::NotFound("目录", collection_id));
         }
-        let data = ItemModel::query(collection_id, offset, limit, conn)?
+        let count = ItemModel::count(collection_id, create_time, update_time, conn)?;
+        Ok(Self { query, count })
+    }
+}
+
+/// collection_id 相关
+impl Queryable for ItemQueryRunner {
+    type Item = ItemAndCollection;
+
+    type Error = GraphqlError;
+
+    async fn len(&self) -> Result<i64, Self::Error> {
+        Ok(self.count)
+    }
+
+    async fn query<P: Paginate>(&self, pagination: P) -> Result<Vec<Self::Item>, Self::Error> {
+        let offset = pagination.offset();
+        let CollectionItemQuery {
+            id,
+            create_time,
+            update_time,
+            pagination: source_pagination,
+        } = self.query;
+        let len = self.len().await?;
+        if len < offset {
+            event!(
+                Level::ERROR,
+                "全记录查询时页码太大 pagination: {:?} len: {} offset: {} offset_pagination: {:?}",
+                source_pagination,
+                len,
+                offset,
+                pagination
+            );
+            return Err(GraphqlError::PageSizeTooMore);
+        }
+        let limit = pagination.limit();
+        let conn = &mut CONNECTION.get()?;
+        let collection_id = match id {
+            Some(id) => id,
+            None => {
+                return Ok(vec![]);
+            }
+        };
+        //  判断父目录是否存在
+        if !CollectionModel::exists(collection_id, conn)? {
+            event!(Level::WARN, "目录不存在: {}", collection_id);
+            return Err(GraphqlError::NotFound("目录", collection_id));
+        }
+        let data = ItemModel::query(collection_id, create_time, update_time, offset, limit, conn)?
             .into_iter()
-            .map(Into::into)
+            .map(|d| ItemAndCollection::Item(Item::from(d)))
             .collect();
         Ok(data)
-    }
-    /// 记录数量
-    pub fn count(collection_id: i64) -> GraphqlResult<i64> {
-        let conn = &mut CONNECTION.get()?;
-        //  判断父目录是否存在
-        if !CollectionModel::exists(collection_id, conn)? {
-            event!(Level::WARN, "目录不存在: {}", collection_id);
-            return Err(GraphqlError::NotFound("目录", collection_id));
-        }
-        ItemModel::count(collection_id, conn)
     }
 }

@@ -15,7 +15,7 @@ tokio = { version = "1.35.1", features = ["full"] }
 
 # jwt
 jsonwebtoken = "9.2.0"
-serde = { version = "1.0.195", features = ["derive"] }
+serde = { version = "1.0.196", features = ["derive"] }
 
 # log
 tracing = "0.1.40"

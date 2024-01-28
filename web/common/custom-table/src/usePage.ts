@@ -1,3 +1,11 @@
+/*
+ * @Author: suxiaoshao suxiaoshao@gmail.com
+ * @Date: 2024-01-06 01:30:13
+ * @LastEditors: suxiaoshao suxiaoshao@gmail.com
+ * @LastEditTime: 2024-01-26 14:11:06
+ * @FilePath: /self-tools/web/common/custom-table/src/usePage.ts
+ * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
+ */
 import { useMemo, useState } from 'react';
 
 export interface PageState {
@@ -11,8 +19,8 @@ export interface PageState {
 }
 export function usePage({
   initPageIndex = 1,
-  initPageSize = 20,
-  pageSizeOptions: initPageSizeOptions = [5, 10, 20, 50, 100],
+  initPageSize = 10,
+  pageSizeOptions: initPageSizeOptions = [5, 10, 15, 20, 50, 100],
 }: {
   initPageSize?: number;
   initPageIndex?: number;
