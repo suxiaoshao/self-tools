@@ -33,6 +33,9 @@ pub enum GraphqlError {
     /// thrift 错误
     Thrift(String),
     ClientError(&'static thrift::ClientError),
+    /// novel 获取错误
+    NovelNetworkError(String),
+    NovelParseError,
 }
 
 impl IntoResponse for GraphqlError {
@@ -83,6 +86,8 @@ impl GraphqlError {
             GraphqlError::UsernameNotSet => "username未设置".to_string(),
             GraphqlError::Thrift(data) => format!("thrift 错误:{data}"),
             GraphqlError::ClientError(data) => format!("thrift client错误:{data}"),
+            GraphqlError::NovelNetworkError(err) => format!("小说网络错误:{err}"),
+            GraphqlError::NovelParseError => "小说解析错误".to_string(),
         }
     }
     pub fn code(&self) -> &str {
@@ -102,6 +107,8 @@ impl GraphqlError {
             GraphqlError::UsernameNotSet => "UsernameNotSet",
             GraphqlError::Thrift(_) => "Thrift",
             GraphqlError::ClientError(_) => "ThriftClient",
+            GraphqlError::NovelNetworkError(_) => "NovelNetworkError",
+            GraphqlError::NovelParseError => "NovelParseError",
         }
     }
 }
@@ -134,6 +141,8 @@ impl Clone for GraphqlError {
             GraphqlError::UsernameNotSet => Self::UsernameNotSet,
             GraphqlError::Thrift(data) => Self::Thrift(data.clone()),
             GraphqlError::ClientError(data) => Self::ClientError(data),
+            GraphqlError::NovelNetworkError(data) => Self::NovelNetworkError(data.clone()),
+            GraphqlError::NovelParseError => Self::NovelParseError,
         }
     }
 }
@@ -174,6 +183,17 @@ impl From<volo_thrift::error::ResponseError<ItemServiceCheckException>> for Grap
 impl From<&'static thrift::ClientError> for GraphqlError {
     fn from(value: &'static thrift::ClientError) -> Self {
         Self::ClientError(value)
+    }
+}
+
+impl From<novel_crawler::NovelError> for GraphqlError {
+    fn from(value: novel_crawler::NovelError) -> Self {
+        match value {
+            novel_crawler::NovelError::NetworkError(err) => {
+                Self::NovelNetworkError(err.to_string())
+            }
+            novel_crawler::NovelError::ParseError => Self::NovelParseError,
+        }
     }
 }
 

@@ -15,6 +15,7 @@ import { format } from 'time';
 import CollectionSelect from '../../components/CollectionSelect';
 import { GetNovelsQuery, GetNovelsQueryVariables, useDeleteNovelMutation, useGetNovelsQuery } from '../../graphql';
 import CreateNovelButton from './Components/CreateNovelButton';
+import { convertFormToVariables } from './utils';
 
 type Data = GetNovelsQuery['queryNovels'][0];
 
@@ -22,7 +23,7 @@ export default function Novel() {
   type FormData = GetNovelsQueryVariables;
   const { control, watch } = useForm<FormData>({ defaultValues: {} });
   const form = watch();
-  const { data, refetch } = useGetNovelsQuery({ variables: form });
+  const { data, refetch } = useGetNovelsQuery({ variables: convertFormToVariables(form) });
   const [deleteNovel] = useDeleteNovelMutation();
   const t = useI18n();
   const columns = useMemo<CustomColumnDefArray<Data>>(

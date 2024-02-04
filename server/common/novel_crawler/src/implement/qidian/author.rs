@@ -28,8 +28,8 @@ static SELECTOR_NOVEL_URLS: Lazy<Selector> = Lazy::new(|| {
     Selector::parse("#appContentWrap > div > div > div > div[class^=allBookListItem] > a").unwrap()
 });
 
-#[derive(Debug)]
-struct QDAuthor {
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct QDAuthor {
     id: String,
     name: String,
     description: String,

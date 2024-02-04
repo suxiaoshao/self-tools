@@ -19,8 +19,8 @@ static SELECTOR_NOVEL_IMAGE: Lazy<Selector> =
 static SELECTOR_NOVEL_CHAPTERS: Lazy<Selector> =
     Lazy::new(|| Selector::parse("#vite-plugin-ssr_pageContext").unwrap());
 
-#[derive(Debug)]
-pub(crate) struct QDNovel {
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct QDNovel {
     id: String,
     name: String,
     description: String,
@@ -38,7 +38,6 @@ impl NovelFn for QDNovel {
         let image = parse_image_src(&html, &SELECTOR_NOVEL_IMAGE)?;
         let image = format!("https:{image}");
         let chapters = parse_chapters(&chapter_html, novel_id)?;
-        dbg!(&chapters);
         Ok(Self {
             id: novel_id.to_string(),
             name,

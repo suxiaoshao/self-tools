@@ -18,16 +18,17 @@ use crate::{
 
 use super::novel::JJNovel;
 
-static SELECTOR_AUTHOR_NAME: Lazy<Selector> = Lazy::new(|| Selector::parse("font > b").unwrap());
+static SELECTOR_AUTHOR_NAME: Lazy<Selector> =
+    Lazy::new(|| Selector::parse("[itemprop=name]").unwrap());
 static SELECTOR_AUTHOR_DESCRIPTION: Lazy<Selector> =
     Lazy::new(|| Selector::parse("[itemprop=description]").unwrap());
 static SELECTOR_AUTHOR_IMAGE: Lazy<Selector> =
     Lazy::new(|| Selector::parse(".authordefaultimage").unwrap());
 static SELECTOR_NOVEL_URLS: Lazy<Selector> =
-    Lazy::new(|| Selector::parse("a[href^=\"onebook.php?novelid=\"]").unwrap());
+    Lazy::new(|| Selector::parse("a[href^=\"onebook.php?novelid=\"]:not(.tooltip)").unwrap());
 
-#[derive(Debug)]
-struct JJAuthor {
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct JJAuthor {
     id: String,
     name: String,
     description: String,
@@ -100,6 +101,7 @@ fn novel_id(input: &str) -> IResult<&str, String> {
 
 #[cfg(test)]
 mod test {
+
     use super::*;
 
     #[test]
@@ -114,6 +116,8 @@ mod test {
     #[tokio::test]
     async fn jj_author_test() -> anyhow::Result<()> {
         let author = JJAuthor::get_author_data("1000001").await?;
+        println!("{author:#?}");
+        let author = JJAuthor::get_author_data("809836").await?;
         println!("{author:#?}");
         Ok(())
     }

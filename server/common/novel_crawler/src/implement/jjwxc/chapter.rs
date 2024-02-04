@@ -1,7 +1,14 @@
+/*
+ * @Author: suxiaoshao suxiaoshao@gmail.com
+ * @Date: 2024-01-06 01:30:13
+ * @LastEditors: suxiaoshao suxiaoshao@gmail.com
+ * @LastEditTime: 2024-02-04 01:12:41
+ * @FilePath: /self-tools/server/common/novel_crawler/src/implement/jjwxc/chapter.rs
+ */
 use crate::chapter::ChapterFn;
 
-#[derive(Clone, Debug)]
-pub(crate) struct JJChapter {
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct JJChapter {
     novel_id: String,
     chapter_id: String,
     title: String,

@@ -5,6 +5,9 @@ use crate::errors::{NovelError, NovelResult};
 mod jjwxc;
 mod qidian;
 
+pub use jjwxc::*;
+pub use qidian::*;
+
 async fn get_doc(url: &str, charset: &str) -> NovelResult<Html> {
     let body = reqwest::get(url).await?.text_with_charset(charset).await?;
     let document = Html::parse_document(&body);

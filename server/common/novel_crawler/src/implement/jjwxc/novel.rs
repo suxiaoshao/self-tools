@@ -18,14 +18,10 @@ use crate::{
 
 use super::chapter::JJChapter;
 
-static SELECTOR_NOVEL_NAME: Lazy<Selector> = Lazy::new(|| {
-    Selector::parse(
-        "#oneboolt > tbody > tr:nth-child(1) > td > div:nth-child(3) > span > h1 > span",
-    )
-    .unwrap()
-});
+static SELECTOR_NOVEL_NAME: Lazy<Selector> =
+    Lazy::new(|| Selector::parse("[itemprop=name] > span").unwrap());
 static SELECTOR_NOVEL_DESCRIPTION: Lazy<Selector> =
-    Lazy::new(|| Selector::parse("#novelintro > font").unwrap());
+    Lazy::new(|| Selector::parse("#novelintro").unwrap());
 static SELECTOR_NOVEL_IMAGE: Lazy<Selector> =
     Lazy::new(|| Selector::parse("img.noveldefaultimage").unwrap());
 
@@ -36,8 +32,8 @@ static SELECTOR_CHAPTER_URLS: Lazy<Selector> = Lazy::new(|| {
     .unwrap()
 });
 
-#[derive(Debug)]
-pub(crate) struct JJNovel {
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct JJNovel {
     id: String,
     name: String,
     description: String,
@@ -136,6 +132,9 @@ mod test {
     #[tokio::test]
     async fn jj_novel_test() -> anyhow::Result<()> {
         let novel_id = "1485737";
+        let novel = super::JJNovel::get_novel_data(novel_id).await?;
+        println!("{novel:#?}");
+        let novel_id = "6357210";
         let novel = super::JJNovel::get_novel_data(novel_id).await?;
         println!("{novel:#?}");
         Ok(())
