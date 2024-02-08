@@ -5,6 +5,8 @@ schema {
   mutation: MutationRoot
 }
 
+union DraftAuthorInfo = JjAuthor | QdAuthor
+
 type Author {
   avatar: String!
   createTime: Int!
@@ -27,6 +29,27 @@ type Collection {
   parentId: Int
   path: String!
   updateTime: Int!
+}
+
+type JjAuthor {
+  description: String!
+  image: String!
+  name: String!
+  novels: [JjNovel!]!
+  url: String!
+}
+
+type JjChapter {
+  title: String!
+  url: String!
+}
+
+type JjNovel {
+  chapters: [JjChapter!]!
+  description: String!
+  image: String!
+  name: String!
+  url: String!
 }
 
 type MutationRoot {
@@ -60,7 +83,30 @@ type Novel {
   updateTime: Int!
 }
 
+type QdAuthor {
+  description: String!
+  image: String!
+  name: String!
+  novels: [QdNovel!]!
+  url: String!
+}
+
+type QdChapter {
+  title: String!
+  url: String!
+}
+
+type QdNovel {
+  chapters: [QdChapter!]!
+  description: String!
+  image: String!
+  name: String!
+  url: String!
+}
+
 type QueryRoot {
+  "后端 fetch 小说详情"
+  fetchAuthor(id: String!, novelSite: NovelSite!): DraftAuthorInfo!
   "获取目录详情"
   getCollection(id: Int!): Collection!
   "获取目录列表"
@@ -81,6 +127,11 @@ type Tag {
   id: Int!
   name: String!
   updateTime: Int!
+}
+
+enum NovelSite {
+  JJWXC
+  QIDIAN
 }
 
 enum ReadStatus {

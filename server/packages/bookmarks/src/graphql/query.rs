@@ -2,7 +2,7 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-01-06 01:30:13
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-02-04 01:19:36
+ * @LastEditTime: 2024-02-08 16:44:35
  * @FilePath: /self-tools/server/packages/bookmarks/src/graphql/query.rs
  */
 use async_graphql::Object;
@@ -16,7 +16,7 @@ use crate::{
 use super::{
     guard::AuthGuard,
     input::{NovelSite, TagMatch},
-    output::DraftAuthorInfo,
+    output::{DraftAuthorInfo, DraftNovelInfo},
     validator::TagMatchValidator,
 };
 
@@ -79,7 +79,7 @@ impl QueryRoot {
         let novel = Novel::get(id)?;
         Ok(novel)
     }
-    /// 后端 fetch 小说详情
+    /// 后端 fetch 作者详情
     #[graphql(guard = "AuthGuard::default()")]
     async fn fetch_author(
         &self,
@@ -88,5 +88,15 @@ impl QueryRoot {
     ) -> GraphqlResult<DraftAuthorInfo> {
         let author = DraftAuthorInfo::new(id, novel_site).await?;
         Ok(author)
+    }
+    /// 后端 fetch 小说详情
+    #[graphql(guard = "AuthGuard::default()")]
+    async fn fetch_novel(
+        &self,
+        id: String,
+        novel_site: NovelSite,
+    ) -> GraphqlResult<DraftNovelInfo> {
+        let novel = DraftNovelInfo::new(id, novel_site).await?;
+        Ok(novel)
     }
 }

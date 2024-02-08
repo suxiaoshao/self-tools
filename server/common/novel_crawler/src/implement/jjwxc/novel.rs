@@ -8,12 +8,13 @@ use nom::{
     IResult,
 };
 use once_cell::sync::Lazy;
-use scraper::{Html, Selector};
+use scraper::{ElementRef, Html, Selector};
 
 use crate::{
     errors::{NovelError, NovelResult},
     implement::{get_doc, parse_image_src, parse_inner_html, parse_text},
     novel::NovelFn,
+    JJAuthor,
 };
 
 use super::chapter::JJChapter;
@@ -32,6 +33,10 @@ static SELECTOR_CHAPTER_URLS: Lazy<Selector> = Lazy::new(|| {
     .unwrap()
 });
 
+static SELECTOR_AUTHOR: Lazy<Selector> = Lazy::new(|| {
+    Selector::parse("#oneboolt > tbody > tr > td > div:nth-child(3) > h2 > a").unwrap()
+});
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct JJNovel {
     id: String,
@@ -39,10 +44,12 @@ pub struct JJNovel {
     description: String,
     image: String,
     chapters: Vec<JJChapter>,
+    author_id: String,
 }
 
 impl NovelFn for JJNovel {
     type Chapter = JJChapter;
+    type Author = JJAuthor;
     async fn get_novel_data(novel_id: &str) -> NovelResult<Self> {
         let url = format!("https://www.jjwxc.net/onebook.php?novelid={novel_id}");
         let html = get_doc(&url, "gb18030").await?;
@@ -50,6 +57,11 @@ impl NovelFn for JJNovel {
         let description = parse_text(&html, &SELECTOR_NOVEL_DESCRIPTION)?;
         let image = parse_image_src(&html, &SELECTOR_NOVEL_IMAGE)?;
         let chapters = parse_chapters(&html, &SELECTOR_CHAPTER_URLS, novel_id)?;
+        let author_id = html
+            .select(&SELECTOR_AUTHOR)
+            .next()
+            .ok_or(NovelError::ParseError)
+            .and_then(parse_author)?;
 
         Ok(Self {
             id: novel_id.to_string(),
@@ -57,6 +69,7 @@ impl NovelFn for JJNovel {
             description,
             image,
             chapters,
+            author_id,
         })
     }
 
@@ -76,6 +89,10 @@ impl NovelFn for JJNovel {
         self.image.as_str()
     }
 
+    fn author_id(&self) -> &str {
+        self.author_id.as_str()
+    }
+
     async fn chapters(&self) -> NovelResult<Vec<Self::Chapter>> {
         Ok(self.chapters.clone())
     }
@@ -92,7 +109,6 @@ fn parse_chapter_id(url: &str) -> IResult<&str, String> {
 }
 
 fn parse_chapters(html: &Html, selector: &Selector, novel_id: &str) -> NovelResult<Vec<JJChapter>> {
-    use scraper::ElementRef;
     fn map_chapter(element: ElementRef) -> NovelResult<(String, String)> {
         let value = element.value();
         let url = value
@@ -114,6 +130,25 @@ fn parse_chapters(html: &Html, selector: &Selector, novel_id: &str) -> NovelResu
     Ok(element_ref)
 }
 
+fn parse_author(element_ref: ElementRef) -> NovelResult<String> {
+    let href = element_ref
+        .value()
+        .attr("href")
+        .ok_or(NovelError::ParseError)?;
+
+    let (_, id) = parse_author_id(href)?;
+    Ok(id)
+}
+
+fn parse_author_id(input: &str) -> IResult<&str, String> {
+    let (input, (_, data, _)) = all_consuming(tuple((
+        tag("http://www.jjwxc.net/oneauthor.php?authorid="),
+        take_while(|_| true),
+        eof,
+    )))(input)?;
+    Ok((input, data.to_string()))
+}
+
 #[cfg(test)]
 mod test {
     use crate::novel::NovelFn;
@@ -126,6 +161,17 @@ mod test {
         let input = "http://my.jjwxc.net/onebook_vip.php?novelid=4375938&chapterid=25";
         let (_, data) = super::parse_chapter_id(input)?;
         assert_eq!(data, "25");
+        Ok(())
+    }
+
+    #[test]
+    fn parse_author_id_test() -> anyhow::Result<()> {
+        let input = "http://www.jjwxc.net/oneauthor.php?authorid=148573";
+        let (_, data) = super::parse_author_id(input)?;
+        assert_eq!(data, "148573");
+        let input = "http://www.jjwxc.net/oneauthor.php?authorid=809836";
+        let (_, data) = super::parse_author_id(input)?;
+        assert_eq!(data, "809836");
         Ok(())
     }
 

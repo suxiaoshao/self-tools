@@ -1,18 +1,20 @@
-use std::ops::Deref;
-
 /*
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-02-02 20:44:22
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-02-04 01:13:47
+ * @LastEditTime: 2024-02-06 20:26:11
  * @FilePath: /self-tools/server/packages/bookmarks/src/graphql/output/novel.rs
  */
 use async_graphql::Object;
 use novel_crawler::{JJNovel as JJNovelInner, NovelFn, QDNovel as QDNovelInner};
+use std::ops::Deref;
 
 use crate::errors::GraphqlResult;
 
-use super::chapter::{JjChapter, QdChapter};
+use super::{
+    author::{JjAuthor, QdAuthor},
+    chapter::{JjChapter, QdChapter},
+};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct QdNovel(pub QDNovelInner);
@@ -34,6 +36,10 @@ impl QdNovel {
     async fn chapters(&self) -> GraphqlResult<Vec<QdChapter>> {
         let data = self.0.chapters().await?;
         Ok(data.into_iter().map(QdChapter::from).collect())
+    }
+    async fn author(&self) -> GraphqlResult<QdAuthor> {
+        let data = self.0.author().await?;
+        Ok(data.into())
     }
 }
 
@@ -85,5 +91,9 @@ impl JjNovel {
     async fn chapters(&self) -> GraphqlResult<Vec<JjChapter>> {
         let data = self.0.chapters().await?;
         Ok(data.into_iter().map(JjChapter::from).collect())
+    }
+    async fn author(&self) -> GraphqlResult<JjAuthor> {
+        let data = self.0.author().await?;
+        Ok(data.into())
     }
 }

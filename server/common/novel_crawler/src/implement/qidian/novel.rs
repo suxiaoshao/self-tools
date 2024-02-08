@@ -1,11 +1,19 @@
 use once_cell::sync::Lazy;
-use scraper::{Html, Selector};
+use scraper::{ElementRef, Html, Selector};
 use serde::{Deserialize, Serialize};
 
 use crate::{
     errors::NovelResult,
     implement::{parse_image_src, parse_text, text_from_url},
     novel::NovelFn,
+    NovelError, QDAuthor,
+};
+
+use nom::{
+    bytes::{complete::tag, streaming::take_until},
+    combinator::{all_consuming, eof},
+    sequence::tuple,
+    IResult,
 };
 
 use super::chapter::QDChapter;
@@ -18,6 +26,8 @@ static SELECTOR_NOVEL_IMAGE: Lazy<Selector> =
     Lazy::new(|| Selector::parse("img.detail__header-bg").unwrap());
 static SELECTOR_NOVEL_CHAPTERS: Lazy<Selector> =
     Lazy::new(|| Selector::parse("#vite-plugin-ssr_pageContext").unwrap());
+static SELECTOR_AUTHOR: Lazy<Selector> =
+    Lazy::new(|| Selector::parse("a.detail__header-detail__author-link").unwrap());
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct QDNovel {
@@ -26,24 +36,33 @@ pub struct QDNovel {
     description: String,
     image: String,
     chapters: Vec<QDChapter>,
+    author_id: String,
 }
 
 impl NovelFn for QDNovel {
     type Chapter = QDChapter;
+    type Author = QDAuthor;
     async fn get_novel_data(novel_id: &str) -> NovelResult<Self> {
         let (html, chapter_html) = Self::get_doc(novel_id).await?;
+        std::fs::write("html.html", &html).unwrap();
         let html = Html::parse_document(&html);
         let name = parse_text(&html, &SELECTOR_NOVEL_NAME)?;
         let description = parse_text(&html, &SELECTOR_NOVEL_DESCRIPTION)?;
         let image = parse_image_src(&html, &SELECTOR_NOVEL_IMAGE)?;
         let image = format!("https:{image}");
-        let chapters = parse_chapters(&chapter_html, novel_id)?;
+        let chapters: Vec<QDChapter> = parse_chapters(&chapter_html, novel_id)?;
+        let author_id = html
+            .select(&SELECTOR_AUTHOR)
+            .next()
+            .ok_or(NovelError::ParseError)
+            .and_then(parse_author)?;
         Ok(Self {
             id: novel_id.to_string(),
             name,
             description,
             image,
             chapters,
+            author_id,
         })
     }
 
@@ -61,6 +80,9 @@ impl NovelFn for QDNovel {
 
     fn image(&self) -> &str {
         self.image.as_str()
+    }
+    fn author_id(&self) -> &str {
+        self.author_id.as_str()
     }
 
     async fn chapters(&self) -> NovelResult<Vec<Self::Chapter>> {
@@ -139,6 +161,25 @@ fn parse_chapters(html: &str, novel_id: &str) -> NovelResult<Vec<QDChapter>> {
     Ok(data)
 }
 
+fn parse_author(element_ref: ElementRef) -> NovelResult<String> {
+    let href = element_ref
+        .value()
+        .attr("href")
+        .ok_or(NovelError::ParseError)?;
+
+    let (_, id) = parse_author_id(href)?;
+    Ok(id)
+}
+
+fn parse_author_id(input: &str) -> IResult<&str, String> {
+    let (input, (_, data, _, _)) = all_consuming(tuple((
+        tag("//m.qidian.com/author/"),
+        take_until("/"),
+        tag("/"),
+        eof,
+    )))(input)?;
+    Ok((input, data.to_string()))
+}
 #[cfg(test)]
 mod test {
     use crate::novel::NovelFn;
@@ -148,6 +189,17 @@ mod test {
         let novel_id = "1029006481";
         let novel = super::QDNovel::get_novel_data(novel_id).await?;
         println!("{novel:#?}");
+        Ok(())
+    }
+
+    #[test]
+    fn parse_author_id_test() -> anyhow::Result<()> {
+        let input = "//m.qidian.com/author/101010/";
+        let (_, data) = super::parse_author_id(input)?;
+        assert_eq!(data, "101010");
+        let input = "//m.qidian.com/author/102020/";
+        let (_, data) = super::parse_author_id(input)?;
+        assert_eq!(data, "102020");
         Ok(())
     }
 }
