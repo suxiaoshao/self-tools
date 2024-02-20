@@ -2,7 +2,7 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-01-06 01:30:13
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-01-22 18:26:09
+ * @LastEditTime: 2024-02-20 16:24:35
  * @FilePath: /self-tools/server/packages/collections/src/graphql/mutation.rs
  */
 use async_graphql::Object;
@@ -18,7 +18,7 @@ pub struct MutationRoot;
 #[Object]
 impl MutationRoot {
     /// 创建目录
-    #[graphql(guard = "AuthGuard::default()")]
+    #[graphql(guard = "AuthGuard")]
     async fn create_collection(
         &self,
         #[graphql(validator(custom = "DirNameValidator"))] name: String,
@@ -29,13 +29,13 @@ impl MutationRoot {
         Ok(new_directory)
     }
     /// 删除目录
-    #[graphql(guard = "AuthGuard::default()")]
+    #[graphql(guard = "AuthGuard")]
     async fn delete_collection(&self, id: i64) -> GraphqlResult<Collection> {
         let deleted_directory = Collection::delete(id)?;
         Ok(deleted_directory)
     }
     /// 修改目录
-    #[graphql(guard = "AuthGuard::default()")]
+    #[graphql(guard = "AuthGuard")]
     async fn update_collection(
         &self,
         id: i64,
@@ -46,7 +46,7 @@ impl MutationRoot {
         Ok(updated_directory)
     }
     /// 创建记录
-    #[graphql(guard = "AuthGuard::default()")]
+    #[graphql(guard = "AuthGuard")]
     async fn create_item(
         &self,
         name: String,
@@ -56,13 +56,13 @@ impl MutationRoot {
         Item::create(name, content, collection_id)
     }
     /// 删除记录
-    #[graphql(guard = "AuthGuard::default()")]
+    #[graphql(guard = "AuthGuard")]
     async fn delete_item(&self, id: i64) -> GraphqlResult<Item> {
         let deleted_item = Item::delete(id)?;
         Ok(deleted_item)
     }
     /// 修改记录
-    #[graphql(guard = "AuthGuard::default()")]
+    #[graphql(guard = "AuthGuard")]
     async fn update_item(&self, id: i64, name: String, content: String) -> GraphqlResult<Item> {
         let updated_item = Item::update(id, &name, &content)?;
         Ok(updated_item)

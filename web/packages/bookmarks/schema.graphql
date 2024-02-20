@@ -7,6 +7,8 @@ schema {
 
 union DraftAuthorInfo = JjAuthor | QdAuthor
 
+union DraftNovelInfo = JjNovel | QdNovel
+
 type Author {
   avatar: String!
   createTime: Int!
@@ -45,6 +47,7 @@ type JjChapter {
 }
 
 type JjNovel {
+  author: JjAuthor!
   chapters: [JjChapter!]!
   description: String!
   image: String!
@@ -97,6 +100,7 @@ type QdChapter {
 }
 
 type QdNovel {
+  author: QdAuthor!
   chapters: [QdChapter!]!
   description: String!
   image: String!
@@ -105,8 +109,10 @@ type QdNovel {
 }
 
 type QueryRoot {
-  "后端 fetch 小说详情"
+  "后端 fetch 作者详情"
   fetchAuthor(id: String!, novelSite: NovelSite!): DraftAuthorInfo!
+  "后端 fetch 小说详情"
+  fetchNovel(id: String!, novelSite: NovelSite!): DraftNovelInfo!
   "获取目录详情"
   getCollection(id: Int!): Collection!
   "获取目录列表"
