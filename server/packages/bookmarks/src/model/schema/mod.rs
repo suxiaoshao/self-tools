@@ -1,3 +1,10 @@
+/*
+ * @Author: suxiaoshao suxiaoshao@gmail.com
+ * @Date: 2024-01-06 01:30:13
+ * @LastEditors: suxiaoshao suxiaoshao@gmail.com
+ * @LastEditTime: 2024-02-27 05:36:02
+ * @FilePath: /self-tools/server/packages/bookmarks/src/model/schema/mod.rs
+ */
 // @generated automatically by Diesel CLI.
 pub mod custom_type;
 
@@ -22,9 +29,10 @@ diesel::table! {
 diesel::table! {
     chapter (id) {
         id -> Int8,
+        #[max_length = 255]
         title -> Varchar,
         url -> Text,
-        content -> Text,
+        content -> Nullable<Text>,
         novel_id -> Int8,
         create_time -> Timestamptz,
         update_time -> Timestamptz,
@@ -65,6 +73,7 @@ diesel::table! {
 diesel::table! {
     tag (id) {
         id -> Int8,
+        #[max_length = 20]
         name -> Varchar,
         collection_id -> Nullable<Int8>,
         create_time -> Timestamptz,

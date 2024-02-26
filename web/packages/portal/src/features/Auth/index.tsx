@@ -1,3 +1,10 @@
+/*
+ * @Author: suxiaoshao suxiaoshao@gmail.com
+ * @Date: 2024-01-06 01:30:13
+ * @LastEditors: suxiaoshao suxiaoshao@gmail.com
+ * @LastEditTime: 2024-02-26 05:17:45
+ * @FilePath: /self-tools/web/packages/portal/src/features/Auth/index.tsx
+ */
 import { Avatar, Box, Button, Container, TextField, Typography } from '@mui/material';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { LockOutlined } from '@mui/icons-material';
@@ -64,7 +71,6 @@ export default function Login() {
               id="username"
               label={t('username')}
               autoComplete="username"
-              autoFocus
               {...register('username', { required: true })}
             />
             <TextField

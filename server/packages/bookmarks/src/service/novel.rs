@@ -52,6 +52,11 @@ impl Novel {
             Ok(None)
         }
     }
+
+    /// 获取小说章节
+    async fn chapters(&self) -> GraphqlResult<Vec<super::chapter::Chapter>> {
+        super::chapter::Chapter::get_by_novel_id(self.id)
+    }
 }
 
 impl From<NovelModel> for Novel {

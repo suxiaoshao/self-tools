@@ -44,7 +44,6 @@ impl NovelFn for QDNovel {
     type Author = QDAuthor;
     async fn get_novel_data(novel_id: &str) -> NovelResult<Self> {
         let (html, chapter_html) = Self::get_doc(novel_id).await?;
-        std::fs::write("html.html", &html).unwrap();
         let html = Html::parse_document(&html);
         let name = parse_text(&html, &SELECTOR_NOVEL_NAME)?;
         let description = parse_text(&html, &SELECTOR_NOVEL_DESCRIPTION)?;

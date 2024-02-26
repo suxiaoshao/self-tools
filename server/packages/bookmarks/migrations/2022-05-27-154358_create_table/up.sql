@@ -48,7 +48,7 @@ create table chapter
     id          bigserial primary key,
     title       varchar(255) not null,
     url         text         not null,
-    content     text         not null,
+    content     text,
     novel_id    bigint       not null,
     create_time timestamptz  not null,
     update_time timestamptz  not null

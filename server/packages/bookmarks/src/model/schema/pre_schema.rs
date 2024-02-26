@@ -21,9 +21,10 @@ diesel::table! {
 diesel::table! {
     chapter (id) {
         id -> Int8,
+        #[max_length = 255]
         title -> Varchar,
         url -> Text,
-        content -> Text,
+        content -> Nullable<Text>,
         novel_id -> Int8,
         create_time -> Timestamptz,
         update_time -> Timestamptz,
@@ -64,6 +65,7 @@ diesel::table! {
 diesel::table! {
     tag (id) {
         id -> Int8,
+        #[max_length = 20]
         name -> Varchar,
         collection_id -> Nullable<Int8>,
         create_time -> Timestamptz,
