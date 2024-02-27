@@ -2,8 +2,8 @@ use crate::errors::GraphqlResult;
 
 use super::schema::collection::{self};
 use super::CONNECTION;
-use chrono::NaiveDateTime;
 use diesel::prelude::*;
+use time::OffsetDateTime;
 
 #[derive(Queryable)]
 #[cfg_attr(test, derive(Debug))]
@@ -13,8 +13,8 @@ pub struct CollectionModel {
     pub path: String,
     pub parent_id: Option<i64>,
     pub description: Option<String>,
-    pub create_time: NaiveDateTime,
-    pub update_time: NaiveDateTime,
+    pub create_time: OffsetDateTime,
+    pub update_time: OffsetDateTime,
 }
 
 #[derive(Insertable)]
@@ -24,8 +24,8 @@ struct NewCollection<'a> {
     pub path: &'a str,
     pub parent_id: Option<i64>,
     pub description: Option<String>,
-    pub create_time: NaiveDateTime,
-    pub update_time: NaiveDateTime,
+    pub create_time: OffsetDateTime,
+    pub update_time: OffsetDateTime,
 }
 
 /// path 相关
@@ -37,7 +37,7 @@ impl CollectionModel {
         parent_id: Option<i64>,
         description: Option<String>,
     ) -> GraphqlResult<Self> {
-        let now = chrono::Local::now().naive_local();
+        let now = time::OffsetDateTime::now_utc();
         let new_collection = NewCollection {
             name,
             path,

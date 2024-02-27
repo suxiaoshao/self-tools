@@ -2,11 +2,11 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-01-06 01:30:13
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-02-27 05:48:33
+ * @LastEditTime: 2024-02-28 03:39:40
  * @FilePath: /self-tools/server/packages/bookmarks/src/model/chapter.rs
  */
-use chrono::NaiveDateTime;
 use diesel::prelude::*;
+use time::OffsetDateTime;
 
 use super::schema::chapter;
 use crate::errors::GraphqlResult;
@@ -18,8 +18,8 @@ pub struct ChapterModel {
     pub url: String,
     pub content: Option<String>,
     pub novel_id: i64,
-    pub create_time: NaiveDateTime,
-    pub update_time: NaiveDateTime,
+    pub create_time: OffsetDateTime,
+    pub update_time: OffsetDateTime,
 }
 
 /// 小说章节

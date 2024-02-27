@@ -2,8 +2,8 @@ use std::collections::HashSet;
 
 use super::schema::{custom_type::ReadStatus, novel};
 use crate::{errors::GraphqlResult, graphql::input::TagMatch};
-use chrono::NaiveDateTime;
 use diesel::prelude::*;
+use time::OffsetDateTime;
 
 #[derive(Queryable)]
 pub struct NovelModel {
@@ -16,8 +16,8 @@ pub struct NovelModel {
     pub tags: Vec<i64>,
     pub collection_id: Option<i64>,
     pub status: ReadStatus,
-    pub create_time: NaiveDateTime,
-    pub update_time: NaiveDateTime,
+    pub create_time: OffsetDateTime,
+    pub update_time: OffsetDateTime,
 }
 #[derive(Insertable)]
 #[diesel(table_name = novel)]
@@ -30,8 +30,8 @@ pub struct NewNovel<'a> {
     pub tags: &'a [i64],
     pub collection_id: Option<i64>,
     pub status: ReadStatus,
-    pub create_time: NaiveDateTime,
-    pub update_time: NaiveDateTime,
+    pub create_time: OffsetDateTime,
+    pub update_time: OffsetDateTime,
 }
 
 /// id 相关
@@ -45,7 +45,7 @@ impl NovelModel {
         tags: &[i64],
         collection_id: Option<i64>,
     ) -> GraphqlResult<Self> {
-        let now = chrono::Local::now().naive_local();
+        let now = time::OffsetDateTime::now_utc();
         let new_novel = NewNovel {
             name,
             author_id,

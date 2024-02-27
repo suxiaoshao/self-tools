@@ -3,31 +3,31 @@ use std::collections::HashMap;
 use crate::{errors::GraphqlResult, model::collection::CollectionModel};
 
 use super::schema::tag;
-use chrono::NaiveDateTime;
 use diesel::prelude::*;
+use time::OffsetDateTime;
 
 #[derive(Queryable)]
 pub struct TagModel {
     pub id: i64,
     pub name: String,
     pub collection_id: Option<i64>,
-    pub create_time: NaiveDateTime,
-    pub update_time: NaiveDateTime,
+    pub create_time: OffsetDateTime,
+    pub update_time: OffsetDateTime,
 }
 #[derive(Insertable)]
 #[diesel(table_name = tag)]
 pub struct NewTag {
     pub name: String,
     pub collection_id: Option<i64>,
-    pub create_time: NaiveDateTime,
-    pub update_time: NaiveDateTime,
+    pub create_time: OffsetDateTime,
+    pub update_time: OffsetDateTime,
 }
 
 /// id 相关
 impl TagModel {
     /// 创建标签
     pub fn create(name: &str, collection_id: Option<i64>) -> GraphqlResult<Self> {
-        let now = chrono::Local::now().naive_local();
+        let now = time::OffsetDateTime::now_utc();
         let new_tag = NewTag {
             name: name.to_string(),
             collection_id,

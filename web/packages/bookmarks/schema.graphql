@@ -11,11 +11,22 @@ union DraftNovelInfo = JjNovel | QdNovel
 
 type Author {
   avatar: String!
-  createTime: Int!
+  createTime: DateTime!
   description: String!
   id: Int!
   name: String!
-  updateTime: Int!
+  updateTime: DateTime!
+  url: String!
+}
+
+type Chapter {
+  content: String
+  createTime: DateTime!
+  id: Int!
+  novel: Novel!
+  novelId: Int!
+  title: String!
+  updateTime: DateTime!
   url: String!
 }
 
@@ -24,13 +35,13 @@ type Collection {
   ancestors: [Collection!]!
   "获取子列表"
   children: [Collection!]!
-  createTime: Int!
+  createTime: DateTime!
   description: String
   id: Int!
   name: String!
   parentId: Int
   path: String!
-  updateTime: Int!
+  updateTime: DateTime!
 }
 
 type JjAuthor {
@@ -76,14 +87,16 @@ type MutationRoot {
 
 type Novel {
   author: Author!
+  "获取小说章节"
+  chapters: [Chapter!]!
   collection: Collection
-  createTime: Int!
+  createTime: DateTime!
   description: String!
   id: Int!
   name: String!
   status: ReadStatus!
   tags: [Tag!]!
-  updateTime: Int!
+  updateTime: DateTime!
 }
 
 type QdAuthor {
@@ -129,10 +142,10 @@ type QueryRoot {
 
 type Tag {
   collectionId: Int
-  createTime: Int!
+  createTime: DateTime!
   id: Int!
   name: String!
-  updateTime: Int!
+  updateTime: DateTime!
 }
 
 enum NovelSite {
@@ -145,6 +158,16 @@ enum ReadStatus {
   READING
   UNREAD
 }
+
+"""
+A datetime with timezone offset.
+
+The input is a string in RFC3339 format, e.g. "2022-01-12T04:00:19.12345Z"
+or "2022-01-12T04:00:19+03:00". The output is also a string in RFC3339
+format, but it is always normalized to the UTC (Z) offset, e.g.
+"2022-01-12T04:00:19.12345Z".
+"""
+scalar DateTime
 
 input CreateNovelInput {
   authorId: Int!

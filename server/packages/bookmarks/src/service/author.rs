@@ -1,4 +1,12 @@
+/*
+ * @Author: suxiaoshao suxiaoshao@gmail.com
+ * @Date: 2024-01-06 01:30:13
+ * @LastEditors: suxiaoshao suxiaoshao@gmail.com
+ * @LastEditTime: 2024-02-28 03:41:53
+ * @FilePath: /self-tools/server/packages/bookmarks/src/service/author.rs
+ */
 use async_graphql::SimpleObject;
+use time::OffsetDateTime;
 use tracing::{event, Level};
 
 use crate::{
@@ -13,8 +21,8 @@ pub struct Author {
     pub name: String,
     pub avatar: String,
     pub description: String,
-    pub create_time: i64,
-    pub update_time: i64,
+    pub create_time: OffsetDateTime,
+    pub update_time: OffsetDateTime,
 }
 
 impl From<AuthorModel> for Author {
@@ -25,8 +33,8 @@ impl From<AuthorModel> for Author {
             name: value.name,
             avatar: value.avatar,
             description: value.description,
-            create_time: value.create_time.timestamp_millis(),
-            update_time: value.update_time.timestamp_millis(),
+            create_time: value.create_time,
+            update_time: value.update_time,
         }
     }
 }

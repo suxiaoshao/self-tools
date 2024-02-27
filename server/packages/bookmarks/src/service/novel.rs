@@ -9,6 +9,7 @@ use crate::{
 };
 use crate::{graphql::input::TagMatch, model::author::AuthorModel};
 use async_graphql::{ComplexObject, SimpleObject};
+use time::OffsetDateTime;
 use tracing::{event, Level};
 
 use super::{author::Author, collection::Collection};
@@ -28,8 +29,8 @@ pub struct Novel {
     #[graphql(skip)]
     pub collection_id: Option<i64>,
     pub status: ReadStatus,
-    pub create_time: i64,
-    pub update_time: i64,
+    pub create_time: OffsetDateTime,
+    pub update_time: OffsetDateTime,
 }
 
 #[ComplexObject]
@@ -70,8 +71,8 @@ impl From<NovelModel> for Novel {
             tags: value.tags,
             collection_id: value.collection_id,
             status: value.status,
-            create_time: value.create_time.timestamp_millis(),
-            update_time: value.update_time.timestamp_millis(),
+            create_time: value.create_time,
+            update_time: value.update_time,
         }
     }
 }

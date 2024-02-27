@@ -1,5 +1,5 @@
 import { Refresh } from '@mui/icons-material';
-import { Box, IconButton } from '@mui/material';
+import { Box, IconButton, Link } from '@mui/material';
 import {
   CustomColumnDefArray,
   CustomTable,
@@ -11,15 +11,16 @@ import {
 import { useI18n } from 'i18n';
 import { useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
+import { Link as RouterLink } from 'react-router-dom';
 import { format } from 'time';
-import CollectionSelect from '../../components/CollectionSelect';
-import { GetNovelsQuery, GetNovelsQueryVariables, useDeleteNovelMutation, useGetNovelsQuery } from '../../graphql';
+import CollectionSelect from '../../../components/CollectionSelect';
+import { GetNovelsQuery, GetNovelsQueryVariables, useDeleteNovelMutation, useGetNovelsQuery } from '../../../graphql';
 import CreateNovelButton from './Components/CreateNovelButton';
 import { convertFormToVariables } from './utils';
 
 type Data = GetNovelsQuery['queryNovels'][0];
 
-export default function Novel() {
+export default function NovelList() {
   type FormData = GetNovelsQueryVariables;
   const { control, watch } = useForm<FormData>({ defaultValues: {} });
   const form = watch();
@@ -31,7 +32,12 @@ export default function Novel() {
       {
         header: t('name'),
         id: 'name',
-        accessorKey: 'name',
+        accessorFn: ({ id, name }) => (
+          <Link to={`/bookmarks/novel/${id}`} underline="hover" component={RouterLink}>
+            {name}
+          </Link>
+        ),
+        cell: (context) => context.getValue(),
       },
       {
         header: t('description'),

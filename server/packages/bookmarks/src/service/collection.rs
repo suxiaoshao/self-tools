@@ -1,4 +1,5 @@
 use async_graphql::*;
+use time::OffsetDateTime;
 use tracing::{event, Level};
 
 use crate::{
@@ -16,8 +17,8 @@ pub struct Collection {
     pub path: String,
     pub parent_id: Option<i64>,
     pub description: Option<String>,
-    pub create_time: i64,
-    pub update_time: i64,
+    pub create_time: OffsetDateTime,
+    pub update_time: OffsetDateTime,
 }
 #[ComplexObject]
 impl Collection {
@@ -41,8 +42,8 @@ impl From<CollectionModel> for Collection {
             id: model.id,
             parent_id: model.parent_id,
             description: model.description,
-            create_time: model.create_time.timestamp_millis(),
-            update_time: model.update_time.timestamp_millis(),
+            create_time: model.create_time,
+            update_time: model.update_time,
         }
     }
 }

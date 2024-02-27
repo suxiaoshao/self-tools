@@ -1,5 +1,6 @@
 use async_graphql::SimpleObject;
 use std::collections::HashSet;
+use time::OffsetDateTime;
 use tracing::{event, Level};
 
 use crate::model::collection::CollectionModel;
@@ -13,8 +14,8 @@ pub struct Tag {
     pub id: i64,
     pub name: String,
     pub collection_id: Option<i64>,
-    pub create_time: i64,
-    pub update_time: i64,
+    pub create_time: OffsetDateTime,
+    pub update_time: OffsetDateTime,
 }
 
 impl From<TagModel> for Tag {
@@ -23,8 +24,8 @@ impl From<TagModel> for Tag {
             id: value.id,
             name: value.name,
             collection_id: value.collection_id,
-            create_time: value.create_time.timestamp_millis(),
-            update_time: value.update_time.timestamp_millis(),
+            create_time: value.create_time,
+            update_time: value.update_time,
         }
     }
 }

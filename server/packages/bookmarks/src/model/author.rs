@@ -1,8 +1,15 @@
+/*
+ * @Author: suxiaoshao suxiaoshao@gmail.com
+ * @Date: 2024-01-06 01:30:13
+ * @LastEditors: suxiaoshao suxiaoshao@gmail.com
+ * @LastEditTime: 2024-02-28 03:38:42
+ * @FilePath: /self-tools/server/packages/bookmarks/src/model/author.rs
+ */
 use crate::errors::GraphqlResult;
 
 use super::schema::author;
-use chrono::NaiveDateTime;
 use diesel::prelude::*;
+use time::OffsetDateTime;
 
 #[derive(Queryable)]
 pub struct AuthorModel {
@@ -11,8 +18,8 @@ pub struct AuthorModel {
     pub name: String,
     pub avatar: String,
     pub description: String,
-    pub create_time: NaiveDateTime,
-    pub update_time: NaiveDateTime,
+    pub create_time: OffsetDateTime,
+    pub update_time: OffsetDateTime,
 }
 #[derive(Insertable)]
 #[diesel(table_name = author)]
@@ -21,15 +28,15 @@ pub struct NewAuthor<'a> {
     pub name: &'a str,
     pub avatar: &'a str,
     pub description: &'a str,
-    pub create_time: NaiveDateTime,
-    pub update_time: NaiveDateTime,
+    pub create_time: OffsetDateTime,
+    pub update_time: OffsetDateTime,
 }
 
 /// id 相关的操作
 impl AuthorModel {
     /// 创建作者
     pub fn create(url: &str, name: &str, avatar: &str, description: &str) -> GraphqlResult<Self> {
-        let now = chrono::Local::now().naive_local();
+        let now = time::OffsetDateTime::now_utc();
         let new_author = NewAuthor {
             url,
             name,

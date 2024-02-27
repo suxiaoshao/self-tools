@@ -2,10 +2,11 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-02-27 05:39:03
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-02-27 05:49:23
+ * @LastEditTime: 2024-02-28 03:42:11
  * @FilePath: /self-tools/server/packages/bookmarks/src/service/chapter.rs
  */
 use async_graphql::{ComplexObject, SimpleObject};
+use time::OffsetDateTime;
 
 use crate::errors::GraphqlResult;
 
@@ -19,8 +20,8 @@ pub struct Chapter {
     pub url: String,
     pub content: Option<String>,
     pub novel_id: i64,
-    pub create_time: i64,
-    pub update_time: i64,
+    pub create_time: OffsetDateTime,
+    pub update_time: OffsetDateTime,
 }
 
 #[ComplexObject]
@@ -39,8 +40,8 @@ impl From<crate::model::chapter::ChapterModel> for Chapter {
             url: value.url,
             content: value.content,
             novel_id: value.novel_id,
-            create_time: value.create_time.timestamp_millis(),
-            update_time: value.update_time.timestamp_millis(),
+            create_time: value.create_time,
+            update_time: value.update_time,
         }
     }
 }

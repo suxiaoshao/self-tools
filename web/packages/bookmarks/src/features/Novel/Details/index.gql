@@ -1,0 +1,32 @@
+query getNovel($id: Int!) {
+  getNovel(id: $id) {
+    id
+    name
+    description
+    createTime
+    updateTime
+    description
+    status
+    collection {
+      id
+      name
+      path
+      description
+    }
+    chapters {
+      id
+      title
+      createTime
+      updateTime
+      content
+      url
+    }
+    author {
+      avatar
+      description
+      id
+      name
+      url
+    }
+  }
+}
