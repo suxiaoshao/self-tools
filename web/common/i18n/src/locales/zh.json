@@ -60,5 +60,6 @@
   "tag_name": "标签名称",
   "home": "首页",
   "bookmarks": "书签",
-  "collections": "集合"
+  "collections": "集合",
+  "refresh": "刷新"
 }

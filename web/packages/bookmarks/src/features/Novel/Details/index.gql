@@ -2,6 +2,7 @@ query getNovel($id: Int!) {
   getNovel(id: $id) {
     id
     name
+    avatar
     description
     createTime
     updateTime
@@ -25,6 +26,43 @@ query getNovel($id: Int!) {
       avatar
       description
       id
+      name
+      url
+    }
+  }
+}
+
+query fetchNovel($id: String!, $NovelSite: NovelSite!) {
+  fetchNovel(id: $id, novelSite: $NovelSite) {
+    ... on QdNovel {
+      author {
+        description
+        image
+        name
+        url
+      }
+      chapters {
+        title
+        url
+      }
+      description
+      image
+      name
+      url
+    }
+    ... on JjNovel {
+      author {
+        description
+        image
+        name
+        url
+      }
+      chapters {
+        title
+        url
+      }
+      description
+      image
       name
       url
     }

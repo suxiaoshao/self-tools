@@ -2,20 +2,20 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-01-06 01:30:13
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-02-20 16:24:21
+ * @LastEditTime: 2024-03-01 07:36:28
  * @FilePath: /self-tools/server/packages/bookmarks/src/graphql/query.rs
  */
 use async_graphql::Object;
 
 use crate::{
     errors::GraphqlResult,
-    model::schema::custom_type::ReadStatus,
+    model::schema::custom_type::{NovelSite, ReadStatus},
     service::{author::Author, collection::Collection, novel::Novel, tag::Tag},
 };
 
 use super::{
     guard::AuthGuard,
-    input::{NovelSite, TagMatch},
+    input::TagMatch,
     output::{DraftAuthorInfo, DraftNovelInfo},
     validator::TagMatchValidator,
 };
@@ -49,6 +49,12 @@ impl QueryRoot {
             _ => search_name,
         };
         let author = Author::query(search_name)?;
+        Ok(author)
+    }
+    /// 获取作者详情
+    #[graphql(guard = "AuthGuard")]
+    async fn get_author(&self, id: i64) -> GraphqlResult<Author> {
+        let author = Author::get(id)?;
         Ok(author)
     }
     /// 获取标签列表

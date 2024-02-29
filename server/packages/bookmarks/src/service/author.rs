@@ -2,22 +2,23 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-01-06 01:30:13
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-02-28 03:41:53
+ * @LastEditTime: 2024-03-01 07:43:02
  * @FilePath: /self-tools/server/packages/bookmarks/src/service/author.rs
  */
-use async_graphql::SimpleObject;
+use async_graphql::{ComplexObject, SimpleObject};
 use time::OffsetDateTime;
 use tracing::{event, Level};
 
 use crate::{
     errors::{GraphqlError, GraphqlResult},
-    model::author::AuthorModel,
+    model::{author::AuthorModel, novel::NovelModel, schema::custom_type::NovelSite},
 };
 
 #[derive(SimpleObject)]
+#[graphql(complex)]
 pub struct Author {
     pub id: i64,
-    pub url: String,
+    pub site: NovelSite,
     pub name: String,
     pub avatar: String,
     pub description: String,
@@ -25,11 +26,19 @@ pub struct Author {
     pub update_time: OffsetDateTime,
 }
 
+#[ComplexObject]
+impl Author {
+    async fn novels(&self) -> GraphqlResult<Vec<super::novel::Novel>> {
+        let novels = NovelModel::query_by_author_id(self.id)?;
+        Ok(novels.into_iter().map(|x| x.into()).collect())
+    }
+}
+
 impl From<AuthorModel> for Author {
     fn from(value: AuthorModel) -> Self {
         Self {
             id: value.id,
-            url: value.url,
+            site: value.site,
             name: value.name,
             avatar: value.avatar,
             description: value.description,
@@ -41,7 +50,12 @@ impl From<AuthorModel> for Author {
 
 impl Author {
     /// 创建作者
-    pub fn create(url: &str, name: &str, avatar: &str, description: &str) -> GraphqlResult<Self> {
+    pub fn create(
+        url: NovelSite,
+        name: &str,
+        avatar: &str,
+        description: &str,
+    ) -> GraphqlResult<Self> {
         let new_author = AuthorModel::create(url, name, avatar, description)?;
         Ok(new_author.into())
     }

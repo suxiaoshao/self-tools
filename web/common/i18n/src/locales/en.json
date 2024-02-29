@@ -60,5 +60,6 @@
   "tag_name": "Tag Name",
   "home": "Home",
   "bookmarks": "Bookmarks",
-  "collections": "Collections"
+  "collections": "Collections",
+  "refresh": "Refresh"
 }

@@ -2,7 +2,7 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-01-06 01:30:13
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-02-28 03:24:56
+ * @LastEditTime: 2024-02-28 05:57:06
  * @FilePath: /self-tools/web/packages/bookmarks/src/features/Novel/Components/CreateNovelButton.tsx
  */
 import { Button, Dialog, Box, DialogTitle, DialogContent, TextField, DialogActions } from '@mui/material';
@@ -52,6 +52,13 @@ export default function CreateNovelButton({ refetch, collectionId }: CreateNovel
               fullWidth
               label={t('novel_name')}
               {...register('name', { required: true })}
+            />
+            <TextField
+              sx={{ mt: 1 }}
+              required
+              fullWidth
+              label={t('avatar')}
+              {...register('avatar', { required: true })}
             />
             <TextField
               required

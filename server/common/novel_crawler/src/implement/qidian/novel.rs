@@ -106,7 +106,7 @@ fn parse_chapters(html: &str, novel_id: &str) -> NovelResult<Vec<QDChapter>> {
     let data = html
         .select(&SELECTOR_NOVEL_CHAPTERS)
         .next()
-        .unwrap()
+        .ok_or(NovelError::ParseError)?
         .inner_html();
     #[derive(Serialize, Deserialize)]
     pub struct Data {

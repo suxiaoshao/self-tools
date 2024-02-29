@@ -2,13 +2,13 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-01-06 01:30:13
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-02-28 03:39:40
+ * @LastEditTime: 2024-03-01 07:30:03
  * @FilePath: /self-tools/server/packages/bookmarks/src/model/chapter.rs
  */
 use diesel::prelude::*;
 use time::OffsetDateTime;
 
-use super::schema::chapter;
+use super::schema::{chapter, custom_type::NovelSite};
 use crate::errors::GraphqlResult;
 
 #[derive(Queryable)]
@@ -16,6 +16,7 @@ pub struct ChapterModel {
     pub id: i64,
     pub title: String,
     pub url: String,
+    pub site: NovelSite,
     pub content: Option<String>,
     pub novel_id: i64,
     pub create_time: OffsetDateTime,

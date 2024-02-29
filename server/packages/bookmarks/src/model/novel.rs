@@ -1,6 +1,9 @@
 use std::collections::HashSet;
 
-use super::schema::{custom_type::ReadStatus, novel};
+use super::schema::{
+    custom_type::{NovelSite, ReadStatus},
+    novel,
+};
 use crate::{errors::GraphqlResult, graphql::input::TagMatch};
 use diesel::prelude::*;
 use time::OffsetDateTime;
@@ -9,9 +12,10 @@ use time::OffsetDateTime;
 pub struct NovelModel {
     pub id: i64,
     pub name: String,
-    pub url: String,
+    pub avatar: String,
     pub description: String,
     pub author_id: i64,
+    pub site: NovelSite,
     pub read_chapter_id: Option<i64>,
     pub tags: Vec<i64>,
     pub collection_id: Option<i64>,
@@ -23,9 +27,10 @@ pub struct NovelModel {
 #[diesel(table_name = novel)]
 pub struct NewNovel<'a> {
     pub name: &'a str,
-    pub author_id: i64,
-    pub url: &'a str,
+    pub avatar: &'a str,
     pub description: &'a str,
+    pub author_id: i64,
+    pub site: NovelSite,
     pub read_chapter_id: Option<i64>,
     pub tags: &'a [i64],
     pub collection_id: Option<i64>,
@@ -40,7 +45,8 @@ impl NovelModel {
     pub fn create(
         name: &str,
         author_id: i64,
-        url: &str,
+        site: NovelSite,
+        avatar: &str,
         description: &str,
         tags: &[i64],
         collection_id: Option<i64>,
@@ -49,7 +55,8 @@ impl NovelModel {
         let new_novel = NewNovel {
             name,
             author_id,
-            url,
+            avatar,
+            site,
             read_chapter_id: None,
             description,
             tags,
@@ -141,6 +148,18 @@ impl NovelModel {
         let deleted = diesel::delete(novel::table.filter(novel::collection_id.eq(collection_id)))
             .execute(conn)?;
         Ok(deleted)
+    }
+}
+
+/// 作者相关
+impl NovelModel {
+    /// 查询小说
+    pub fn query_by_author_id(author_id: i64) -> GraphqlResult<Vec<Self>> {
+        let conn = &mut super::CONNECTION.get()?;
+        let data = novel::table
+            .filter(novel::author_id.eq(author_id))
+            .load(conn)?;
+        Ok(data)
     }
 }
 

@@ -2,7 +2,7 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-01-06 01:30:13
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-02-20 16:23:32
+ * @LastEditTime: 2024-03-01 07:37:22
  * @FilePath: /self-tools/server/packages/bookmarks/src/graphql/mutation.rs
  */
 use std::collections::HashSet;
@@ -12,6 +12,7 @@ use async_graphql::{InputObject, Object};
 
 use crate::{
     errors::GraphqlResult,
+    model::schema::custom_type::NovelSite,
     service::{author::Author, collection::Collection, novel::Novel, tag::Tag},
 };
 
@@ -40,12 +41,12 @@ impl MutationRoot {
     #[graphql(guard = "AuthGuard")]
     async fn create_author(
         &self,
-        #[graphql(validator(url))] url: String,
+        site: NovelSite,
         name: String,
         #[graphql(validator(url))] avatar: String,
         description: String,
     ) -> GraphqlResult<Author> {
-        let new_author = Author::create(&url, &name, &avatar, &description)?;
+        let new_author = Author::create(site, &name, &avatar, &description)?;
         Ok(new_author)
     }
     /// 删除作者
@@ -72,12 +73,21 @@ impl MutationRoot {
         let CreateNovelInput {
             name,
             author_id,
-            url,
+            site,
+            avatar,
             description,
             tags,
             collection_id,
         } = data;
-        Novel::create(name, author_id, url, description, tags, collection_id)
+        Novel::create(
+            name,
+            author_id,
+            site,
+            avatar,
+            description,
+            tags,
+            collection_id,
+        )
     }
     /// 删除小说
     #[graphql(guard = "AuthGuard")]
@@ -91,7 +101,8 @@ impl MutationRoot {
 struct CreateNovelInput {
     name: String,
     author_id: i64,
-    url: String,
+    site: NovelSite,
+    avatar: String,
     description: String,
     tags: HashSet<i64>,
     collection_id: Option<i64>,

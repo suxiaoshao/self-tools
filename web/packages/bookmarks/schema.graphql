@@ -15,6 +15,7 @@ type Author {
   description: String!
   id: Int!
   name: String!
+  novels: [Novel!]!
   updateTime: DateTime!
   url: String!
 }
@@ -87,6 +88,7 @@ type MutationRoot {
 
 type Novel {
   author: Author!
+  avatar: String!
   "获取小说章节"
   chapters: [Chapter!]!
   collection: Collection
@@ -126,6 +128,8 @@ type QueryRoot {
   fetchAuthor(id: String!, novelSite: NovelSite!): DraftAuthorInfo!
   "后端 fetch 小说详情"
   fetchNovel(id: String!, novelSite: NovelSite!): DraftNovelInfo!
+  "获取作者详情"
+  getAuthor(id: Int!): Author!
   "获取目录详情"
   getCollection(id: Int!): Collection!
   "获取目录列表"
@@ -171,6 +175,7 @@ scalar DateTime
 
 input CreateNovelInput {
   authorId: Int!
+  avatar: String!
   collectionId: Int
   description: String!
   name: String!

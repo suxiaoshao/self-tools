@@ -2,17 +2,16 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-02-02 20:43:34
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-02-08 16:43:21
+ * @LastEditTime: 2024-03-01 07:35:44
  * @FilePath: /self-tools/server/packages/bookmarks/src/graphql/output/mod.rs
  */
 use async_graphql::Union;
 use novel_crawler::{AuthorFn, NovelFn};
 
-use crate::errors::GraphqlResult;
+use crate::{errors::GraphqlResult, model::schema::custom_type::NovelSite};
 
 use self::author::{JjAuthor, QdAuthor};
 
-use super::input::NovelSite;
 mod author;
 mod chapter;
 mod novel;

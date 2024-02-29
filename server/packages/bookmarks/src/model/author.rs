@@ -2,21 +2,21 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-01-06 01:30:13
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-02-28 03:38:42
+ * @LastEditTime: 2024-03-01 07:41:10
  * @FilePath: /self-tools/server/packages/bookmarks/src/model/author.rs
  */
 use crate::errors::GraphqlResult;
 
-use super::schema::author;
+use super::schema::{author, custom_type::NovelSite};
 use diesel::prelude::*;
 use time::OffsetDateTime;
 
 #[derive(Queryable)]
 pub struct AuthorModel {
     pub id: i64,
-    pub url: String,
     pub name: String,
     pub avatar: String,
+    pub site: NovelSite,
     pub description: String,
     pub create_time: OffsetDateTime,
     pub update_time: OffsetDateTime,
@@ -24,9 +24,9 @@ pub struct AuthorModel {
 #[derive(Insertable)]
 #[diesel(table_name = author)]
 pub struct NewAuthor<'a> {
-    pub url: &'a str,
     pub name: &'a str,
     pub avatar: &'a str,
+    pub site: NovelSite,
     pub description: &'a str,
     pub create_time: OffsetDateTime,
     pub update_time: OffsetDateTime,
@@ -35,10 +35,15 @@ pub struct NewAuthor<'a> {
 /// id 相关的操作
 impl AuthorModel {
     /// 创建作者
-    pub fn create(url: &str, name: &str, avatar: &str, description: &str) -> GraphqlResult<Self> {
+    pub fn create(
+        site: NovelSite,
+        name: &str,
+        avatar: &str,
+        description: &str,
+    ) -> GraphqlResult<Self> {
         let now = time::OffsetDateTime::now_utc();
         let new_author = NewAuthor {
-            url,
+            site,
             name,
             avatar,
             description,

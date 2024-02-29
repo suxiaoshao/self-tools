@@ -1,13 +1,16 @@
 -- Your SQL goes here
 
 create type read_status as enum ('unread','read','reading');
+create type novel_site as enum ('qidian','jjwxc');
 create table novel
 (
     id              bigserial primary key,
     name            text        not null,
-    url             text        not null,
+    avatar          text        not null,
     description     text        not null,
     author_id       bigint      not null,
+    site            novel_site  not null,
+    site_id         text        not null,
     read_chapter_id bigint,
     tags            bigint[]    not null check (array_position(tags, null) is null),
     collection_id   bigint,
@@ -28,9 +31,10 @@ create table collection
 create table author
 (
     id          bigserial primary key,
-    url         text        not null,
     name        text        not null,
     avatar      text        not null,
+    site        novel_site  not null,
+    site_id     text        not null,
     description text        not null,
     create_time timestamptz not null,
     update_time timestamptz not null
@@ -47,7 +51,8 @@ create table chapter
 (
     id          bigserial primary key,
     title       varchar(255) not null,
-    url         text         not null,
+    site        novel_site   not null,
+    site_id     text         not null,
     content     text,
     novel_id    bigint       not null,
     create_time timestamptz  not null,

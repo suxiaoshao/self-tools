@@ -9,16 +9,17 @@ import {
   TableActions,
   useCustomTable,
 } from 'custom-table';
-import { GetAuthorsQuery, useDeleteAuthorMutation, useGetAuthorsQuery } from '../../graphql';
+import { GetAuthorsQuery, useDeleteAuthorMutation, useGetAuthorsQuery } from '../../../graphql';
 import CreateAuthorButton from './components/CreateAuthorButton';
 import { useMemo } from 'react';
 import { format } from 'time';
 import { useI18n } from 'i18n';
+import { Link as RouterLink } from 'react-router-dom';
 
 type TableItem = GetAuthorsQuery['queryAuthors'][0];
 
 const columnHelper = createCustomColumnHelper<TableItem>();
-export default function Author() {
+export default function AuthorList() {
   const { data, refetch } = useGetAuthorsQuery();
   const [deleteAuthor] = useDeleteAuthorMutation();
   const t = useI18n();
@@ -26,8 +27,8 @@ export default function Author() {
     () =>
       [
         columnHelper.accessor(
-          ({ url, name }) => (
-            <Link target="_blank" href={url} rel="noreferrer">
+          ({ name, id }) => (
+            <Link to={`/bookmarks/authors/${id}`} component={RouterLink}>
               {name}
             </Link>
           ),

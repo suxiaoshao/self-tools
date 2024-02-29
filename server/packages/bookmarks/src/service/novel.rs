@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
-use crate::model::collection::CollectionModel;
 use crate::model::novel::NovelModel;
+use crate::model::{collection::CollectionModel, schema::custom_type::NovelSite};
 use crate::service::tag::Tag;
 use crate::{
     errors::{GraphqlError, GraphqlResult},
@@ -23,6 +23,7 @@ pub struct Novel {
     pub author_id: i64,
     #[graphql(skip)]
     pub read_chapter_id: Option<i64>,
+    pub avatar: String,
     pub description: String,
     #[graphql(skip)]
     pub tags: Vec<i64>,
@@ -67,6 +68,7 @@ impl From<NovelModel> for Novel {
             name: value.name,
             author_id: value.author_id,
             read_chapter_id: value.read_chapter_id,
+            avatar: value.avatar,
             description: value.description,
             tags: value.tags,
             collection_id: value.collection_id,
@@ -82,7 +84,8 @@ impl Novel {
     pub fn create(
         name: String,
         author_id: i64,
-        url: String,
+        site: NovelSite,
+        avatar: String,
         description: String,
         tags: HashSet<i64>,
         collection_id: Option<i64>,
@@ -106,7 +109,8 @@ impl Novel {
         let new_novel = NovelModel::create(
             &name,
             author_id,
-            &url,
+            site,
+            &avatar,
             &description,
             &tags.into_iter().collect::<Vec<_>>(),
             collection_id,

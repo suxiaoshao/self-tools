@@ -3,6 +3,22 @@ query getAuthors {
     ...AuthorAll
   }
 }
+
+query getAuthor($id: Int!) {
+  getAuthor(id: $id) {
+    novels {
+      id
+      name
+      avatar
+      createTime
+      updateTime
+      description
+      status
+    }
+    ...AuthorAll
+  }
+}
+
 mutation deleteAuthor($id: Int!) {
   deleteAuthor(id: $id) {
     id
