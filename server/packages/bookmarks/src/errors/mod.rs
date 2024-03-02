@@ -1,5 +1,5 @@
 use async_graphql::ErrorExtensionValues;
-use axum::{response::IntoResponse, Json};
+use axum::{extract::rejection::QueryRejection, response::IntoResponse, Json};
 use diesel::r2d2;
 use std::sync::Arc;
 use thrift::auth::ItemServiceCheckException;
@@ -36,6 +36,10 @@ pub enum GraphqlError {
     /// novel 获取错误
     NovelNetworkError(String),
     NovelParseError,
+    // query rejection
+    QueryRejection(String),
+    // reqwest error
+    ReqwestError(String),
 }
 
 impl IntoResponse for GraphqlError {
@@ -88,6 +92,8 @@ impl GraphqlError {
             GraphqlError::ClientError(data) => format!("thrift client错误:{data}"),
             GraphqlError::NovelNetworkError(err) => format!("小说网络错误:{err}"),
             GraphqlError::NovelParseError => "小说解析错误".to_string(),
+            GraphqlError::QueryRejection(value) => format!("query rejection:{value}"),
+            GraphqlError::ReqwestError(err) => format!("reqwest error:{err}"),
         }
     }
     pub fn code(&self) -> &str {
@@ -109,6 +115,8 @@ impl GraphqlError {
             GraphqlError::ClientError(_) => "ThriftClient",
             GraphqlError::NovelNetworkError(_) => "NovelNetworkError",
             GraphqlError::NovelParseError => "NovelParseError",
+            GraphqlError::QueryRejection(_) => "QueryRejection",
+            GraphqlError::ReqwestError(_) => "ReqwestError",
         }
     }
 }
@@ -143,6 +151,8 @@ impl Clone for GraphqlError {
             GraphqlError::ClientError(data) => Self::ClientError(data),
             GraphqlError::NovelNetworkError(data) => Self::NovelNetworkError(data.clone()),
             GraphqlError::NovelParseError => Self::NovelParseError,
+            GraphqlError::QueryRejection(data) => Self::QueryRejection(data.clone()),
+            GraphqlError::ReqwestError(data) => Self::ReqwestError(data.clone()),
         }
     }
 }
@@ -211,5 +221,17 @@ impl From<GraphqlError> for async_graphql::Error {
             source: Some(Arc::new(value)),
             extensions: Some(extensions),
         }
+    }
+}
+
+impl From<QueryRejection> for GraphqlError {
+    fn from(value: QueryRejection) -> Self {
+        Self::QueryRejection(value.to_string())
+    }
+}
+
+impl From<reqwest::Error> for GraphqlError {
+    fn from(value: reqwest::Error) -> Self {
+        Self::ReqwestError(value.to_string())
     }
 }

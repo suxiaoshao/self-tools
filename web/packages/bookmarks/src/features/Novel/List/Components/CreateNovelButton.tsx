@@ -2,7 +2,7 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-01-06 01:30:13
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-02-28 05:57:06
+ * @LastEditTime: 2024-03-01 17:51:59
  * @FilePath: /self-tools/web/packages/bookmarks/src/features/Novel/Components/CreateNovelButton.tsx
  */
 import { Button, Dialog, Box, DialogTitle, DialogContent, TextField, DialogActions } from '@mui/material';
@@ -67,7 +67,7 @@ export default function CreateNovelButton({ refetch, collectionId }: CreateNovel
               label={t('description')}
               {...register('description', { required: true })}
             />
-            <TextField required sx={{ mt: 1 }} fullWidth label={t('link')} {...register('url', { required: true })} />
+            <TextField required sx={{ mt: 1 }} fullWidth label={t('link')} {...register('site', { required: true })} />
             <Controller
               control={control}
               name="tags"

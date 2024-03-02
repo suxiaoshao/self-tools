@@ -16,8 +16,8 @@ type Author {
   id: Int!
   name: String!
   novels: [Novel!]!
+  site: NovelSite!
   updateTime: DateTime!
-  url: String!
 }
 
 type Chapter {
@@ -69,7 +69,7 @@ type JjNovel {
 
 type MutationRoot {
   "创建作者"
-  createAuthor(avatar: String!, description: String!, name: String!, url: String!): Author!
+  createAuthor(avatar: String!, description: String!, name: String!, site: NovelSite!): Author!
   "创建目录"
   createCollection(description: String, name: String!, parentId: Int): Collection!
   "创建小说"
@@ -179,8 +179,8 @@ input CreateNovelInput {
   collectionId: Int
   description: String!
   name: String!
+  site: NovelSite!
   tags: [Int!]!
-  url: String!
 }
 
 input TagMatch {

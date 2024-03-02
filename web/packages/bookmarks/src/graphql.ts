@@ -34,8 +34,8 @@ export type Author = {
   id: Scalars['Int']['output'];
   name: Scalars['String']['output'];
   novels: Array<Novel>;
+  site: NovelSite;
   updateTime: Scalars['DateTime']['output'];
-  url: Scalars['String']['output'];
 };
 
 export type Chapter = {
@@ -71,8 +71,8 @@ export type CreateNovelInput = {
   collectionId?: InputMaybe<Scalars['Int']['input']>;
   description: Scalars['String']['input'];
   name: Scalars['String']['input'];
+  site: NovelSite;
   tags: Array<Scalars['Int']['input']>;
-  url: Scalars['String']['input'];
 };
 
 export type DraftAuthorInfo = JjAuthor | QdAuthor;
@@ -129,7 +129,7 @@ export type MutationRootCreateAuthorArgs = {
   avatar: Scalars['String']['input'];
   description: Scalars['String']['input'];
   name: Scalars['String']['input'];
-  url: Scalars['String']['input'];
+  site: NovelSite;
 };
 
 
@@ -332,14 +332,22 @@ export type AllowTagsQuery = { __typename?: 'QueryRoot', queryTags: Array<{ __ty
 export type GetAuthorsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetAuthorsQuery = { __typename?: 'QueryRoot', queryAuthors: Array<{ __typename?: 'Author', id: number, url: string, name: string, createTime: any, updateTime: any, avatar: string, description: string }> };
+export type GetAuthorsQuery = { __typename?: 'QueryRoot', queryAuthors: Array<{ __typename?: 'Author', id: number, site: NovelSite, name: string, createTime: any, updateTime: any, avatar: string, description: string }> };
 
 export type GetAuthorQueryVariables = Exact<{
   id: Scalars['Int']['input'];
 }>;
 
 
-export type GetAuthorQuery = { __typename?: 'QueryRoot', getAuthor: { __typename?: 'Author', id: number, url: string, name: string, createTime: any, updateTime: any, avatar: string, description: string, novels: Array<{ __typename?: 'Novel', id: number, name: string, avatar: string, createTime: any, updateTime: any, description: string, status: ReadStatus }> } };
+export type GetAuthorQuery = { __typename?: 'QueryRoot', getAuthor: { __typename?: 'Author', id: number, site: NovelSite, name: string, createTime: any, updateTime: any, avatar: string, description: string, novels: Array<{ __typename?: 'Novel', id: number, name: string, avatar: string, createTime: any, updateTime: any, description: string, status: ReadStatus }> } };
+
+export type FetchAuthorQueryVariables = Exact<{
+  id: Scalars['String']['input'];
+  novelSite: NovelSite;
+}>;
+
+
+export type FetchAuthorQuery = { __typename?: 'QueryRoot', fetchAuthor: { __typename: 'JjAuthor', name: string, description: string, image: string, url: string, novels: Array<{ __typename?: 'JjNovel', name: string, description: string, image: string, url: string, chapters: Array<{ __typename?: 'JjChapter', title: string, url: string }> }> } | { __typename: 'QdAuthor', name: string, description: string, image: string, url: string, novels: Array<{ __typename?: 'QdNovel', name: string, description: string, image: string, url: string, chapters: Array<{ __typename?: 'QdChapter', title: string, url: string }> }> } };
 
 export type DeleteAuthorMutationVariables = Exact<{
   id: Scalars['Int']['input'];
@@ -352,13 +360,13 @@ export type CreateAuthorMutationVariables = Exact<{
   avatar: Scalars['String']['input'];
   description: Scalars['String']['input'];
   name: Scalars['String']['input'];
-  url: Scalars['String']['input'];
+  site: NovelSite;
 }>;
 
 
-export type CreateAuthorMutation = { __typename?: 'MutationRoot', createAuthor: { __typename?: 'Author', id: number, url: string, name: string, createTime: any, updateTime: any, avatar: string, description: string } };
+export type CreateAuthorMutation = { __typename?: 'MutationRoot', createAuthor: { __typename?: 'Author', id: number, site: NovelSite, name: string, createTime: any, updateTime: any, avatar: string, description: string } };
 
-export type AuthorAllFragment = { __typename?: 'Author', id: number, url: string, name: string, createTime: any, updateTime: any, avatar: string, description: string };
+export type AuthorAllFragment = { __typename?: 'Author', id: number, site: NovelSite, name: string, createTime: any, updateTime: any, avatar: string, description: string };
 
 export type GetCollectionsQueryVariables = Exact<{
   parentId?: InputMaybe<Scalars['Int']['input']>;
@@ -395,7 +403,15 @@ export type GetNovelQueryVariables = Exact<{
 }>;
 
 
-export type GetNovelQuery = { __typename?: 'QueryRoot', getNovel: { __typename?: 'Novel', id: number, name: string, avatar: string, description: string, createTime: any, updateTime: any, status: ReadStatus, collection?: { __typename?: 'Collection', id: number, name: string, path: string, description?: string | null } | null, chapters: Array<{ __typename?: 'Chapter', id: number, title: string, createTime: any, updateTime: any, content?: string | null, url: string }>, author: { __typename?: 'Author', avatar: string, description: string, id: number, name: string, url: string } } };
+export type GetNovelQuery = { __typename?: 'QueryRoot', getNovel: { __typename?: 'Novel', id: number, name: string, avatar: string, description: string, createTime: any, updateTime: any, status: ReadStatus, collection?: { __typename?: 'Collection', id: number, name: string, path: string, description?: string | null } | null, chapters: Array<{ __typename?: 'Chapter', id: number, title: string, createTime: any, updateTime: any, content?: string | null, url: string }>, author: { __typename?: 'Author', avatar: string, description: string, id: number, name: string, site: NovelSite } } };
+
+export type FetchNovelQueryVariables = Exact<{
+  id: Scalars['String']['input'];
+  NovelSite: NovelSite;
+}>;
+
+
+export type FetchNovelQuery = { __typename?: 'QueryRoot', fetchNovel: { __typename?: 'JjNovel', description: string, image: string, name: string, url: string, author: { __typename?: 'JjAuthor', description: string, image: string, name: string, url: string }, chapters: Array<{ __typename?: 'JjChapter', title: string, url: string }> } | { __typename?: 'QdNovel', description: string, image: string, name: string, url: string, author: { __typename?: 'QdAuthor', description: string, image: string, name: string, url: string }, chapters: Array<{ __typename?: 'QdChapter', title: string, url: string }> } };
 
 export type GetNovelsQueryVariables = Exact<{
   collectionId?: InputMaybe<Scalars['Int']['input']>;
@@ -445,7 +461,7 @@ export type DeleteTagMutation = { __typename?: 'MutationRoot', deleteTag: { __ty
 export const AuthorAllFragmentDoc = gql`
     fragment AuthorAll on Author {
   id
-  url
+  site
   name
   createTime
   updateTime
@@ -666,6 +682,79 @@ export type GetAuthorQueryHookResult = ReturnType<typeof useGetAuthorQuery>;
 export type GetAuthorLazyQueryHookResult = ReturnType<typeof useGetAuthorLazyQuery>;
 export type GetAuthorSuspenseQueryHookResult = ReturnType<typeof useGetAuthorSuspenseQuery>;
 export type GetAuthorQueryResult = Apollo.QueryResult<GetAuthorQuery, GetAuthorQueryVariables>;
+export const FetchAuthorDocument = gql`
+    query fetchAuthor($id: String!, $novelSite: NovelSite!) {
+  fetchAuthor(id: $id, novelSite: $novelSite) {
+    __typename
+    ... on QdAuthor {
+      name
+      description
+      image
+      url
+      novels {
+        name
+        description
+        image
+        url
+        chapters {
+          title
+          url
+        }
+      }
+    }
+    ... on JjAuthor {
+      name
+      description
+      image
+      url
+      novels {
+        name
+        description
+        image
+        url
+        chapters {
+          title
+          url
+        }
+      }
+    }
+  }
+}
+    `;
+
+/**
+ * __useFetchAuthorQuery__
+ *
+ * To run a query within a React component, call `useFetchAuthorQuery` and pass it any options that fit your needs.
+ * When your component renders, `useFetchAuthorQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useFetchAuthorQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *      novelSite: // value for 'novelSite'
+ *   },
+ * });
+ */
+export function useFetchAuthorQuery(baseOptions: Apollo.QueryHookOptions<FetchAuthorQuery, FetchAuthorQueryVariables> & ({ variables: FetchAuthorQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<FetchAuthorQuery, FetchAuthorQueryVariables>(FetchAuthorDocument, options);
+      }
+export function useFetchAuthorLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<FetchAuthorQuery, FetchAuthorQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<FetchAuthorQuery, FetchAuthorQueryVariables>(FetchAuthorDocument, options);
+        }
+export function useFetchAuthorSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<FetchAuthorQuery, FetchAuthorQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<FetchAuthorQuery, FetchAuthorQueryVariables>(FetchAuthorDocument, options);
+        }
+export type FetchAuthorQueryHookResult = ReturnType<typeof useFetchAuthorQuery>;
+export type FetchAuthorLazyQueryHookResult = ReturnType<typeof useFetchAuthorLazyQuery>;
+export type FetchAuthorSuspenseQueryHookResult = ReturnType<typeof useFetchAuthorSuspenseQuery>;
+export type FetchAuthorQueryResult = Apollo.QueryResult<FetchAuthorQuery, FetchAuthorQueryVariables>;
 export const DeleteAuthorDocument = gql`
     mutation deleteAuthor($id: Int!) {
   deleteAuthor(id: $id) {
@@ -700,8 +789,13 @@ export type DeleteAuthorMutationHookResult = ReturnType<typeof useDeleteAuthorMu
 export type DeleteAuthorMutationResult = Apollo.MutationResult<DeleteAuthorMutation>;
 export type DeleteAuthorMutationOptions = Apollo.BaseMutationOptions<DeleteAuthorMutation, DeleteAuthorMutationVariables>;
 export const CreateAuthorDocument = gql`
-    mutation createAuthor($avatar: String!, $description: String!, $name: String!, $url: String!) {
-  createAuthor(avatar: $avatar, description: $description, name: $name, url: $url) {
+    mutation createAuthor($avatar: String!, $description: String!, $name: String!, $site: NovelSite!) {
+  createAuthor(
+    avatar: $avatar
+    description: $description
+    name: $name
+    site: $site
+  ) {
     ...AuthorAll
   }
 }
@@ -724,7 +818,7 @@ export type CreateAuthorMutationFn = Apollo.MutationFunction<CreateAuthorMutatio
  *      avatar: // value for 'avatar'
  *      description: // value for 'description'
  *      name: // value for 'name'
- *      url: // value for 'url'
+ *      site: // value for 'site'
  *   },
  * });
  */
@@ -923,7 +1017,7 @@ export const GetNovelDocument = gql`
       description
       id
       name
-      url
+      site
     }
   }
 }
@@ -961,6 +1055,78 @@ export type GetNovelQueryHookResult = ReturnType<typeof useGetNovelQuery>;
 export type GetNovelLazyQueryHookResult = ReturnType<typeof useGetNovelLazyQuery>;
 export type GetNovelSuspenseQueryHookResult = ReturnType<typeof useGetNovelSuspenseQuery>;
 export type GetNovelQueryResult = Apollo.QueryResult<GetNovelQuery, GetNovelQueryVariables>;
+export const FetchNovelDocument = gql`
+    query fetchNovel($id: String!, $NovelSite: NovelSite!) {
+  fetchNovel(id: $id, novelSite: $NovelSite) {
+    ... on QdNovel {
+      author {
+        description
+        image
+        name
+        url
+      }
+      chapters {
+        title
+        url
+      }
+      description
+      image
+      name
+      url
+    }
+    ... on JjNovel {
+      author {
+        description
+        image
+        name
+        url
+      }
+      chapters {
+        title
+        url
+      }
+      description
+      image
+      name
+      url
+    }
+  }
+}
+    `;
+
+/**
+ * __useFetchNovelQuery__
+ *
+ * To run a query within a React component, call `useFetchNovelQuery` and pass it any options that fit your needs.
+ * When your component renders, `useFetchNovelQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useFetchNovelQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *      NovelSite: // value for 'NovelSite'
+ *   },
+ * });
+ */
+export function useFetchNovelQuery(baseOptions: Apollo.QueryHookOptions<FetchNovelQuery, FetchNovelQueryVariables> & ({ variables: FetchNovelQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<FetchNovelQuery, FetchNovelQueryVariables>(FetchNovelDocument, options);
+      }
+export function useFetchNovelLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<FetchNovelQuery, FetchNovelQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<FetchNovelQuery, FetchNovelQueryVariables>(FetchNovelDocument, options);
+        }
+export function useFetchNovelSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<FetchNovelQuery, FetchNovelQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<FetchNovelQuery, FetchNovelQueryVariables>(FetchNovelDocument, options);
+        }
+export type FetchNovelQueryHookResult = ReturnType<typeof useFetchNovelQuery>;
+export type FetchNovelLazyQueryHookResult = ReturnType<typeof useFetchNovelLazyQuery>;
+export type FetchNovelSuspenseQueryHookResult = ReturnType<typeof useFetchNovelSuspenseQuery>;
+export type FetchNovelQueryResult = Apollo.QueryResult<FetchNovelQuery, FetchNovelQueryVariables>;
 export const GetNovelsDocument = gql`
     query getNovels($collectionId: Int, $readStatus: ReadStatus, $tagMatch: TagMatch) {
   queryNovels(

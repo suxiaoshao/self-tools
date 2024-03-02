@@ -27,7 +27,7 @@ query getNovel($id: Int!) {
       description
       id
       name
-      url
+      site
     }
   }
 }

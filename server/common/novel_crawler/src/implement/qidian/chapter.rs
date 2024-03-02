@@ -2,7 +2,7 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-01-06 01:30:13
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-02-04 01:04:15
+ * @LastEditTime: 2024-03-01 17:13:29
  * @FilePath: /self-tools/server/common/novel_crawler/src/implement/qidian/chapter.rs
  */
 use crate::chapter::ChapterFn;
@@ -24,6 +24,12 @@ impl ChapterFn for QDChapter {
 
     fn title(&self) -> &str {
         self.title.as_str()
+    }
+    fn chapter_id(&self) -> &str {
+        self.chapter_id.as_str()
+    }
+    fn novel_id(&self) -> &str {
+        self.novel_id.as_str()
     }
 }
 

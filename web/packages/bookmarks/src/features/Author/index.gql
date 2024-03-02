@@ -19,20 +19,58 @@ query getAuthor($id: Int!) {
   }
 }
 
+query fetchAuthor($id: String!, $novelSite: NovelSite!) {
+  fetchAuthor(id: $id, novelSite: $novelSite) {
+    __typename
+    ... on QdAuthor {
+      name
+      description
+      image
+      url
+      novels {
+        name
+        description
+        image
+        url
+        chapters {
+          title
+          url
+        }
+      }
+    }
+    ... on JjAuthor {
+      name
+      description
+      image
+      url
+      novels {
+        name
+        description
+        image
+        url
+        chapters {
+          title
+          url
+        }
+      }
+    }
+  }
+}
+
 mutation deleteAuthor($id: Int!) {
   deleteAuthor(id: $id) {
     id
   }
 }
-mutation createAuthor($avatar: String!, $description: String!, $name: String!, $url: String!) {
-  createAuthor(avatar: $avatar, description: $description, name: $name, url: $url) {
+mutation createAuthor($avatar: String!, $description: String!, $name: String!, $site: NovelSite!) {
+  createAuthor(avatar: $avatar, description: $description, name: $name, site: $site) {
     ...AuthorAll
   }
 }
 
 fragment AuthorAll on Author {
   id
-  url
+  site
   name
   createTime
   updateTime

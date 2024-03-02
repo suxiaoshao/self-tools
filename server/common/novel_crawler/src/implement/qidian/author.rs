@@ -21,7 +21,7 @@ static SELECTOR_AUTHOR_NAME: Lazy<Selector> = Lazy::new(|| {
     Selector::parse("#appContentWrap > div > div > div > div[class^=authorName] > h1").unwrap()
 });
 static SELECTOR_AUTHOR_DESCRIPTION: Lazy<Selector> =
-    Lazy::new(|| Selector::parse("#appContentWrap > div > div > div > p").unwrap());
+    Lazy::new(|| Selector::parse("p[class^=\"authorDesc\"]").unwrap());
 static SELECTOR_AUTHOR_IMAGE: Lazy<Selector> =
     Lazy::new(|| Selector::parse("#appContentWrap > div > div > div > div > img").unwrap());
 static SELECTOR_NOVEL_URLS: Lazy<Selector> = Lazy::new(|| {
@@ -46,7 +46,6 @@ impl AuthorFn for QDAuthor {
 
         // 图片
         let image = parse_attr(&image_doc, &SELECTOR_AUTHOR_IMAGE, "data-src")?;
-        let image = format!("https:{image}");
         // 其他
         let name = parse_inner_html(&image_doc, &SELECTOR_AUTHOR_NAME)?;
         let description = parse_text(&image_doc, &SELECTOR_AUTHOR_DESCRIPTION)?;
@@ -117,7 +116,7 @@ mod test {
 
     #[tokio::test]
     async fn qd_author_test() -> anyhow::Result<()> {
-        let author = QDAuthor::get_author_data("4362386").await?;
+        let author = QDAuthor::get_author_data("4362948").await?;
         println!("{author:#?}");
         Ok(())
     }

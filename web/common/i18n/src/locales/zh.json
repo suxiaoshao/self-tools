@@ -61,5 +61,14 @@
   "home": "首页",
   "bookmarks": "书签",
   "collections": "集合",
-  "refresh": "刷新"
+  "refresh": "刷新",
+  "crawler": "爬取",
+  "novel_site": "小说站点",
+  "novel_id": "小说ID",
+  "filter": "过滤",
+  "fetch": "获取",
+  "jjwxc": "晋江文学城",
+  "qidian": "起点中文网",
+  "author_id": "作者ID",
+  "view_novel_chapters": "查看小说章节"
 }

@@ -8,6 +8,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@tanstack/react-table": "^8.13.0"
+    "@tanstack/react-table": "^8.13.2"
   }
 }

@@ -372,6 +372,8 @@ dependencies = [
  "middleware",
  "novel_crawler",
  "once_cell",
+ "reqwest",
+ "serde",
  "serde_json",
  "thiserror",
  "thrift",

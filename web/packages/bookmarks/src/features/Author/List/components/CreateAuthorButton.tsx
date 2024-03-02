@@ -1,3 +1,10 @@
+/*
+ * @Author: suxiaoshao suxiaoshao@gmail.com
+ * @Date: 2024-01-06 01:30:13
+ * @LastEditors: suxiaoshao suxiaoshao@gmail.com
+ * @LastEditTime: 2024-03-01 17:52:09
+ * @FilePath: /self-tools/web/packages/bookmarks/src/features/Author/List/components/CreateAuthorButton.tsx
+ */
 import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField } from '@mui/material';
 import { useState } from 'react';
 import { CreateAuthorMutationVariables, useCreateAuthorMutation } from '../../../../graphql';
@@ -52,7 +59,7 @@ export default function CreateAuthorButton({ refetch }: CreateAuthorButtonProps)
               required
               fullWidth
               label={t('link')}
-              {...register('url', { required: true })}
+              {...register('site', { required: true })}
             />
             <TextField
               variant="standard"
