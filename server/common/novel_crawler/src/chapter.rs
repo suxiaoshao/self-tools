@@ -2,7 +2,7 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-01-06 01:30:13
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-03-01 17:13:03
+ * @LastEditTime: 2024-03-03 11:19:18
  * @FilePath: /self-tools/server/common/novel_crawler/src/chapter.rs
  */
 pub trait ChapterFn: Sized + Send {
@@ -10,6 +10,8 @@ pub trait ChapterFn: Sized + Send {
     fn title(&self) -> &str;
     fn chapter_id(&self) -> &str;
     fn novel_id(&self) -> &str;
+    fn word_count(&self) -> u32;
+    fn time(&self) -> &str;
 }
 
 pub trait ChapterDetail: ChapterFn {

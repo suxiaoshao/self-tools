@@ -142,9 +142,12 @@ fn parse_chapters(html: &str, novel_id: &str) -> NovelResult<Vec<QDChapter>> {
     pub struct Chapter {
         #[serde(rename = "cN")]
         name: String,
-
         #[serde(rename = "id")]
         id: i64,
+        #[serde(rename = "cnt")]
+        cnt: u32,
+        #[serde(rename = "uT")]
+        u_t: String,
     }
 
     let data: Data = serde_json::from_str(&data)?;
@@ -155,7 +158,9 @@ fn parse_chapters(html: &str, novel_id: &str) -> NovelResult<Vec<QDChapter>> {
         .vs
         .into_iter()
         .flat_map(|d| d.cs)
-        .map(|Chapter { id, name }| QDChapter::new(novel_id.to_string(), id.to_string(), name))
+        .map(|Chapter { id, name, cnt, u_t }| {
+            QDChapter::new(novel_id.to_string(), id.to_string(), name, cnt, u_t)
+        })
         .collect();
     Ok(data)
 }

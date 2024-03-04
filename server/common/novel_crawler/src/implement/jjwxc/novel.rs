@@ -26,12 +26,14 @@ static SELECTOR_NOVEL_DESCRIPTION: Lazy<Selector> =
 static SELECTOR_NOVEL_IMAGE: Lazy<Selector> =
     Lazy::new(|| Selector::parse("img.noveldefaultimage").unwrap());
 
-static SELECTOR_CHAPTER_URLS: Lazy<Selector> = Lazy::new(|| {
-    Selector::parse(
-        "#oneboolt > tbody > tr > td:nth-child(2) > span > div:nth-child(1) > a:nth-child(1)",
-    )
-    .unwrap()
-});
+static SELECTOR_CHAPTER: Lazy<Selector> =
+    Lazy::new(|| Selector::parse("#oneboolt > tbody > tr[itemprop=\"chapter\"]").unwrap());
+static SELECTOR_CHAPTER_NAME: Lazy<Selector> =
+    Lazy::new(|| Selector::parse("a[itemprop='url']").unwrap());
+static SELECTOR_CHAPTER_TIME: Lazy<Selector> =
+    Lazy::new(|| Selector::parse("td[title] > span").unwrap());
+static SELECTOR_CHAPTER_WORD_COUNT: Lazy<Selector> =
+    Lazy::new(|| Selector::parse("td[itemprop='wordCount']").unwrap());
 
 static SELECTOR_AUTHOR: Lazy<Selector> = Lazy::new(|| {
     Selector::parse("#oneboolt > tbody > tr > td > div:nth-child(3) > h2 > a").unwrap()
@@ -56,7 +58,7 @@ impl NovelFn for JJNovel {
         let name = parse_inner_html(&html, &SELECTOR_NOVEL_NAME)?;
         let description = parse_text(&html, &SELECTOR_NOVEL_DESCRIPTION)?;
         let image = parse_image_src(&html, &SELECTOR_NOVEL_IMAGE)?;
-        let chapters = parse_chapters(&html, &SELECTOR_CHAPTER_URLS, novel_id)?;
+        let chapters = parse_chapters(&html, &SELECTOR_CHAPTER, novel_id)?;
         let author_id = html
             .select(&SELECTOR_AUTHOR)
             .next()
@@ -109,22 +111,44 @@ fn parse_chapter_id(url: &str) -> IResult<&str, String> {
 }
 
 fn parse_chapters(html: &Html, selector: &Selector, novel_id: &str) -> NovelResult<Vec<JJChapter>> {
-    fn map_chapter(element: ElementRef) -> NovelResult<(String, String)> {
-        let value = element.value();
-        let url = value
+    fn map_chapter(element: ElementRef) -> NovelResult<(String, String, u32, String)> {
+        let name = element
+            .select(&SELECTOR_CHAPTER_NAME)
+            .next()
+            .ok_or(NovelError::ParseError)?;
+        let url = name
+            .value()
             .attr("href")
-            .or_else(|| value.attr("rel"))
+            .or_else(|| name.attr("rel"))
             .ok_or(NovelError::ParseError)?
             .to_string();
+        let name = name.inner_html();
         let id = parse_chapter_id(&url)?.1;
-        let name = element.inner_html();
-        Ok((id, name))
+        let time = element
+            .select(&SELECTOR_CHAPTER_TIME)
+            .next()
+            .ok_or(NovelError::ParseError)?
+            .inner_html()
+            .trim()
+            .to_string();
+        let word_count = element
+            .select(&SELECTOR_CHAPTER_WORD_COUNT)
+            .next()
+            .ok_or(NovelError::ParseError)?
+            .inner_html();
+        Ok((id, name, word_count.parse().unwrap_or(0), time))
     }
     let element_ref = html
         .select(selector)
-        .map(|x| match map_chapter(x) {
-            Ok((chapter_id, name)) => Ok(JJChapter::new(novel_id.to_string(), chapter_id, name)),
-            Err(e) => Err(e),
+        .map(|data| match map_chapter(data) {
+            Ok((chapter_id, title, word_count, time)) => Ok(JJChapter::new(
+                novel_id.to_string(),
+                chapter_id,
+                title,
+                word_count,
+                time,
+            )),
+            Err(err) => Err(err),
         })
         .collect::<NovelResult<Vec<_>>>()?;
     Ok(element_ref)
