@@ -90,8 +90,10 @@ export type JjAuthor = {
 
 export type JjChapter = {
   __typename?: 'JjChapter';
+  time: Scalars['String']['output'];
   title: Scalars['String']['output'];
   url: Scalars['String']['output'];
+  wordCount: Scalars['Int']['output'];
 };
 
 export type JjNovel = {
@@ -194,8 +196,10 @@ export type QdAuthor = {
 
 export type QdChapter = {
   __typename?: 'QdChapter';
+  time: Scalars['String']['output'];
   title: Scalars['String']['output'];
   url: Scalars['String']['output'];
+  wordCount: Scalars['Int']['output'];
 };
 
 export type QdNovel = {
@@ -382,7 +386,7 @@ export type FetchAuthorQuery = {
           description: string;
           image: string;
           url: string;
-          chapters: Array<{ __typename?: 'JjChapter'; title: string; url: string }>;
+          chapters: Array<{ __typename?: 'JjChapter'; title: string; url: string; time: string; wordCount: number }>;
         }>;
       }
     | {
@@ -397,7 +401,7 @@ export type FetchAuthorQuery = {
           description: string;
           image: string;
           url: string;
-          chapters: Array<{ __typename?: 'QdChapter'; title: string; url: string }>;
+          chapters: Array<{ __typename?: 'QdChapter'; title: string; url: string; time: string; wordCount: number }>;
         }>;
       };
 };
@@ -899,6 +903,8 @@ export const FetchAuthorDocument = gql`
           chapters {
             title
             url
+            time
+            wordCount
           }
         }
       }
@@ -915,6 +921,8 @@ export const FetchAuthorDocument = gql`
           chapters {
             title
             url
+            time
+            wordCount
           }
         }
       }

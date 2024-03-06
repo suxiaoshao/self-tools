@@ -35,6 +35,8 @@ query fetchAuthor($id: String!, $novelSite: NovelSite!) {
         chapters {
           title
           url
+          time
+          wordCount
         }
       }
     }
@@ -51,6 +53,8 @@ query fetchAuthor($id: String!, $novelSite: NovelSite!) {
         chapters {
           title
           url
+          time
+          wordCount
         }
       }
     }

@@ -54,8 +54,10 @@ type JjAuthor {
 }
 
 type JjChapter {
+  time: String!
   title: String!
   url: String!
+  wordCount: Int!
 }
 
 type JjNovel {
@@ -110,8 +112,10 @@ type QdAuthor {
 }
 
 type QdChapter {
+  time: String!
   title: String!
   url: String!
+  wordCount: Int!
 }
 
 type QdNovel {

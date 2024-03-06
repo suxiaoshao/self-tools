@@ -111,11 +111,10 @@ fn parse_chapter_id(url: &str) -> IResult<&str, String> {
 }
 
 fn parse_chapters(html: &Html, selector: &Selector, novel_id: &str) -> NovelResult<Vec<JJChapter>> {
-    fn map_chapter(element: ElementRef) -> NovelResult<(String, String, u32, String)> {
-        let name = element
-            .select(&SELECTOR_CHAPTER_NAME)
-            .next()
-            .ok_or(NovelError::ParseError)?;
+    fn map_chapter(
+        element: ElementRef,
+        name: ElementRef,
+    ) -> NovelResult<(String, String, u32, String)> {
         let url = name
             .value()
             .attr("href")
@@ -138,17 +137,24 @@ fn parse_chapters(html: &Html, selector: &Selector, novel_id: &str) -> NovelResu
             .inner_html();
         Ok((id, name, word_count.parse().unwrap_or(0), time))
     }
+    fn filter_map(element_ref: ElementRef) -> Option<NovelResult<(String, String, u32, String)>> {
+        let name = element_ref.select(&SELECTOR_CHAPTER_NAME).next()?;
+        Some(map_chapter(element_ref, name))
+    }
+
     let element_ref = html
         .select(selector)
-        .map(|data| match map_chapter(data) {
-            Ok((chapter_id, title, word_count, time)) => Ok(JJChapter::new(
-                novel_id.to_string(),
-                chapter_id,
-                title,
-                word_count,
-                time,
-            )),
-            Err(err) => Err(err),
+        .filter_map(|data| {
+            filter_map(data).map(|data| match data {
+                Ok((chapter_id, title, word_count, time)) => Ok(JJChapter::new(
+                    novel_id.to_string(),
+                    chapter_id,
+                    title,
+                    word_count,
+                    time,
+                )),
+                Err(err) => Err(err),
+            })
         })
         .collect::<NovelResult<Vec<_>>>()?;
     Ok(element_ref)
@@ -201,10 +207,10 @@ mod test {
 
     #[tokio::test]
     async fn jj_novel_test() -> anyhow::Result<()> {
-        let novel_id = "1485737";
+        let novel_id = "6357210";
         let novel = super::JJNovel::get_novel_data(novel_id).await?;
         println!("{novel:#?}");
-        let novel_id = "6357210";
+        let novel_id = "1972045";
         let novel = super::JJNovel::get_novel_data(novel_id).await?;
         println!("{novel:#?}");
         Ok(())

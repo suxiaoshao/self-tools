@@ -2,7 +2,7 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-03-01 17:53:40
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-03-02 20:08:27
+ * @LastEditTime: 2024-03-06 00:26:55
  * @FilePath: /self-tools/web/packages/bookmarks/src/features/Author/Fetch/index.tsx
  */
 import { useFetchAuthorLazyQuery, FetchAuthorQueryVariables, NovelSite } from '@bookmarks/graphql';
@@ -24,6 +24,7 @@ import { useI18n } from 'i18n';
 import { Search } from '@mui/icons-material';
 import { getImageUrl } from '@bookmarks/utils/image';
 import ViewListIcon from '@mui/icons-material/ViewList';
+import ChapterModal from '@bookmarks/components/ChapterModal';
 
 export default function AuthorFetch() {
   type FormData = FetchAuthorQueryVariables;
@@ -96,11 +97,7 @@ export default function AuthorFetch() {
                 <Box sx={{ flex: '1 1 0' }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <Typography variant="h6">{novel.name}</Typography>
-                    <Tooltip title={t('view_novel_chapters')}>
-                      <IconButton href={novel.url} target="_blank">
-                        <ViewListIcon />
-                      </IconButton>
-                    </Tooltip>
+                    <ChapterModal chapters={novel.chapters} />
                   </Box>
                   <Typography variant="body2">{novel.description}</Typography>
                 </Box>
