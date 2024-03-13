@@ -6,8 +6,8 @@ pub mod sql_types {
     pub struct NovelSite;
 
     #[derive(diesel::sql_types::SqlType)]
-    #[diesel(postgres_type(name = "read_status"))]
-    pub struct ReadStatus;
+    #[diesel(postgres_type(name = "novel_status"))]
+    pub struct NovelStatus;
 }
 
 diesel::table! {
@@ -19,6 +19,7 @@ diesel::table! {
         name -> Text,
         avatar -> Text,
         site -> NovelSite,
+        site_id -> Text,
         description -> Text,
         create_time -> Timestamptz,
         update_time -> Timestamptz,
@@ -33,8 +34,8 @@ diesel::table! {
         id -> Int8,
         #[max_length = 255]
         title -> Varchar,
-        url -> Text,
         site -> NovelSite,
+        site_id -> Text,
         content -> Nullable<Text>,
         novel_id -> Int8,
         create_time -> Timestamptz,
@@ -56,8 +57,8 @@ diesel::table! {
 
 diesel::table! {
     use diesel::sql_types::*;
+    use super::sql_types::NovelStatus;
     use super::sql_types::NovelSite;
-    use super::sql_types::ReadStatus;
 
     novel (id) {
         id -> Int8,
@@ -65,11 +66,11 @@ diesel::table! {
         avatar -> Text,
         description -> Text,
         author_id -> Int8,
+        novel_status -> NovelStatus,
         site -> NovelSite,
-        read_chapter_id -> Nullable<Int8>,
+        site_id -> Text,
         tags -> Array<Nullable<Int8>>,
         collection_id -> Nullable<Int8>,
-        status -> ReadStatus,
         create_time -> Timestamptz,
         update_time -> Timestamptz,
     }

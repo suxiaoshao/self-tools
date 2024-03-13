@@ -2,14 +2,14 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-01-06 01:30:13
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-03-01 07:36:28
+ * @LastEditTime: 2024-03-13 00:42:20
  * @FilePath: /self-tools/server/packages/bookmarks/src/graphql/query.rs
  */
 use async_graphql::Object;
 
 use crate::{
     errors::GraphqlResult,
-    model::schema::custom_type::{NovelSite, ReadStatus},
+    model::schema::custom_type::{NovelSite, NovelStatus},
     service::{author::Author, collection::Collection, novel::Novel, tag::Tag},
 };
 
@@ -74,7 +74,7 @@ impl QueryRoot {
         &self,
         collection_id: Option<i64>,
         #[graphql(validator(custom = "TagMatchValidator"))] tag_match: Option<TagMatch>,
-        read_status: Option<ReadStatus>,
+        read_status: Option<NovelStatus>,
     ) -> GraphqlResult<Vec<Novel>> {
         let novel = Novel::query(collection_id, tag_match, read_status)?;
         Ok(novel)

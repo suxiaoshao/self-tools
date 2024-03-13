@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use super::schema::{
-    custom_type::{NovelSite, ReadStatus},
+    custom_type::{NovelSite, NovelStatus},
     novel,
 };
 use crate::{errors::GraphqlResult, graphql::input::TagMatch};
@@ -15,11 +15,11 @@ pub struct NovelModel {
     pub avatar: String,
     pub description: String,
     pub author_id: i64,
+    pub novel_status: NovelStatus,
     pub site: NovelSite,
-    pub read_chapter_id: Option<i64>,
+    pub site_id: String,
     pub tags: Vec<i64>,
     pub collection_id: Option<i64>,
-    pub status: ReadStatus,
     pub create_time: OffsetDateTime,
     pub update_time: OffsetDateTime,
 }
@@ -30,47 +30,27 @@ pub struct NewNovel<'a> {
     pub avatar: &'a str,
     pub description: &'a str,
     pub author_id: i64,
+    pub novel_status: NovelStatus,
     pub site: NovelSite,
-    pub read_chapter_id: Option<i64>,
-    pub tags: &'a [i64],
+    pub site_id: &'a str,
+    pub tags: Vec<i64>,
     pub collection_id: Option<i64>,
-    pub status: ReadStatus,
     pub create_time: OffsetDateTime,
     pub update_time: OffsetDateTime,
 }
 
-/// id 相关
-impl NovelModel {
-    /// 创建小说
-    pub fn create(
-        name: &str,
-        author_id: i64,
-        site: NovelSite,
-        avatar: &str,
-        description: &str,
-        tags: &[i64],
-        collection_id: Option<i64>,
-    ) -> GraphqlResult<Self> {
-        let now = time::OffsetDateTime::now_utc();
-        let new_novel = NewNovel {
-            name,
-            author_id,
-            avatar,
-            site,
-            read_chapter_id: None,
-            description,
-            tags,
-            collection_id,
-            status: ReadStatus::Unread,
-            create_time: now,
-            update_time: now,
-        };
+impl NewNovel<'_> {
+    pub fn create(&self) -> GraphqlResult<NovelModel> {
         let conn = &mut super::CONNECTION.get()?;
         let new_novel = diesel::insert_into(novel::table)
-            .values(&new_novel)
+            .values(self)
             .get_result(conn)?;
         Ok(new_novel)
     }
+}
+
+/// id 相关
+impl NovelModel {
     /// 删除小说
     pub fn delete(id: i64) -> GraphqlResult<Self> {
         let conn = &mut super::CONNECTION.get()?;
@@ -98,20 +78,20 @@ impl NovelModel {
     pub fn query(
         collection_id: Option<i64>,
         tag_match: Option<TagMatch>,
-        read_status: Option<ReadStatus>,
+        novel_status: Option<NovelStatus>,
     ) -> GraphqlResult<Vec<Self>> {
         let conn = &mut super::CONNECTION.get()?;
         // 获取数据
-        let data = match (collection_id, read_status) {
-            (Some(collection_id), Some(read_status)) => novel::table
+        let data = match (collection_id, novel_status) {
+            (Some(collection_id), Some(novel_status)) => novel::table
                 .filter(novel::collection_id.eq(collection_id))
-                .filter(novel::status.eq(read_status))
+                .filter(novel::novel_status.eq(novel_status))
                 .load::<Self>(conn)?,
             (Some(collection_id), None) => novel::table
                 .filter(novel::collection_id.eq(collection_id))
                 .load(conn)?,
             (None, Some(read_status)) => novel::table
-                .filter(novel::status.eq(read_status))
+                .filter(novel::novel_status.eq(read_status))
                 .filter(novel::collection_id.is_null())
                 .load::<Self>(conn)?,
             (None, None) => novel::table.load(conn)?,

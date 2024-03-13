@@ -2,7 +2,7 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-01-06 01:30:13
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-03-01 07:30:03
+ * @LastEditTime: 2024-03-13 00:45:45
  * @FilePath: /self-tools/server/packages/bookmarks/src/model/chapter.rs
  */
 use diesel::prelude::*;
@@ -15,8 +15,8 @@ use crate::errors::GraphqlResult;
 pub struct ChapterModel {
     pub id: i64,
     pub title: String,
-    pub url: String,
     pub site: NovelSite,
+    pub site_id: String,
     pub content: Option<String>,
     pub novel_id: i64,
     pub create_time: OffsetDateTime,

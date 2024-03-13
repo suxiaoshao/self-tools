@@ -2,7 +2,7 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-01-06 01:30:13
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-03-01 07:43:02
+ * @LastEditTime: 2024-03-13 19:18:00
  * @FilePath: /self-tools/server/packages/bookmarks/src/service/author.rs
  */
 use async_graphql::{ComplexObject, SimpleObject};
@@ -18,9 +18,10 @@ use crate::{
 #[graphql(complex)]
 pub struct Author {
     pub id: i64,
-    pub site: NovelSite,
     pub name: String,
     pub avatar: String,
+    pub site: NovelSite,
+    pub site_id: String,
     pub description: String,
     pub create_time: OffsetDateTime,
     pub update_time: OffsetDateTime,
@@ -44,6 +45,7 @@ impl From<AuthorModel> for Author {
             description: value.description,
             create_time: value.create_time,
             update_time: value.update_time,
+            site_id: value.site_id,
         }
     }
 }
@@ -51,12 +53,13 @@ impl From<AuthorModel> for Author {
 impl Author {
     /// 创建作者
     pub fn create(
-        url: NovelSite,
         name: &str,
         avatar: &str,
         description: &str,
+        site: NovelSite,
+        site_id: &str,
     ) -> GraphqlResult<Self> {
-        let new_author = AuthorModel::create(url, name, avatar, description)?;
+        let new_author = AuthorModel::create(name, avatar, site, site_id, description)?;
         Ok(new_author.into())
     }
     /// 删除作者

@@ -2,12 +2,15 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-01-06 01:30:13
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-03-01 07:41:10
+ * @LastEditTime: 2024-03-13 19:17:15
  * @FilePath: /self-tools/server/packages/bookmarks/src/model/author.rs
  */
 use crate::errors::GraphqlResult;
 
-use super::schema::{author, custom_type::NovelSite};
+use super::schema::{
+    author::{self},
+    custom_type::NovelSite,
+};
 use diesel::prelude::*;
 use time::OffsetDateTime;
 
@@ -17,6 +20,7 @@ pub struct AuthorModel {
     pub name: String,
     pub avatar: String,
     pub site: NovelSite,
+    pub site_id: String,
     pub description: String,
     pub create_time: OffsetDateTime,
     pub update_time: OffsetDateTime,
@@ -27,6 +31,7 @@ pub struct NewAuthor<'a> {
     pub name: &'a str,
     pub avatar: &'a str,
     pub site: NovelSite,
+    pub site_id: &'a str,
     pub description: &'a str,
     pub create_time: OffsetDateTime,
     pub update_time: OffsetDateTime,
@@ -36,9 +41,10 @@ pub struct NewAuthor<'a> {
 impl AuthorModel {
     /// 创建作者
     pub fn create(
-        site: NovelSite,
         name: &str,
         avatar: &str,
+        site: NovelSite,
+        site_id: &str,
         description: &str,
     ) -> GraphqlResult<Self> {
         let now = time::OffsetDateTime::now_utc();
@@ -47,6 +53,7 @@ impl AuthorModel {
             name,
             avatar,
             description,
+            site_id,
             create_time: now,
             update_time: now,
         };

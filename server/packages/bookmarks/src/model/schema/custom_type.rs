@@ -2,7 +2,7 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-01-06 01:30:13
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-02-29 13:50:07
+ * @LastEditTime: 2024-03-13 00:22:47
  * @FilePath: /self-tools/server/packages/bookmarks/src/model/schema/custom_type.rs
  */
 use async_graphql::Enum;
@@ -18,30 +18,27 @@ use diesel::{
 };
 
 #[derive(Debug, FromSqlRow, AsExpression, QueryId, Enum, Copy, Clone, Eq, PartialEq)]
-#[diesel(sql_type = super::sql_types::ReadStatus)]
-pub enum ReadStatus {
-    Read,
-    Unread,
-    Reading,
+#[diesel(sql_type = super::sql_types::NovelStatus)]
+pub enum NovelStatus {
+    Ongoing,
+    Completed,
 }
 
-impl ToSql<super::sql_types::ReadStatus, Pg> for ReadStatus {
+impl ToSql<super::sql_types::NovelStatus, Pg> for NovelStatus {
     fn to_sql<'b>(&'b self, out: &mut Output<'b, '_, Pg>) -> serialize::Result {
         match *self {
-            ReadStatus::Read => out.write_all(b"read")?,
-            ReadStatus::Unread => out.write_all(b"unread")?,
-            ReadStatus::Reading => out.write_all(b"reading")?,
+            NovelStatus::Ongoing => out.write_all(b"ongoing")?,
+            NovelStatus::Completed => out.write_all(b"completed")?,
         }
         Ok(IsNull::No)
     }
 }
 
-impl FromSql<super::sql_types::ReadStatus, Pg> for ReadStatus {
+impl FromSql<super::sql_types::NovelStatus, Pg> for NovelStatus {
     fn from_sql(bytes: PgValue) -> deserialize::Result<Self> {
         match bytes.as_bytes() {
-            b"read" => Ok(ReadStatus::Read),
-            b"unread" => Ok(ReadStatus::Unread),
-            b"reading" => Ok(ReadStatus::Reading),
+            b"ongoing" => Ok(NovelStatus::Ongoing),
+            b"completed" => Ok(NovelStatus::Completed),
             _ => {
                 event!(
                     Level::ERROR,

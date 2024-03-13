@@ -1,14 +1,14 @@
 use std::collections::HashSet;
 
-use crate::model::novel::NovelModel;
+use crate::model::novel::{NewNovel, NovelModel};
 use crate::model::{collection::CollectionModel, schema::custom_type::NovelSite};
 use crate::service::tag::Tag;
 use crate::{
     errors::{GraphqlError, GraphqlResult},
-    model::schema::custom_type::ReadStatus,
+    model::schema::custom_type::NovelStatus,
 };
 use crate::{graphql::input::TagMatch, model::author::AuthorModel};
-use async_graphql::{ComplexObject, SimpleObject};
+use async_graphql::{ComplexObject, InputObject, SimpleObject};
 use time::OffsetDateTime;
 use tracing::{event, Level};
 
@@ -19,17 +19,17 @@ use super::{author::Author, collection::Collection};
 pub struct Novel {
     pub id: i64,
     pub name: String,
-    #[graphql(skip)]
-    pub author_id: i64,
-    #[graphql(skip)]
-    pub read_chapter_id: Option<i64>,
     pub avatar: String,
     pub description: String,
+    #[graphql(skip)]
+    pub author_id: i64,
+    pub novel_status: NovelStatus,
+    pub site: NovelSite,
+    pub site_id: String,
     #[graphql(skip)]
     pub tags: Vec<i64>,
     #[graphql(skip)]
     pub collection_id: Option<i64>,
-    pub status: ReadStatus,
     pub create_time: OffsetDateTime,
     pub update_time: OffsetDateTime,
 }
@@ -67,56 +67,20 @@ impl From<NovelModel> for Novel {
             id: value.id,
             name: value.name,
             author_id: value.author_id,
-            read_chapter_id: value.read_chapter_id,
             avatar: value.avatar,
             description: value.description,
             tags: value.tags,
             collection_id: value.collection_id,
-            status: value.status,
             create_time: value.create_time,
             update_time: value.update_time,
+            novel_status: value.novel_status,
+            site: value.site,
+            site_id: value.site_id,
         }
     }
 }
 
 impl Novel {
-    /// 创建小说
-    pub fn create(
-        name: String,
-        author_id: i64,
-        site: NovelSite,
-        avatar: String,
-        description: String,
-        tags: HashSet<i64>,
-        collection_id: Option<i64>,
-    ) -> GraphqlResult<Self> {
-        // 作者不存在
-        if !AuthorModel::exists(author_id)? {
-            event!(Level::WARN, "作者不存在: {}", author_id);
-            return Err(GraphqlError::NotFound("作者", author_id));
-        }
-        //  判断父目录是否存在
-        if let Some(id) = collection_id {
-            if !CollectionModel::exists(id)? {
-                event!(Level::WARN, "目录不存在: {}", id);
-                return Err(GraphqlError::NotFound("目录", id));
-            }
-        }
-        // tag 不存在
-        Tag::exists_all(tags.iter())?;
-        // tags 都属于 collection_id
-        Tag::belong_to_collection(collection_id, tags.iter())?;
-        let new_novel = NovelModel::create(
-            &name,
-            author_id,
-            site,
-            &avatar,
-            &description,
-            &tags.into_iter().collect::<Vec<_>>(),
-            collection_id,
-        )?;
-        Ok(new_novel.into())
-    }
     /// 删除小说
     pub fn delete(id: i64) -> GraphqlResult<Self> {
         if !NovelModel::exists(id)? {
@@ -143,7 +107,7 @@ impl Novel {
     pub fn query(
         collection_id: Option<i64>,
         tag_match: Option<TagMatch>,
-        read_status: Option<ReadStatus>,
+        novel_status: Option<NovelStatus>,
     ) -> GraphqlResult<Vec<Self>> {
         //  判断父目录是否存在
         if let Some(id) = collection_id {
@@ -158,7 +122,7 @@ impl Novel {
             // tags 都属于 collection_id
             Tag::belong_to_collection(collection_id, match_set.iter())?;
         }
-        let data = NovelModel::query(collection_id, tag_match, read_status)?
+        let data = NovelModel::query(collection_id, tag_match, novel_status)?
             .into_iter()
             .map(Into::into)
             .collect();
@@ -168,5 +132,69 @@ impl Novel {
     pub fn delete_by_collection_id(collection_id: i64) -> GraphqlResult<()> {
         NovelModel::delete_by_collection_id(collection_id)?;
         Ok(())
+    }
+}
+
+#[derive(InputObject)]
+pub struct CreateNovelInput {
+    name: String,
+    avatar: String,
+    description: String,
+    author_id: i64,
+    novel_status: NovelStatus,
+    site: NovelSite,
+    site_id: String,
+    tags: HashSet<i64>,
+    collection_id: Option<i64>,
+}
+
+impl CreateNovelInput {
+    pub fn create(self) -> GraphqlResult<Novel> {
+        // 作者不存在
+        if !AuthorModel::exists(self.author_id)? {
+            event!(Level::WARN, "作者不存在: {}", self.author_id);
+            return Err(GraphqlError::NotFound("作者", self.author_id));
+        }
+        //  判断父目录是否存在
+        if let Some(id) = self.collection_id {
+            if !CollectionModel::exists(id)? {
+                event!(Level::WARN, "目录不存在: {}", id);
+                return Err(GraphqlError::NotFound("目录", id));
+            }
+        }
+        // tag 不存在
+        Tag::exists_all(self.tags.iter())?;
+        // tags 都属于 collection_id
+        Tag::belong_to_collection(self.collection_id, self.tags.iter())?;
+        let new_novel = self.to_new_novel().create()?;
+        Ok(new_novel.into())
+    }
+    fn to_new_novel(&self) -> NewNovel<'_> {
+        let now = time::OffsetDateTime::now_utc();
+        let CreateNovelInput {
+            name,
+            avatar,
+            description,
+            author_id,
+            novel_status,
+            site,
+            site_id,
+            tags,
+            collection_id,
+        } = self;
+        let tags = tags.iter().copied().collect::<Vec<_>>();
+        NewNovel {
+            name,
+            avatar,
+            description,
+            author_id: *author_id,
+            novel_status: *novel_status,
+            site: *site,
+            site_id,
+            tags,
+            collection_id: *collection_id,
+            create_time: now,
+            update_time: now,
+        }
     }
 }

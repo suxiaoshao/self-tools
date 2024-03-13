@@ -2,18 +2,22 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-01-06 01:30:13
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-03-01 07:37:22
+ * @LastEditTime: 2024-03-13 19:50:17
  * @FilePath: /self-tools/server/packages/bookmarks/src/graphql/mutation.rs
  */
-use std::collections::HashSet;
 
 use super::{guard::AuthGuard, validator::DirNameValidator};
-use async_graphql::{InputObject, Object};
+use async_graphql::Object;
 
 use crate::{
     errors::GraphqlResult,
     model::schema::custom_type::NovelSite,
-    service::{author::Author, collection::Collection, novel::Novel, tag::Tag},
+    service::{
+        author::Author,
+        collection::Collection,
+        novel::{CreateNovelInput, Novel},
+        tag::Tag,
+    },
 };
 
 pub struct MutationRoot;
@@ -41,12 +45,13 @@ impl MutationRoot {
     #[graphql(guard = "AuthGuard")]
     async fn create_author(
         &self,
-        site: NovelSite,
         name: String,
-        #[graphql(validator(url))] avatar: String,
+        avatar: String,
         description: String,
+        site: NovelSite,
+        site_id: String,
     ) -> GraphqlResult<Author> {
-        let new_author = Author::create(site, &name, &avatar, &description)?;
+        let new_author = Author::create(&name, &avatar, &description, site, &site_id)?;
         Ok(new_author)
     }
     /// 删除作者
@@ -70,24 +75,7 @@ impl MutationRoot {
     /// 创建小说
     #[graphql(guard = "AuthGuard")]
     async fn create_novel(&self, data: CreateNovelInput) -> GraphqlResult<Novel> {
-        let CreateNovelInput {
-            name,
-            author_id,
-            site,
-            avatar,
-            description,
-            tags,
-            collection_id,
-        } = data;
-        Novel::create(
-            name,
-            author_id,
-            site,
-            avatar,
-            description,
-            tags,
-            collection_id,
-        )
+        data.create()
     }
     /// 删除小说
     #[graphql(guard = "AuthGuard")]
@@ -95,15 +83,4 @@ impl MutationRoot {
         let deleted_novel = Novel::delete(id)?;
         Ok(deleted_novel)
     }
-}
-
-#[derive(InputObject)]
-struct CreateNovelInput {
-    name: String,
-    author_id: i64,
-    site: NovelSite,
-    avatar: String,
-    description: String,
-    tags: HashSet<i64>,
-    collection_id: Option<i64>,
 }
