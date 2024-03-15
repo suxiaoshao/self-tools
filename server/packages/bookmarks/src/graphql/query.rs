@@ -2,7 +2,7 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-01-06 01:30:13
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-03-13 00:42:20
+ * @LastEditTime: 2024-03-13 20:38:59
  * @FilePath: /self-tools/server/packages/bookmarks/src/graphql/query.rs
  */
 use async_graphql::Object;
@@ -74,9 +74,9 @@ impl QueryRoot {
         &self,
         collection_id: Option<i64>,
         #[graphql(validator(custom = "TagMatchValidator"))] tag_match: Option<TagMatch>,
-        read_status: Option<NovelStatus>,
+        novel_status: Option<NovelStatus>,
     ) -> GraphqlResult<Vec<Novel>> {
-        let novel = Novel::query(collection_id, tag_match, read_status)?;
+        let novel = Novel::query(collection_id, tag_match, novel_status)?;
         Ok(novel)
     }
     /// 获取小说详情

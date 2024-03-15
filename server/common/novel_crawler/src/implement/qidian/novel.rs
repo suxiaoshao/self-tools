@@ -66,7 +66,7 @@ impl NovelFn for QDNovel {
     }
 
     fn url(&self) -> String {
-        format!("https://m.qidian.com/book/{}.html", self.id)
+        Self::get_url_from_id(self.id.as_str())
     }
 
     fn name(&self) -> &str {
@@ -86,6 +86,9 @@ impl NovelFn for QDNovel {
 
     async fn chapters(&self) -> NovelResult<Vec<Self::Chapter>> {
         Ok(self.chapters.clone())
+    }
+    fn get_url_from_id(id: &str) -> String {
+        format!("https://m.qidian.com/book/{}.html", id)
     }
 }
 

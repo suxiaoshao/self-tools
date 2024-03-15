@@ -1,12 +1,12 @@
-query getNovels($collectionId: Int, $readStatus: ReadStatus, $tagMatch: TagMatch) {
-  queryNovels(collectionId: $collectionId, readStatus: $readStatus, tagMatch: $tagMatch) {
+query getNovels($collectionId: Int, $novelStatus: NovelStatus, $tagMatch: TagMatch) {
+  queryNovels(collectionId: $collectionId, novelStatus: $novelStatus, tagMatch: $tagMatch) {
     id
     name
     description
     createTime
     updateTime
     description
-    status
+    novelStatus
   }
 }
 

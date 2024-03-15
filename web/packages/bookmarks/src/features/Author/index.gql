@@ -13,7 +13,7 @@ query getAuthor($id: Int!) {
       createTime
       updateTime
       description
-      status
+      novelStatus
     }
     ...AuthorAll
   }
@@ -66,8 +66,8 @@ mutation deleteAuthor($id: Int!) {
     id
   }
 }
-mutation createAuthor($avatar: String!, $description: String!, $name: String!, $site: NovelSite!) {
-  createAuthor(avatar: $avatar, description: $description, name: $name, site: $site) {
+mutation createAuthor($avatar: String!, $description: String!, $name: String!, $site: NovelSite!, $siteId: String!) {
+  createAuthor(avatar: $avatar, description: $description, name: $name, site: $site, siteId: $siteId) {
     ...AuthorAll
   }
 }

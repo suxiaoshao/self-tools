@@ -2,7 +2,7 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-01-06 01:30:13
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-03-03 14:19:44
+ * @LastEditTime: 2024-03-15 05:13:14
  * @FilePath: /self-tools/server/common/novel_crawler/src/implement/qidian/chapter.rs
  */
 use crate::chapter::ChapterFn;
@@ -18,10 +18,7 @@ pub struct QDChapter {
 
 impl ChapterFn for QDChapter {
     fn url(&self) -> String {
-        format!(
-            "https://m.qidian.com/book/{}/{}.html",
-            self.novel_id, self.chapter_id
-        )
+        Self::get_url_from_id(&self.chapter_id, &self.novel_id)
     }
 
     fn title(&self) -> &str {
@@ -38,6 +35,9 @@ impl ChapterFn for QDChapter {
     }
     fn word_count(&self) -> u32 {
         self.word_count
+    }
+    fn get_url_from_id(chapter_id: &str, novel_id: &str) -> String {
+        format!("https://m.qidian.com/book/{}/{}.html", novel_id, chapter_id)
     }
 }
 

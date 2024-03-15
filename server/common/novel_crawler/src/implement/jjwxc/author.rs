@@ -62,8 +62,7 @@ impl AuthorFn for JJAuthor {
     }
 
     fn url(&self) -> String {
-        let data = format!("https://www.jjwxc.net/oneauthor.php?authorid={}", self.id);
-        data
+        Self::get_url_from_id(&self.id)
     }
     fn name(&self) -> &str {
         self.name.as_str()
@@ -77,6 +76,9 @@ impl AuthorFn for JJAuthor {
     async fn novels(&self) -> NovelResult<Vec<Self::Novel>> {
         let data = try_join_all(self.novel_ids.iter().map(|x| JJNovel::get_novel_data(x))).await?;
         Ok(data)
+    }
+    fn get_url_from_id(id: &str) -> String {
+        format!("https://www.jjwxc.net/oneauthor.php?authorid={}", id)
     }
 }
 

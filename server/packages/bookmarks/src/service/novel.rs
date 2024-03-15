@@ -9,6 +9,7 @@ use crate::{
 };
 use crate::{graphql::input::TagMatch, model::author::AuthorModel};
 use async_graphql::{ComplexObject, InputObject, SimpleObject};
+use novel_crawler::{JJNovel, NovelFn, QDNovel};
 use time::OffsetDateTime;
 use tracing::{event, Level};
 
@@ -58,6 +59,12 @@ impl Novel {
     /// 获取小说章节
     async fn chapters(&self) -> GraphqlResult<Vec<super::chapter::Chapter>> {
         super::chapter::Chapter::get_by_novel_id(self.id)
+    }
+    async fn url(&self) -> String {
+        match self.site {
+            NovelSite::Jjwxc => JJNovel::get_url_from_id(&self.site_id),
+            NovelSite::Qidian => QDNovel::get_url_from_id(&self.site_id),
+        }
     }
 }
 

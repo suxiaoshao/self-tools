@@ -76,7 +76,7 @@ impl NovelFn for JJNovel {
     }
 
     fn url(&self) -> String {
-        format!("https://www.jjwxc.net/onebook.php?novelid={}", self.id)
+        Self::get_url_from_id(&self.id)
     }
 
     fn name(&self) -> &str {
@@ -97,6 +97,9 @@ impl NovelFn for JJNovel {
 
     async fn chapters(&self) -> NovelResult<Vec<Self::Chapter>> {
         Ok(self.chapters.clone())
+    }
+    fn get_url_from_id(id: &str) -> String {
+        format!("https://www.jjwxc.net/onebook.php?novelid={}", id)
     }
 }
 

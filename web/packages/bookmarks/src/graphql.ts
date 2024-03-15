@@ -35,6 +35,7 @@ export type Author = {
   name: Scalars['String']['output'];
   novels: Array<Novel>;
   site: NovelSite;
+  siteId: Scalars['String']['output'];
   updateTime: Scalars['DateTime']['output'];
 };
 
@@ -45,6 +46,9 @@ export type Chapter = {
   id: Scalars['Int']['output'];
   novel: Novel;
   novelId: Scalars['Int']['output'];
+  site: NovelSite;
+  siteId: Scalars['String']['output'];
+  siteNovelId: Scalars['String']['output'];
   title: Scalars['String']['output'];
   updateTime: Scalars['DateTime']['output'];
   url: Scalars['String']['output'];
@@ -71,7 +75,9 @@ export type CreateNovelInput = {
   collectionId?: InputMaybe<Scalars['Int']['input']>;
   description: Scalars['String']['input'];
   name: Scalars['String']['input'];
+  novelStatus: NovelStatus;
   site: NovelSite;
+  siteId: Scalars['String']['input'];
   tags: Array<Scalars['Int']['input']>;
 };
 
@@ -131,6 +137,7 @@ export type MutationRootCreateAuthorArgs = {
   description: Scalars['String']['input'];
   name: Scalars['String']['input'];
   site: NovelSite;
+  siteId: Scalars['String']['input'];
 };
 
 export type MutationRootCreateCollectionArgs = {
@@ -175,14 +182,22 @@ export type Novel = {
   description: Scalars['String']['output'];
   id: Scalars['Int']['output'];
   name: Scalars['String']['output'];
-  status: ReadStatus;
+  novelStatus: NovelStatus;
+  site: NovelSite;
+  siteId: Scalars['String']['output'];
   tags: Array<Tag>;
   updateTime: Scalars['DateTime']['output'];
+  url: Scalars['String']['output'];
 };
 
 export enum NovelSite {
   Jjwxc = 'JJWXC',
   Qidian = 'QIDIAN',
+}
+
+export enum NovelStatus {
+  Completed = 'COMPLETED',
+  Ongoing = 'ONGOING',
 }
 
 export type QdAuthor = {
@@ -266,7 +281,7 @@ export type QueryRootQueryAuthorsArgs = {
 
 export type QueryRootQueryNovelsArgs = {
   collectionId?: InputMaybe<Scalars['Int']['input']>;
-  readStatus?: InputMaybe<ReadStatus>;
+  novelStatus?: InputMaybe<NovelStatus>;
   tagMatch?: InputMaybe<TagMatch>;
 };
 
@@ -274,12 +289,6 @@ export type QueryRootQueryTagsArgs = {
   collectionId?: InputMaybe<Scalars['Int']['input']>;
   deepSearch?: InputMaybe<Scalars['Boolean']['input']>;
 };
-
-export enum ReadStatus {
-  Read = 'READ',
-  Reading = 'READING',
-  Unread = 'UNREAD',
-}
 
 export type Tag = {
   __typename?: 'Tag';
@@ -361,7 +370,7 @@ export type GetAuthorQuery = {
       createTime: any;
       updateTime: any;
       description: string;
-      status: ReadStatus;
+      novelStatus: NovelStatus;
     }>;
   };
 };
@@ -417,6 +426,7 @@ export type CreateAuthorMutationVariables = Exact<{
   description: Scalars['String']['input'];
   name: Scalars['String']['input'];
   site: NovelSite;
+  siteId: Scalars['String']['input'];
 }>;
 
 export type CreateAuthorMutation = {
@@ -509,7 +519,7 @@ export type GetNovelQuery = {
     description: string;
     createTime: any;
     updateTime: any;
-    status: ReadStatus;
+    novelStatus: NovelStatus;
     collection?: {
       __typename?: 'Collection';
       id: number;
@@ -560,7 +570,7 @@ export type FetchNovelQuery = {
 
 export type GetNovelsQueryVariables = Exact<{
   collectionId?: InputMaybe<Scalars['Int']['input']>;
-  readStatus?: InputMaybe<ReadStatus>;
+  novelStatus?: InputMaybe<NovelStatus>;
   tagMatch?: InputMaybe<TagMatch>;
 }>;
 
@@ -573,7 +583,7 @@ export type GetNovelsQuery = {
     description: string;
     createTime: any;
     updateTime: any;
-    status: ReadStatus;
+    novelStatus: NovelStatus;
   }>;
 };
 
@@ -839,7 +849,7 @@ export const GetAuthorDocument = gql`
         createTime
         updateTime
         description
-        status
+        novelStatus
       }
       ...AuthorAll
     }
@@ -1009,8 +1019,8 @@ export type DeleteAuthorMutationOptions = Apollo.BaseMutationOptions<
   DeleteAuthorMutationVariables
 >;
 export const CreateAuthorDocument = gql`
-  mutation createAuthor($avatar: String!, $description: String!, $name: String!, $site: NovelSite!) {
-    createAuthor(avatar: $avatar, description: $description, name: $name, site: $site) {
+  mutation createAuthor($avatar: String!, $description: String!, $name: String!, $site: NovelSite!, $siteId: String!) {
+    createAuthor(avatar: $avatar, description: $description, name: $name, site: $site, siteId: $siteId) {
       ...AuthorAll
     }
   }
@@ -1035,6 +1045,7 @@ export type CreateAuthorMutationFn = Apollo.MutationFunction<CreateAuthorMutatio
  *      description: // value for 'description'
  *      name: // value for 'name'
  *      site: // value for 'site'
+ *      siteId: // value for 'siteId'
  *   },
  * });
  */
@@ -1265,7 +1276,7 @@ export const GetNovelDocument = gql`
       createTime
       updateTime
       description
-      status
+      novelStatus
       collection {
         id
         name
@@ -1408,15 +1419,15 @@ export type FetchNovelLazyQueryHookResult = ReturnType<typeof useFetchNovelLazyQ
 export type FetchNovelSuspenseQueryHookResult = ReturnType<typeof useFetchNovelSuspenseQuery>;
 export type FetchNovelQueryResult = Apollo.QueryResult<FetchNovelQuery, FetchNovelQueryVariables>;
 export const GetNovelsDocument = gql`
-  query getNovels($collectionId: Int, $readStatus: ReadStatus, $tagMatch: TagMatch) {
-    queryNovels(collectionId: $collectionId, readStatus: $readStatus, tagMatch: $tagMatch) {
+  query getNovels($collectionId: Int, $novelStatus: NovelStatus, $tagMatch: TagMatch) {
+    queryNovels(collectionId: $collectionId, novelStatus: $novelStatus, tagMatch: $tagMatch) {
       id
       name
       description
       createTime
       updateTime
       description
-      status
+      novelStatus
     }
   }
 `;
@@ -1434,7 +1445,7 @@ export const GetNovelsDocument = gql`
  * const { data, loading, error } = useGetNovelsQuery({
  *   variables: {
  *      collectionId: // value for 'collectionId'
- *      readStatus: // value for 'readStatus'
+ *      novelStatus: // value for 'novelStatus'
  *      tagMatch: // value for 'tagMatch'
  *   },
  * });

@@ -17,6 +17,7 @@ type Author {
   name: String!
   novels: [Novel!]!
   site: NovelSite!
+  siteId: String!
   updateTime: DateTime!
 }
 
@@ -26,6 +27,9 @@ type Chapter {
   id: Int!
   novel: Novel!
   novelId: Int!
+  site: NovelSite!
+  siteId: String!
+  siteNovelId: String!
   title: String!
   updateTime: DateTime!
   url: String!
@@ -71,7 +75,7 @@ type JjNovel {
 
 type MutationRoot {
   "创建作者"
-  createAuthor(avatar: String!, description: String!, name: String!, site: NovelSite!): Author!
+  createAuthor(avatar: String!, description: String!, name: String!, site: NovelSite!, siteId: String!): Author!
   "创建目录"
   createCollection(description: String, name: String!, parentId: Int): Collection!
   "创建小说"
@@ -98,9 +102,12 @@ type Novel {
   description: String!
   id: Int!
   name: String!
-  status: ReadStatus!
+  novelStatus: NovelStatus!
+  site: NovelSite!
+  siteId: String!
   tags: [Tag!]!
   updateTime: DateTime!
+  url: String!
 }
 
 type QdAuthor {
@@ -143,7 +150,7 @@ type QueryRoot {
   "获取作者列表"
   queryAuthors(searchName: String): [Author!]!
   "获取小说列表"
-  queryNovels(collectionId: Int, readStatus: ReadStatus, tagMatch: TagMatch): [Novel!]!
+  queryNovels(collectionId: Int, novelStatus: NovelStatus, tagMatch: TagMatch): [Novel!]!
   "获取标签列表"
   queryTags(collectionId: Int, deepSearch: Boolean): [Tag!]!
 }
@@ -161,10 +168,9 @@ enum NovelSite {
   QIDIAN
 }
 
-enum ReadStatus {
-  READ
-  READING
-  UNREAD
+enum NovelStatus {
+  COMPLETED
+  ONGOING
 }
 
 """
@@ -183,7 +189,9 @@ input CreateNovelInput {
   collectionId: Int
   description: String!
   name: String!
+  novelStatus: NovelStatus!
   site: NovelSite!
+  siteId: String!
   tags: [Int!]!
 }
 

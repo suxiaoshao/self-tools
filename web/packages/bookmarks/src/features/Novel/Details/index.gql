@@ -7,7 +7,7 @@ query getNovel($id: Int!) {
     createTime
     updateTime
     description
-    status
+    novelStatus
     collection {
       id
       name
