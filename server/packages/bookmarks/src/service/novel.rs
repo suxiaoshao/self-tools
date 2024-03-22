@@ -58,7 +58,7 @@ impl Novel {
 
     /// 获取小说章节
     async fn chapters(&self) -> GraphqlResult<Vec<super::chapter::Chapter>> {
-        super::chapter::Chapter::get_by_novel_id(self.id)
+        super::chapter::Chapter::get_by_novel_id(self.id, &self.site_id)
     }
     async fn url(&self) -> String {
         match self.site {

@@ -2,17 +2,14 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-02-27 05:39:03
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-03-15 09:08:14
+ * @LastEditTime: 2024-03-16 04:09:38
  * @FilePath: /self-tools/server/packages/bookmarks/src/service/chapter.rs
  */
 use async_graphql::{ComplexObject, SimpleObject};
 use novel_crawler::{ChapterFn, JJChapter, QDChapter};
 use time::OffsetDateTime;
 
-use crate::{
-    errors::GraphqlResult,
-    model::{novel::NovelModel, schema::custom_type::NovelSite},
-};
+use crate::{errors::GraphqlResult, model::schema::custom_type::NovelSite};
 
 use super::novel::Novel;
 
@@ -62,12 +59,11 @@ impl Chapter {
 
 /// 小说相关
 impl Chapter {
-    pub fn get_by_novel_id(novel_id: i64) -> GraphqlResult<Vec<Self>> {
-        let NovelModel { site_id, .. } = crate::model::novel::NovelModel::find_one(novel_id)?;
+    pub fn get_by_novel_id(novel_id: i64, site_novel_id: &str) -> GraphqlResult<Vec<Self>> {
         let chapters = crate::model::chapter::ChapterModel::get_by_novel_id(novel_id)?;
         Ok(chapters
             .into_iter()
-            .map(|x| Chapter::from(x, site_id.clone()))
+            .map(|x| Chapter::from(x, site_novel_id.to_owned()))
             .collect())
     }
 }

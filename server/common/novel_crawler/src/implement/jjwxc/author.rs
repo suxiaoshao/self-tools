@@ -80,6 +80,9 @@ impl AuthorFn for JJAuthor {
     fn get_url_from_id(id: &str) -> String {
         format!("https://www.jjwxc.net/oneauthor.php?authorid={}", id)
     }
+    fn id(&self) -> &str {
+        self.id.as_str()
+    }
 }
 
 fn map_url(element_ref: ElementRef) -> NovelResult<String> {

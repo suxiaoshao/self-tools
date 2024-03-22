@@ -2,12 +2,12 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-01-06 01:30:13
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-03-13 19:50:17
+ * @LastEditTime: 2024-03-22 16:05:58
  * @FilePath: /self-tools/server/packages/bookmarks/src/graphql/mutation.rs
  */
 
 use super::{guard::AuthGuard, validator::DirNameValidator};
-use async_graphql::Object;
+use async_graphql::{InputObject, Object};
 
 use crate::{
     errors::GraphqlResult,
@@ -83,4 +83,42 @@ impl MutationRoot {
         let deleted_novel = Novel::delete(id)?;
         Ok(deleted_novel)
     }
+    /// 保存 draft author
+    #[graphql(guard = "AuthGuard")]
+    async fn save_draft_author(&self, author: DraftAuthorInfo) -> GraphqlResult<Author> {
+        todo!()
+    }
+}
+
+#[derive(InputObject, Clone, Eq, PartialEq, Debug)]
+
+struct DraftAuthorInfo {
+    id: String,
+    site: NovelSite,
+    url: String,
+    name: String,
+    description: String,
+    image: String,
+    novels: Vec<DraftNovelInfo>,
+}
+
+#[derive(InputObject, Clone, Eq, PartialEq, Debug)]
+struct DraftNovelInfo {
+    id: String,
+    site: NovelSite,
+    url: String,
+    name: String,
+    description: String,
+    image: String,
+    chapters: Vec<DraftChapterInfo>,
+}
+
+#[derive(InputObject, Clone, Eq, PartialEq, Debug)]
+struct DraftChapterInfo {
+    id: String,
+    name: String,
+    novel_id: String,
+    url: String,
+    word_count: u32,
+    time: String,
 }

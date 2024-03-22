@@ -2,7 +2,7 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-01-06 01:30:13
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-03-15 05:12:21
+ * @LastEditTime: 2024-03-22 16:05:09
  * @FilePath: /self-tools/server/common/novel_crawler/src/implement/jjwxc/chapter.rs
  */
 use crate::chapter::ChapterFn;
