@@ -14,7 +14,7 @@ volo-thrift = "0.9.2"
 tokio = { version = "1.36.0", features = ["full"] }
 
 # jwt
-jsonwebtoken = "9.2.0"
+jsonwebtoken = "9.3.0"
 serde = { version = "1.0.197", features = ["derive"] }
 
 # log
