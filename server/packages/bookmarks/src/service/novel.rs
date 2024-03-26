@@ -1,11 +1,10 @@
 use std::collections::HashSet;
 
-use crate::model::{collection::CollectionModel, schema::custom_type::NovelSite};
+use crate::model::{collection::CollectionModel, schema::custom_type::NovelSite, tag::TagModel};
 use crate::model::{
     novel::{NewNovel, NovelModel},
     PgPool,
 };
-use crate::service::tag::Tag;
 use crate::{
     errors::{GraphqlError, GraphqlResult},
     model::schema::custom_type::NovelStatus,
@@ -17,7 +16,7 @@ use novel_crawler::{JJNovel, NovelFn, QDNovel};
 use time::OffsetDateTime;
 use tracing::{event, Level};
 
-use super::{author::Author, collection::Collection};
+use super::{author::Author, collection::Collection, tag::Tag};
 
 #[derive(SimpleObject)]
 #[graphql(complex)]
@@ -146,23 +145,15 @@ impl Novel {
         }
         if let Some(TagMatch { match_set, .. }) = &tag_match {
             // tag 不存在
-            Tag::exists_all(match_set.iter(), conn)?;
+            TagModel::exists_all(match_set.iter(), conn)?;
             // tags 都属于 collection_id
-            Tag::belong_to_collection(collection_id, match_set.iter(), conn)?;
+            TagModel::belong_to_collection(collection_id, match_set.iter(), conn)?;
         }
         let data = NovelModel::query(collection_id, tag_match, novel_status, conn)?
             .into_iter()
             .map(Into::into)
             .collect();
         Ok(data)
-    }
-    /// 根据 collection_id 删除小说
-    pub fn delete_by_collection_id(
-        collection_id: i64,
-        conn: &mut PgConnection,
-    ) -> GraphqlResult<()> {
-        NovelModel::delete_by_collection_id(collection_id, conn)?;
-        Ok(())
     }
 }
 
@@ -194,9 +185,9 @@ impl CreateNovelInput {
             }
         }
         // tag 不存在
-        Tag::exists_all(self.tags.iter(), conn)?;
+        TagModel::exists_all(self.tags.iter(), conn)?;
         // tags 都属于 collection_id
-        Tag::belong_to_collection(self.collection_id, self.tags.iter(), conn)?;
+        TagModel::belong_to_collection(self.collection_id, self.tags.iter(), conn)?;
         let new_novel = self.to_new_novel().create(conn)?;
         Ok(new_novel.into())
     }

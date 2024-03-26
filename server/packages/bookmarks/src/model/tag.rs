@@ -1,10 +1,14 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
-use crate::{errors::GraphqlResult, model::collection::CollectionModel};
+use crate::{
+    errors::{GraphqlError, GraphqlResult},
+    model::collection::CollectionModel,
+};
 
 use super::schema::tag;
 use diesel::prelude::*;
 use time::OffsetDateTime;
+use tracing::{event, Level};
 
 #[derive(Queryable)]
 pub struct TagModel {
@@ -59,6 +63,22 @@ impl TagModel {
     pub fn get_by_ids(ids: &[i64], conn: &mut PgConnection) -> GraphqlResult<Vec<Self>> {
         let tags = tag::table.filter(tag::id.eq_any(ids)).load::<Self>(conn)?;
         Ok(tags)
+    }
+    /// 判断标签是否全部存在
+    pub fn exists_all<'a, T: Iterator<Item = &'a i64>>(
+        tags: T,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<()> {
+        let tag_ids: HashSet<i64> = tags.cloned().collect();
+        let database_tags = TagModel::get_list(conn)?;
+        let database_tags: HashSet<i64> = database_tags.into_iter().map(|tag| tag.id).collect();
+        for id in tag_ids {
+            if !database_tags.contains(&id) {
+                event!(Level::ERROR, "标签不存在: {}", id);
+                return Err(GraphqlError::NotFound("标签", id));
+            }
+        }
+        Ok(())
     }
 }
 
@@ -141,6 +161,36 @@ impl TagModel {
             }
         }
         Ok(result)
+    }
+    /// 验证 tags 属于 collection_id
+    pub fn belong_to_collection<'a, T: Iterator<Item = &'a i64>>(
+        collection_id: Option<i64>,
+        tags: T,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<()> {
+        let allow_tags = match collection_id {
+            Some(id) => TagModel::allow_tags(id, conn)?,
+            None => TagModel::query_root(conn)?,
+        };
+        let allow_tags: HashSet<_> = allow_tags.into_iter().map(|tag| tag.id).collect();
+        // 存在不符合的 tags
+        for tag in tags {
+            if !allow_tags.contains(tag) {
+                event!(
+                    Level::ERROR,
+                    "标签: {} 不属于集合: {:?}",
+                    tag,
+                    collection_id
+                );
+                return Err(GraphqlError::Scope {
+                    sub_tag: "标签",
+                    sub_value: *tag,
+                    super_tag: "集合",
+                    super_value: collection_id,
+                });
+            }
+        }
+        Ok(())
     }
 }
 

@@ -2,7 +2,7 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-01-06 01:30:13
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-03-25 00:10:58
+ * @LastEditTime: 2024-03-26 17:13:31
  * @FilePath: /self-tools/server/packages/bookmarks/src/service/author.rs
  */
 use async_graphql::{ComplexObject, Context, SimpleObject};
@@ -14,6 +14,8 @@ use crate::{
     errors::{GraphqlError, GraphqlResult},
     model::{author::AuthorModel, novel::NovelModel, schema::custom_type::NovelSite, PgPool},
 };
+
+use super::novel::Novel;
 
 #[derive(SimpleObject)]
 #[graphql(complex)]
@@ -30,7 +32,7 @@ pub struct Author {
 
 #[ComplexObject]
 impl Author {
-    async fn novels(&self, context: &Context<'_>) -> GraphqlResult<Vec<super::novel::Novel>> {
+    async fn novels(&self, context: &Context<'_>) -> GraphqlResult<Vec<Novel>> {
         let conn = &mut context
             .data::<PgPool>()
             .map_err(|_| GraphqlError::NotGraphqlContextData("PgPool"))?
