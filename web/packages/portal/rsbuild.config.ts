@@ -2,12 +2,13 @@
  * @Author: suxiaoshao suxiaoshao@gamil.com
  * @Date: 2023-12-18 22:35:51
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-03-21 07:50:48
+ * @LastEditTime: 2024-03-26 16:18:28
  */
 import { defineConfig } from '@rsbuild/core';
 import { pluginReact } from '@rsbuild/plugin-react';
 import { RsdoctorRspackPlugin } from '@rsdoctor/rspack-plugin';
 import { pluginLightningcss } from '@rsbuild/plugin-lightningcss';
+import { codeInspectorPlugin } from 'code-inspector-plugin';
 
 export default defineConfig({
   plugins: [pluginReact(), pluginLightningcss()],
@@ -35,9 +36,11 @@ export default defineConfig({
   },
   tools: {
     bundlerChain: (chain) => {
-      // chain.plugin('monaco').use(MonacoWebpackPlugin);
       if (process.env.RSDOCTOR) {
         chain.plugin('rsdoctor').use(new RsdoctorRspackPlugin());
+      }
+      if (process.env.NODE_ENV === 'development') {
+        chain.plugin('code-inspector').use(codeInspectorPlugin({ bundler: 'rspack' }));
       }
     },
   },
