@@ -2,16 +2,17 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-01-06 01:30:13
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-03-13 19:18:00
+ * @LastEditTime: 2024-03-25 00:10:58
  * @FilePath: /self-tools/server/packages/bookmarks/src/service/author.rs
  */
-use async_graphql::{ComplexObject, SimpleObject};
+use async_graphql::{ComplexObject, Context, SimpleObject};
+use diesel::PgConnection;
 use time::OffsetDateTime;
 use tracing::{event, Level};
 
 use crate::{
     errors::{GraphqlError, GraphqlResult},
-    model::{author::AuthorModel, novel::NovelModel, schema::custom_type::NovelSite},
+    model::{author::AuthorModel, novel::NovelModel, schema::custom_type::NovelSite, PgPool},
 };
 
 #[derive(SimpleObject)]
@@ -29,8 +30,12 @@ pub struct Author {
 
 #[ComplexObject]
 impl Author {
-    async fn novels(&self) -> GraphqlResult<Vec<super::novel::Novel>> {
-        let novels = NovelModel::query_by_author_id(self.id)?;
+    async fn novels(&self, context: &Context<'_>) -> GraphqlResult<Vec<super::novel::Novel>> {
+        let conn = &mut context
+            .data::<PgPool>()
+            .map_err(|_| GraphqlError::NotGraphqlContextData("PgPool"))?
+            .get()?;
+        let novels = NovelModel::query_by_author_id(self.id, conn)?;
         Ok(novels.into_iter().map(|x| x.into()).collect())
     }
 }
@@ -58,36 +63,37 @@ impl Author {
         description: &str,
         site: NovelSite,
         site_id: &str,
+        conn: &mut PgConnection,
     ) -> GraphqlResult<Self> {
-        let new_author = AuthorModel::create(name, avatar, site, site_id, description)?;
+        let new_author = AuthorModel::create(name, avatar, site, site_id, description, conn)?;
         Ok(new_author.into())
     }
     /// 删除作者
-    pub fn delete(id: i64) -> GraphqlResult<Self> {
+    pub fn delete(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
         // 作者不存在
-        if !AuthorModel::exists(id)? {
+        if !AuthorModel::exists(id, conn)? {
             event!(Level::WARN, "作者不存在: {}", id);
             return Err(GraphqlError::NotFound("作者", id));
         }
-        let deleted_author = AuthorModel::delete(id)?;
+        let deleted_author = AuthorModel::delete(id, conn)?;
         Ok(deleted_author.into())
     }
     /// 获取作者列表
-    pub fn query(search_name: Option<String>) -> GraphqlResult<Vec<Self>> {
+    pub fn query(search_name: Option<String>, conn: &mut PgConnection) -> GraphqlResult<Vec<Self>> {
         let authors = match search_name {
-            Some(search_name) => AuthorModel::get_search_list(search_name)?,
-            None => AuthorModel::get_list()?,
+            Some(search_name) => AuthorModel::get_search_list(search_name, conn)?,
+            None => AuthorModel::get_list(conn)?,
         };
         Ok(authors.into_iter().map(|x| x.into()).collect())
     }
     /// 获取作者
-    pub fn get(id: i64) -> GraphqlResult<Self> {
+    pub fn get(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
         // 作者不存在
-        if !AuthorModel::exists(id)? {
+        if !AuthorModel::exists(id, conn)? {
             event!(Level::WARN, "作者不存在: {}", id);
             return Err(GraphqlError::NotFound("作者", id));
         }
-        let author = AuthorModel::get(id)?;
+        let author = AuthorModel::get(id, conn)?;
         Ok(author.into())
     }
 }

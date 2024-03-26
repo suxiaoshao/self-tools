@@ -2,14 +2,18 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-02-27 05:39:03
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-03-16 04:09:38
+ * @LastEditTime: 2024-03-25 13:47:09
  * @FilePath: /self-tools/server/packages/bookmarks/src/service/chapter.rs
  */
-use async_graphql::{ComplexObject, SimpleObject};
+use async_graphql::{ComplexObject, Context, SimpleObject};
+use diesel::PgConnection;
 use novel_crawler::{ChapterFn, JJChapter, QDChapter};
 use time::OffsetDateTime;
 
-use crate::{errors::GraphqlResult, model::schema::custom_type::NovelSite};
+use crate::{
+    errors::{GraphqlError, GraphqlResult},
+    model::{schema::custom_type::NovelSite, PgPool},
+};
 
 use super::novel::Novel;
 
@@ -29,8 +33,12 @@ pub struct Chapter {
 
 #[ComplexObject]
 impl Chapter {
-    async fn novel(&self) -> GraphqlResult<Novel> {
-        let novel = Novel::get(self.novel_id)?;
+    async fn novel(&self, context: &Context<'_>) -> GraphqlResult<Novel> {
+        let conn = &mut context
+            .data::<PgPool>()
+            .map_err(|_| GraphqlError::NotGraphqlContextData("PgPool"))?
+            .get()?;
+        let novel = Novel::get(self.novel_id, conn)?;
         Ok(novel)
     }
     async fn url(&self) -> String {
@@ -59,8 +67,12 @@ impl Chapter {
 
 /// 小说相关
 impl Chapter {
-    pub fn get_by_novel_id(novel_id: i64, site_novel_id: &str) -> GraphqlResult<Vec<Self>> {
-        let chapters = crate::model::chapter::ChapterModel::get_by_novel_id(novel_id)?;
+    pub fn get_by_novel_id(
+        novel_id: i64,
+        site_novel_id: &str,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<Vec<Self>> {
+        let chapters = crate::model::chapter::ChapterModel::get_by_novel_id(novel_id, conn)?;
         Ok(chapters
             .into_iter()
             .map(|x| Chapter::from(x, site_novel_id.to_owned()))

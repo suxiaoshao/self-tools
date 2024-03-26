@@ -40,8 +40,7 @@ pub struct NewNovel<'a> {
 }
 
 impl NewNovel<'_> {
-    pub fn create(&self) -> GraphqlResult<NovelModel> {
-        let conn = &mut super::CONNECTION.get()?;
+    pub fn create(&self, conn: &mut PgConnection) -> GraphqlResult<NovelModel> {
         let new_novel = diesel::insert_into(novel::table)
             .values(self)
             .get_result(conn)?;
@@ -52,20 +51,17 @@ impl NewNovel<'_> {
 /// id 相关
 impl NovelModel {
     /// 删除小说
-    pub fn delete(id: i64) -> GraphqlResult<Self> {
-        let conn = &mut super::CONNECTION.get()?;
+    pub fn delete(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
         let novel = diesel::delete(novel::table.filter(novel::id.eq(id))).get_result(conn)?;
         Ok(novel)
     }
     /// 查找小说
-    pub fn find_one(id: i64) -> GraphqlResult<Self> {
-        let conn = &mut super::CONNECTION.get()?;
+    pub fn find_one(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
         let novel = novel::table.filter(novel::id.eq(id)).first::<Self>(conn)?;
         Ok(novel)
     }
     /// 判断是否存在
-    pub fn exists(id: i64) -> GraphqlResult<bool> {
-        let conn = &mut super::CONNECTION.get()?;
+    pub fn exists(id: i64, conn: &mut PgConnection) -> GraphqlResult<bool> {
         let exists = diesel::select(diesel::dsl::exists(novel::table.filter(novel::id.eq(id))))
             .get_result(conn)?;
         Ok(exists)
@@ -79,8 +75,8 @@ impl NovelModel {
         collection_id: Option<i64>,
         tag_match: Option<TagMatch>,
         novel_status: Option<NovelStatus>,
+        conn: &mut PgConnection,
     ) -> GraphqlResult<Vec<Self>> {
-        let conn = &mut super::CONNECTION.get()?;
         // 获取数据
         let data = match (collection_id, novel_status) {
             (Some(collection_id), Some(novel_status)) => novel::table
@@ -123,8 +119,10 @@ impl NovelModel {
         Ok(data)
     }
     /// 根据 collection_id 删除小说
-    pub fn delete_by_collection_id(collection_id: i64) -> GraphqlResult<usize> {
-        let conn = &mut super::CONNECTION.get()?;
+    pub fn delete_by_collection_id(
+        collection_id: i64,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<usize> {
         let deleted = diesel::delete(novel::table.filter(novel::collection_id.eq(collection_id)))
             .execute(conn)?;
         Ok(deleted)
@@ -134,8 +132,7 @@ impl NovelModel {
 /// 作者相关
 impl NovelModel {
     /// 查询小说
-    pub fn query_by_author_id(author_id: i64) -> GraphqlResult<Vec<Self>> {
-        let conn = &mut super::CONNECTION.get()?;
+    pub fn query_by_author_id(author_id: i64, conn: &mut PgConnection) -> GraphqlResult<Vec<Self>> {
         let data = novel::table
             .filter(novel::author_id.eq(author_id))
             .load(conn)?;

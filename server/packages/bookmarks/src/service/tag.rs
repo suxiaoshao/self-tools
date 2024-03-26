@@ -1,4 +1,5 @@
 use async_graphql::SimpleObject;
+use diesel::PgConnection;
 use std::collections::HashSet;
 use time::OffsetDateTime;
 use tracing::{event, Level};
@@ -33,36 +34,43 @@ impl From<TagModel> for Tag {
 /// id 相关
 impl Tag {
     /// 创建标签
-    pub fn create(name: &str, collection_id: Option<i64>) -> GraphqlResult<Self> {
+    pub fn create(
+        name: &str,
+        collection_id: Option<i64>,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<Self> {
         //  判断父目录是否存在
         if let Some(id) = collection_id {
-            if !CollectionModel::exists(id)? {
+            if !CollectionModel::exists(id, conn)? {
                 event!(Level::ERROR, "目录不存在: {}", id);
                 return Err(GraphqlError::NotFound("目录", id));
             }
         }
-        let new_tag = TagModel::create(name, collection_id)?;
+        let new_tag = TagModel::create(name, collection_id, conn)?;
         Ok(new_tag.into())
     }
     /// 删除标签
-    pub fn delete(id: i64) -> GraphqlResult<Self> {
+    pub fn delete(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
         // 标签不存在
-        if !TagModel::exists(id)? {
+        if !TagModel::exists(id, conn)? {
             event!(Level::ERROR, "标签不存在: {}", id);
             return Err(GraphqlError::NotFound("标签", id));
         }
-        let deleted_tag = TagModel::delete(id)?;
+        let deleted_tag = TagModel::delete(id, conn)?;
         Ok(deleted_tag.into())
     }
     /// 获取标签列表
-    pub fn get_by_ids(ids: &[i64]) -> GraphqlResult<Vec<Self>> {
-        let tags = TagModel::get_by_ids(ids)?;
+    pub fn get_by_ids(ids: &[i64], conn: &mut PgConnection) -> GraphqlResult<Vec<Self>> {
+        let tags = TagModel::get_by_ids(ids, conn)?;
         Ok(tags.into_iter().map(|x| x.into()).collect())
     }
     /// 判断标签是否全部存在
-    pub fn exists_all<'a, T: Iterator<Item = &'a i64>>(tags: T) -> GraphqlResult<()> {
+    pub fn exists_all<'a, T: Iterator<Item = &'a i64>>(
+        tags: T,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<()> {
         let tag_ids: HashSet<i64> = tags.cloned().collect();
-        let database_tags = TagModel::get_list()?;
+        let database_tags = TagModel::get_list(conn)?;
         let database_tags: HashSet<i64> = database_tags.into_iter().map(|tag| tag.id).collect();
         for id in tag_ids {
             if !database_tags.contains(&id) {
@@ -77,18 +85,19 @@ impl Tag {
 /// collection_id 相关
 impl Tag {
     /// 根据 collection_id 删除标签
-    pub fn delete_by_collection(collection_id: i64) -> GraphqlResult<()> {
-        TagModel::delete_by_collection(collection_id)?;
+    pub fn delete_by_collection(collection_id: i64, conn: &mut PgConnection) -> GraphqlResult<()> {
+        TagModel::delete_by_collection(collection_id, conn)?;
         Ok(())
     }
     /// 验证 tags 属于 collection_id
     pub fn belong_to_collection<'a, T: Iterator<Item = &'a i64>>(
         collection_id: Option<i64>,
         tags: T,
+        conn: &mut PgConnection,
     ) -> GraphqlResult<()> {
         let allow_tags = match collection_id {
-            Some(id) => TagModel::allow_tags(id)?,
-            None => TagModel::query_root()?,
+            Some(id) => TagModel::allow_tags(id, conn)?,
+            None => TagModel::query_root(conn)?,
         };
         let allow_tags: HashSet<_> = allow_tags.into_iter().map(|tag| tag.id).collect();
         // 存在不符合的 tags
@@ -111,20 +120,24 @@ impl Tag {
         Ok(())
     }
     /// 获取标签列表
-    pub fn query(collection_id: Option<i64>, deep_search: bool) -> GraphqlResult<Vec<Self>> {
+    pub fn query(
+        collection_id: Option<i64>,
+        deep_search: bool,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<Vec<Self>> {
         //  判断父目录是否存在
         if let Some(id) = collection_id {
-            if !CollectionModel::exists(id)? {
+            if !CollectionModel::exists(id, conn)? {
                 event!(Level::ERROR, "目录不存在: {}", id);
                 return Err(GraphqlError::NotFound("目录", id));
             }
         }
         // 获取标签列表
         let tags = match (collection_id, deep_search) {
-            (Some(id), false) => TagModel::query_by_collection(id)?,
-            (None, false) => TagModel::query_root()?,
-            (None, true) => TagModel::get_list()?,
-            (Some(id), true) => TagModel::allow_tags(id)?,
+            (Some(id), false) => TagModel::query_by_collection(id, conn)?,
+            (None, false) => TagModel::query_root(conn)?,
+            (None, true) => TagModel::get_list(conn)?,
+            (Some(id), true) => TagModel::allow_tags(id, conn)?,
         };
         Ok(tags.into_iter().map(|tag| tag.into()).collect())
     }

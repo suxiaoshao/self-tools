@@ -1,7 +1,6 @@
 use crate::errors::GraphqlResult;
 
 use super::schema::collection::{self};
-use super::CONNECTION;
 use diesel::prelude::*;
 use time::OffsetDateTime;
 
@@ -36,6 +35,7 @@ impl CollectionModel {
         path: &str,
         parent_id: Option<i64>,
         description: Option<String>,
+        conn: &mut PgConnection,
     ) -> GraphqlResult<Self> {
         let now = time::OffsetDateTime::now_utc();
         let new_collection = NewCollection {
@@ -46,7 +46,6 @@ impl CollectionModel {
             create_time: now,
             update_time: now,
         };
-        let conn = &mut CONNECTION.get()?;
 
         let new_collection = diesel::insert_into(collection::table)
             .values(&new_collection)
@@ -54,8 +53,7 @@ impl CollectionModel {
         Ok(new_collection)
     }
     /// 判断目录是否存在
-    pub fn exists(id: i64) -> GraphqlResult<bool> {
-        let conn = &mut CONNECTION.get()?;
+    pub fn exists(id: i64, conn: &mut PgConnection) -> GraphqlResult<bool> {
         let exists = diesel::select(diesel::dsl::exists(
             collection::table.filter(collection::id.eq(id)),
         ))
@@ -63,16 +61,14 @@ impl CollectionModel {
         Ok(exists)
     }
     /// 查找目录
-    pub fn find_one(id: i64) -> GraphqlResult<Self> {
-        let conn = &mut CONNECTION.get()?;
+    pub fn find_one(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
         let collection = collection::table
             .filter(collection::id.eq(id))
             .first(conn)?;
         Ok(collection)
     }
     /// 删除目录
-    pub fn delete(id: i64) -> GraphqlResult<Self> {
-        let conn = &mut CONNECTION.get()?;
+    pub fn delete(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
         let collection =
             diesel::delete(collection::table.filter(collection::id.eq(id))).get_result(conn)?;
         Ok(collection)
@@ -82,8 +78,7 @@ impl CollectionModel {
 /// path 相关
 impl CollectionModel {
     /// 是否存在该路径
-    pub fn exists_by_path(path: &str) -> GraphqlResult<bool> {
-        let conn = &mut CONNECTION.get()?;
+    pub fn exists_by_path(path: &str, conn: &mut PgConnection) -> GraphqlResult<bool> {
         let exists = diesel::select(diesel::dsl::exists(
             collection::table.filter(collection::path.eq(path)),
         ))
@@ -95,8 +90,10 @@ impl CollectionModel {
 /// parent_id 相关
 impl CollectionModel {
     /// 获取父目录下的所有目录
-    pub fn get_list_by_parent(parent_id: Option<i64>) -> GraphqlResult<Vec<Self>> {
-        let conn = &mut CONNECTION.get()?;
+    pub fn get_list_by_parent(
+        parent_id: Option<i64>,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<Vec<Self>> {
         match parent_id {
             Some(parent_id) => {
                 let collections = collection::table
@@ -117,8 +114,7 @@ impl CollectionModel {
 /// all
 impl CollectionModel {
     /// 获取所有目录
-    pub fn get_list() -> GraphqlResult<Vec<Self>> {
-        let conn = &mut CONNECTION.get()?;
+    pub fn get_list(conn: &mut PgConnection) -> GraphqlResult<Vec<Self>> {
         let collections = collection::table.load(conn)?;
         Ok(collections)
     }

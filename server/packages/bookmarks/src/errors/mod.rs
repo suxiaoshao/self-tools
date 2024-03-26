@@ -1,7 +1,7 @@
 use async_graphql::ErrorExtensionValues;
 use axum::{extract::rejection::QueryRejection, response::IntoResponse, Json};
 use diesel::r2d2;
-use std::sync::Arc;
+use std::{env::VarError, sync::Arc};
 use thrift::auth::ItemServiceCheckException;
 
 #[derive(Debug)]
@@ -40,6 +40,8 @@ pub enum GraphqlError {
     QueryRejection(String),
     // reqwest error
     ReqwestError(String),
+    VarError(VarError),
+    NotGraphqlContextData(&'static str),
 }
 
 impl IntoResponse for GraphqlError {
@@ -94,6 +96,10 @@ impl GraphqlError {
             GraphqlError::NovelParseError => "小说解析错误".to_string(),
             GraphqlError::QueryRejection(value) => format!("query rejection:{value}"),
             GraphqlError::ReqwestError(err) => format!("reqwest error:{err}"),
+            GraphqlError::VarError(err) => format!("env error:{err}"),
+            GraphqlError::NotGraphqlContextData(tag) => {
+                format!("graphql context data:{}不存在", tag)
+            }
         }
     }
     pub fn code(&self) -> &str {
@@ -117,6 +123,8 @@ impl GraphqlError {
             GraphqlError::NovelParseError => "NovelParseError",
             GraphqlError::QueryRejection(_) => "QueryRejection",
             GraphqlError::ReqwestError(_) => "ReqwestError",
+            GraphqlError::VarError(_) => "VarError",
+            GraphqlError::NotGraphqlContextData(_) => "NotGraphqlContextData",
         }
     }
 }
@@ -153,6 +161,8 @@ impl Clone for GraphqlError {
             GraphqlError::NovelParseError => Self::NovelParseError,
             GraphqlError::QueryRejection(data) => Self::QueryRejection(data.clone()),
             GraphqlError::ReqwestError(data) => Self::ReqwestError(data.clone()),
+            GraphqlError::VarError(data) => Self::VarError(data.clone()),
+            GraphqlError::NotGraphqlContextData(data) => Self::NotGraphqlContextData(data),
         }
     }
 }
@@ -204,6 +214,12 @@ impl From<novel_crawler::NovelError> for GraphqlError {
             }
             novel_crawler::NovelError::ParseError => Self::NovelParseError,
         }
+    }
+}
+
+impl From<VarError> for GraphqlError {
+    fn from(value: VarError) -> Self {
+        Self::VarError(value)
     }
 }
 
