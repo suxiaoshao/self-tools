@@ -46,6 +46,15 @@ impl NewNovel<'_> {
             .get_result(conn)?;
         Ok(new_novel)
     }
+    pub fn create_many(
+        data: &[NewNovel],
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<Vec<NovelModel>> {
+        let new_novels = diesel::insert_into(novel::table)
+            .values(data)
+            .get_results(conn)?;
+        Ok(new_novels)
+    }
 }
 
 /// id 相关

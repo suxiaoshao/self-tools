@@ -25,7 +25,10 @@ impl Collection {
     async fn ancestors(&self, context: &Context<'_>) -> GraphqlResult<Vec<Collection>> {
         let conn = &mut context
             .data::<PgPool>()
-            .map_err(|_| GraphqlError::NotGraphqlContextData("PgPool"))?
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
             .get()?;
         let ancestors = Collection::get_ancestors(self.id, conn)?;
         Ok(ancestors)
@@ -34,7 +37,10 @@ impl Collection {
     async fn children(&self, context: &Context<'_>) -> GraphqlResult<Vec<Collection>> {
         let conn = &mut context
             .data::<PgPool>()
-            .map_err(|_| GraphqlError::NotGraphqlContextData("PgPool"))?
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
             .get()?;
         let children = Collection::get_list_parent_id(Some(self.id), conn)?;
         Ok(children)

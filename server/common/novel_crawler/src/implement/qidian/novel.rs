@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     errors::NovelResult,
     implement::{parse_image_src, parse_text, text_from_url},
-    novel::NovelFn,
+    novel::{NovelFn, NovelStatus},
     NovelError, QDAuthor,
 };
 
@@ -28,6 +28,8 @@ static SELECTOR_NOVEL_CHAPTERS: Lazy<Selector> =
     Lazy::new(|| Selector::parse("#vite-plugin-ssr_pageContext").unwrap());
 static SELECTOR_AUTHOR: Lazy<Selector> =
     Lazy::new(|| Selector::parse("a.detail__header-detail__author-link").unwrap());
+static SELECTOR_STATUS: Lazy<Selector> =
+    Lazy::new(|| Selector::parse("head > meta[property=\"og:novel:status\"]").unwrap());
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct QDNovel {
@@ -37,6 +39,7 @@ pub struct QDNovel {
     image: String,
     chapters: Vec<QDChapter>,
     author_id: String,
+    status: NovelStatus,
 }
 
 impl NovelFn for QDNovel {
@@ -50,6 +53,7 @@ impl NovelFn for QDNovel {
         let image = parse_image_src(&html, &SELECTOR_NOVEL_IMAGE)?;
         let image = format!("https:{image}");
         let chapters: Vec<QDChapter> = parse_chapters(&chapter_html, novel_id)?;
+        let status = parse_status(&html)?;
         let author_id = html
             .select(&SELECTOR_AUTHOR)
             .next()
@@ -62,6 +66,7 @@ impl NovelFn for QDNovel {
             image,
             chapters,
             author_id,
+            status,
         })
     }
 
@@ -89,6 +94,9 @@ impl NovelFn for QDNovel {
     }
     fn get_url_from_id(id: &str) -> String {
         format!("https://m.qidian.com/book/{}.html", id)
+    }
+    fn status(&self) -> NovelStatus {
+        self.status
     }
 }
 
@@ -186,6 +194,20 @@ fn parse_author_id(input: &str) -> IResult<&str, String> {
         eof,
     )))(input)?;
     Ok((input, data.to_string()))
+}
+fn parse_status(html: &Html) -> NovelResult<NovelStatus> {
+    let status = html
+        .select(&SELECTOR_STATUS)
+        .next()
+        .ok_or(NovelError::ParseError)?
+        .value()
+        .attr("content")
+        .ok_or(NovelError::ParseError)?;
+    match status {
+        "连载" => Ok(NovelStatus::Ongoing),
+        "完本" => Ok(NovelStatus::Completed),
+        _ => Err(NovelError::ParseError),
+    }
 }
 #[cfg(test)]
 mod test {

@@ -6,6 +6,7 @@
  * @FilePath: /self-tools/server/packages/bookmarks/src/graphql/query.rs
  */
 use async_graphql::{Context, Object};
+use tracing::{event, Level};
 
 use crate::{
     errors::{GraphqlError, GraphqlResult},
@@ -36,7 +37,10 @@ impl QueryRoot {
     ) -> GraphqlResult<Vec<Collection>> {
         let conn = &mut context
             .data::<PgPool>()
-            .map_err(|_| GraphqlError::NotGraphqlContextData("PgPool"))?
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
             .get()?;
         let directory = Collection::get_list_parent_id(parent_id, conn)?;
         Ok(directory)
@@ -46,7 +50,10 @@ impl QueryRoot {
     async fn get_collection(&self, context: &Context<'_>, id: i64) -> GraphqlResult<Collection> {
         let conn = &mut context
             .data::<PgPool>()
-            .map_err(|_| GraphqlError::NotGraphqlContextData("PgPool"))?
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
             .get()?;
         let collection = Collection::get(id, conn)?;
         Ok(collection)
@@ -61,7 +68,10 @@ impl QueryRoot {
     ) -> GraphqlResult<Vec<Author>> {
         let conn = &mut context
             .data::<PgPool>()
-            .map_err(|_| GraphqlError::NotGraphqlContextData("PgPool"))?
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
             .get()?;
         // 空字符串视为无效
         let search_name = match search_name {
@@ -76,7 +86,10 @@ impl QueryRoot {
     async fn get_author(&self, context: &Context<'_>, id: i64) -> GraphqlResult<Author> {
         let conn = &mut context
             .data::<PgPool>()
-            .map_err(|_| GraphqlError::NotGraphqlContextData("PgPool"))?
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
             .get()?;
         let author = Author::get(id, conn)?;
         Ok(author)
@@ -92,7 +105,10 @@ impl QueryRoot {
     ) -> GraphqlResult<Vec<Tag>> {
         let conn = &mut context
             .data::<PgPool>()
-            .map_err(|_| GraphqlError::NotGraphqlContextData("PgPool"))?
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
             .get()?;
         let tag = Tag::query(collection_id, deep_search.unwrap_or(false), conn)?;
         Ok(tag)
@@ -108,7 +124,10 @@ impl QueryRoot {
     ) -> GraphqlResult<Vec<Novel>> {
         let conn = &mut context
             .data::<PgPool>()
-            .map_err(|_| GraphqlError::NotGraphqlContextData("PgPool"))?
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
             .get()?;
         let novel = Novel::query(collection_id, tag_match, novel_status, conn)?;
         Ok(novel)
@@ -118,7 +137,10 @@ impl QueryRoot {
     async fn get_novel(&self, context: &Context<'_>, id: i64) -> GraphqlResult<Novel> {
         let conn = &mut context
             .data::<PgPool>()
-            .map_err(|_| GraphqlError::NotGraphqlContextData("PgPool"))?
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
             .get()?;
         let novel = Novel::get(id, conn)?;
         Ok(novel)

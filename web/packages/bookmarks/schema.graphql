@@ -90,6 +90,8 @@ type MutationRoot {
   deleteNovel(id: Int!): Novel!
   "删除标签"
   deleteTag(id: Int!): Tag!
+  "保存 draft author"
+  saveDraftAuthor(author: SaveDraftAuthor!): Author!
 }
 
 type Novel {
@@ -193,6 +195,36 @@ input CreateNovelInput {
   site: NovelSite!
   siteId: String!
   tags: [Int!]!
+}
+
+input SaveChapterInfo {
+  id: String!
+  name: String!
+  novelId: String!
+  time: String!
+  url: String!
+  wordCount: Int!
+}
+
+input SaveDraftAuthor {
+  description: String!
+  id: String!
+  image: String!
+  name: String!
+  novels: [SaveNovelInfo!]!
+  site: NovelSite!
+  url: String!
+}
+
+input SaveNovelInfo {
+  chapters: [SaveChapterInfo!]!
+  description: String!
+  id: String!
+  image: String!
+  name: String!
+  novelStatus: NovelStatus!
+  site: NovelSite!
+  url: String!
 }
 
 input TagMatch {

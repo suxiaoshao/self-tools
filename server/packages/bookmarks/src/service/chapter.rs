@@ -9,6 +9,7 @@ use async_graphql::{ComplexObject, Context, SimpleObject};
 use diesel::PgConnection;
 use novel_crawler::{ChapterFn, JJChapter, QDChapter};
 use time::OffsetDateTime;
+use tracing::{event, Level};
 
 use crate::{
     errors::{GraphqlError, GraphqlResult},
@@ -36,7 +37,10 @@ impl Chapter {
     async fn novel(&self, context: &Context<'_>) -> GraphqlResult<Novel> {
         let conn = &mut context
             .data::<PgPool>()
-            .map_err(|_| GraphqlError::NotGraphqlContextData("PgPool"))?
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
             .get()?;
         let novel = Novel::get(self.novel_id, conn)?;
         Ok(novel)

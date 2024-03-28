@@ -42,6 +42,7 @@ pub enum GraphqlError {
     ReqwestError(String),
     VarError(VarError),
     NotGraphqlContextData(&'static str),
+    SavaDraftError(&'static str),
 }
 
 impl IntoResponse for GraphqlError {
@@ -100,6 +101,7 @@ impl GraphqlError {
             GraphqlError::NotGraphqlContextData(tag) => {
                 format!("graphql context data:{}不存在", tag)
             }
+            GraphqlError::SavaDraftError(tag) => format!("保存草稿错误:{tag}"),
         }
     }
     pub fn code(&self) -> &str {
@@ -125,6 +127,7 @@ impl GraphqlError {
             GraphqlError::ReqwestError(_) => "ReqwestError",
             GraphqlError::VarError(_) => "VarError",
             GraphqlError::NotGraphqlContextData(_) => "NotGraphqlContextData",
+            GraphqlError::SavaDraftError(_) => "SavaDraftError",
         }
     }
 }
@@ -163,6 +166,7 @@ impl Clone for GraphqlError {
             GraphqlError::ReqwestError(data) => Self::ReqwestError(data.clone()),
             GraphqlError::VarError(data) => Self::VarError(data.clone()),
             GraphqlError::NotGraphqlContextData(data) => Self::NotGraphqlContextData(data),
+            GraphqlError::SavaDraftError(data) => Self::SavaDraftError(data),
         }
     }
 }

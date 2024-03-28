@@ -13,7 +13,7 @@ use scraper::{ElementRef, Html, Selector};
 use crate::{
     errors::{NovelError, NovelResult},
     implement::{get_doc, parse_image_src, parse_inner_html, parse_text},
-    novel::NovelFn,
+    novel::{NovelFn, NovelStatus},
     JJAuthor,
 };
 
@@ -39,6 +39,9 @@ static SELECTOR_AUTHOR: Lazy<Selector> = Lazy::new(|| {
     Selector::parse("#oneboolt > tbody > tr > td > div:nth-child(3) > h2 > a").unwrap()
 });
 
+static SELECTOR_STATUS: Lazy<Selector> =
+    Lazy::new(|| Selector::parse("span[itemprop='updataStatus']").unwrap());
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct JJNovel {
     id: String,
@@ -47,6 +50,7 @@ pub struct JJNovel {
     image: String,
     chapters: Vec<JJChapter>,
     author_id: String,
+    status: NovelStatus,
 }
 
 impl NovelFn for JJNovel {
@@ -64,6 +68,7 @@ impl NovelFn for JJNovel {
             .next()
             .ok_or(NovelError::ParseError)
             .and_then(parse_author)?;
+        let status = parse_status(&html)?;
 
         Ok(Self {
             id: novel_id.to_string(),
@@ -72,6 +77,7 @@ impl NovelFn for JJNovel {
             image,
             chapters,
             author_id,
+            status,
         })
     }
 
@@ -100,6 +106,9 @@ impl NovelFn for JJNovel {
     }
     fn get_url_from_id(id: &str) -> String {
         format!("https://www.jjwxc.net/onebook.php?novelid={}", id)
+    }
+    fn status(&self) -> NovelStatus {
+        self.status
     }
 }
 
@@ -180,6 +189,23 @@ fn parse_author_id(input: &str) -> IResult<&str, String> {
         eof,
     )))(input)?;
     Ok((input, data.to_string()))
+}
+
+fn parse_status(html: &Html) -> NovelResult<NovelStatus> {
+    let status = html
+        .select(&SELECTOR_STATUS)
+        .next()
+        .ok_or(NovelError::ParseError)?
+        .text()
+        .fold(String::new(), |mut acc, f| {
+            acc.push_str(f);
+            acc
+        });
+    match status.as_str() {
+        "连载" => Ok(NovelStatus::Ongoing),
+        "完结" => Ok(NovelStatus::Completed),
+        _ => Err(NovelError::ParseError),
+    }
 }
 
 #[cfg(test)]

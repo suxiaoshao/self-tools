@@ -43,7 +43,10 @@ impl Novel {
     async fn author(&self, context: &Context<'_>) -> GraphqlResult<Author> {
         let conn = &mut context
             .data::<PgPool>()
-            .map_err(|_| GraphqlError::NotGraphqlContextData("PgPool"))?
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
             .get()?;
         let author = Author::get(self.author_id, conn)?;
         Ok(author)
@@ -52,7 +55,10 @@ impl Novel {
     async fn tags(&self, context: &Context<'_>) -> GraphqlResult<Vec<Tag>> {
         let conn = &mut context
             .data::<PgPool>()
-            .map_err(|_| GraphqlError::NotGraphqlContextData("PgPool"))?
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
             .get()?;
         let tags = Tag::get_by_ids(&self.tags, conn)?;
         Ok(tags)
@@ -61,7 +67,10 @@ impl Novel {
     async fn collection(&self, context: &Context<'_>) -> GraphqlResult<Option<Collection>> {
         let conn = &mut context
             .data::<PgPool>()
-            .map_err(|_| GraphqlError::NotGraphqlContextData("PgPool"))?
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
             .get()?;
         if let Some(collection_id) = self.collection_id {
             let collection = Collection::get(collection_id, conn)?;
@@ -75,7 +84,10 @@ impl Novel {
     async fn chapters(&self, context: &Context<'_>) -> GraphqlResult<Vec<super::chapter::Chapter>> {
         let conn = &mut context
             .data::<PgPool>()
-            .map_err(|_| GraphqlError::NotGraphqlContextData("PgPool"))?
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
             .get()?;
         super::chapter::Chapter::get_by_novel_id(self.id, &self.site_id, conn)
     }

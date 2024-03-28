@@ -35,7 +35,10 @@ impl Author {
     async fn novels(&self, context: &Context<'_>) -> GraphqlResult<Vec<Novel>> {
         let conn = &mut context
             .data::<PgPool>()
-            .map_err(|_| GraphqlError::NotGraphqlContextData("PgPool"))?
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
             .get()?;
         let novels = NovelModel::query_by_author_id(self.id, conn)?;
         Ok(novels.into_iter().map(|x| x.into()).collect())
