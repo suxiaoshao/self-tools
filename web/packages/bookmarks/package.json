@@ -12,6 +12,7 @@
     "custom-table": "workspace:^",
     "i18n": "workspace:^",
     "time": "workspace:^",
-    "types": "workspace:^"
+    "types": "workspace:^",
+    "notify": "workspace:^"
   }
 }

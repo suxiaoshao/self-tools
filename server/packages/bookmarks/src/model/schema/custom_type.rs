@@ -2,7 +2,7 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-01-06 01:30:13
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-03-13 00:22:47
+ * @LastEditTime: 2024-03-28 09:36:07
  * @FilePath: /self-tools/server/packages/bookmarks/src/model/schema/custom_type.rs
  */
 use async_graphql::Enum;
@@ -47,6 +47,15 @@ impl FromSql<super::sql_types::NovelStatus, Pg> for NovelStatus {
                 );
                 Err("Unrecognized enum variant".into())
             }
+        }
+    }
+}
+
+impl From<novel_crawler::novel::NovelStatus> for NovelStatus {
+    fn from(value: novel_crawler::novel::NovelStatus) -> Self {
+        match value {
+            novel_crawler::novel::NovelStatus::Ongoing => NovelStatus::Ongoing,
+            novel_crawler::novel::NovelStatus::Completed => NovelStatus::Completed,
         }
     }
 }

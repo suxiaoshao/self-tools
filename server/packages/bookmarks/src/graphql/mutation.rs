@@ -2,7 +2,7 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-01-06 01:30:13
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-03-28 09:10:26
+ * @LastEditTime: 2024-03-28 09:39:00
  * @FilePath: /self-tools/server/packages/bookmarks/src/graphql/mutation.rs
  */
 
@@ -234,11 +234,11 @@ impl MutationRoot {
                             return Err(GraphqlError::SavaDraftError("chapter-novel"));
                         }
                     };
-                    for SaveChapterInfo { name, url, .. } in chapters.iter() {
+                    for SaveChapterInfo { name, id, .. } in chapters.iter() {
                         let new_chapter = NewChapter {
                             title: name,
                             site,
-                            site_id: url,
+                            site_id: id,
                             content: None,
                             novel_id: *novel_id,
                             create_time: now,

@@ -206,6 +206,9 @@ importers:
       i18n:
         specifier: workspace:^
         version: link:../../common/i18n
+      notify:
+        specifier: workspace:^
+        version: link:../../common/notify
       time:
         specifier: workspace:^
         version: link:../../common/time

@@ -2,14 +2,14 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-02-02 20:44:22
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-02-06 20:26:11
+ * @LastEditTime: 2024-03-28 09:44:02
  * @FilePath: /self-tools/server/packages/bookmarks/src/graphql/output/novel.rs
  */
 use async_graphql::Object;
 use novel_crawler::{JJNovel as JJNovelInner, NovelFn, QDNovel as QDNovelInner};
 use std::ops::Deref;
 
-use crate::errors::GraphqlResult;
+use crate::{errors::GraphqlResult, model::schema::custom_type::NovelStatus};
 
 use super::{
     author::{JjAuthor, QdAuthor},
@@ -40,6 +40,12 @@ impl QdNovel {
     async fn author(&self) -> GraphqlResult<QdAuthor> {
         let data = self.0.author().await?;
         Ok(data.into())
+    }
+    async fn status(&self) -> NovelStatus {
+        self.0.status().into()
+    }
+    async fn id(&self) -> String {
+        self.0.id().to_owned()
     }
 }
 
@@ -95,5 +101,11 @@ impl JjNovel {
     async fn author(&self) -> GraphqlResult<JjAuthor> {
         let data = self.0.author().await?;
         Ok(data.into())
+    }
+    async fn status(&self) -> NovelStatus {
+        self.0.status().into()
+    }
+    async fn id(&self) -> String {
+        self.0.id().to_owned()
     }
 }

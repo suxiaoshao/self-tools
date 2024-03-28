@@ -98,6 +98,9 @@ impl NovelFn for QDNovel {
     fn status(&self) -> NovelStatus {
         self.status
     }
+    fn id(&self) -> &str {
+        self.id.as_str()
+    }
 }
 
 impl QDNovel {

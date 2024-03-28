@@ -88,6 +88,7 @@ export type DraftNovelInfo = JjNovel | QdNovel;
 export type JjAuthor = {
   __typename?: 'JjAuthor';
   description: Scalars['String']['output'];
+  id: Scalars['String']['output'];
   image: Scalars['String']['output'];
   name: Scalars['String']['output'];
   novels: Array<JjNovel>;
@@ -96,6 +97,8 @@ export type JjAuthor = {
 
 export type JjChapter = {
   __typename?: 'JjChapter';
+  id: Scalars['String']['output'];
+  novelId: Scalars['String']['output'];
   time: Scalars['String']['output'];
   title: Scalars['String']['output'];
   url: Scalars['String']['output'];
@@ -107,8 +110,10 @@ export type JjNovel = {
   author: JjAuthor;
   chapters: Array<JjChapter>;
   description: Scalars['String']['output'];
+  id: Scalars['String']['output'];
   image: Scalars['String']['output'];
   name: Scalars['String']['output'];
+  status: NovelStatus;
   url: Scalars['String']['output'];
 };
 
@@ -130,6 +135,8 @@ export type MutationRoot = {
   deleteNovel: Novel;
   /** 删除标签 */
   deleteTag: Tag;
+  /** 保存 draft author */
+  saveDraftAuthor: Author;
 };
 
 export type MutationRootCreateAuthorArgs = {
@@ -171,6 +178,10 @@ export type MutationRootDeleteTagArgs = {
   id: Scalars['Int']['input'];
 };
 
+export type MutationRootSaveDraftAuthorArgs = {
+  author: SaveDraftAuthor;
+};
+
 export type Novel = {
   __typename?: 'Novel';
   author: Author;
@@ -203,6 +214,7 @@ export enum NovelStatus {
 export type QdAuthor = {
   __typename?: 'QdAuthor';
   description: Scalars['String']['output'];
+  id: Scalars['String']['output'];
   image: Scalars['String']['output'];
   name: Scalars['String']['output'];
   novels: Array<QdNovel>;
@@ -211,6 +223,8 @@ export type QdAuthor = {
 
 export type QdChapter = {
   __typename?: 'QdChapter';
+  id: Scalars['String']['output'];
+  novelId: Scalars['String']['output'];
   time: Scalars['String']['output'];
   title: Scalars['String']['output'];
   url: Scalars['String']['output'];
@@ -222,8 +236,10 @@ export type QdNovel = {
   author: QdAuthor;
   chapters: Array<QdChapter>;
   description: Scalars['String']['output'];
+  id: Scalars['String']['output'];
   image: Scalars['String']['output'];
   name: Scalars['String']['output'];
+  status: NovelStatus;
   url: Scalars['String']['output'];
 };
 
@@ -288,6 +304,36 @@ export type QueryRootQueryNovelsArgs = {
 export type QueryRootQueryTagsArgs = {
   collectionId?: InputMaybe<Scalars['Int']['input']>;
   deepSearch?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+export type SaveChapterInfo = {
+  id: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+  novelId: Scalars['String']['input'];
+  time: Scalars['String']['input'];
+  url: Scalars['String']['input'];
+  wordCount: Scalars['Int']['input'];
+};
+
+export type SaveDraftAuthor = {
+  description: Scalars['String']['input'];
+  id: Scalars['String']['input'];
+  image: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+  novels: Array<SaveNovelInfo>;
+  site: NovelSite;
+  url: Scalars['String']['input'];
+};
+
+export type SaveNovelInfo = {
+  chapters: Array<SaveChapterInfo>;
+  description: Scalars['String']['input'];
+  id: Scalars['String']['input'];
+  image: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+  novelStatus: NovelStatus;
+  site: NovelSite;
+  url: Scalars['String']['input'];
 };
 
 export type Tag = {
@@ -389,13 +435,24 @@ export type FetchAuthorQuery = {
         description: string;
         image: string;
         url: string;
+        id: string;
         novels: Array<{
           __typename?: 'JjNovel';
+          id: string;
           name: string;
           description: string;
           image: string;
           url: string;
-          chapters: Array<{ __typename?: 'JjChapter'; title: string; url: string; time: string; wordCount: number }>;
+          status: NovelStatus;
+          chapters: Array<{
+            __typename?: 'JjChapter';
+            id: string;
+            novelId: string;
+            title: string;
+            url: string;
+            time: string;
+            wordCount: number;
+          }>;
         }>;
       }
     | {
@@ -404,13 +461,24 @@ export type FetchAuthorQuery = {
         description: string;
         image: string;
         url: string;
+        id: string;
         novels: Array<{
           __typename?: 'QdNovel';
+          id: string;
           name: string;
           description: string;
           image: string;
           url: string;
-          chapters: Array<{ __typename?: 'QdChapter'; title: string; url: string; time: string; wordCount: number }>;
+          status: NovelStatus;
+          chapters: Array<{
+            __typename?: 'QdChapter';
+            id: string;
+            novelId: string;
+            title: string;
+            url: string;
+            time: string;
+            wordCount: number;
+          }>;
         }>;
       };
 };
@@ -452,6 +520,24 @@ export type AuthorAllFragment = {
   updateTime: any;
   avatar: string;
   description: string;
+};
+
+export type SaveDraftAuthorMutationVariables = Exact<{
+  author: SaveDraftAuthor;
+}>;
+
+export type SaveDraftAuthorMutation = {
+  __typename?: 'MutationRoot';
+  saveDraftAuthor: {
+    __typename?: 'Author';
+    id: number;
+    site: NovelSite;
+    name: string;
+    createTime: any;
+    updateTime: any;
+    avatar: string;
+    description: string;
+  };
 };
 
 export type GetCollectionsQueryVariables = Exact<{
@@ -584,6 +670,7 @@ export type GetNovelsQuery = {
     createTime: any;
     updateTime: any;
     novelStatus: NovelStatus;
+    avatar: string;
   }>;
 };
 
@@ -905,12 +992,17 @@ export const FetchAuthorDocument = gql`
         description
         image
         url
+        id
         novels {
+          id
           name
           description
           image
           url
+          status
           chapters {
+            id
+            novelId
             title
             url
             time
@@ -923,12 +1015,17 @@ export const FetchAuthorDocument = gql`
         description
         image
         url
+        id
         novels {
+          id
           name
           description
           image
           url
+          status
           chapters {
+            id
+            novelId
             title
             url
             time
@@ -1060,6 +1157,51 @@ export type CreateAuthorMutationResult = Apollo.MutationResult<CreateAuthorMutat
 export type CreateAuthorMutationOptions = Apollo.BaseMutationOptions<
   CreateAuthorMutation,
   CreateAuthorMutationVariables
+>;
+export const SaveDraftAuthorDocument = gql`
+  mutation saveDraftAuthor($author: SaveDraftAuthor!) {
+    saveDraftAuthor(author: $author) {
+      ...AuthorAll
+    }
+  }
+  ${AuthorAllFragmentDoc}
+`;
+export type SaveDraftAuthorMutationFn = Apollo.MutationFunction<
+  SaveDraftAuthorMutation,
+  SaveDraftAuthorMutationVariables
+>;
+
+/**
+ * __useSaveDraftAuthorMutation__
+ *
+ * To run a mutation, you first call `useSaveDraftAuthorMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useSaveDraftAuthorMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [saveDraftAuthorMutation, { data, loading, error }] = useSaveDraftAuthorMutation({
+ *   variables: {
+ *      author: // value for 'author'
+ *   },
+ * });
+ */
+export function useSaveDraftAuthorMutation(
+  baseOptions?: Apollo.MutationHookOptions<SaveDraftAuthorMutation, SaveDraftAuthorMutationVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useMutation<SaveDraftAuthorMutation, SaveDraftAuthorMutationVariables>(
+    SaveDraftAuthorDocument,
+    options,
+  );
+}
+export type SaveDraftAuthorMutationHookResult = ReturnType<typeof useSaveDraftAuthorMutation>;
+export type SaveDraftAuthorMutationResult = Apollo.MutationResult<SaveDraftAuthorMutation>;
+export type SaveDraftAuthorMutationOptions = Apollo.BaseMutationOptions<
+  SaveDraftAuthorMutation,
+  SaveDraftAuthorMutationVariables
 >;
 export const GetCollectionsDocument = gql`
   query getCollections($parentId: Int) {
@@ -1428,6 +1570,7 @@ export const GetNovelsDocument = gql`
       updateTime
       description
       novelStatus
+      avatar
     }
   }
 `;

@@ -110,6 +110,9 @@ impl NovelFn for JJNovel {
     fn status(&self) -> NovelStatus {
         self.status
     }
+    fn id(&self) -> &str {
+        self.id.as_str()
+    }
 }
 
 fn parse_chapter_id(url: &str) -> IResult<&str, String> {

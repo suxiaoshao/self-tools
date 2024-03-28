@@ -2,7 +2,7 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-01-06 01:30:13
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-03-26 17:13:31
+ * @LastEditTime: 2024-03-28 19:55:16
  * @FilePath: /self-tools/server/packages/bookmarks/src/service/author.rs
  */
 use async_graphql::{ComplexObject, Context, SimpleObject};
@@ -80,8 +80,12 @@ impl Author {
             event!(Level::WARN, "作者不存在: {}", id);
             return Err(GraphqlError::NotFound("作者", id));
         }
-        let deleted_author = AuthorModel::delete(id, conn)?;
-        Ok(deleted_author.into())
+        conn.build_transaction().run(|conn| {
+            let deleted_author = AuthorModel::delete(id, conn)?;
+            NovelModel::delete_by_author_id(id, conn)?;
+            // todo delete chapters
+            Ok(deleted_author.into())
+        })
     }
     /// 获取作者列表
     pub fn query(search_name: Option<String>, conn: &mut PgConnection) -> GraphqlResult<Vec<Self>> {

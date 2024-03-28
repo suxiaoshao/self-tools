@@ -2,7 +2,7 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-02-28 04:24:47
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-02-29 10:57:03
+ * @LastEditTime: 2024-03-28 09:57:11
  * @FilePath: /self-tools/web/packages/bookmarks/src/features/Novel/Details/index.tsx
  */
 import { useGetNovelQuery } from '@bookmarks/graphql';
@@ -11,6 +11,7 @@ import { Avatar, Box, Card, CardContent, CardHeader, IconButton, Tooltip, Typogr
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 import { useI18n } from 'i18n';
 import CloudDownloadIcon from '@mui/icons-material/CloudDownload';
+import { getImageUrl } from '@bookmarks/utils/image';
 
 export default function NovelDetails() {
   const { novelId } = useParams();
@@ -38,7 +39,7 @@ export default function NovelDetails() {
           }}
         >
           <CardHeader
-            avatar={<Avatar src={data.getNovel.avatar} />}
+            avatar={<Avatar src={getImageUrl(data.getNovel.avatar)} />}
             title={data.getNovel.name}
             subheader={data.getNovel.author.name}
             action={

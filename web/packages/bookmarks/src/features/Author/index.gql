@@ -27,12 +27,17 @@ query fetchAuthor($id: String!, $novelSite: NovelSite!) {
       description
       image
       url
+      id
       novels {
+        id
         name
         description
         image
         url
+        status
         chapters {
+          id
+          novelId
           title
           url
           time
@@ -45,12 +50,17 @@ query fetchAuthor($id: String!, $novelSite: NovelSite!) {
       description
       image
       url
+      id
       novels {
+        id
         name
         description
         image
         url
+        status
         chapters {
+          id
+          novelId
           title
           url
           time
@@ -80,4 +90,10 @@ fragment AuthorAll on Author {
   updateTime
   avatar
   description
+}
+
+mutation saveDraftAuthor($author: SaveDraftAuthor!) {
+  saveDraftAuthor(author: $author) {
+    ...AuthorAll
+  }
 }

@@ -147,6 +147,12 @@ impl NovelModel {
             .load(conn)?;
         Ok(data)
     }
+    /// 删除小说
+    pub fn delete_by_author_id(author_id: i64, conn: &mut PgConnection) -> GraphqlResult<usize> {
+        let deleted =
+            diesel::delete(novel::table.filter(novel::author_id.eq(author_id))).execute(conn)?;
+        Ok(deleted)
+    }
 }
 
 #[cfg(test)]

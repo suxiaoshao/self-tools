@@ -1,5 +1,5 @@
 import { Refresh } from '@mui/icons-material';
-import { Box, IconButton, Link } from '@mui/material';
+import { Avatar, Box, IconButton, Link } from '@mui/material';
 import {
   CustomColumnDefArray,
   CustomTable,
@@ -17,6 +17,7 @@ import CollectionSelect from '../../../components/CollectionSelect';
 import { GetNovelsQuery, GetNovelsQueryVariables, useDeleteNovelMutation, useGetNovelsQuery } from '../../../graphql';
 import CreateNovelButton from './Components/CreateNovelButton';
 import { convertFormToVariables } from './utils';
+import { getImageUrl } from '@bookmarks/utils/image';
 
 type Data = GetNovelsQuery['queryNovels'][0];
 
@@ -37,6 +38,12 @@ export default function NovelList() {
             {name}
           </Link>
         ),
+        cell: (context) => context.getValue(),
+      },
+      {
+        header: t('avatar'),
+        id: 'avatar',
+        accessorFn: ({ avatar }) => <Avatar src={getImageUrl(avatar)} />,
         cell: (context) => context.getValue(),
       },
       {

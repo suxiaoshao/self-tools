@@ -71,5 +71,7 @@
   "qidian": "起点中文网",
   "author_id": "Author ID",
   "view_novel_chapters": "View Novel Chapters",
-  "novel_chapters": "Novel Chapters"
+  "novel_chapters": "Novel Chapters",
+  "save_draft": "Save Draft",
+  "save_draft_success": "Save draft success"
 }

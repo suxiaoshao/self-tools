@@ -7,6 +7,7 @@ query getNovels($collectionId: Int, $novelStatus: NovelStatus, $tagMatch: TagMat
     updateTime
     description
     novelStatus
+    avatar
   }
 }
 

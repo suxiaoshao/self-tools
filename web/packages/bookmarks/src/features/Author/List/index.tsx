@@ -15,6 +15,7 @@ import { useMemo } from 'react';
 import { format } from 'time';
 import { useI18n } from 'i18n';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { getImageUrl } from '@bookmarks/utils/image';
 
 type TableItem = GetAuthorsQuery['queryAuthors'][0];
 
@@ -40,7 +41,7 @@ export default function AuthorList() {
             meta: {},
           },
         ),
-        columnHelper.accessor(({ avatar }) => <Avatar src={avatar} />, {
+        columnHelper.accessor(({ avatar }) => <Avatar src={getImageUrl(avatar)} />, {
           header: t('avatar'),
           id: 'avatar',
           cell: (context) => context.getValue(),

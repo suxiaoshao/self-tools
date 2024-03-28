@@ -51,6 +51,7 @@ type Collection {
 
 type JjAuthor {
   description: String!
+  id: String!
   image: String!
   name: String!
   novels: [JjNovel!]!
@@ -58,6 +59,8 @@ type JjAuthor {
 }
 
 type JjChapter {
+  id: String!
+  novelId: String!
   time: String!
   title: String!
   url: String!
@@ -68,8 +71,10 @@ type JjNovel {
   author: JjAuthor!
   chapters: [JjChapter!]!
   description: String!
+  id: String!
   image: String!
   name: String!
+  status: NovelStatus!
   url: String!
 }
 
@@ -114,6 +119,7 @@ type Novel {
 
 type QdAuthor {
   description: String!
+  id: String!
   image: String!
   name: String!
   novels: [QdNovel!]!
@@ -121,6 +127,8 @@ type QdAuthor {
 }
 
 type QdChapter {
+  id: String!
+  novelId: String!
   time: String!
   title: String!
   url: String!
@@ -131,8 +139,10 @@ type QdNovel {
   author: QdAuthor!
   chapters: [QdChapter!]!
   description: String!
+  id: String!
   image: String!
   name: String!
+  status: NovelStatus!
   url: String!
 }
 

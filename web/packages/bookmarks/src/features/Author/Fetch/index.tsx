@@ -2,16 +2,23 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-03-01 17:53:40
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-03-06 00:26:55
+ * @LastEditTime: 2024-03-28 19:56:56
  * @FilePath: /self-tools/web/packages/bookmarks/src/features/Author/Fetch/index.tsx
  */
-import { useFetchAuthorLazyQuery, FetchAuthorQueryVariables, NovelSite } from '@bookmarks/graphql';
+import {
+  useFetchAuthorLazyQuery,
+  FetchAuthorQueryVariables,
+  NovelSite,
+  useSaveDraftAuthorMutation,
+} from '@bookmarks/graphql';
 import {
   Avatar,
+  Backdrop,
   Box,
   Card,
   CardContent,
   CardHeader,
+  CircularProgress,
   IconButton,
   MenuItem,
   Skeleton,
@@ -21,10 +28,11 @@ import {
 } from '@mui/material';
 import { Controller, useForm } from 'react-hook-form';
 import { useI18n } from 'i18n';
-import { Search } from '@mui/icons-material';
+import { Save, Search } from '@mui/icons-material';
 import { getImageUrl } from '@bookmarks/utils/image';
-import ViewListIcon from '@mui/icons-material/ViewList';
 import ChapterModal from '@bookmarks/components/ChapterModal';
+import { convertFetchToDraftAuthor } from './utils';
+import { enqueueSnackbar } from 'notify';
 
 export default function AuthorFetch() {
   type FormData = FetchAuthorQueryVariables;
@@ -35,6 +43,7 @@ export default function AuthorFetch() {
     fn({ variables: data });
   });
   const author = data?.fetchAuthor;
+  const [saveDraftAuthor, { loading: saveLoading }] = useSaveDraftAuthorMutation();
   return (
     <Box
       onSubmit={onSubmit}
@@ -45,11 +54,29 @@ export default function AuthorFetch() {
         <CardHeader
           title={t('filter')}
           action={
-            <Tooltip title={t('fetch')}>
-              <IconButton type="submit">
-                <Search />
-              </IconButton>
-            </Tooltip>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <Tooltip title={t('fetch')}>
+                <IconButton type="submit">
+                  <Search />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title={t('save_draft')}>
+                <IconButton
+                  disabled={!author || saveLoading}
+                  onClick={async () => {
+                    if (author) {
+                      await saveDraftAuthor({ variables: { author: convertFetchToDraftAuthor(author) } });
+                      enqueueSnackbar(t('save_draft_success'), { variant: 'success' });
+                    }
+                  }}
+                >
+                  <Save />
+                </IconButton>
+              </Tooltip>
+              <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={saveLoading}>
+                <CircularProgress color="inherit" />
+              </Backdrop>
+            </Box>
           }
         />
         <CardContent sx={{ display: 'flex', gap: 1 }}>

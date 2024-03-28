@@ -4,7 +4,7 @@ use std::ops::Deref;
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-02-02 20:44:29
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-03-04 21:15:52
+ * @LastEditTime: 2024-03-28 09:44:12
  * @FilePath: /self-tools/server/packages/bookmarks/src/graphql/output/chapter.rs
  */
 use async_graphql::Object;
@@ -27,6 +27,12 @@ impl QdChapter {
     }
     async fn word_count(&self) -> u32 {
         self.0.word_count()
+    }
+    async fn novel_id(&self) -> String {
+        self.0.novel_id().to_owned()
+    }
+    async fn id(&self) -> String {
+        self.0.chapter_id().to_owned()
     }
 }
 
@@ -60,6 +66,12 @@ impl JjChapter {
     }
     async fn word_count(&self) -> u32 {
         self.0.word_count()
+    }
+    async fn novel_id(&self) -> String {
+        self.0.novel_id().to_owned()
+    }
+    async fn id(&self) -> String {
+        self.0.chapter_id().to_owned()
     }
 }
 

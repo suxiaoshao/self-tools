@@ -4,7 +4,7 @@ use std::ops::Deref;
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-02-02 20:44:15
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-02-04 03:12:30
+ * @LastEditTime: 2024-03-28 09:27:20
  * @FilePath: /self-tools/server/packages/bookmarks/src/graphql/output/author.rs
  */
 use async_graphql::Object;
@@ -50,6 +50,9 @@ impl QdAuthor {
         let data = self.0.novels().await?;
         Ok(data.into_iter().map(QdNovel::from).collect())
     }
+    async fn id(&self) -> String {
+        self.0.id().to_owned()
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -86,5 +89,8 @@ impl JjAuthor {
     async fn novels(&self) -> GraphqlResult<Vec<JjNovel>> {
         let data = self.0.novels().await?;
         Ok(data.into_iter().map(JjNovel::from).collect())
+    }
+    async fn id(&self) -> String {
+        self.0.id().to_owned()
     }
 }
