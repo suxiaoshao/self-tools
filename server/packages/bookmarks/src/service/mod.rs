@@ -1,4 +1,5 @@
 pub mod author;
+pub mod chapter;
 pub mod collection;
-pub mod tag;
 pub mod novel;
+pub mod tag;

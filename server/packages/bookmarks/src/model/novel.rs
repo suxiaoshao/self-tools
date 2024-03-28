@@ -1,84 +1,76 @@
 use std::collections::HashSet;
 
-use super::schema::{custom_type::ReadStatus, novel};
+use super::schema::{
+    custom_type::{NovelSite, NovelStatus},
+    novel,
+};
 use crate::{errors::GraphqlResult, graphql::input::TagMatch};
-use chrono::NaiveDateTime;
 use diesel::prelude::*;
+use time::OffsetDateTime;
 
 #[derive(Queryable)]
 pub struct NovelModel {
     pub id: i64,
     pub name: String,
-    pub url: String,
+    pub avatar: String,
     pub description: String,
     pub author_id: i64,
-    pub read_chapter_id: Option<i64>,
+    pub novel_status: NovelStatus,
+    pub site: NovelSite,
+    pub site_id: String,
     pub tags: Vec<i64>,
     pub collection_id: Option<i64>,
-    pub status: ReadStatus,
-    pub create_time: NaiveDateTime,
-    pub update_time: NaiveDateTime,
+    pub create_time: OffsetDateTime,
+    pub update_time: OffsetDateTime,
 }
 #[derive(Insertable)]
 #[diesel(table_name = novel)]
 pub struct NewNovel<'a> {
     pub name: &'a str,
-    pub author_id: i64,
-    pub url: &'a str,
+    pub avatar: &'a str,
     pub description: &'a str,
-    pub read_chapter_id: Option<i64>,
-    pub tags: &'a [i64],
+    pub author_id: i64,
+    pub novel_status: NovelStatus,
+    pub site: NovelSite,
+    pub site_id: &'a str,
+    pub tags: Vec<i64>,
     pub collection_id: Option<i64>,
-    pub status: ReadStatus,
-    pub create_time: NaiveDateTime,
-    pub update_time: NaiveDateTime,
+    pub create_time: OffsetDateTime,
+    pub update_time: OffsetDateTime,
+}
+
+impl NewNovel<'_> {
+    pub fn create(&self, conn: &mut PgConnection) -> GraphqlResult<NovelModel> {
+        let new_novel = diesel::insert_into(novel::table)
+            .values(self)
+            .get_result(conn)?;
+        Ok(new_novel)
+    }
+    pub fn create_many(
+        data: &[NewNovel],
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<Vec<NovelModel>> {
+        let new_novels = diesel::insert_into(novel::table)
+            .values(data)
+            .get_results(conn)?;
+        Ok(new_novels)
+    }
 }
 
 /// id 相关
 impl NovelModel {
-    /// 创建小说
-    pub fn create(
-        name: &str,
-        author_id: i64,
-        url: &str,
-        description: &str,
-        tags: &[i64],
-        collection_id: Option<i64>,
-    ) -> GraphqlResult<Self> {
-        let now = chrono::Local::now().naive_local();
-        let new_novel = NewNovel {
-            name,
-            author_id,
-            url,
-            read_chapter_id: None,
-            description,
-            tags,
-            collection_id,
-            status: ReadStatus::Unread,
-            create_time: now,
-            update_time: now,
-        };
-        let conn = &mut super::CONNECTION.get()?;
-        let new_novel = diesel::insert_into(novel::table)
-            .values(&new_novel)
-            .get_result(conn)?;
-        Ok(new_novel)
-    }
     /// 删除小说
-    pub fn delete(id: i64) -> GraphqlResult<Self> {
-        let conn = &mut super::CONNECTION.get()?;
+    pub fn delete(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
         let novel = diesel::delete(novel::table.filter(novel::id.eq(id))).get_result(conn)?;
         Ok(novel)
     }
     /// 查找小说
-    pub fn find_one(id: i64) -> GraphqlResult<Self> {
-        let conn = &mut super::CONNECTION.get()?;
+    pub fn find_one(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
         let novel = novel::table.filter(novel::id.eq(id)).first::<Self>(conn)?;
         Ok(novel)
     }
     /// 判断是否存在
-    pub fn exists(id: i64) -> GraphqlResult<bool> {
-        let conn = &mut super::CONNECTION.get()?;
+    pub fn exists(id: i64, conn: &mut PgConnection) -> GraphqlResult<bool> {
         let exists = diesel::select(diesel::dsl::exists(novel::table.filter(novel::id.eq(id))))
             .get_result(conn)?;
         Ok(exists)
@@ -91,20 +83,20 @@ impl NovelModel {
     pub fn query(
         collection_id: Option<i64>,
         tag_match: Option<TagMatch>,
-        read_status: Option<ReadStatus>,
+        novel_status: Option<NovelStatus>,
+        conn: &mut PgConnection,
     ) -> GraphqlResult<Vec<Self>> {
-        let conn = &mut super::CONNECTION.get()?;
         // 获取数据
-        let data = match (collection_id, read_status) {
-            (Some(collection_id), Some(read_status)) => novel::table
+        let data = match (collection_id, novel_status) {
+            (Some(collection_id), Some(novel_status)) => novel::table
                 .filter(novel::collection_id.eq(collection_id))
-                .filter(novel::status.eq(read_status))
+                .filter(novel::novel_status.eq(novel_status))
                 .load::<Self>(conn)?,
             (Some(collection_id), None) => novel::table
                 .filter(novel::collection_id.eq(collection_id))
                 .load(conn)?,
             (None, Some(read_status)) => novel::table
-                .filter(novel::status.eq(read_status))
+                .filter(novel::novel_status.eq(read_status))
                 .filter(novel::collection_id.is_null())
                 .load::<Self>(conn)?,
             (None, None) => novel::table.load(conn)?,
@@ -136,10 +128,29 @@ impl NovelModel {
         Ok(data)
     }
     /// 根据 collection_id 删除小说
-    pub fn delete_by_collection_id(collection_id: i64) -> GraphqlResult<usize> {
-        let conn = &mut super::CONNECTION.get()?;
+    pub fn delete_by_collection_id(
+        collection_id: i64,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<usize> {
         let deleted = diesel::delete(novel::table.filter(novel::collection_id.eq(collection_id)))
             .execute(conn)?;
+        Ok(deleted)
+    }
+}
+
+/// 作者相关
+impl NovelModel {
+    /// 查询小说
+    pub fn query_by_author_id(author_id: i64, conn: &mut PgConnection) -> GraphqlResult<Vec<Self>> {
+        let data = novel::table
+            .filter(novel::author_id.eq(author_id))
+            .load(conn)?;
+        Ok(data)
+    }
+    /// 删除小说
+    pub fn delete_by_author_id(author_id: i64, conn: &mut PgConnection) -> GraphqlResult<usize> {
+        let deleted =
+            diesel::delete(novel::table.filter(novel::author_id.eq(author_id))).execute(conn)?;
         Ok(deleted)
     }
 }

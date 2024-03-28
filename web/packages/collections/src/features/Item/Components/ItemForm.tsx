@@ -67,7 +67,7 @@ export default function ItemForm({
             <Typography sx={{ ml: 2, flex: 1 }} variant="h6" component="div">
               {mode === 'create' ? t('create_item') : t('modify_item')}
             </Typography>
-            <Button autoFocus type="submit" color="inherit">
+            <Button type="submit" color="inherit">
               {t('submit')}
             </Button>
           </Toolbar>

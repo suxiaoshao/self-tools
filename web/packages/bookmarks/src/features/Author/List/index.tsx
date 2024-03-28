@@ -1,4 +1,4 @@
-import { Avatar, Box, IconButton, Link, Typography } from '@mui/material';
+import { Avatar, Box, Button, IconButton, Link, Typography } from '@mui/material';
 import { Refresh } from '@mui/icons-material';
 import {
   createCustomColumnHelper,
@@ -9,25 +9,28 @@ import {
   TableActions,
   useCustomTable,
 } from 'custom-table';
-import { GetAuthorsQuery, useDeleteAuthorMutation, useGetAuthorsQuery } from '../../graphql';
+import { GetAuthorsQuery, useDeleteAuthorMutation, useGetAuthorsQuery } from '../../../graphql';
 import CreateAuthorButton from './components/CreateAuthorButton';
 import { useMemo } from 'react';
 import { format } from 'time';
 import { useI18n } from 'i18n';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { getImageUrl } from '@bookmarks/utils/image';
 
 type TableItem = GetAuthorsQuery['queryAuthors'][0];
 
 const columnHelper = createCustomColumnHelper<TableItem>();
-export default function Author() {
+export default function AuthorList() {
   const { data, refetch } = useGetAuthorsQuery();
   const [deleteAuthor] = useDeleteAuthorMutation();
   const t = useI18n();
+  const navigate = useNavigate();
   const columns = useMemo<CustomColumnDefArray<TableItem>>(
     () =>
       [
         columnHelper.accessor(
-          ({ url, name }) => (
-            <Link target="_blank" href={url} rel="noreferrer">
+          ({ name, id }) => (
+            <Link to={`/bookmarks/authors/${id}`} component={RouterLink}>
               {name}
             </Link>
           ),
@@ -38,7 +41,7 @@ export default function Author() {
             meta: {},
           },
         ),
-        columnHelper.accessor(({ avatar }) => <Avatar src={avatar} />, {
+        columnHelper.accessor(({ avatar }) => <Avatar src={getImageUrl(avatar)} />, {
           header: t('avatar'),
           id: 'avatar',
           cell: (context) => context.getValue(),
@@ -109,6 +112,15 @@ export default function Author() {
         }}
       >
         <CreateAuthorButton refetch={refetch} />
+        <Button
+          sx={{ ml: 1 }}
+          color="primary"
+          size="large"
+          variant="contained"
+          onClick={() => navigate('/bookmarks/authors/fetch')}
+        >
+          {t('crawler')}
+        </Button>
         <IconButton sx={{ marginLeft: 'auto' }} onClick={() => refetch()}>
           <Refresh />
         </IconButton>

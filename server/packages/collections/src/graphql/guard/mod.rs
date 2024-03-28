@@ -2,10 +2,10 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-01-06 01:30:13
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-01-23 00:02:08
+ * @LastEditTime: 2024-02-20 15:31:44
  * @FilePath: /self-tools/server/packages/collections/src/graphql/guard/mod.rs
  */
-use async_graphql::{async_trait, Context, Guard, Result};
+use async_graphql::{Context, Guard, Result};
 use middleware::TraceIdExt;
 use thrift::{auth::CheckRequest, get_client};
 use tracing::{event, Level};
@@ -17,7 +17,6 @@ use crate::{
 
 #[derive(Default)]
 pub struct AuthGuard;
-#[async_trait::async_trait]
 impl Guard for AuthGuard {
     async fn check(&self, ctx: &Context<'_>) -> Result<()> {
         let auth = ctx.data_opt::<Auth>();

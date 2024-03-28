@@ -2,7 +2,7 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-01-06 01:30:13
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-01-27 10:30:58
+ * @LastEditTime: 2024-02-20 16:24:41
  * @FilePath: /self-tools/server/packages/collections/src/graphql/query.rs
  */
 use async_graphql::Object;
@@ -25,19 +25,19 @@ pub struct QueryRoot;
 #[Object]
 impl QueryRoot {
     /// 获取目录详情
-    #[graphql(guard = "AuthGuard::default()")]
+    #[graphql(guard = "AuthGuard")]
     async fn get_collection(&self, id: i64) -> GraphqlResult<Collection> {
         let collection = Collection::get(id)?;
         Ok(collection)
     }
     /// 获取记录详情
-    #[graphql(guard = "AuthGuard::default()")]
+    #[graphql(guard = "AuthGuard")]
     async fn get_item(&self, id: i64) -> GraphqlResult<Item> {
         let item = Item::get(id)?;
         Ok(item)
     }
     /// 获取集合下的集合和记录
-    #[graphql(guard = "AuthGuard::default()")]
+    #[graphql(guard = "AuthGuard")]
     async fn collection_and_item(
         &self,
         query: CollectionItemQuery,

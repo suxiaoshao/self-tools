@@ -1,7 +1,14 @@
+/*
+ * @Author: suxiaoshao suxiaoshao@gmail.com
+ * @Date: 2024-01-06 01:30:13
+ * @LastEditors: suxiaoshao suxiaoshao@gmail.com
+ * @LastEditTime: 2024-02-03 17:07:33
+ * @FilePath: /self-tools/server/common/novel_crawler/src/errors.rs
+ */
 use thiserror::Error;
 
 #[derive(Error, Debug)]
-pub(crate) enum NovelError {
+pub enum NovelError {
     #[error("网络错误")]
     NetworkError(reqwest::Error),
     #[error("解析错误")]

@@ -2,7 +2,7 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-01-06 01:30:13
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-01-23 01:34:13
+ * @LastEditTime: 2024-03-23 21:22:23
  * @FilePath: /self-tools/server/packages/bookmarks/src/main.rs
  */
 mod errors;
@@ -29,7 +29,10 @@ async fn main() -> anyhow::Result<()> {
         .init();
     // 设置跨域
     let cors = get_cors();
-    let app = get_router().layer(cors).layer(trace_layer());
+    let app = get_router()
+        .map_err(|_x| anyhow::anyhow!("VarError"))?
+        .layer(cors)
+        .layer(trace_layer());
 
     let addr = "0.0.0.0:8080";
     event!(Level::INFO, addr, "server start");

@@ -21,15 +21,15 @@ static SELECTOR_AUTHOR_NAME: Lazy<Selector> = Lazy::new(|| {
     Selector::parse("#appContentWrap > div > div > div > div[class^=authorName] > h1").unwrap()
 });
 static SELECTOR_AUTHOR_DESCRIPTION: Lazy<Selector> =
-    Lazy::new(|| Selector::parse("#appContentWrap > div > div > div > p").unwrap());
+    Lazy::new(|| Selector::parse("p[class^=\"authorDesc\"]").unwrap());
 static SELECTOR_AUTHOR_IMAGE: Lazy<Selector> =
     Lazy::new(|| Selector::parse("#appContentWrap > div > div > div > div > img").unwrap());
 static SELECTOR_NOVEL_URLS: Lazy<Selector> = Lazy::new(|| {
     Selector::parse("#appContentWrap > div > div > div > div[class^=allBookListItem] > a").unwrap()
 });
 
-#[derive(Debug)]
-struct QDAuthor {
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct QDAuthor {
     id: String,
     name: String,
     description: String,
@@ -46,7 +46,6 @@ impl AuthorFn for QDAuthor {
 
         // 图片
         let image = parse_attr(&image_doc, &SELECTOR_AUTHOR_IMAGE, "data-src")?;
-        let image = format!("https:{image}");
         // 其他
         let name = parse_inner_html(&image_doc, &SELECTOR_AUTHOR_NAME)?;
         let description = parse_text(&image_doc, &SELECTOR_AUTHOR_DESCRIPTION)?;
@@ -64,8 +63,7 @@ impl AuthorFn for QDAuthor {
     }
 
     fn url(&self) -> String {
-        let data = format!("https://m.qidian.com/author/{}/", self.id);
-        data
+        Self::get_url_from_id(&self.id)
     }
     fn name(&self) -> &str {
         self.name.as_str()
@@ -79,6 +77,12 @@ impl AuthorFn for QDAuthor {
     async fn novels(&self) -> NovelResult<Vec<Self::Novel>> {
         let data = try_join_all(self.novel_ids.iter().map(|x| QDNovel::get_novel_data(x))).await?;
         Ok(data)
+    }
+    fn get_url_from_id(id: &str) -> String {
+        format!("https://m.qidian.com/author/{}/", id)
+    }
+    fn id(&self) -> &str {
+        self.id.as_str()
     }
 }
 
@@ -117,7 +121,7 @@ mod test {
 
     #[tokio::test]
     async fn qd_author_test() -> anyhow::Result<()> {
-        let author = QDAuthor::get_author_data("4362386").await?;
+        let author = QDAuthor::get_author_data("4362948").await?;
         println!("{author:#?}");
         Ok(())
     }

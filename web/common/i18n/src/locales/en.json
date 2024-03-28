@@ -60,5 +60,18 @@
   "tag_name": "Tag Name",
   "home": "Home",
   "bookmarks": "Bookmarks",
-  "collections": "Collections"
+  "collections": "Collections",
+  "refresh": "Refresh",
+  "crawler": "Crawler",
+  "novel_site": "Novel Site",
+  "novel_id": "Novel ID",
+  "filter": "Filter",
+  "fetch": "Fetch",
+  "jjwxc": "晋江文学城",
+  "qidian": "起点中文网",
+  "author_id": "Author ID",
+  "view_novel_chapters": "View Novel Chapters",
+  "novel_chapters": "Novel Chapters",
+  "save_draft": "Save Draft",
+  "save_draft_success": "Save draft success"
 }
