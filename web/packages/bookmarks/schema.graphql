@@ -61,7 +61,7 @@ type JjAuthor {
 type JjChapter {
   id: String!
   novelId: String!
-  time: String!
+  time: DateTime!
   title: String!
   url: String!
   wordCount: Int!
@@ -129,7 +129,7 @@ type QdAuthor {
 type QdChapter {
   id: String!
   novelId: String!
-  time: String!
+  time: DateTime!
   title: String!
   url: String!
   wordCount: Int!

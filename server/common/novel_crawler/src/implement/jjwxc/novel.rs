@@ -9,6 +9,10 @@ use nom::{
 };
 use once_cell::sync::Lazy;
 use scraper::{ElementRef, Html, Selector};
+use time::{
+    macros::{format_description, offset},
+    OffsetDateTime, PrimitiveDateTime,
+};
 
 use crate::{
     errors::{NovelError, NovelResult},
@@ -126,10 +130,15 @@ fn parse_chapter_id(url: &str) -> IResult<&str, String> {
 }
 
 fn parse_chapters(html: &Html, selector: &Selector, novel_id: &str) -> NovelResult<Vec<JJChapter>> {
+    fn parse_time(time: &str) -> NovelResult<OffsetDateTime> {
+        let format = format_description!("[year]-[month]-[day] [hour]:[minute]:[second]");
+        let time = PrimitiveDateTime::parse(time, &format)?;
+        Ok(time.assume_offset(offset!(+8)))
+    }
     fn map_chapter(
         element: ElementRef,
         name: ElementRef,
-    ) -> NovelResult<(String, String, u32, String)> {
+    ) -> NovelResult<(String, String, u32, OffsetDateTime)> {
         let url = name
             .value()
             .attr("href")
@@ -142,9 +151,9 @@ fn parse_chapters(html: &Html, selector: &Selector, novel_id: &str) -> NovelResu
             .select(&SELECTOR_CHAPTER_TIME)
             .next()
             .ok_or(NovelError::ParseError)?
-            .inner_html()
-            .trim()
-            .to_string();
+            .inner_html();
+        let time = time.trim();
+        let time = parse_time(time)?;
         let word_count = element
             .select(&SELECTOR_CHAPTER_WORD_COUNT)
             .next()
@@ -152,7 +161,9 @@ fn parse_chapters(html: &Html, selector: &Selector, novel_id: &str) -> NovelResu
             .inner_html();
         Ok((id, name, word_count.parse().unwrap_or(0), time))
     }
-    fn filter_map(element_ref: ElementRef) -> Option<NovelResult<(String, String, u32, String)>> {
+    fn filter_map_chapter(
+        element_ref: ElementRef,
+    ) -> Option<NovelResult<(String, String, u32, OffsetDateTime)>> {
         let name = element_ref.select(&SELECTOR_CHAPTER_NAME).next()?;
         Some(map_chapter(element_ref, name))
     }
@@ -160,7 +171,7 @@ fn parse_chapters(html: &Html, selector: &Selector, novel_id: &str) -> NovelResu
     let element_ref = html
         .select(selector)
         .filter_map(|data| {
-            filter_map(data).map(|data| match data {
+            filter_map_chapter(data).map(|data| match data {
                 Ok((chapter_id, title, word_count, time)) => Ok(JJChapter::new(
                     novel_id.to_string(),
                     chapter_id,

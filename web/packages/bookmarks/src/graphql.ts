@@ -99,7 +99,7 @@ export type JjChapter = {
   __typename?: 'JjChapter';
   id: Scalars['String']['output'];
   novelId: Scalars['String']['output'];
-  time: Scalars['String']['output'];
+  time: Scalars['DateTime']['output'];
   title: Scalars['String']['output'];
   url: Scalars['String']['output'];
   wordCount: Scalars['Int']['output'];
@@ -225,7 +225,7 @@ export type QdChapter = {
   __typename?: 'QdChapter';
   id: Scalars['String']['output'];
   novelId: Scalars['String']['output'];
-  time: Scalars['String']['output'];
+  time: Scalars['DateTime']['output'];
   title: Scalars['String']['output'];
   url: Scalars['String']['output'];
   wordCount: Scalars['Int']['output'];
@@ -450,7 +450,7 @@ export type FetchAuthorQuery = {
             novelId: string;
             title: string;
             url: string;
-            time: string;
+            time: any;
             wordCount: number;
           }>;
         }>;
@@ -476,7 +476,7 @@ export type FetchAuthorQuery = {
             novelId: string;
             title: string;
             url: string;
-            time: string;
+            time: any;
             wordCount: number;
           }>;
         }>;

@@ -2,10 +2,12 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-01-06 01:30:13
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-03-22 16:05:09
+ * @LastEditTime: 2024-03-30 23:14:39
  * @FilePath: /self-tools/server/common/novel_crawler/src/implement/jjwxc/chapter.rs
  */
 use crate::chapter::ChapterFn;
+
+use time::OffsetDateTime;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct JJChapter {
@@ -13,7 +15,7 @@ pub struct JJChapter {
     chapter_id: String,
     title: String,
     word_count: u32,
-    time: String,
+    time: OffsetDateTime,
 }
 
 impl JJChapter {
@@ -22,7 +24,7 @@ impl JJChapter {
         chapter_id: String,
         title: String,
         word_count: u32,
-        time: String,
+        time: OffsetDateTime,
     ) -> Self {
         Self {
             novel_id,
@@ -48,8 +50,8 @@ impl ChapterFn for JJChapter {
     fn novel_id(&self) -> &str {
         self.novel_id.as_str()
     }
-    fn time(&self) -> &str {
-        self.time.as_str()
+    fn time(&self) -> OffsetDateTime {
+        self.time
     }
     fn word_count(&self) -> u32 {
         self.word_count

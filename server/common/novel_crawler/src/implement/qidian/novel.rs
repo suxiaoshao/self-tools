@@ -1,6 +1,10 @@
 use once_cell::sync::Lazy;
 use scraper::{ElementRef, Html, Selector};
 use serde::{Deserialize, Serialize};
+use time::{
+    macros::{format_description, offset},
+    PrimitiveDateTime,
+};
 
 use crate::{
     errors::NovelResult,
@@ -165,6 +169,21 @@ fn parse_chapters(html: &str, novel_id: &str) -> NovelResult<Vec<QDChapter>> {
     }
 
     let data: Data = serde_json::from_str(&data)?;
+    fn map_chapter(
+        Chapter { name, id, cnt, u_t }: Chapter,
+        novel_id: &str,
+    ) -> NovelResult<QDChapter> {
+        let format = format_description!("[year]-[month]-[day] [hour]:[minute]");
+        let time = PrimitiveDateTime::parse(&u_t, &format)?;
+        let time = time.assume_offset(offset!(+8));
+        Ok(QDChapter::new(
+            novel_id.to_string(),
+            id.to_string(),
+            name,
+            cnt,
+            time,
+        ))
+    }
     let data = data
         .page_context
         .page_props
@@ -172,10 +191,8 @@ fn parse_chapters(html: &str, novel_id: &str) -> NovelResult<Vec<QDChapter>> {
         .vs
         .into_iter()
         .flat_map(|d| d.cs)
-        .map(|Chapter { id, name, cnt, u_t }| {
-            QDChapter::new(novel_id.to_string(), id.to_string(), name, cnt, u_t)
-        })
-        .collect();
+        .map(|chapter| map_chapter(chapter, novel_id))
+        .collect::<NovelResult<_>>()?;
     Ok(data)
 }
 

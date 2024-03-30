@@ -36,6 +36,7 @@ pub enum GraphqlError {
     /// novel 获取错误
     NovelNetworkError(String),
     NovelParseError,
+    NovelTimeParseError(time::error::Parse),
     // query rejection
     QueryRejection(String),
     // reqwest error
@@ -102,6 +103,7 @@ impl GraphqlError {
                 format!("graphql context data:{}不存在", tag)
             }
             GraphqlError::SavaDraftError(tag) => format!("保存草稿错误:{tag}"),
+            GraphqlError::NovelTimeParseError(tag) => format!("小说时间解析错误:{tag}"),
         }
     }
     pub fn code(&self) -> &str {
@@ -128,6 +130,7 @@ impl GraphqlError {
             GraphqlError::VarError(_) => "VarError",
             GraphqlError::NotGraphqlContextData(_) => "NotGraphqlContextData",
             GraphqlError::SavaDraftError(_) => "SavaDraftError",
+            GraphqlError::NovelTimeParseError(_) => "NovelTimeParseError",
         }
     }
 }
@@ -167,6 +170,7 @@ impl Clone for GraphqlError {
             GraphqlError::VarError(data) => Self::VarError(data.clone()),
             GraphqlError::NotGraphqlContextData(data) => Self::NotGraphqlContextData(data),
             GraphqlError::SavaDraftError(data) => Self::SavaDraftError(data),
+            GraphqlError::NovelTimeParseError(data) => Self::NovelTimeParseError(*data),
         }
     }
 }
@@ -217,6 +221,7 @@ impl From<novel_crawler::NovelError> for GraphqlError {
                 Self::NovelNetworkError(err.to_string())
             }
             novel_crawler::NovelError::ParseError => Self::NovelParseError,
+            novel_crawler::NovelError::TimeParseError(data) => Self::NovelTimeParseError(data),
         }
     }
 }
