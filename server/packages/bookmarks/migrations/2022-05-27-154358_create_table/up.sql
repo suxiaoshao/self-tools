@@ -54,6 +54,8 @@ create table chapter
     site        novel_site   not null,
     site_id     text         not null,
     content     text,
+    time        timestamptz  not null,
+    word_count  bigint       not null,
     novel_id    bigint       not null,
     author_id   bigint       not null,
     create_time timestamptz  not null,

@@ -2,7 +2,7 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-01-06 01:30:13
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-03-28 19:55:16
+ * @LastEditTime: 2024-03-31 11:50:52
  * @FilePath: /self-tools/server/packages/bookmarks/src/service/author.rs
  */
 use async_graphql::{ComplexObject, Context, SimpleObject};
@@ -12,7 +12,10 @@ use tracing::{event, Level};
 
 use crate::{
     errors::{GraphqlError, GraphqlResult},
-    model::{author::AuthorModel, novel::NovelModel, schema::custom_type::NovelSite, PgPool},
+    model::{
+        author::AuthorModel, chapter::ChapterModel, novel::NovelModel,
+        schema::custom_type::NovelSite, PgPool,
+    },
 };
 
 use super::novel::Novel;
@@ -83,7 +86,7 @@ impl Author {
         conn.build_transaction().run(|conn| {
             let deleted_author = AuthorModel::delete(id, conn)?;
             NovelModel::delete_by_author_id(id, conn)?;
-            // todo delete chapters
+            ChapterModel::delete_by_author_id(id, conn)?;
             Ok(deleted_author.into())
         })
     }

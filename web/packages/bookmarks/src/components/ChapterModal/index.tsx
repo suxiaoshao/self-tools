@@ -2,7 +2,7 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-03-05 23:57:14
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-03-06 00:35:18
+ * @LastEditTime: 2024-03-31 11:42:00
  * @FilePath: /self-tools/web/packages/bookmarks/src/components/ChapterModal/index.tsx
  */
 import { FetchAuthorQuery } from '@bookmarks/graphql';
@@ -10,6 +10,7 @@ import { Dialog, DialogTitle, IconButton, List, ListItem, ListItemButton, ListIt
 import { useCallback, useState } from 'react';
 import { useI18n } from 'i18n';
 import { ViewList } from '@mui/icons-material';
+import { format } from 'time';
 
 export interface ChapterModalProps {
   chapters: FetchAuthorQuery['fetchAuthor']['novels'][0]['chapters'];
@@ -36,7 +37,7 @@ export default function ChapterModal({ chapters }: ChapterModalProps) {
         <List sx={{ pt: 0 }}>
           {chapters.map((chapter) => (
             <ListItem key={chapter.url}>
-              <ListItemText primary={chapter.title} secondary={`${chapter.time} - ${chapter.wordCount}`} />
+              <ListItemText primary={chapter.title} secondary={`${format(chapter.time)} - ${chapter.wordCount}`} />
             </ListItem>
           ))}
         </List>

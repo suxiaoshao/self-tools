@@ -2,7 +2,7 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-01-06 01:30:13
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-03-13 00:56:49
+ * @LastEditTime: 2024-03-31 11:28:22
  * @FilePath: /self-tools/server/packages/bookmarks/src/model/schema/mod.rs
  */
 // @generated automatically by Diesel CLI.
@@ -45,7 +45,10 @@ diesel::table! {
         site -> NovelSite,
         site_id -> Text,
         content -> Nullable<Text>,
+        time -> Timestamptz,
+        word_count -> Int8,
         novel_id -> Int8,
+        author_id -> Int8,
         create_time -> Timestamptz,
         update_time -> Timestamptz,
     }

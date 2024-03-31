@@ -310,7 +310,7 @@ export type SaveChapterInfo = {
   id: Scalars['String']['input'];
   name: Scalars['String']['input'];
   novelId: Scalars['String']['input'];
-  time: Scalars['String']['input'];
+  time: Scalars['DateTime']['input'];
   url: Scalars['String']['input'];
   wordCount: Scalars['Int']['input'];
 };

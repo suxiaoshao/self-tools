@@ -37,7 +37,10 @@ diesel::table! {
         site -> NovelSite,
         site_id -> Text,
         content -> Nullable<Text>,
+        time -> Timestamptz,
+        word_count -> Int8,
         novel_id -> Int8,
+        author_id -> Int8,
         create_time -> Timestamptz,
         update_time -> Timestamptz,
     }

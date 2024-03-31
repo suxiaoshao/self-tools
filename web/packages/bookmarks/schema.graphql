@@ -211,7 +211,7 @@ input SaveChapterInfo {
   id: String!
   name: String!
   novelId: String!
-  time: String!
+  time: DateTime!
   url: String!
   wordCount: Int!
 }

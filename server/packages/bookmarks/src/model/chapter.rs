@@ -2,7 +2,7 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-01-06 01:30:13
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-03-28 09:12:20
+ * @LastEditTime: 2024-03-31 11:50:26
  * @FilePath: /self-tools/server/packages/bookmarks/src/model/chapter.rs
  */
 use diesel::prelude::*;
@@ -18,7 +18,10 @@ pub struct ChapterModel {
     pub site: NovelSite,
     pub site_id: String,
     pub content: Option<String>,
+    pub time: OffsetDateTime,
+    pub word_count: i64,
     pub novel_id: i64,
+    pub author_id: i64,
     pub create_time: OffsetDateTime,
     pub update_time: OffsetDateTime,
 }
@@ -32,6 +35,12 @@ impl ChapterModel {
             .load::<Self>(conn)?;
         Ok(chapters)
     }
+    /// 根据 author_id 删除章节
+    pub fn delete_by_author_id(author_id: i64, conn: &mut PgConnection) -> GraphqlResult<usize> {
+        let count = diesel::delete(chapter::table.filter(chapter::author_id.eq(author_id)))
+            .execute(conn)?;
+        Ok(count)
+    }
 }
 
 #[derive(Insertable)]
@@ -41,7 +50,10 @@ pub struct NewChapter<'a> {
     pub site: NovelSite,
     pub site_id: &'a str,
     pub content: Option<&'a str>,
+    pub time: OffsetDateTime,
+    pub word_count: i64,
     pub novel_id: i64,
+    pub author_id: i64,
     pub create_time: OffsetDateTime,
     pub update_time: OffsetDateTime,
 }
