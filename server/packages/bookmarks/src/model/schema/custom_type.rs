@@ -2,11 +2,14 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-01-06 01:30:13
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-03-28 09:36:07
+ * @LastEditTime: 2024-04-01 03:57:54
  * @FilePath: /self-tools/server/packages/bookmarks/src/model/schema/custom_type.rs
  */
 use async_graphql::Enum;
-use std::io::Write;
+use std::{
+    fmt::{self, Display, Formatter},
+    io::Write,
+};
 use tracing::{event, Level};
 
 use diesel::{
@@ -65,6 +68,15 @@ impl From<novel_crawler::novel::NovelStatus> for NovelStatus {
 pub enum NovelSite {
     Qidian,
     Jjwxc,
+}
+
+impl Display for NovelSite {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        match self {
+            NovelSite::Qidian => write!(f, "起点"),
+            NovelSite::Jjwxc => write!(f, "晋江"),
+        }
+    }
 }
 
 impl ToSql<super::sql_types::NovelSite, Pg> for NovelSite {

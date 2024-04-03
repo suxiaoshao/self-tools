@@ -2,7 +2,7 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-01-06 01:30:13
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-03-23 21:40:43
+ * @LastEditTime: 2024-04-01 03:54:18
  * @FilePath: /self-tools/server/packages/bookmarks/src/model/author.rs
  */
 use crate::errors::GraphqlResult;
@@ -97,5 +97,16 @@ impl AuthorModel {
             .filter(author::name.like(format!("%{search_name}%")))
             .load(conn)?;
         Ok(authors)
+    }
+}
+
+/// site_id 相关的操作
+impl AuthorModel {
+    pub fn exists_by_site_id(site_id: &str, conn: &mut PgConnection) -> GraphqlResult<bool> {
+        let exists = diesel::select(diesel::dsl::exists(
+            author::table.filter(author::site_id.eq(site_id)),
+        ))
+        .get_result(conn)?;
+        Ok(exists)
     }
 }

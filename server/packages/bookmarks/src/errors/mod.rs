@@ -43,6 +43,7 @@ pub enum GraphqlError {
     ReqwestError(String),
     VarError(VarError),
     NotGraphqlContextData(&'static str),
+    // 保存草稿错误
     SavaDraftError(&'static str),
 }
 

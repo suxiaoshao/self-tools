@@ -2,29 +2,22 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-01-06 01:30:13
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-03-31 11:33:39
+ * @LastEditTime: 2024-03-31 14:30:20
  * @FilePath: /self-tools/server/packages/bookmarks/src/graphql/mutation.rs
  */
 
-use std::collections::HashMap;
-
 use super::{guard::AuthGuard, validator::DirNameValidator};
-use async_graphql::{Context, InputObject, Object};
-use time::OffsetDateTime;
+use async_graphql::{Context, Object};
 use tracing::{event, Level};
 
 use crate::{
     errors::{GraphqlError, GraphqlResult},
-    model::{
-        chapter::NewChapter,
-        novel::NewNovel,
-        schema::custom_type::{NovelSite, NovelStatus},
-        PgPool,
-    },
+    model::{schema::custom_type::NovelSite, PgPool},
     service::{
         author::Author,
         collection::Collection,
         novel::{CreateNovelInput, Novel},
+        save_draft::SaveDraftAuthor,
         tag::Tag,
     },
 };
@@ -173,127 +166,6 @@ impl MutationRoot {
                 GraphqlError::NotGraphqlContextData("PgPool")
             })?
             .get()?;
-        let SaveDraftAuthor {
-            id,
-            site,
-            name,
-            description,
-            image,
-            novels,
-            ..
-        } = author;
-        let author = conn
-            .build_transaction()
-            .run::<Author, GraphqlError, _>(|conn| {
-                let now = OffsetDateTime::now_utc();
-                // 保存作者
-                let author = Author::create(&name, &image, &description, site, &id, conn)?;
-                // 保存小说
-                let new_novels = novels
-                    .iter()
-                    .map(
-                        |SaveNovelInfo {
-                             id,
-                             site,
-                             name,
-                             description,
-                             image,
-
-                             novel_status,
-                             ..
-                         }| {
-                            NewNovel {
-                                name,
-                                avatar: image,
-                                description,
-                                author_id: author.id,
-                                novel_status: *novel_status,
-                                site: *site,
-                                site_id: id,
-                                tags: Vec::new(),
-                                collection_id: None,
-                                create_time: now,
-                                update_time: now,
-                            }
-                        },
-                    )
-                    .collect::<Vec<_>>();
-                let new_novels = NewNovel::create_many(&new_novels, conn)?;
-                // 保存章节
-                let new_novels = new_novels
-                    .into_iter()
-                    .map(|novel| (novel.site_id, novel.id))
-                    .collect::<HashMap<String, i64>>();
-                let mut new_chapters = vec![];
-                for novel in novels.iter() {
-                    let SaveNovelInfo { id, chapters, .. } = novel;
-                    let novel_id = match new_novels.get(id) {
-                        Some(data) => data,
-                        None => {
-                            event!(Level::ERROR, "site id:{} 没保存到", id);
-                            return Err(GraphqlError::SavaDraftError("chapter-novel"));
-                        }
-                    };
-                    for SaveChapterInfo {
-                        name,
-                        id,
-                        time,
-                        word_count,
-                        ..
-                    } in chapters.iter()
-                    {
-                        let new_chapter = NewChapter {
-                            title: name,
-                            site,
-                            site_id: id,
-                            content: None,
-                            time: *time,
-                            word_count: *word_count as i64,
-                            novel_id: *novel_id,
-                            author_id: author.id,
-                            create_time: now,
-                            update_time: now,
-                        };
-                        new_chapters.push(new_chapter);
-                    }
-                }
-                NewChapter::create_many(&new_chapters, conn)?;
-                Ok(author)
-            })?;
-        Ok(author)
+        author.save(conn)
     }
-}
-
-#[derive(InputObject, Clone, Eq, PartialEq, Debug)]
-
-struct SaveDraftAuthor {
-    id: String,
-    site: NovelSite,
-    url: String,
-    name: String,
-    description: String,
-    image: String,
-    novels: Vec<SaveNovelInfo>,
-}
-
-#[derive(InputObject, Clone, Eq, PartialEq, Debug)]
-struct SaveNovelInfo {
-    id: String,
-    site: NovelSite,
-    url: String,
-    name: String,
-    description: String,
-    image: String,
-    chapters: Vec<SaveChapterInfo>,
-    novel_status: NovelStatus,
-}
-
-#[derive(InputObject, Clone, Eq, PartialEq, Debug)]
-struct SaveChapterInfo {
-    id: String,
-    name: String,
-    novel_id: String,
-    url: String,
-    time: OffsetDateTime,
-    word_count: u32,
 }
