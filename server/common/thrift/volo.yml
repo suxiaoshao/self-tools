@@ -2,8 +2,7 @@ entries:
   default:
     protocol: thrift
     filename: volo_gen.rs
-    idls:
-      - source: local
-        path: ./idl/auth.thrift
-    touch_all: false
-    nonstandard_snake_case: false
+    services:
+      - idl:
+          source: local
+          path: ./idl/auth.thrift

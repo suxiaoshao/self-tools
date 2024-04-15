@@ -2,14 +2,14 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-01-18 01:32:12
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-01-21 01:01:34
+ * @LastEditTime: 2024-04-14 10:07:00
  * @FilePath: /self-tools/server/packages/new_auth/src/impls/mod.rs
  */
 use thrift::auth::{
     CheckRequest, ItemServiceCheckException, ItemServiceLoginException, LoginReply, LoginRequest,
 };
 use tracing::{event, Level};
-use volo_thrift::UserError;
+use volo_thrift::MaybeException;
 
 use crate::utils::Claims;
 
@@ -19,9 +19,9 @@ impl thrift::auth::ItemService for AuthImpl {
     async fn login(
         &self,
         _req: thrift::auth::LoginRequest,
-    ) -> ::core::result::Result<
-        thrift::auth::LoginReply,
-        ::volo_thrift::error::UserError<thrift::auth::ItemServiceLoginException>,
+    ) -> Result<
+        volo_thrift::MaybeException<LoginReply, ItemServiceLoginException>,
+        volo_thrift::ServerError,
     > {
         let LoginRequest {
             username,
@@ -33,33 +33,39 @@ impl thrift::auth::ItemService for AuthImpl {
         let _enter = span.enter();
         event!(Level::INFO, "login start");
         event!(Level::INFO, "login request: {}", &username);
-        let auth = Claims::manager_token(username.into(), password.into()).map_err(|err| {
-            UserError::UserException(ItemServiceLoginException::Err(thrift::auth::AuthError {
-                code: err,
-            }))
-        })?;
+        let auth = match Claims::manager_token(username.into(), password.into()) {
+            Ok(auth) => auth,
+            Err(err) => {
+                event!(Level::ERROR, "login failed: {}", err.inner());
+                return Ok(MaybeException::Exception(ItemServiceLoginException::Err(
+                    thrift::auth::AuthError { code: err },
+                )));
+            }
+        };
         event!(Level::INFO, "login success");
-        Ok(LoginReply { auth: auth.into() })
+        Ok(MaybeException::Ok(LoginReply { auth: auth.into() }))
     }
 
     async fn check(
         &self,
         _req: thrift::auth::CheckRequest,
-    ) -> ::core::result::Result<
-        (),
-        ::volo_thrift::error::UserError<thrift::auth::ItemServiceCheckException>,
-    > {
+    ) -> Result<volo_thrift::MaybeException<(), ItemServiceCheckException>, volo_thrift::ServerError>
+    {
         let CheckRequest { auth, trace_id } = _req;
         let trace_id = trace_id.as_str();
         let span = tracing::info_span!("check", trace_id);
         let _enter = span.enter();
         event!(Level::INFO, "check start");
-        Claims::check_manager(auth.into()).map_err(|err| {
-            UserError::UserException(ItemServiceCheckException::Err(thrift::auth::AuthError {
-                code: err,
-            }))
-        })?;
+        match Claims::check_manager(auth.into()) {
+            Ok(_) => {}
+            Err(err) => {
+                event!(Level::ERROR, "check failed: {}", err.inner());
+                return Ok(MaybeException::Exception(ItemServiceCheckException::Err(
+                    thrift::auth::AuthError { code: err },
+                )));
+            }
+        };
         event!(Level::INFO, "check success");
-        Ok(())
+        Ok(MaybeException::Ok(()))
     }
 }

@@ -187,24 +187,30 @@ impl From<diesel::result::Error> for GraphqlError {
         Self::Diesel(error.to_string())
     }
 }
-impl From<volo_thrift::error::ResponseError<ItemServiceCheckException>> for GraphqlError {
-    fn from(value: volo_thrift::error::ResponseError<ItemServiceCheckException>) -> Self {
+impl From<volo_thrift::error::ClientError> for GraphqlError {
+    fn from(value: volo_thrift::error::ClientError) -> Self {
         match value {
-            volo_thrift::ResponseError::UserException(ItemServiceCheckException::Err(
-                thrift::auth::AuthError { code },
-            )) => match code {
-                thrift::auth::AuthErrorCode::Jwt => Self::Jwt,
-                thrift::auth::AuthErrorCode::PasswordError => Self::PasswordError,
-                thrift::auth::AuthErrorCode::AuthTimeout => Self::AuthTimeout,
-                thrift::auth::AuthErrorCode::TokenError => Self::TokenError,
-                thrift::auth::AuthErrorCode::PasswordNotSet => Self::PasswordNotSet,
-                thrift::auth::AuthErrorCode::SecretKeyNotSet => Self::SecretKeyNotSet,
-                thrift::auth::AuthErrorCode::UsernameNotSet => Self::UsernameNotSet,
+            volo_thrift::ClientError::Application(x) => Self::Thrift(x.to_string()),
+            volo_thrift::ClientError::Transport(x) => Self::Thrift(x.to_string()),
+            volo_thrift::ClientError::Protocol(x) => Self::Thrift(x.to_string()),
+            volo_thrift::ClientError::Biz(x) => Self::Thrift(x.to_string()),
+        }
+    }
+}
+
+impl From<ItemServiceCheckException> for GraphqlError {
+    fn from(value: ItemServiceCheckException) -> Self {
+        match value {
+            ItemServiceCheckException::Err(thrift::auth::AuthError { code }) => match code {
+                thrift::auth::AuthErrorCode::JWT => Self::Jwt,
+                thrift::auth::AuthErrorCode::PASSWORD_ERROR => Self::PasswordError,
+                thrift::auth::AuthErrorCode::AUTH_TIMEOUT => Self::AuthTimeout,
+                thrift::auth::AuthErrorCode::TOKEN_ERROR => Self::TokenError,
+                thrift::auth::AuthErrorCode::PASSWORD_NOT_SET => Self::PasswordNotSet,
+                thrift::auth::AuthErrorCode::SECRET_KEY_NOT_SET => Self::SecretKeyNotSet,
+                thrift::auth::AuthErrorCode::USERNAME_NOT_SET => Self::UsernameNotSet,
+                _ => Self::Thrift("未知错误".to_string()),
             },
-            volo_thrift::ResponseError::Application(x) => Self::Thrift(x.to_string()),
-            volo_thrift::ResponseError::Transport(x) => Self::Thrift(x.to_string()),
-            volo_thrift::ResponseError::Protocol(x) => Self::Thrift(x.to_string()),
-            volo_thrift::ResponseError::Basic(x) => Self::Thrift(x.to_string()),
         }
     }
 }

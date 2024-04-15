@@ -2,7 +2,7 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-01-06 01:30:13
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-02-20 15:32:04
+ * @LastEditTime: 2024-04-14 11:39:59
  * @FilePath: /self-tools/server/packages/collections/src/graphql/guard/mod.rs
  */
 use async_graphql::{Context, Guard, Result};
@@ -38,12 +38,19 @@ async fn check(auth: Option<&Auth>, trace_id: &str) -> GraphqlResult<()> {
     let client = get_client()?;
     event!(Level::INFO, "rpc check call");
     let trace_id = trace_id.to_string().into();
-    client
+    match client
         .check(CheckRequest {
             auth: auth.into(),
             trace_id,
         })
-        .await?;
+        .await?
+    {
+        volo_thrift::MaybeException::Ok(_) => {}
+        volo_thrift::MaybeException::Exception(err) => {
+            event!(Level::ERROR, "rpc check error:{:?}", err);
+            return Err(err.into());
+        }
+    };
     event!(Level::INFO, "rpc check success");
     Ok(())
 }
