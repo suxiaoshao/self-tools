@@ -8,10 +8,11 @@
     "generate": "graphql-codegen"
   },
   "dependencies": {
-    "custom-graphql": "workspace:^1.0.0",
-    "custom-table": "workspace:^1.0.0",
-    "i18n": "workspace:^1.0.0",
-    "time": "workspace:^1.0.0",
-    "types": "workspace:^1.0.0"
+    "custom-graphql": "workspace:^",
+    "custom-table": "workspace:^",
+    "i18n": "workspace:^",
+    "time": "workspace:^",
+    "types": "workspace:^",
+    "notify": "workspace:^"
   }
 }

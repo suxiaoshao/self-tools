@@ -1,7 +1,7 @@
 use async_graphql::ErrorExtensionValues;
-use axum::{response::IntoResponse, Json};
+use axum::{extract::rejection::QueryRejection, response::IntoResponse, Json};
 use diesel::r2d2;
-use std::sync::Arc;
+use std::{env::VarError, sync::Arc};
 use thrift::auth::ItemServiceCheckException;
 
 #[derive(Debug)]
@@ -33,6 +33,18 @@ pub enum GraphqlError {
     /// thrift 错误
     Thrift(String),
     ClientError(&'static thrift::ClientError),
+    /// novel 获取错误
+    NovelNetworkError(String),
+    NovelParseError,
+    NovelTimeParseError(time::error::Parse),
+    // query rejection
+    QueryRejection(String),
+    // reqwest error
+    ReqwestError(String),
+    VarError(VarError),
+    NotGraphqlContextData(&'static str),
+    // 保存草稿错误
+    SavaDraftError(&'static str),
 }
 
 impl IntoResponse for GraphqlError {
@@ -83,6 +95,16 @@ impl GraphqlError {
             GraphqlError::UsernameNotSet => "username未设置".to_string(),
             GraphqlError::Thrift(data) => format!("thrift 错误:{data}"),
             GraphqlError::ClientError(data) => format!("thrift client错误:{data}"),
+            GraphqlError::NovelNetworkError(err) => format!("小说网络错误:{err}"),
+            GraphqlError::NovelParseError => "小说解析错误".to_string(),
+            GraphqlError::QueryRejection(value) => format!("query rejection:{value}"),
+            GraphqlError::ReqwestError(err) => format!("reqwest error:{err}"),
+            GraphqlError::VarError(err) => format!("env error:{err}"),
+            GraphqlError::NotGraphqlContextData(tag) => {
+                format!("graphql context data:{}不存在", tag)
+            }
+            GraphqlError::SavaDraftError(tag) => format!("保存草稿错误:{tag}"),
+            GraphqlError::NovelTimeParseError(tag) => format!("小说时间解析错误:{tag}"),
         }
     }
     pub fn code(&self) -> &str {
@@ -102,6 +124,14 @@ impl GraphqlError {
             GraphqlError::UsernameNotSet => "UsernameNotSet",
             GraphqlError::Thrift(_) => "Thrift",
             GraphqlError::ClientError(_) => "ThriftClient",
+            GraphqlError::NovelNetworkError(_) => "NovelNetworkError",
+            GraphqlError::NovelParseError => "NovelParseError",
+            GraphqlError::QueryRejection(_) => "QueryRejection",
+            GraphqlError::ReqwestError(_) => "ReqwestError",
+            GraphqlError::VarError(_) => "VarError",
+            GraphqlError::NotGraphqlContextData(_) => "NotGraphqlContextData",
+            GraphqlError::SavaDraftError(_) => "SavaDraftError",
+            GraphqlError::NovelTimeParseError(_) => "NovelTimeParseError",
         }
     }
 }
@@ -134,6 +164,14 @@ impl Clone for GraphqlError {
             GraphqlError::UsernameNotSet => Self::UsernameNotSet,
             GraphqlError::Thrift(data) => Self::Thrift(data.clone()),
             GraphqlError::ClientError(data) => Self::ClientError(data),
+            GraphqlError::NovelNetworkError(data) => Self::NovelNetworkError(data.clone()),
+            GraphqlError::NovelParseError => Self::NovelParseError,
+            GraphqlError::QueryRejection(data) => Self::QueryRejection(data.clone()),
+            GraphqlError::ReqwestError(data) => Self::ReqwestError(data.clone()),
+            GraphqlError::VarError(data) => Self::VarError(data.clone()),
+            GraphqlError::NotGraphqlContextData(data) => Self::NotGraphqlContextData(data),
+            GraphqlError::SavaDraftError(data) => Self::SavaDraftError(data),
+            GraphqlError::NovelTimeParseError(data) => Self::NovelTimeParseError(*data),
         }
     }
 }
@@ -149,24 +187,30 @@ impl From<diesel::result::Error> for GraphqlError {
         Self::Diesel(error.to_string())
     }
 }
-impl From<volo_thrift::error::ResponseError<ItemServiceCheckException>> for GraphqlError {
-    fn from(value: volo_thrift::error::ResponseError<ItemServiceCheckException>) -> Self {
+impl From<volo_thrift::error::ClientError> for GraphqlError {
+    fn from(value: volo_thrift::error::ClientError) -> Self {
         match value {
-            volo_thrift::ResponseError::UserException(ItemServiceCheckException::Err(
-                thrift::auth::AuthError { code },
-            )) => match code {
-                thrift::auth::AuthErrorCode::Jwt => Self::Jwt,
-                thrift::auth::AuthErrorCode::PasswordError => Self::PasswordError,
-                thrift::auth::AuthErrorCode::AuthTimeout => Self::AuthTimeout,
-                thrift::auth::AuthErrorCode::TokenError => Self::TokenError,
-                thrift::auth::AuthErrorCode::PasswordNotSet => Self::PasswordNotSet,
-                thrift::auth::AuthErrorCode::SecretKeyNotSet => Self::SecretKeyNotSet,
-                thrift::auth::AuthErrorCode::UsernameNotSet => Self::UsernameNotSet,
+            volo_thrift::ClientError::Application(x) => Self::Thrift(x.to_string()),
+            volo_thrift::ClientError::Transport(x) => Self::Thrift(x.to_string()),
+            volo_thrift::ClientError::Protocol(x) => Self::Thrift(x.to_string()),
+            volo_thrift::ClientError::Biz(x) => Self::Thrift(x.to_string()),
+        }
+    }
+}
+
+impl From<ItemServiceCheckException> for GraphqlError {
+    fn from(value: ItemServiceCheckException) -> Self {
+        match value {
+            ItemServiceCheckException::Err(thrift::auth::AuthError { code }) => match code {
+                thrift::auth::AuthErrorCode::JWT => Self::Jwt,
+                thrift::auth::AuthErrorCode::PASSWORD_ERROR => Self::PasswordError,
+                thrift::auth::AuthErrorCode::AUTH_TIMEOUT => Self::AuthTimeout,
+                thrift::auth::AuthErrorCode::TOKEN_ERROR => Self::TokenError,
+                thrift::auth::AuthErrorCode::PASSWORD_NOT_SET => Self::PasswordNotSet,
+                thrift::auth::AuthErrorCode::SECRET_KEY_NOT_SET => Self::SecretKeyNotSet,
+                thrift::auth::AuthErrorCode::USERNAME_NOT_SET => Self::UsernameNotSet,
+                _ => Self::Thrift("未知错误".to_string()),
             },
-            volo_thrift::ResponseError::Application(x) => Self::Thrift(x.to_string()),
-            volo_thrift::ResponseError::Transport(x) => Self::Thrift(x.to_string()),
-            volo_thrift::ResponseError::Protocol(x) => Self::Thrift(x.to_string()),
-            volo_thrift::ResponseError::Basic(x) => Self::Thrift(x.to_string()),
         }
     }
 }
@@ -174,6 +218,24 @@ impl From<volo_thrift::error::ResponseError<ItemServiceCheckException>> for Grap
 impl From<&'static thrift::ClientError> for GraphqlError {
     fn from(value: &'static thrift::ClientError) -> Self {
         Self::ClientError(value)
+    }
+}
+
+impl From<novel_crawler::NovelError> for GraphqlError {
+    fn from(value: novel_crawler::NovelError) -> Self {
+        match value {
+            novel_crawler::NovelError::NetworkError(err) => {
+                Self::NovelNetworkError(err.to_string())
+            }
+            novel_crawler::NovelError::ParseError => Self::NovelParseError,
+            novel_crawler::NovelError::TimeParseError(data) => Self::NovelTimeParseError(data),
+        }
+    }
+}
+
+impl From<VarError> for GraphqlError {
+    fn from(value: VarError) -> Self {
+        Self::VarError(value)
     }
 }
 
@@ -191,5 +253,17 @@ impl From<GraphqlError> for async_graphql::Error {
             source: Some(Arc::new(value)),
             extensions: Some(extensions),
         }
+    }
+}
+
+impl From<QueryRejection> for GraphqlError {
+    fn from(value: QueryRejection) -> Self {
+        Self::QueryRejection(value.to_string())
+    }
+}
+
+impl From<reqwest::Error> for GraphqlError {
+    fn from(value: reqwest::Error) -> Self {
+        Self::ReqwestError(value.to_string())
     }
 }

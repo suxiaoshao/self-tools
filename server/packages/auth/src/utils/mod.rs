@@ -2,7 +2,7 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-01-18 01:35:07
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-01-18 01:44:58
+ * @LastEditTime: 2024-04-14 10:07:56
  * @FilePath: /self-tools/server/packages/new_auth/src/utils/mod.rs
  */
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
@@ -40,7 +40,7 @@ impl Claims {
             self,
             &EncodingKey::from_secret(secret_key.as_bytes()),
         )
-        .map_err(|_| AuthErrorCode::Jwt)?;
+        .map_err(|_| AuthErrorCode::JWT)?;
         Ok(token)
     }
     // 新建并生成token
@@ -55,7 +55,7 @@ impl Claims {
             Claims::new_token(name, password)
         } else {
             event!(Level::WARN, "管理员密码错误: {}", name);
-            Err(AuthErrorCode::PasswordError)
+            Err(AuthErrorCode::PASSWORD_ERROR)
         }
     }
     /// 验证管理员
@@ -65,7 +65,7 @@ impl Claims {
         let claim = jwt_decode::<Self>(&auth)?;
         if claim.name != correct_username.as_str() || claim.password != correct_password.as_str() {
             event!(Level::WARN, "管理员密码错误: {}", claim.name);
-            return Err(AuthErrorCode::PasswordError);
+            return Err(AuthErrorCode::PASSWORD_ERROR);
         };
         Ok(())
     }
@@ -83,11 +83,11 @@ fn jwt_decode<T: DeserializeOwned>(token: &str) -> Result<T, AuthErrorCode> {
         Err(e) => Err(match e.kind() {
             jsonwebtoken::errors::ErrorKind::ExpiredSignature => {
                 event!(Level::WARN, "token 过期: {}", token);
-                AuthErrorCode::AuthTimeout
+                AuthErrorCode::AUTH_TIMEOUT
             }
             _ => {
                 event!(Level::WARN, "token 错误: {}", token);
-                AuthErrorCode::TokenError
+                AuthErrorCode::TOKEN_ERROR
             }
         }),
     }

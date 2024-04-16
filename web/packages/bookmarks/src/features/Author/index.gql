@@ -1,0 +1,99 @@
+query getAuthors {
+  queryAuthors {
+    ...AuthorAll
+  }
+}
+
+query getAuthor($id: Int!) {
+  getAuthor(id: $id) {
+    novels {
+      id
+      name
+      avatar
+      createTime
+      updateTime
+      description
+      novelStatus
+    }
+    ...AuthorAll
+  }
+}
+
+query fetchAuthor($id: String!, $novelSite: NovelSite!) {
+  fetchAuthor(id: $id, novelSite: $novelSite) {
+    __typename
+    ... on QdAuthor {
+      name
+      description
+      image
+      url
+      id
+      novels {
+        id
+        name
+        description
+        image
+        url
+        status
+        chapters {
+          id
+          novelId
+          title
+          url
+          time
+          wordCount
+        }
+      }
+    }
+    ... on JjAuthor {
+      name
+      description
+      image
+      url
+      id
+      novels {
+        id
+        name
+        description
+        image
+        url
+        status
+        chapters {
+          id
+          novelId
+          title
+          url
+          time
+          wordCount
+        }
+      }
+    }
+  }
+}
+
+mutation deleteAuthor($id: Int!) {
+  deleteAuthor(id: $id) {
+    id
+  }
+}
+mutation createAuthor($avatar: String!, $description: String!, $name: String!, $site: NovelSite!, $siteId: String!) {
+  createAuthor(avatar: $avatar, description: $description, name: $name, site: $site, siteId: $siteId) {
+    ...AuthorAll
+  }
+}
+
+fragment AuthorAll on Author {
+  id
+  site
+  name
+  createTime
+  updateTime
+  avatar
+  description
+}
+
+mutation saveDraftAuthor($author: SaveDraftAuthor!) {
+  saveDraftAuthor(author: $author) {
+    ...AuthorAll
+  }
+}

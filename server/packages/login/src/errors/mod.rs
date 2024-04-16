@@ -2,7 +2,7 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-01-06 01:30:13
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-01-23 00:03:27
+ * @LastEditTime: 2024-04-14 11:34:42
  * @FilePath: /self-tools/server/packages/login/src/errors/mod.rs
  */
 use axum::{
@@ -67,20 +67,22 @@ impl From<ExtensionRejection> for OpenError {
     }
 }
 
-impl From<volo_thrift::error::ResponseError<ItemServiceLoginException>> for OpenError {
-    fn from(value: volo_thrift::error::ResponseError<ItemServiceLoginException>) -> Self {
-        match value {
-            volo_thrift::ResponseError::UserException(ItemServiceLoginException::Err(
-                AuthError { code },
-            )) => match code {
-                thrift::auth::AuthErrorCode::Jwt => Self::Jwt,
-                thrift::auth::AuthErrorCode::PasswordError => Self::PasswordError,
-                thrift::auth::AuthErrorCode::AuthTimeout => Self::AuthTimeout,
-                thrift::auth::AuthErrorCode::TokenError => Self::TokenError,
-                thrift::auth::AuthErrorCode::PasswordNotSet => Self::PasswordNotSet,
-                thrift::auth::AuthErrorCode::SecretKeyNotSet => Self::SecretKeyNotSet,
-                thrift::auth::AuthErrorCode::UsernameNotSet => Self::UsernameNotSet,
-            },
+impl From<volo_thrift::error::ClientError> for OpenError {
+    fn from(_: volo_thrift::error::ClientError) -> Self {
+        Self::UnknownError
+    }
+}
+
+impl From<ItemServiceLoginException> for OpenError {
+    fn from(ItemServiceLoginException::Err(AuthError { code }): ItemServiceLoginException) -> Self {
+        match code {
+            thrift::auth::AuthErrorCode::JWT => Self::Jwt,
+            thrift::auth::AuthErrorCode::PASSWORD_ERROR => Self::PasswordError,
+            thrift::auth::AuthErrorCode::AUTH_TIMEOUT => Self::AuthTimeout,
+            thrift::auth::AuthErrorCode::TOKEN_ERROR => Self::TokenError,
+            thrift::auth::AuthErrorCode::PASSWORD_NOT_SET => Self::PasswordNotSet,
+            thrift::auth::AuthErrorCode::SECRET_KEY_NOT_SET => Self::SecretKeyNotSet,
+            thrift::auth::AuthErrorCode::USERNAME_NOT_SET => Self::UsernameNotSet,
             _ => Self::UnknownError,
         }
     }

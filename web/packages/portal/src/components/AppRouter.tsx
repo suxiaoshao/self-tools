@@ -2,7 +2,7 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-01-06 01:30:13
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-01-21 22:53:48
+ * @LastEditTime: 2024-02-28 00:34:34
  * @FilePath: /self-tools/web/packages/portal/src/components/AppRouter.tsx
  */
 import { Routes, Route } from 'react-router-dom';
@@ -15,7 +15,11 @@ import { Menu } from 'types';
 function MenuRouter({ path }: Menu) {
   switch (path.tag) {
     case 'path':
-      return <Route key={path.value.path} path={path.value.path} element={path.value.element} />;
+      return (
+        <Route key={path.value.path} path={path.value.path} element={path.value.element}>
+          {path.value.children}
+        </Route>
+      );
     case 'menu':
       return (
         <>

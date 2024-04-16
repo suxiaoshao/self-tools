@@ -5,3 +5,5 @@ drop table collection;
 drop table author;
 drop table novel;
 drop type read_status;
+drop type novel_status;
+drop type novel_site;

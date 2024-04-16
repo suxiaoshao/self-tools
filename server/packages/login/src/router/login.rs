@@ -2,7 +2,7 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-01-06 01:30:13
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-01-23 00:04:10
+ * @LastEditTime: 2024-04-14 11:04:19
  * @FilePath: /self-tools/server/packages/login/src/router/login.rs
  */
 use axum::{
@@ -35,13 +35,17 @@ pub(crate) async fn login(
     event!(Level::INFO, "login request: {}", &username);
     let client = get_client()?;
     event!(Level::INFO, "rpc login call");
-    let LoginReply { auth } = client
+    let LoginReply { auth } = match client
         .login(LoginRequest {
             username: username.into(),
             password: password.into(),
             trace_id: trace_id.into(),
         })
-        .await?;
+        .await?
+    {
+        volo_thrift::MaybeException::Ok(data) => data,
+        volo_thrift::MaybeException::Exception(err) => return Err(err.into()),
+    };
     event!(Level::INFO, "login success");
     Ok(OpenResponse::new(auth.to_string()))
 }

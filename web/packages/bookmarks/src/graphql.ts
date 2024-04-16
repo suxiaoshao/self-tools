@@ -15,16 +15,42 @@ export type Scalars = {
   Boolean: { input: boolean; output: boolean };
   Int: { input: number; output: number };
   Float: { input: number; output: number };
+  /**
+   * A datetime with timezone offset.
+   *
+   * The input is a string in RFC3339 format, e.g. "2022-01-12T04:00:19.12345Z"
+   * or "2022-01-12T04:00:19+03:00". The output is also a string in RFC3339
+   * format, but it is always normalized to the UTC (Z) offset, e.g.
+   * "2022-01-12T04:00:19.12345Z".
+   */
+  DateTime: { input: any; output: any };
 };
 
 export type Author = {
   __typename?: 'Author';
   avatar: Scalars['String']['output'];
-  createTime: Scalars['Int']['output'];
+  createTime: Scalars['DateTime']['output'];
   description: Scalars['String']['output'];
   id: Scalars['Int']['output'];
   name: Scalars['String']['output'];
-  updateTime: Scalars['Int']['output'];
+  novels: Array<Novel>;
+  site: NovelSite;
+  siteId: Scalars['String']['output'];
+  updateTime: Scalars['DateTime']['output'];
+};
+
+export type Chapter = {
+  __typename?: 'Chapter';
+  content?: Maybe<Scalars['String']['output']>;
+  createTime: Scalars['DateTime']['output'];
+  id: Scalars['Int']['output'];
+  novel: Novel;
+  novelId: Scalars['Int']['output'];
+  site: NovelSite;
+  siteId: Scalars['String']['output'];
+  siteNovelId: Scalars['String']['output'];
+  title: Scalars['String']['output'];
+  updateTime: Scalars['DateTime']['output'];
   url: Scalars['String']['output'];
 };
 
@@ -34,22 +60,61 @@ export type Collection = {
   ancestors: Array<Collection>;
   /** 获取子列表 */
   children: Array<Collection>;
-  createTime: Scalars['Int']['output'];
+  createTime: Scalars['DateTime']['output'];
   description?: Maybe<Scalars['String']['output']>;
   id: Scalars['Int']['output'];
   name: Scalars['String']['output'];
   parentId?: Maybe<Scalars['Int']['output']>;
   path: Scalars['String']['output'];
-  updateTime: Scalars['Int']['output'];
+  updateTime: Scalars['DateTime']['output'];
 };
 
 export type CreateNovelInput = {
   authorId: Scalars['Int']['input'];
+  avatar: Scalars['String']['input'];
   collectionId?: InputMaybe<Scalars['Int']['input']>;
   description: Scalars['String']['input'];
   name: Scalars['String']['input'];
+  novelStatus: NovelStatus;
+  site: NovelSite;
+  siteId: Scalars['String']['input'];
   tags: Array<Scalars['Int']['input']>;
-  url: Scalars['String']['input'];
+};
+
+export type DraftAuthorInfo = JjAuthor | QdAuthor;
+
+export type DraftNovelInfo = JjNovel | QdNovel;
+
+export type JjAuthor = {
+  __typename?: 'JjAuthor';
+  description: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  image: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  novels: Array<JjNovel>;
+  url: Scalars['String']['output'];
+};
+
+export type JjChapter = {
+  __typename?: 'JjChapter';
+  id: Scalars['String']['output'];
+  novelId: Scalars['String']['output'];
+  time: Scalars['DateTime']['output'];
+  title: Scalars['String']['output'];
+  url: Scalars['String']['output'];
+  wordCount: Scalars['Int']['output'];
+};
+
+export type JjNovel = {
+  __typename?: 'JjNovel';
+  author: JjAuthor;
+  chapters: Array<JjChapter>;
+  description: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  image: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  status: NovelStatus;
+  url: Scalars['String']['output'];
 };
 
 export type MutationRoot = {
@@ -70,13 +135,16 @@ export type MutationRoot = {
   deleteNovel: Novel;
   /** 删除标签 */
   deleteTag: Tag;
+  /** 保存 draft author */
+  saveDraftAuthor: Author;
 };
 
 export type MutationRootCreateAuthorArgs = {
   avatar: Scalars['String']['input'];
   description: Scalars['String']['input'];
   name: Scalars['String']['input'];
-  url: Scalars['String']['input'];
+  site: NovelSite;
+  siteId: Scalars['String']['input'];
 };
 
 export type MutationRootCreateCollectionArgs = {
@@ -110,21 +178,79 @@ export type MutationRootDeleteTagArgs = {
   id: Scalars['Int']['input'];
 };
 
+export type MutationRootSaveDraftAuthorArgs = {
+  author: SaveDraftAuthor;
+};
+
 export type Novel = {
   __typename?: 'Novel';
   author: Author;
+  avatar: Scalars['String']['output'];
+  /** 获取小说章节 */
+  chapters: Array<Chapter>;
   collection?: Maybe<Collection>;
-  createTime: Scalars['Int']['output'];
+  createTime: Scalars['DateTime']['output'];
   description: Scalars['String']['output'];
   id: Scalars['Int']['output'];
   name: Scalars['String']['output'];
-  status: ReadStatus;
+  novelStatus: NovelStatus;
+  site: NovelSite;
+  siteId: Scalars['String']['output'];
   tags: Array<Tag>;
-  updateTime: Scalars['Int']['output'];
+  updateTime: Scalars['DateTime']['output'];
+  url: Scalars['String']['output'];
+};
+
+export enum NovelSite {
+  Jjwxc = 'JJWXC',
+  Qidian = 'QIDIAN',
+}
+
+export enum NovelStatus {
+  Completed = 'COMPLETED',
+  Ongoing = 'ONGOING',
+}
+
+export type QdAuthor = {
+  __typename?: 'QdAuthor';
+  description: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  image: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  novels: Array<QdNovel>;
+  url: Scalars['String']['output'];
+};
+
+export type QdChapter = {
+  __typename?: 'QdChapter';
+  id: Scalars['String']['output'];
+  novelId: Scalars['String']['output'];
+  time: Scalars['DateTime']['output'];
+  title: Scalars['String']['output'];
+  url: Scalars['String']['output'];
+  wordCount: Scalars['Int']['output'];
+};
+
+export type QdNovel = {
+  __typename?: 'QdNovel';
+  author: QdAuthor;
+  chapters: Array<QdChapter>;
+  description: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  image: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  status: NovelStatus;
+  url: Scalars['String']['output'];
 };
 
 export type QueryRoot = {
   __typename?: 'QueryRoot';
+  /** 后端 fetch 作者详情 */
+  fetchAuthor: DraftAuthorInfo;
+  /** 后端 fetch 小说详情 */
+  fetchNovel: DraftNovelInfo;
+  /** 获取作者详情 */
+  getAuthor: Author;
   /** 获取目录详情 */
   getCollection: Collection;
   /** 获取目录列表 */
@@ -137,6 +263,20 @@ export type QueryRoot = {
   queryNovels: Array<Novel>;
   /** 获取标签列表 */
   queryTags: Array<Tag>;
+};
+
+export type QueryRootFetchAuthorArgs = {
+  id: Scalars['String']['input'];
+  novelSite: NovelSite;
+};
+
+export type QueryRootFetchNovelArgs = {
+  id: Scalars['String']['input'];
+  novelSite: NovelSite;
+};
+
+export type QueryRootGetAuthorArgs = {
+  id: Scalars['Int']['input'];
 };
 
 export type QueryRootGetCollectionArgs = {
@@ -157,7 +297,7 @@ export type QueryRootQueryAuthorsArgs = {
 
 export type QueryRootQueryNovelsArgs = {
   collectionId?: InputMaybe<Scalars['Int']['input']>;
-  readStatus?: InputMaybe<ReadStatus>;
+  novelStatus?: InputMaybe<NovelStatus>;
   tagMatch?: InputMaybe<TagMatch>;
 };
 
@@ -166,19 +306,43 @@ export type QueryRootQueryTagsArgs = {
   deepSearch?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
-export enum ReadStatus {
-  Read = 'READ',
-  Reading = 'READING',
-  Unread = 'UNREAD',
-}
+export type SaveChapterInfo = {
+  id: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+  novelId: Scalars['String']['input'];
+  time: Scalars['DateTime']['input'];
+  url: Scalars['String']['input'];
+  wordCount: Scalars['Int']['input'];
+};
+
+export type SaveDraftAuthor = {
+  description: Scalars['String']['input'];
+  id: Scalars['String']['input'];
+  image: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+  novels: Array<SaveNovelInfo>;
+  site: NovelSite;
+  url: Scalars['String']['input'];
+};
+
+export type SaveNovelInfo = {
+  chapters: Array<SaveChapterInfo>;
+  description: Scalars['String']['input'];
+  id: Scalars['String']['input'];
+  image: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+  novelStatus: NovelStatus;
+  site: NovelSite;
+  url: Scalars['String']['input'];
+};
 
 export type Tag = {
   __typename?: 'Tag';
   collectionId?: Maybe<Scalars['Int']['output']>;
-  createTime: Scalars['Int']['output'];
+  createTime: Scalars['DateTime']['output'];
   id: Scalars['Int']['output'];
   name: Scalars['String']['output'];
-  updateTime: Scalars['Int']['output'];
+  updateTime: Scalars['DateTime']['output'];
 };
 
 export type TagMatch = {
@@ -220,13 +384,103 @@ export type GetAuthorsQuery = {
   queryAuthors: Array<{
     __typename?: 'Author';
     id: number;
-    url: string;
+    site: NovelSite;
     name: string;
-    createTime: number;
-    updateTime: number;
+    createTime: any;
+    updateTime: any;
     avatar: string;
     description: string;
   }>;
+};
+
+export type GetAuthorQueryVariables = Exact<{
+  id: Scalars['Int']['input'];
+}>;
+
+export type GetAuthorQuery = {
+  __typename?: 'QueryRoot';
+  getAuthor: {
+    __typename?: 'Author';
+    id: number;
+    site: NovelSite;
+    name: string;
+    createTime: any;
+    updateTime: any;
+    avatar: string;
+    description: string;
+    novels: Array<{
+      __typename?: 'Novel';
+      id: number;
+      name: string;
+      avatar: string;
+      createTime: any;
+      updateTime: any;
+      description: string;
+      novelStatus: NovelStatus;
+    }>;
+  };
+};
+
+export type FetchAuthorQueryVariables = Exact<{
+  id: Scalars['String']['input'];
+  novelSite: NovelSite;
+}>;
+
+export type FetchAuthorQuery = {
+  __typename?: 'QueryRoot';
+  fetchAuthor:
+    | {
+        __typename: 'JjAuthor';
+        name: string;
+        description: string;
+        image: string;
+        url: string;
+        id: string;
+        novels: Array<{
+          __typename?: 'JjNovel';
+          id: string;
+          name: string;
+          description: string;
+          image: string;
+          url: string;
+          status: NovelStatus;
+          chapters: Array<{
+            __typename?: 'JjChapter';
+            id: string;
+            novelId: string;
+            title: string;
+            url: string;
+            time: any;
+            wordCount: number;
+          }>;
+        }>;
+      }
+    | {
+        __typename: 'QdAuthor';
+        name: string;
+        description: string;
+        image: string;
+        url: string;
+        id: string;
+        novels: Array<{
+          __typename?: 'QdNovel';
+          id: string;
+          name: string;
+          description: string;
+          image: string;
+          url: string;
+          status: NovelStatus;
+          chapters: Array<{
+            __typename?: 'QdChapter';
+            id: string;
+            novelId: string;
+            title: string;
+            url: string;
+            time: any;
+            wordCount: number;
+          }>;
+        }>;
+      };
 };
 
 export type DeleteAuthorMutationVariables = Exact<{
@@ -239,7 +493,8 @@ export type CreateAuthorMutationVariables = Exact<{
   avatar: Scalars['String']['input'];
   description: Scalars['String']['input'];
   name: Scalars['String']['input'];
-  url: Scalars['String']['input'];
+  site: NovelSite;
+  siteId: Scalars['String']['input'];
 }>;
 
 export type CreateAuthorMutation = {
@@ -247,10 +502,10 @@ export type CreateAuthorMutation = {
   createAuthor: {
     __typename?: 'Author';
     id: number;
-    url: string;
+    site: NovelSite;
     name: string;
-    createTime: number;
-    updateTime: number;
+    createTime: any;
+    updateTime: any;
     avatar: string;
     description: string;
   };
@@ -259,12 +514,30 @@ export type CreateAuthorMutation = {
 export type AuthorAllFragment = {
   __typename?: 'Author';
   id: number;
-  url: string;
+  site: NovelSite;
   name: string;
-  createTime: number;
-  updateTime: number;
+  createTime: any;
+  updateTime: any;
   avatar: string;
   description: string;
+};
+
+export type SaveDraftAuthorMutationVariables = Exact<{
+  author: SaveDraftAuthor;
+}>;
+
+export type SaveDraftAuthorMutation = {
+  __typename?: 'MutationRoot';
+  saveDraftAuthor: {
+    __typename?: 'Author';
+    id: number;
+    site: NovelSite;
+    name: string;
+    createTime: any;
+    updateTime: any;
+    avatar: string;
+    description: string;
+  };
 };
 
 export type GetCollectionsQueryVariables = Exact<{
@@ -278,8 +551,8 @@ export type GetCollectionsQuery = {
     name: string;
     id: number;
     path: string;
-    createTime: number;
-    updateTime: number;
+    createTime: any;
+    updateTime: any;
     description?: string | null;
   }>;
 };
@@ -318,9 +591,72 @@ export type GetCollectionAncestorsQuery = {
   };
 };
 
+export type GetNovelQueryVariables = Exact<{
+  id: Scalars['Int']['input'];
+}>;
+
+export type GetNovelQuery = {
+  __typename?: 'QueryRoot';
+  getNovel: {
+    __typename?: 'Novel';
+    id: number;
+    name: string;
+    avatar: string;
+    description: string;
+    createTime: any;
+    updateTime: any;
+    novelStatus: NovelStatus;
+    collection?: {
+      __typename?: 'Collection';
+      id: number;
+      name: string;
+      path: string;
+      description?: string | null;
+    } | null;
+    chapters: Array<{
+      __typename?: 'Chapter';
+      id: number;
+      title: string;
+      createTime: any;
+      updateTime: any;
+      content?: string | null;
+      url: string;
+    }>;
+    author: { __typename?: 'Author'; avatar: string; description: string; id: number; name: string; site: NovelSite };
+  };
+};
+
+export type FetchNovelQueryVariables = Exact<{
+  id: Scalars['String']['input'];
+  NovelSite: NovelSite;
+}>;
+
+export type FetchNovelQuery = {
+  __typename?: 'QueryRoot';
+  fetchNovel:
+    | {
+        __typename?: 'JjNovel';
+        description: string;
+        image: string;
+        name: string;
+        url: string;
+        author: { __typename?: 'JjAuthor'; description: string; image: string; name: string; url: string };
+        chapters: Array<{ __typename?: 'JjChapter'; title: string; url: string }>;
+      }
+    | {
+        __typename?: 'QdNovel';
+        description: string;
+        image: string;
+        name: string;
+        url: string;
+        author: { __typename?: 'QdAuthor'; description: string; image: string; name: string; url: string };
+        chapters: Array<{ __typename?: 'QdChapter'; title: string; url: string }>;
+      };
+};
+
 export type GetNovelsQueryVariables = Exact<{
   collectionId?: InputMaybe<Scalars['Int']['input']>;
-  readStatus?: InputMaybe<ReadStatus>;
+  novelStatus?: InputMaybe<NovelStatus>;
   tagMatch?: InputMaybe<TagMatch>;
 }>;
 
@@ -331,9 +667,10 @@ export type GetNovelsQuery = {
     id: number;
     name: string;
     description: string;
-    createTime: number;
-    updateTime: number;
-    status: ReadStatus;
+    createTime: any;
+    updateTime: any;
+    novelStatus: NovelStatus;
+    avatar: string;
   }>;
 };
 
@@ -369,8 +706,8 @@ export type GetTagsQuery = {
     __typename?: 'Tag';
     name: string;
     id: number;
-    createTime: number;
-    updateTime: number;
+    createTime: any;
+    updateTime: any;
     collectionId?: number | null;
   }>;
 };
@@ -384,7 +721,7 @@ export type DeleteTagMutation = { __typename?: 'MutationRoot'; deleteTag: { __ty
 export const AuthorAllFragmentDoc = gql`
   fragment AuthorAll on Author {
     id
-    url
+    site
     name
     createTime
     updateTime
@@ -589,6 +926,157 @@ export type GetAuthorsQueryHookResult = ReturnType<typeof useGetAuthorsQuery>;
 export type GetAuthorsLazyQueryHookResult = ReturnType<typeof useGetAuthorsLazyQuery>;
 export type GetAuthorsSuspenseQueryHookResult = ReturnType<typeof useGetAuthorsSuspenseQuery>;
 export type GetAuthorsQueryResult = Apollo.QueryResult<GetAuthorsQuery, GetAuthorsQueryVariables>;
+export const GetAuthorDocument = gql`
+  query getAuthor($id: Int!) {
+    getAuthor(id: $id) {
+      novels {
+        id
+        name
+        avatar
+        createTime
+        updateTime
+        description
+        novelStatus
+      }
+      ...AuthorAll
+    }
+  }
+  ${AuthorAllFragmentDoc}
+`;
+
+/**
+ * __useGetAuthorQuery__
+ *
+ * To run a query within a React component, call `useGetAuthorQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetAuthorQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetAuthorQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetAuthorQuery(
+  baseOptions: Apollo.QueryHookOptions<GetAuthorQuery, GetAuthorQueryVariables> &
+    ({ variables: GetAuthorQueryVariables; skip?: boolean } | { skip: boolean }),
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useQuery<GetAuthorQuery, GetAuthorQueryVariables>(GetAuthorDocument, options);
+}
+export function useGetAuthorLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<GetAuthorQuery, GetAuthorQueryVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useLazyQuery<GetAuthorQuery, GetAuthorQueryVariables>(GetAuthorDocument, options);
+}
+export function useGetAuthorSuspenseQuery(
+  baseOptions?: Apollo.SuspenseQueryHookOptions<GetAuthorQuery, GetAuthorQueryVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useSuspenseQuery<GetAuthorQuery, GetAuthorQueryVariables>(GetAuthorDocument, options);
+}
+export type GetAuthorQueryHookResult = ReturnType<typeof useGetAuthorQuery>;
+export type GetAuthorLazyQueryHookResult = ReturnType<typeof useGetAuthorLazyQuery>;
+export type GetAuthorSuspenseQueryHookResult = ReturnType<typeof useGetAuthorSuspenseQuery>;
+export type GetAuthorQueryResult = Apollo.QueryResult<GetAuthorQuery, GetAuthorQueryVariables>;
+export const FetchAuthorDocument = gql`
+  query fetchAuthor($id: String!, $novelSite: NovelSite!) {
+    fetchAuthor(id: $id, novelSite: $novelSite) {
+      __typename
+      ... on QdAuthor {
+        name
+        description
+        image
+        url
+        id
+        novels {
+          id
+          name
+          description
+          image
+          url
+          status
+          chapters {
+            id
+            novelId
+            title
+            url
+            time
+            wordCount
+          }
+        }
+      }
+      ... on JjAuthor {
+        name
+        description
+        image
+        url
+        id
+        novels {
+          id
+          name
+          description
+          image
+          url
+          status
+          chapters {
+            id
+            novelId
+            title
+            url
+            time
+            wordCount
+          }
+        }
+      }
+    }
+  }
+`;
+
+/**
+ * __useFetchAuthorQuery__
+ *
+ * To run a query within a React component, call `useFetchAuthorQuery` and pass it any options that fit your needs.
+ * When your component renders, `useFetchAuthorQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useFetchAuthorQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *      novelSite: // value for 'novelSite'
+ *   },
+ * });
+ */
+export function useFetchAuthorQuery(
+  baseOptions: Apollo.QueryHookOptions<FetchAuthorQuery, FetchAuthorQueryVariables> &
+    ({ variables: FetchAuthorQueryVariables; skip?: boolean } | { skip: boolean }),
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useQuery<FetchAuthorQuery, FetchAuthorQueryVariables>(FetchAuthorDocument, options);
+}
+export function useFetchAuthorLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<FetchAuthorQuery, FetchAuthorQueryVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useLazyQuery<FetchAuthorQuery, FetchAuthorQueryVariables>(FetchAuthorDocument, options);
+}
+export function useFetchAuthorSuspenseQuery(
+  baseOptions?: Apollo.SuspenseQueryHookOptions<FetchAuthorQuery, FetchAuthorQueryVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useSuspenseQuery<FetchAuthorQuery, FetchAuthorQueryVariables>(FetchAuthorDocument, options);
+}
+export type FetchAuthorQueryHookResult = ReturnType<typeof useFetchAuthorQuery>;
+export type FetchAuthorLazyQueryHookResult = ReturnType<typeof useFetchAuthorLazyQuery>;
+export type FetchAuthorSuspenseQueryHookResult = ReturnType<typeof useFetchAuthorSuspenseQuery>;
+export type FetchAuthorQueryResult = Apollo.QueryResult<FetchAuthorQuery, FetchAuthorQueryVariables>;
 export const DeleteAuthorDocument = gql`
   mutation deleteAuthor($id: Int!) {
     deleteAuthor(id: $id) {
@@ -628,8 +1116,8 @@ export type DeleteAuthorMutationOptions = Apollo.BaseMutationOptions<
   DeleteAuthorMutationVariables
 >;
 export const CreateAuthorDocument = gql`
-  mutation createAuthor($avatar: String!, $description: String!, $name: String!, $url: String!) {
-    createAuthor(avatar: $avatar, description: $description, name: $name, url: $url) {
+  mutation createAuthor($avatar: String!, $description: String!, $name: String!, $site: NovelSite!, $siteId: String!) {
+    createAuthor(avatar: $avatar, description: $description, name: $name, site: $site, siteId: $siteId) {
       ...AuthorAll
     }
   }
@@ -653,7 +1141,8 @@ export type CreateAuthorMutationFn = Apollo.MutationFunction<CreateAuthorMutatio
  *      avatar: // value for 'avatar'
  *      description: // value for 'description'
  *      name: // value for 'name'
- *      url: // value for 'url'
+ *      site: // value for 'site'
+ *      siteId: // value for 'siteId'
  *   },
  * });
  */
@@ -668,6 +1157,51 @@ export type CreateAuthorMutationResult = Apollo.MutationResult<CreateAuthorMutat
 export type CreateAuthorMutationOptions = Apollo.BaseMutationOptions<
   CreateAuthorMutation,
   CreateAuthorMutationVariables
+>;
+export const SaveDraftAuthorDocument = gql`
+  mutation saveDraftAuthor($author: SaveDraftAuthor!) {
+    saveDraftAuthor(author: $author) {
+      ...AuthorAll
+    }
+  }
+  ${AuthorAllFragmentDoc}
+`;
+export type SaveDraftAuthorMutationFn = Apollo.MutationFunction<
+  SaveDraftAuthorMutation,
+  SaveDraftAuthorMutationVariables
+>;
+
+/**
+ * __useSaveDraftAuthorMutation__
+ *
+ * To run a mutation, you first call `useSaveDraftAuthorMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useSaveDraftAuthorMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [saveDraftAuthorMutation, { data, loading, error }] = useSaveDraftAuthorMutation({
+ *   variables: {
+ *      author: // value for 'author'
+ *   },
+ * });
+ */
+export function useSaveDraftAuthorMutation(
+  baseOptions?: Apollo.MutationHookOptions<SaveDraftAuthorMutation, SaveDraftAuthorMutationVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useMutation<SaveDraftAuthorMutation, SaveDraftAuthorMutationVariables>(
+    SaveDraftAuthorDocument,
+    options,
+  );
+}
+export type SaveDraftAuthorMutationHookResult = ReturnType<typeof useSaveDraftAuthorMutation>;
+export type SaveDraftAuthorMutationResult = Apollo.MutationResult<SaveDraftAuthorMutation>;
+export type SaveDraftAuthorMutationOptions = Apollo.BaseMutationOptions<
+  SaveDraftAuthorMutation,
+  SaveDraftAuthorMutationVariables
 >;
 export const GetCollectionsDocument = gql`
   query getCollections($parentId: Int) {
@@ -840,7 +1374,8 @@ export const GetCollectionAncestorsDocument = gql`
  * });
  */
 export function useGetCollectionAncestorsQuery(
-  baseOptions: Apollo.QueryHookOptions<GetCollectionAncestorsQuery, GetCollectionAncestorsQueryVariables>,
+  baseOptions: Apollo.QueryHookOptions<GetCollectionAncestorsQuery, GetCollectionAncestorsQueryVariables> &
+    ({ variables: GetCollectionAncestorsQueryVariables; skip?: boolean } | { skip: boolean }),
 ) {
   const options = { ...defaultOptions, ...baseOptions };
   return Apollo.useQuery<GetCollectionAncestorsQuery, GetCollectionAncestorsQueryVariables>(
@@ -873,16 +1408,169 @@ export type GetCollectionAncestorsQueryResult = Apollo.QueryResult<
   GetCollectionAncestorsQuery,
   GetCollectionAncestorsQueryVariables
 >;
+export const GetNovelDocument = gql`
+  query getNovel($id: Int!) {
+    getNovel(id: $id) {
+      id
+      name
+      avatar
+      description
+      createTime
+      updateTime
+      description
+      novelStatus
+      collection {
+        id
+        name
+        path
+        description
+      }
+      chapters {
+        id
+        title
+        createTime
+        updateTime
+        content
+        url
+      }
+      author {
+        avatar
+        description
+        id
+        name
+        site
+      }
+    }
+  }
+`;
+
+/**
+ * __useGetNovelQuery__
+ *
+ * To run a query within a React component, call `useGetNovelQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetNovelQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetNovelQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetNovelQuery(
+  baseOptions: Apollo.QueryHookOptions<GetNovelQuery, GetNovelQueryVariables> &
+    ({ variables: GetNovelQueryVariables; skip?: boolean } | { skip: boolean }),
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useQuery<GetNovelQuery, GetNovelQueryVariables>(GetNovelDocument, options);
+}
+export function useGetNovelLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetNovelQuery, GetNovelQueryVariables>) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useLazyQuery<GetNovelQuery, GetNovelQueryVariables>(GetNovelDocument, options);
+}
+export function useGetNovelSuspenseQuery(
+  baseOptions?: Apollo.SuspenseQueryHookOptions<GetNovelQuery, GetNovelQueryVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useSuspenseQuery<GetNovelQuery, GetNovelQueryVariables>(GetNovelDocument, options);
+}
+export type GetNovelQueryHookResult = ReturnType<typeof useGetNovelQuery>;
+export type GetNovelLazyQueryHookResult = ReturnType<typeof useGetNovelLazyQuery>;
+export type GetNovelSuspenseQueryHookResult = ReturnType<typeof useGetNovelSuspenseQuery>;
+export type GetNovelQueryResult = Apollo.QueryResult<GetNovelQuery, GetNovelQueryVariables>;
+export const FetchNovelDocument = gql`
+  query fetchNovel($id: String!, $NovelSite: NovelSite!) {
+    fetchNovel(id: $id, novelSite: $NovelSite) {
+      ... on QdNovel {
+        author {
+          description
+          image
+          name
+          url
+        }
+        chapters {
+          title
+          url
+        }
+        description
+        image
+        name
+        url
+      }
+      ... on JjNovel {
+        author {
+          description
+          image
+          name
+          url
+        }
+        chapters {
+          title
+          url
+        }
+        description
+        image
+        name
+        url
+      }
+    }
+  }
+`;
+
+/**
+ * __useFetchNovelQuery__
+ *
+ * To run a query within a React component, call `useFetchNovelQuery` and pass it any options that fit your needs.
+ * When your component renders, `useFetchNovelQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useFetchNovelQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *      NovelSite: // value for 'NovelSite'
+ *   },
+ * });
+ */
+export function useFetchNovelQuery(
+  baseOptions: Apollo.QueryHookOptions<FetchNovelQuery, FetchNovelQueryVariables> &
+    ({ variables: FetchNovelQueryVariables; skip?: boolean } | { skip: boolean }),
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useQuery<FetchNovelQuery, FetchNovelQueryVariables>(FetchNovelDocument, options);
+}
+export function useFetchNovelLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<FetchNovelQuery, FetchNovelQueryVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useLazyQuery<FetchNovelQuery, FetchNovelQueryVariables>(FetchNovelDocument, options);
+}
+export function useFetchNovelSuspenseQuery(
+  baseOptions?: Apollo.SuspenseQueryHookOptions<FetchNovelQuery, FetchNovelQueryVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useSuspenseQuery<FetchNovelQuery, FetchNovelQueryVariables>(FetchNovelDocument, options);
+}
+export type FetchNovelQueryHookResult = ReturnType<typeof useFetchNovelQuery>;
+export type FetchNovelLazyQueryHookResult = ReturnType<typeof useFetchNovelLazyQuery>;
+export type FetchNovelSuspenseQueryHookResult = ReturnType<typeof useFetchNovelSuspenseQuery>;
+export type FetchNovelQueryResult = Apollo.QueryResult<FetchNovelQuery, FetchNovelQueryVariables>;
 export const GetNovelsDocument = gql`
-  query getNovels($collectionId: Int, $readStatus: ReadStatus, $tagMatch: TagMatch) {
-    queryNovels(collectionId: $collectionId, readStatus: $readStatus, tagMatch: $tagMatch) {
+  query getNovels($collectionId: Int, $novelStatus: NovelStatus, $tagMatch: TagMatch) {
+    queryNovels(collectionId: $collectionId, novelStatus: $novelStatus, tagMatch: $tagMatch) {
       id
       name
       description
       createTime
       updateTime
       description
-      status
+      novelStatus
+      avatar
     }
   }
 `;
@@ -900,7 +1588,7 @@ export const GetNovelsDocument = gql`
  * const { data, loading, error } = useGetNovelsQuery({
  *   variables: {
  *      collectionId: // value for 'collectionId'
- *      readStatus: // value for 'readStatus'
+ *      novelStatus: // value for 'novelStatus'
  *      tagMatch: // value for 'tagMatch'
  *   },
  * });

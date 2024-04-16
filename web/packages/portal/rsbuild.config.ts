@@ -2,17 +2,27 @@
  * @Author: suxiaoshao suxiaoshao@gamil.com
  * @Date: 2023-12-18 22:35:51
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-01-26 14:18:47
+ * @LastEditTime: 2024-03-26 16:18:28
  */
 import { defineConfig } from '@rsbuild/core';
 import { pluginReact } from '@rsbuild/plugin-react';
-// @ts-ignore
-import MonacoWebpackPlugin from 'monaco-editor-webpack-plugin';
-import { resolve } from 'path';
+import { RsdoctorRspackPlugin } from '@rsdoctor/rspack-plugin';
+import { pluginLightningcss } from '@rsbuild/plugin-lightningcss';
+import { codeInspectorPlugin } from 'code-inspector-plugin';
+
 export default defineConfig({
-  plugins: [pluginReact()],
+  plugins: [pluginReact(), pluginLightningcss()],
   server: {
     port: 3000,
+  },
+  output: {
+    assetPrefix: 'https://sushao.top',
+  },
+  dev: {
+    client: {
+      port: '443',
+    },
+    assetPrefix: 'https://sushao.top',
   },
   source: {
     entry: {
@@ -26,7 +36,17 @@ export default defineConfig({
   },
   tools: {
     bundlerChain: (chain) => {
-      chain.plugin('monaco').use(MonacoWebpackPlugin);
+      if (process.env.RSDOCTOR) {
+        chain.plugin('rsdoctor').use(new RsdoctorRspackPlugin());
+      }
+      if (process.env.NODE_ENV === 'development') {
+        chain.plugin('code-inspector').use(codeInspectorPlugin({ bundler: 'rspack' }));
+      }
+    },
+  },
+  moduleFederation: {
+    options: {
+      name: 'portal',
     },
   },
 });
