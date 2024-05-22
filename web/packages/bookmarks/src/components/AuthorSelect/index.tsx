@@ -2,7 +2,7 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-01-06 01:30:13
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-01-14 03:28:00
+ * @LastEditTime: 2024-05-01 00:31:56
  * @FilePath: /self-tools/web/packages/bookmarks/src/components/AuthorSelect/index.tsx
  */
 import {
@@ -18,6 +18,7 @@ import { useI18n } from 'i18n';
 import { FocusEventHandler, useEffect, useMemo, useState } from 'react';
 import { debounceTime, Subject } from 'rxjs';
 import { SearchAuthorQuery, useSearchAuthorQuery } from '../../graphql';
+import { getImageUrl } from '@bookmarks/utils/image';
 
 export interface TagsSelectProps
   extends Omit<
@@ -61,7 +62,7 @@ export default function AuthorSelect({ onBlur, onChange, sx, value, ...props }: 
       renderOption={(props, { name, avatar }) => (
         <MenuItem {...props}>
           <ListItemAvatar>
-            <Avatar src={avatar} />
+            <Avatar src={getImageUrl(avatar)} />
           </ListItemAvatar>
           <ListItemText>{name}</ListItemText>
         </MenuItem>
