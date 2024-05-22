@@ -19,9 +19,9 @@ import {
 } from '@mui/material';
 import { useState } from 'react';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
-import { updateColor, useAppDispatch, useAppSelector } from '../themeSlice';
-import { string, object, InferType } from 'yup';
-import { yupResolver } from '@hookform/resolvers/yup';
+import { ColorSetting, updateColor, useAppDispatch, useAppSelector } from '../themeSlice';
+import { string, object, InferInput, pipe, regex, enum_ } from 'valibot';
+import { valibotResolver } from '@hookform/resolvers/valibot';
 import { useI18n } from 'i18n';
 
 export default function ThemeDrawerItem() {
@@ -30,16 +30,13 @@ export default function ThemeDrawerItem() {
   const handleClose = () => {
     setOpen(false);
   };
-
   const theme = useAppSelector((state) => state.theme);
   const t = useI18n();
   const createColorSchema = object({
-    color: string()
-      .required(t('cannot_empty'))
-      .matches(/^#[0-9a-fA-F]{6}$/, t('color_format_error')),
-    colorSetting: string().oneOf(['light', 'dark', 'system']).required(t('cannot_empty')),
+    color: pipe(string(), regex(/^#[0-9a-fA-F]{6}$/, t('color_format_error'))),
+    colorSetting: enum_(ColorSetting),
   });
-  type FormData = InferType<typeof createColorSchema>;
+  type FormData = InferInput<typeof createColorSchema>;
   const {
     register,
     handleSubmit,
@@ -47,11 +44,11 @@ export default function ThemeDrawerItem() {
     formState: { errors },
   } = useForm<FormData>({
     defaultValues: theme,
-    resolver: yupResolver(createColorSchema),
+    resolver: valibotResolver(createColorSchema),
   });
   const dispatch = useAppDispatch();
   const onSubmit: SubmitHandler<FormData> = async ({ color, colorSetting }) => {
-    await dispatch(updateColor({ colorSetting, color }));
+    dispatch(updateColor({ colorSetting, color }));
     handleClose();
   };
 
