@@ -5,7 +5,10 @@ use tracing::{event, Level};
 
 use crate::{
     errors::{GraphqlError, GraphqlResult},
-    model::{collection::CollectionModel, novel::NovelModel, tag::TagModel, PgPool},
+    model::{
+        chapter::ChapterModel, collection::CollectionModel, novel::NovelModel, tag::TagModel,
+        PgPool,
+    },
 };
 
 #[derive(SimpleObject)]
@@ -114,23 +117,26 @@ impl Collection {
             event!(Level::WARN, "目录不存在: {}", id);
             return Err(GraphqlError::NotFound("目录", id));
         }
-        let collection = CollectionModel::delete(id, conn)?;
-        conn.build_transaction()
+        let collection = conn
+            .build_transaction()
             .run(|conn| Self::delete_inner(id, conn))?;
-        Ok(collection.into())
+        Ok(collection)
     }
-    fn delete_inner(id: i64, conn: &mut PgConnection) -> GraphqlResult<()> {
+    fn delete_inner(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
         // 删除 小说
         NovelModel::delete_by_collection_id(id, conn)?;
         // 删除 tag
         TagModel::delete_by_collection(id, conn)?;
+        // 删除章节
+        ChapterModel::delete_by_collection_id(id, conn)?;
         //递归删除子目录
         CollectionModel::get_list_by_parent(Some(id), conn)?
             .into_iter()
             .try_for_each(|CollectionModel { id, .. }| {
                 Collection::delete_inner(id, conn).map(|_| ())
             })?;
-        Ok(())
+        let collection = CollectionModel::delete(id, conn)?;
+        Ok(collection.into())
     }
     /// 获取目录列表
     pub fn get_list_parent_id(

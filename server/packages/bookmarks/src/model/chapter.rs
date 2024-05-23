@@ -22,6 +22,7 @@ pub struct ChapterModel {
     pub word_count: i64,
     pub novel_id: i64,
     pub author_id: i64,
+    pub collection_id: Option<i64>,
     pub create_time: OffsetDateTime,
     pub update_time: OffsetDateTime,
 }
@@ -41,6 +42,21 @@ impl ChapterModel {
             .execute(conn)?;
         Ok(count)
     }
+    /// 根据 collection_id 删除章节
+    pub fn delete_by_collection_id(
+        collection_id: i64,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<usize> {
+        let count = diesel::delete(chapter::table.filter(chapter::collection_id.eq(collection_id)))
+            .execute(conn)?;
+        Ok(count)
+    }
+    /// 根据 novel_id 删除章节
+    pub fn delete_by_novel_id(novel_id: i64, conn: &mut PgConnection) -> GraphqlResult<usize> {
+        let count =
+            diesel::delete(chapter::table.filter(chapter::novel_id.eq(novel_id))).execute(conn)?;
+        Ok(count)
+    }
 }
 
 #[derive(Insertable)]
@@ -54,6 +70,7 @@ pub struct NewChapter<'a> {
     pub word_count: i64,
     pub novel_id: i64,
     pub author_id: i64,
+    pub collection_id: Option<i64>,
     pub create_time: OffsetDateTime,
     pub update_time: OffsetDateTime,
 }

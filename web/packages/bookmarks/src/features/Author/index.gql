@@ -90,6 +90,7 @@ fragment AuthorAll on Author {
   updateTime
   avatar
   description
+  url
 }
 
 mutation saveDraftAuthor($author: SaveDraftAuthor!) {

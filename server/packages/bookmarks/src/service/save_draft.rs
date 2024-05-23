@@ -52,6 +52,7 @@ impl SaveDraftAuthor {
                 let now = OffsetDateTime::now_utc();
                 // 保存作者
                 let author = Author::create(&name, &image, &description, site, &id, conn)?;
+
                 // 保存小说
                 let new_novels = novels
                     .iter()
@@ -83,6 +84,7 @@ impl SaveDraftAuthor {
                     )
                     .collect::<Vec<_>>();
                 let new_novels = NewNovel::create_many(&new_novels, conn)?;
+
                 // 保存章节
                 let new_novels = new_novels
                     .into_iter()
@@ -115,6 +117,7 @@ impl SaveDraftAuthor {
                             word_count: *word_count as i64,
                             novel_id: *novel_id,
                             author_id: author.id,
+                            collection_id: None,
                             create_time: now,
                             update_time: now,
                         };

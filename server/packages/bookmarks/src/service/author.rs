@@ -7,6 +7,7 @@
  */
 use async_graphql::{ComplexObject, Context, SimpleObject};
 use diesel::PgConnection;
+use novel_crawler::{AuthorFn, JJAuthor, QDAuthor};
 use time::OffsetDateTime;
 use tracing::{event, Level};
 
@@ -45,6 +46,12 @@ impl Author {
             .get()?;
         let novels = NovelModel::query_by_author_id(self.id, conn)?;
         Ok(novels.into_iter().map(|x| x.into()).collect())
+    }
+    async fn url(&self) -> String {
+        match self.site {
+            NovelSite::Qidian => QDAuthor::get_url_from_id(&self.site_id),
+            NovelSite::Jjwxc => JJAuthor::get_url_from_id(&self.site_id),
+        }
     }
 }
 

@@ -1,5 +1,6 @@
 use std::collections::HashSet;
 
+use crate::model::chapter::ChapterModel;
 use crate::model::{collection::CollectionModel, schema::custom_type::NovelSite, tag::TagModel};
 use crate::model::{
     novel::{NewNovel, NovelModel},
@@ -125,8 +126,12 @@ impl Novel {
             event!(Level::WARN, "小说不存在: {}", id);
             return Err(GraphqlError::NotFound("小说", id));
         }
-        let novel = NovelModel::delete(id, conn)?;
-        Ok(novel.into())
+        let novel = conn.build_transaction().run::<_, GraphqlError, _>(|conn| {
+            let novel = NovelModel::delete(id, conn)?;
+            ChapterModel::delete_by_novel_id(id, conn)?;
+            Ok(novel.into())
+        })?;
+        Ok(novel)
     }
     /// 获取小说
     pub fn get(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {

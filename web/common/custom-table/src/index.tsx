@@ -26,6 +26,7 @@ export function CustomTable<D extends object>({
   tableInstance,
   page,
   containerProps,
+  sx,
   ...tableProps
 }: CustomTableProps<D>): JSX.Element {
   const { getHeaderGroups, getRowModel } = tableInstance;
@@ -37,6 +38,7 @@ export function CustomTable<D extends object>({
         flexDirection: 'column',
         maxHeight: '100%',
         overflowY: 'auto',
+        ...sx,
       }}
       component={Paper}
       {...containerProps}

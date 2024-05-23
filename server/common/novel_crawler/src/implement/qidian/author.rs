@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use futures::future::try_join_all;
 use nom::{
     bytes::complete::{tag, take_until},
@@ -34,7 +36,7 @@ pub struct QDAuthor {
     name: String,
     description: String,
     image: String,
-    novel_ids: Vec<String>,
+    novel_ids: HashSet<String>,
 }
 
 impl AuthorFn for QDAuthor {
@@ -52,7 +54,7 @@ impl AuthorFn for QDAuthor {
         let urls = image_doc
             .select(&SELECTOR_NOVEL_URLS)
             .map(map_url)
-            .collect::<NovelResult<Vec<_>>>()?;
+            .collect::<NovelResult<_>>()?;
         Ok(Self {
             id: author_id.to_string(),
             name,

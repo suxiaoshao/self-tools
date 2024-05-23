@@ -58,6 +58,7 @@ create table chapter
     word_count  bigint       not null,
     novel_id    bigint       not null,
     author_id   bigint       not null,
+    collection_id bigint,
     create_time timestamptz  not null,
     update_time timestamptz  not null
 );

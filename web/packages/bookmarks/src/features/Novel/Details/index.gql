@@ -8,6 +8,7 @@ query getNovel($id: Int!) {
     updateTime
     description
     novelStatus
+    url
     collection {
       id
       name
@@ -21,6 +22,8 @@ query getNovel($id: Int!) {
       updateTime
       content
       url
+      wordCount
+      time
     }
     author {
       avatar
