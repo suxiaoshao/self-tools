@@ -8,8 +8,19 @@
 import { useGetAuthorQuery } from '@bookmarks/graphql';
 import { getImageUrl } from '@bookmarks/utils/image';
 import { CloudDownload, Explore, KeyboardArrowLeft, Refresh } from '@mui/icons-material';
-import { Avatar, Box, Card, CardContent, CardHeader, IconButton, Skeleton, Tooltip, Typography } from '@mui/material';
-import { useNavigate, useParams } from 'react-router-dom';
+import {
+  Avatar,
+  Box,
+  Card,
+  CardContent,
+  CardHeader,
+  IconButton,
+  Link,
+  Skeleton,
+  Tooltip,
+  Typography,
+} from '@mui/material';
+import { useNavigate, useParams, Link as RouterLink } from 'react-router-dom';
 import { useI18n } from 'i18n';
 import { useCallback } from 'react';
 
@@ -38,7 +49,7 @@ export default function AuthorDetails() {
         </IconButton>
       </Box>
       {data?.getAuthor && (
-        <Box>
+        <>
           <Card>
             <CardHeader
               avatar={<Avatar src={getImageUrl(data.getAuthor.avatar)} />}
@@ -64,7 +75,42 @@ export default function AuthorDetails() {
               </Typography>
             </CardContent>
           </Card>
-        </Box>
+          <Box
+            sx={{
+              flex: '1 1 0',
+              overflowY: 'auto',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: 1,
+              gridAutoRows: 'max-content',
+            }}
+          >
+            {data?.getAuthor.novels.map(({ id, avatar, name, description, url }) => (
+              <Card key={id}>
+                <CardHeader
+                  avatar={<Avatar src={getImageUrl(avatar)} />}
+                  title={
+                    <Link to={`/bookmarks/novel/${id}`} component={RouterLink}>
+                      {name}
+                    </Link>
+                  }
+                  action={
+                    <Tooltip title={t('go_to_source_site')}>
+                      <IconButton onClick={() => window.open(url, '_blank')}>
+                        <Explore />
+                      </IconButton>
+                    </Tooltip>
+                  }
+                />
+                <CardContent>
+                  <Typography variant="body2" component="p" gutterBottom>
+                    {description}
+                  </Typography>
+                </CardContent>
+              </Card>
+            ))}
+          </Box>
+        </>
       )}
       {loading && (
         <Card>
