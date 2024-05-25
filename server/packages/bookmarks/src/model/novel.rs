@@ -8,21 +8,6 @@ use crate::{errors::GraphqlResult, graphql::input::TagMatch};
 use diesel::prelude::*;
 use time::OffsetDateTime;
 
-#[derive(Queryable)]
-pub struct NovelModel {
-    pub id: i64,
-    pub name: String,
-    pub avatar: String,
-    pub description: String,
-    pub author_id: i64,
-    pub novel_status: NovelStatus,
-    pub site: NovelSite,
-    pub site_id: String,
-    pub tags: Vec<i64>,
-    pub collection_id: Option<i64>,
-    pub create_time: OffsetDateTime,
-    pub update_time: OffsetDateTime,
-}
 #[derive(Insertable)]
 #[diesel(table_name = novel)]
 pub struct NewNovel<'a> {
@@ -55,6 +40,22 @@ impl NewNovel<'_> {
             .get_results(conn)?;
         Ok(new_novels)
     }
+}
+
+#[derive(Queryable)]
+pub struct NovelModel {
+    pub id: i64,
+    pub name: String,
+    pub avatar: String,
+    pub description: String,
+    pub author_id: i64,
+    pub novel_status: NovelStatus,
+    pub site: NovelSite,
+    pub site_id: String,
+    pub tags: Vec<i64>,
+    pub collection_id: Option<i64>,
+    pub create_time: OffsetDateTime,
+    pub update_time: OffsetDateTime,
 }
 
 /// id 相关
@@ -170,5 +171,25 @@ mod test {
             sql,
             "DELETE  FROM \"novel\" WHERE (\"novel\".\"id\" = $1) -- binds: [2]"
         );
+    }
+}
+
+#[derive(AsChangeset)]
+#[diesel(table_name = novel)]
+pub struct UpdateNovelModel<'a> {
+    pub id: i64,
+    pub name: Option<&'a str>,
+    pub avatar: Option<&'a str>,
+    pub description: Option<&'a str>,
+    pub novel_status: Option<NovelStatus>,
+    pub update_time: OffsetDateTime,
+}
+
+impl UpdateNovelModel<'_> {
+    pub fn update(self, conn: &mut PgConnection) -> GraphqlResult<NovelModel> {
+        let novel = diesel::update(novel::table.filter(novel::id.eq(self.id)))
+            .set(self)
+            .get_result(conn)?;
+        Ok(novel)
     }
 }

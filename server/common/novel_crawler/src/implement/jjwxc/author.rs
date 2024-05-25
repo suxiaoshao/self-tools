@@ -40,6 +40,7 @@ pub struct JJAuthor {
 
 impl AuthorFn for JJAuthor {
     type Novel = JJNovel;
+    const SITE: crate::NovelSite = crate::NovelSite::Jjwxc;
     async fn get_author_data(author_id: &str) -> NovelResult<Self> {
         let url = format!("https://www.jjwxc.net/oneauthor.php?authorid={author_id}");
         let image_doc = text_from_url(&url, "gb18030").await?;

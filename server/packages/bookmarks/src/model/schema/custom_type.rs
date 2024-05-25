@@ -2,7 +2,7 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-01-06 01:30:13
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-04-01 03:57:54
+ * @LastEditTime: 2024-05-24 16:20:32
  * @FilePath: /self-tools/server/packages/bookmarks/src/model/schema/custom_type.rs
  */
 use async_graphql::Enum;
@@ -25,6 +25,30 @@ use diesel::{
 pub enum NovelStatus {
     Ongoing,
     Completed,
+}
+
+impl From<&novel_crawler::novel::NovelStatus> for NovelStatus {
+    fn from(value: &novel_crawler::novel::NovelStatus) -> Self {
+        match value {
+            novel_crawler::novel::NovelStatus::Ongoing => NovelStatus::Ongoing,
+            novel_crawler::novel::NovelStatus::Completed => NovelStatus::Completed,
+        }
+    }
+}
+
+impl PartialEq<novel_crawler::novel::NovelStatus> for NovelStatus {
+    fn eq(&self, other: &novel_crawler::novel::NovelStatus) -> bool {
+        matches!(
+            (self, other),
+            (
+                NovelStatus::Ongoing,
+                novel_crawler::novel::NovelStatus::Ongoing
+            ) | (
+                NovelStatus::Completed,
+                novel_crawler::novel::NovelStatus::Completed
+            )
+        )
+    }
 }
 
 impl ToSql<super::sql_types::NovelStatus, Pg> for NovelStatus {
@@ -102,6 +126,15 @@ impl FromSql<super::sql_types::NovelSite, Pg> for NovelSite {
                 );
                 Err("Unrecognized enum variant".into())
             }
+        }
+    }
+}
+
+impl From<novel_crawler::NovelSite> for NovelSite {
+    fn from(value: novel_crawler::NovelSite) -> Self {
+        match value {
+            novel_crawler::NovelSite::Qidian => NovelSite::Qidian,
+            novel_crawler::NovelSite::Jjwxc => NovelSite::Jjwxc,
         }
     }
 }

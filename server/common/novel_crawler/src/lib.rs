@@ -16,3 +16,9 @@ pub use chapter::*;
 pub use errors::*;
 pub use implement::*;
 pub use novel::NovelFn;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum NovelSite {
+    Qidian,
+    Jjwxc,
+}

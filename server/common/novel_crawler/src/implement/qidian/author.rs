@@ -41,6 +41,7 @@ pub struct QDAuthor {
 
 impl AuthorFn for QDAuthor {
     type Novel = QDNovel;
+    const SITE: crate::NovelSite = crate::NovelSite::Qidian;
     async fn get_author_data(author_id: &str) -> NovelResult<Self> {
         let url = format!("https://m.qidian.com/author/{author_id}/");
         let image_doc = text_from_url(&url, "utf-8").await?;

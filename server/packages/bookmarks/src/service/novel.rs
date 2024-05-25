@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 
-use crate::model::chapter::ChapterModel;
+use crate::model::chapter::{ChapterModel, NewChapter, UpdateChapterModel};
+use crate::model::novel::UpdateNovelModel;
 use crate::model::{collection::CollectionModel, schema::custom_type::NovelSite, tag::TagModel};
 use crate::model::{
     novel::{NewNovel, NovelModel},
@@ -119,6 +120,38 @@ impl From<NovelModel> for Novel {
     }
 }
 
+impl<'a, T: NovelFn> From<(&'a Novel, &'a T)> for UpdateNovelModel<'a> {
+    fn from(value: (&'a Novel, &'a T)) -> Self {
+        let now = OffsetDateTime::now_utc();
+        let novel = &value.0;
+        let fetch_novel = &value.1;
+        Self {
+            id: novel.id,
+            name: if fetch_novel.name() == novel.name {
+                None
+            } else {
+                Some(fetch_novel.name())
+            },
+            avatar: if fetch_novel.image() == novel.avatar {
+                None
+            } else {
+                Some(fetch_novel.image())
+            },
+            description: if fetch_novel.description() == novel.description {
+                None
+            } else {
+                Some(fetch_novel.description())
+            },
+            novel_status: if novel.novel_status == fetch_novel.status() {
+                None
+            } else {
+                Some(fetch_novel.status().into())
+            },
+            update_time: now,
+        }
+    }
+}
+
 impl Novel {
     /// 删除小说
     pub fn delete(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
@@ -141,6 +174,37 @@ impl Novel {
         }
         let novel = NovelModel::find_one(id, conn)?;
         Ok(novel.into())
+    }
+    /// update by crawler
+    pub async fn update_by_crawler<T: novel_crawler::NovelFn>(
+        &self,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<Self> {
+        let novel = T::get_novel_data(&self.site_id).await?;
+        let fetch_chapters = novel.chapters().await?;
+        let update_novel: UpdateNovelModel = (self, &novel).into();
+        conn.build_transaction().run::<_, GraphqlError, _>(|conn| {
+            // 更新小说
+            let novel = update_novel.update(conn)?;
+
+            // 获取待更新章节，新章节，删除章节
+            let chapters = ChapterModel::get_by_novel_id(novel.id, conn)?;
+            let (update_chapters, new_chapters, delete_chapter_ids) = UpdateChapterModel::from(
+                chapters.as_slice(),
+                fetch_chapters.as_slice(),
+                novel.id,
+                novel.author_id,
+                novel.collection_id,
+            );
+
+            // 更新章节
+            UpdateChapterModel::update_many(update_chapters.as_slice(), conn)?;
+            // 新增章节
+            NewChapter::create_many(new_chapters.as_slice(), conn)?;
+            // 删除章节
+            ChapterModel::delete_by_ids(delete_chapter_ids.as_slice(), conn)?;
+            Ok(novel.into())
+        })
     }
 }
 

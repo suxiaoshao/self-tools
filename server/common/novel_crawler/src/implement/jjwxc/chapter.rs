@@ -37,6 +37,8 @@ impl JJChapter {
 }
 
 impl ChapterFn for JJChapter {
+    type Author = crate::implement::jjwxc::author::JJAuthor;
+    type Novel = crate::implement::jjwxc::novel::JJNovel;
     fn url(&self) -> String {
         Self::get_url_from_id(&self.chapter_id, &self.novel_id)
     }
