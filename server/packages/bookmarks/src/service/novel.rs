@@ -180,22 +180,23 @@ impl Novel {
         &self,
         conn: &mut PgConnection,
     ) -> GraphqlResult<Self> {
-        let novel = T::get_novel_data(&self.site_id).await?;
-        let fetch_chapters = novel.chapters().await?;
-        let update_novel: UpdateNovelModel = (self, &novel).into();
+        let fetch_novel = T::get_novel_data(&self.site_id).await?;
+        let fetch_chapters = fetch_novel.chapters().await?;
+        let update_novel: UpdateNovelModel = (self, &fetch_novel).into();
         conn.build_transaction().run::<_, GraphqlError, _>(|conn| {
             // 更新小说
             let novel = update_novel.update(conn)?;
 
             // 获取待更新章节，新章节，删除章节
             let chapters = ChapterModel::get_by_novel_id(novel.id, conn)?;
-            let (update_chapters, new_chapters, delete_chapter_ids) = UpdateChapterModel::from(
-                chapters.as_slice(),
-                fetch_chapters.as_slice(),
-                novel.id,
-                novel.author_id,
-                novel.collection_id,
-            );
+            let (update_chapters, new_chapters, delete_chapter_ids) =
+                UpdateChapterModel::from_novel(
+                    chapters.as_slice(),
+                    fetch_chapters.as_slice(),
+                    novel.id,
+                    novel.author_id,
+                    novel.collection_id,
+                );
 
             // 更新章节
             UpdateChapterModel::update_many(update_chapters.as_slice(), conn)?;

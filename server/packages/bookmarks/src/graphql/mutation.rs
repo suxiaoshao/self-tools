@@ -8,7 +8,7 @@
 
 use super::{guard::AuthGuard, validator::DirNameValidator};
 use async_graphql::{Context, Object};
-use novel_crawler::{JJNovel, QDNovel};
+use novel_crawler::{JJAuthor, JJNovel, QDAuthor, QDNovel};
 use tracing::{event, Level};
 
 use crate::{
@@ -187,6 +187,26 @@ impl MutationRoot {
         match novel.site {
             NovelSite::Qidian => novel.update_by_crawler::<QDNovel>(conn).await,
             NovelSite::Jjwxc => novel.update_by_crawler::<JJNovel>(conn).await,
+        }
+    }
+    /// 通过 fetch 更新作者
+    #[graphql(guard = "AuthGuard")]
+    async fn update_author_by_crawler(
+        &self,
+        context: &Context<'_>,
+        author_id: i64,
+    ) -> GraphqlResult<Author> {
+        let conn = &mut context
+            .data::<PgPool>()
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
+            .get()?;
+        let author = Author::get(author_id, conn)?;
+        match author.site {
+            NovelSite::Qidian => author.update_by_crawler::<QDAuthor>(conn).await,
+            NovelSite::Jjwxc => author.update_by_crawler::<JJAuthor>(conn).await,
         }
     }
 }

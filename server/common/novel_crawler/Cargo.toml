@@ -16,7 +16,7 @@ reqwest = { version = "0.12.4", features = [
 scraper = "0.19.0"
 once_cell = "1.19.0"
 nom = "7.1.3"
-serde = { version = "1.0.202", features = ["derive"] }
+serde = { version = "1.0.203", features = ["derive"] }
 serde_json = "1.0.117"
 # async trait support
 tokio = { version = "1.37.0", default-features = false, features = ["macros"] }
