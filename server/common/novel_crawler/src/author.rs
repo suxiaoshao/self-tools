@@ -9,6 +9,7 @@ use crate::{errors::NovelResult, novel::NovelFn};
 
 pub trait AuthorFn: Sized + Send + Sync {
     type Novel: NovelFn;
+    const SITE: crate::NovelSite;
     fn get_author_data(
         author_id: &str,
     ) -> impl std::future::Future<Output = NovelResult<Self>> + Send;

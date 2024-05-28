@@ -14,6 +14,7 @@ query getAuthor($id: Int!) {
       updateTime
       description
       novelStatus
+      url
     }
     ...AuthorAll
   }
@@ -90,10 +91,16 @@ fragment AuthorAll on Author {
   updateTime
   avatar
   description
+  url
 }
 
 mutation saveDraftAuthor($author: SaveDraftAuthor!) {
   saveDraftAuthor(author: $author) {
     ...AuthorAll
+  }
+}
+mutation updateAuthorByCrawler($authorId: Int!) {
+  updateAuthorByCrawler(authorId: $authorId) {
+    id
   }
 }

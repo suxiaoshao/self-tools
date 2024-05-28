@@ -18,18 +18,18 @@ import {
 } from '@mui/material';
 import { useState } from 'react';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
-import { useAppDispatch, useAppSelector, setLangSetting } from './i18nSlice';
-import { string, object, InferType } from 'yup';
-import { yupResolver } from '@hookform/resolvers/yup';
+import { useAppDispatch, useAppSelector, setLangSetting, LangMode, CustomLang } from './i18nSlice';
+import { object, enum_, InferInput } from 'valibot';
+import { valibotResolver } from '@hookform/resolvers/valibot';
 import { useI18n } from '.';
 
 export default function I18nDrawerItem() {
   const t = useI18n();
   const createColorSchema = object({
-    langMode: string().oneOf(['custom', 'system']).required(t('cannot_empty')),
-    customLang: string().oneOf(['en', 'zh']).required(t('cannot_empty')),
+    langMode: enum_(LangMode),
+    customLang: enum_(CustomLang),
   });
-  type FormData = InferType<typeof createColorSchema>;
+  type FormData = InferInput<typeof createColorSchema>;
   // 控制 dialog
   const [open, setOpen] = useState(false);
   const handleClose = () => {
@@ -46,11 +46,11 @@ export default function I18nDrawerItem() {
       langMode: i18n.langMode,
       customLang: i18n.customLang,
     },
-    resolver: yupResolver(createColorSchema),
+    resolver: valibotResolver(createColorSchema),
   });
   const dispatch = useAppDispatch();
   const onSubmit: SubmitHandler<FormData> = async (data) => {
-    await dispatch(setLangSetting(data));
+    dispatch(setLangSetting(data));
     handleClose();
   };
   const watchTag = watch('langMode');
@@ -82,8 +82,8 @@ export default function I18nDrawerItem() {
                       field.onChange(newValue as 'custom' | 'system');
                     }}
                   >
-                    <FormControlLabel value="custom" control={<Radio />} label={t('custom')} />
-                    <FormControlLabel value="system" control={<Radio />} label={t('system')} />
+                    <FormControlLabel value={LangMode.custom} control={<Radio />} label={t('custom')} />
+                    <FormControlLabel value={LangMode.system} control={<Radio />} label={t('system')} />
                   </RadioGroup>
                 )}
               />
@@ -106,8 +106,8 @@ export default function I18nDrawerItem() {
                         field.onChange(newValue as 'en' | 'zh');
                       }}
                     >
-                      <FormControlLabel value="zh" control={<Radio />} label={t('chinese')} />
-                      <FormControlLabel value="en" control={<Radio />} label={t('english')} />
+                      <FormControlLabel value={CustomLang.zh} control={<Radio />} label={t('chinese')} />
+                      <FormControlLabel value={CustomLang.en} control={<Radio />} label={t('english')} />
                     </RadioGroup>
                   )}
                 />

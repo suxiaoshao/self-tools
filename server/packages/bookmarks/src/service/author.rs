@@ -7,14 +7,18 @@
  */
 use async_graphql::{ComplexObject, Context, SimpleObject};
 use diesel::PgConnection;
+use novel_crawler::{AuthorFn, JJAuthor, NovelFn, QDAuthor};
 use time::OffsetDateTime;
 use tracing::{event, Level};
 
 use crate::{
     errors::{GraphqlError, GraphqlResult},
     model::{
-        author::AuthorModel, chapter::ChapterModel, novel::NovelModel,
-        schema::custom_type::NovelSite, PgPool,
+        author::{AuthorModel, UpdateAuthorModel},
+        chapter::{ChapterModel, NewChapter, UpdateChapterModel},
+        novel::{NewNovel, NovelModel, UpdateNovelModel},
+        schema::custom_type::NovelSite,
+        PgPool,
     },
 };
 
@@ -46,6 +50,12 @@ impl Author {
         let novels = NovelModel::query_by_author_id(self.id, conn)?;
         Ok(novels.into_iter().map(|x| x.into()).collect())
     }
+    async fn url(&self) -> String {
+        match self.site {
+            NovelSite::Qidian => QDAuthor::get_url_from_id(&self.site_id),
+            NovelSite::Jjwxc => JJAuthor::get_url_from_id(&self.site_id),
+        }
+    }
 }
 
 impl From<AuthorModel> for Author {
@@ -59,6 +69,32 @@ impl From<AuthorModel> for Author {
             create_time: value.create_time,
             update_time: value.update_time,
             site_id: value.site_id,
+        }
+    }
+}
+
+impl<'a, T: AuthorFn> From<(&'a Author, &'a T)> for UpdateAuthorModel<'a> {
+    fn from(value: (&'a Author, &'a T)) -> Self {
+        let now = OffsetDateTime::now_utc();
+        let (author, fetch_author) = value;
+        Self {
+            id: author.id,
+            name: if fetch_author.name() == author.name {
+                None
+            } else {
+                Some(fetch_author.name())
+            },
+            avatar: if fetch_author.image() == author.avatar {
+                None
+            } else {
+                Some(fetch_author.image())
+            },
+            description: if fetch_author.description() == author.description {
+                None
+            } else {
+                Some(fetch_author.description())
+            },
+            update_time: now,
         }
     }
 }
@@ -107,5 +143,53 @@ impl Author {
         }
         let author = AuthorModel::get(id, conn)?;
         Ok(author.into())
+    }
+    /// update by crawler
+    pub async fn update_by_crawler<T: novel_crawler::AuthorFn>(
+        &self,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<Self> {
+        let fetch_author = T::get_author_data(&self.site_id).await?;
+        let fetch_novels = fetch_author.novels().await?;
+        let mut fetch_chapters = Vec::new();
+        for novel in &fetch_novels {
+            fetch_chapters.extend(novel.chapters().await?);
+        }
+        let update_author: UpdateAuthorModel = (self, &fetch_author).into();
+        conn.build_transaction().run::<_, GraphqlError, _>(|conn| {
+            let author = update_author.update(conn)?;
+
+            // 获取待更新的小说，新建的小说，删除的小说
+            let novels = NovelModel::query_by_author_id(author.id, conn)?;
+            let (update_novels, new_noevls, delete_novels) = UpdateNovelModel::from_author(
+                novels.as_slice(),
+                fetch_novels.as_slice(),
+                author.id,
+            );
+
+            // 更新小说
+            UpdateNovelModel::update_many(update_novels.as_slice(), conn)?;
+            // 新建小说
+            let new_novels = NewNovel::create_many(new_noevls.as_slice(), conn)?;
+            // 删除小说
+            NovelModel::delete_many(delete_novels.as_slice(), conn)?;
+
+            // 获取待更新的章节，新建的章节，删除的章节
+            let chapters = ChapterModel::get_by_author_id(author.id, conn)?;
+            let (update_chapters, new_chapters, delete_chapters) = UpdateChapterModel::from_author(
+                chapters.as_slice(),
+                fetch_chapters.as_slice(),
+                new_novels.as_slice(),
+                delete_novels.as_slice(),
+            )?;
+            // 新建章节
+            UpdateChapterModel::update_many(update_chapters.as_slice(), conn)?;
+            // 新建章节
+            NewChapter::create_many(new_chapters.as_slice(), conn)?;
+            // 删除章节
+            ChapterModel::delete_by_ids(delete_chapters.as_slice(), conn)?;
+
+            Ok(author.into())
+        })
     }
 }

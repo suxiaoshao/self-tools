@@ -49,6 +49,7 @@ diesel::table! {
         word_count -> Int8,
         novel_id -> Int8,
         author_id -> Int8,
+        collection_id -> Nullable<Int8>,
         create_time -> Timestamptz,
         update_time -> Timestamptz,
     }

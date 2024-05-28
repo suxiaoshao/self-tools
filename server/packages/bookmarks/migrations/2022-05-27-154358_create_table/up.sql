@@ -12,7 +12,7 @@ create table novel
     author_id     bigint       not null,
     novel_status  novel_status not null,
     site          novel_site   not null,
-    site_id       text         not null,
+    site_id       text         not null unique,
     tags          bigint[]     not null check (array_position(tags, null) is null),
     collection_id bigint,
     create_time   timestamptz  not null,
@@ -34,7 +34,7 @@ create table author
     name        text        not null,
     avatar      text        not null,
     site        novel_site  not null,
-    site_id     text        not null,
+    site_id     text        not null unique,
     description text        not null,
     create_time timestamptz not null,
     update_time timestamptz not null
@@ -49,15 +49,17 @@ create table tag
 );
 create table chapter
 (
-    id          bigserial primary key,
-    title       varchar(255) not null,
-    site        novel_site   not null,
-    site_id     text         not null,
-    content     text,
-    time        timestamptz  not null,
-    word_count  bigint       not null,
-    novel_id    bigint       not null,
-    author_id   bigint       not null,
-    create_time timestamptz  not null,
-    update_time timestamptz  not null
+    id            bigserial primary key,
+    title         varchar(255) not null,
+    site          novel_site   not null,
+    site_id       text         not null,
+    content       text,
+    time          timestamptz  not null,
+    word_count    bigint       not null,
+    novel_id      bigint       not null,
+    author_id     bigint       not null,
+    collection_id bigint,
+    create_time   timestamptz  not null,
+    update_time   timestamptz  not null,
+    unique (novel_id, site_id)
 );

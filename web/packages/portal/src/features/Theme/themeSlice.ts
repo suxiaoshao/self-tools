@@ -1,11 +1,17 @@
-import { AnyAction, createSlice, EnhancedStore, PayloadAction, ThunkAction } from '@reduxjs/toolkit';
+import { createSlice, EnhancedStore, PayloadAction, ThunkAction } from '@reduxjs/toolkit';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 import { argbFromHex, themeFromSourceColor } from '@material/material-color-utilities';
 import { youThemeToMuiTheme } from './utils/youTheme';
 
+export enum ColorSetting {
+  dark = 'dark',
+  light = 'light',
+  system = 'system',
+}
+
 export type ThemeSliceType = {
   color: string;
-  colorSetting: 'dark' | 'light' | 'system';
+  colorSetting: ColorSetting;
   systemColorScheme: 'light' | 'dark';
 };
 const getColorScheme = (
@@ -68,7 +74,6 @@ export const selectMuiTheme = (state: RootState) => {
 type StoreType = EnhancedStore<{ theme: ThemeSliceType }>;
 
 export default themeSlice.reducer;
-export type AppThunkAction<ReturnType = void> = ThunkAction<ReturnType, RootState, unknown, AnyAction>;
 export type RootState = ReturnType<StoreType['getState']>;
 export type AppDispatch = StoreType['dispatch'];
 export const useAppDispatch = () => useDispatch<AppDispatch>();

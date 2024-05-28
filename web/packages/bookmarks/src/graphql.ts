@@ -37,6 +37,7 @@ export type Author = {
   site: NovelSite;
   siteId: Scalars['String']['output'];
   updateTime: Scalars['DateTime']['output'];
+  url: Scalars['String']['output'];
 };
 
 export type Chapter = {
@@ -49,9 +50,11 @@ export type Chapter = {
   site: NovelSite;
   siteId: Scalars['String']['output'];
   siteNovelId: Scalars['String']['output'];
+  time: Scalars['DateTime']['output'];
   title: Scalars['String']['output'];
   updateTime: Scalars['DateTime']['output'];
   url: Scalars['String']['output'];
+  wordCount: Scalars['Int']['output'];
 };
 
 export type Collection = {
@@ -137,6 +140,10 @@ export type MutationRoot = {
   deleteTag: Tag;
   /** 保存 draft author */
   saveDraftAuthor: Author;
+  /** 通过 fetch 更新作者 */
+  updateAuthorByCrawler: Author;
+  /** 通过 fetch 更新小说 */
+  updateNovelByCrawler: Novel;
 };
 
 export type MutationRootCreateAuthorArgs = {
@@ -180,6 +187,14 @@ export type MutationRootDeleteTagArgs = {
 
 export type MutationRootSaveDraftAuthorArgs = {
   author: SaveDraftAuthor;
+};
+
+export type MutationRootUpdateAuthorByCrawlerArgs = {
+  authorId: Scalars['Int']['input'];
+};
+
+export type MutationRootUpdateNovelByCrawlerArgs = {
+  novelId: Scalars['Int']['input'];
 };
 
 export type Novel = {
@@ -390,6 +405,7 @@ export type GetAuthorsQuery = {
     updateTime: any;
     avatar: string;
     description: string;
+    url: string;
   }>;
 };
 
@@ -408,6 +424,7 @@ export type GetAuthorQuery = {
     updateTime: any;
     avatar: string;
     description: string;
+    url: string;
     novels: Array<{
       __typename?: 'Novel';
       id: number;
@@ -417,6 +434,7 @@ export type GetAuthorQuery = {
       updateTime: any;
       description: string;
       novelStatus: NovelStatus;
+      url: string;
     }>;
   };
 };
@@ -508,6 +526,7 @@ export type CreateAuthorMutation = {
     updateTime: any;
     avatar: string;
     description: string;
+    url: string;
   };
 };
 
@@ -520,6 +539,7 @@ export type AuthorAllFragment = {
   updateTime: any;
   avatar: string;
   description: string;
+  url: string;
 };
 
 export type SaveDraftAuthorMutationVariables = Exact<{
@@ -537,7 +557,17 @@ export type SaveDraftAuthorMutation = {
     updateTime: any;
     avatar: string;
     description: string;
+    url: string;
   };
+};
+
+export type UpdateAuthorByCrawlerMutationVariables = Exact<{
+  authorId: Scalars['Int']['input'];
+}>;
+
+export type UpdateAuthorByCrawlerMutation = {
+  __typename?: 'MutationRoot';
+  updateAuthorByCrawler: { __typename?: 'Author'; id: number };
 };
 
 export type GetCollectionsQueryVariables = Exact<{
@@ -606,6 +636,7 @@ export type GetNovelQuery = {
     createTime: any;
     updateTime: any;
     novelStatus: NovelStatus;
+    url: string;
     collection?: {
       __typename?: 'Collection';
       id: number;
@@ -621,6 +652,8 @@ export type GetNovelQuery = {
       updateTime: any;
       content?: string | null;
       url: string;
+      wordCount: number;
+      time: any;
     }>;
     author: { __typename?: 'Author'; avatar: string; description: string; id: number; name: string; site: NovelSite };
   };
@@ -652,6 +685,15 @@ export type FetchNovelQuery = {
         author: { __typename?: 'QdAuthor'; description: string; image: string; name: string; url: string };
         chapters: Array<{ __typename?: 'QdChapter'; title: string; url: string }>;
       };
+};
+
+export type UpdateNovelByCrawlerMutationVariables = Exact<{
+  novelId: Scalars['Int']['input'];
+}>;
+
+export type UpdateNovelByCrawlerMutation = {
+  __typename?: 'MutationRoot';
+  updateNovelByCrawler: { __typename?: 'Novel'; id: number };
 };
 
 export type GetNovelsQueryVariables = Exact<{
@@ -727,6 +769,7 @@ export const AuthorAllFragmentDoc = gql`
     updateTime
     avatar
     description
+    url
   }
 `;
 export const SearchAuthorDocument = gql`
@@ -937,6 +980,7 @@ export const GetAuthorDocument = gql`
         updateTime
         description
         novelStatus
+        url
       }
       ...AuthorAll
     }
@@ -1203,6 +1247,50 @@ export type SaveDraftAuthorMutationOptions = Apollo.BaseMutationOptions<
   SaveDraftAuthorMutation,
   SaveDraftAuthorMutationVariables
 >;
+export const UpdateAuthorByCrawlerDocument = gql`
+  mutation updateAuthorByCrawler($authorId: Int!) {
+    updateAuthorByCrawler(authorId: $authorId) {
+      id
+    }
+  }
+`;
+export type UpdateAuthorByCrawlerMutationFn = Apollo.MutationFunction<
+  UpdateAuthorByCrawlerMutation,
+  UpdateAuthorByCrawlerMutationVariables
+>;
+
+/**
+ * __useUpdateAuthorByCrawlerMutation__
+ *
+ * To run a mutation, you first call `useUpdateAuthorByCrawlerMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateAuthorByCrawlerMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateAuthorByCrawlerMutation, { data, loading, error }] = useUpdateAuthorByCrawlerMutation({
+ *   variables: {
+ *      authorId: // value for 'authorId'
+ *   },
+ * });
+ */
+export function useUpdateAuthorByCrawlerMutation(
+  baseOptions?: Apollo.MutationHookOptions<UpdateAuthorByCrawlerMutation, UpdateAuthorByCrawlerMutationVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useMutation<UpdateAuthorByCrawlerMutation, UpdateAuthorByCrawlerMutationVariables>(
+    UpdateAuthorByCrawlerDocument,
+    options,
+  );
+}
+export type UpdateAuthorByCrawlerMutationHookResult = ReturnType<typeof useUpdateAuthorByCrawlerMutation>;
+export type UpdateAuthorByCrawlerMutationResult = Apollo.MutationResult<UpdateAuthorByCrawlerMutation>;
+export type UpdateAuthorByCrawlerMutationOptions = Apollo.BaseMutationOptions<
+  UpdateAuthorByCrawlerMutation,
+  UpdateAuthorByCrawlerMutationVariables
+>;
 export const GetCollectionsDocument = gql`
   query getCollections($parentId: Int) {
     getCollections(parentId: $parentId) {
@@ -1419,6 +1507,7 @@ export const GetNovelDocument = gql`
       updateTime
       description
       novelStatus
+      url
       collection {
         id
         name
@@ -1432,6 +1521,8 @@ export const GetNovelDocument = gql`
         updateTime
         content
         url
+        wordCount
+        time
       }
       author {
         avatar
@@ -1560,6 +1651,50 @@ export type FetchNovelQueryHookResult = ReturnType<typeof useFetchNovelQuery>;
 export type FetchNovelLazyQueryHookResult = ReturnType<typeof useFetchNovelLazyQuery>;
 export type FetchNovelSuspenseQueryHookResult = ReturnType<typeof useFetchNovelSuspenseQuery>;
 export type FetchNovelQueryResult = Apollo.QueryResult<FetchNovelQuery, FetchNovelQueryVariables>;
+export const UpdateNovelByCrawlerDocument = gql`
+  mutation updateNovelByCrawler($novelId: Int!) {
+    updateNovelByCrawler(novelId: $novelId) {
+      id
+    }
+  }
+`;
+export type UpdateNovelByCrawlerMutationFn = Apollo.MutationFunction<
+  UpdateNovelByCrawlerMutation,
+  UpdateNovelByCrawlerMutationVariables
+>;
+
+/**
+ * __useUpdateNovelByCrawlerMutation__
+ *
+ * To run a mutation, you first call `useUpdateNovelByCrawlerMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateNovelByCrawlerMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateNovelByCrawlerMutation, { data, loading, error }] = useUpdateNovelByCrawlerMutation({
+ *   variables: {
+ *      novelId: // value for 'novelId'
+ *   },
+ * });
+ */
+export function useUpdateNovelByCrawlerMutation(
+  baseOptions?: Apollo.MutationHookOptions<UpdateNovelByCrawlerMutation, UpdateNovelByCrawlerMutationVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useMutation<UpdateNovelByCrawlerMutation, UpdateNovelByCrawlerMutationVariables>(
+    UpdateNovelByCrawlerDocument,
+    options,
+  );
+}
+export type UpdateNovelByCrawlerMutationHookResult = ReturnType<typeof useUpdateNovelByCrawlerMutation>;
+export type UpdateNovelByCrawlerMutationResult = Apollo.MutationResult<UpdateNovelByCrawlerMutation>;
+export type UpdateNovelByCrawlerMutationOptions = Apollo.BaseMutationOptions<
+  UpdateNovelByCrawlerMutation,
+  UpdateNovelByCrawlerMutationVariables
+>;
 export const GetNovelsDocument = gql`
   query getNovels($collectionId: Int, $novelStatus: NovelStatus, $tagMatch: TagMatch) {
     queryNovels(collectionId: $collectionId, novelStatus: $novelStatus, tagMatch: $tagMatch) {

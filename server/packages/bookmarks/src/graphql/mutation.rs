@@ -2,12 +2,13 @@
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-01-06 01:30:13
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-03-31 14:30:20
+ * @LastEditTime: 2024-05-24 16:20:09
  * @FilePath: /self-tools/server/packages/bookmarks/src/graphql/mutation.rs
  */
 
 use super::{guard::AuthGuard, validator::DirNameValidator};
 use async_graphql::{Context, Object};
+use novel_crawler::{JJAuthor, JJNovel, QDAuthor, QDNovel};
 use tracing::{event, Level};
 
 use crate::{
@@ -167,5 +168,45 @@ impl MutationRoot {
             })?
             .get()?;
         author.save(conn)
+    }
+    /// 通过 fetch 更新小说
+    #[graphql(guard = "AuthGuard")]
+    async fn update_novel_by_crawler(
+        &self,
+        context: &Context<'_>,
+        novel_id: i64,
+    ) -> GraphqlResult<Novel> {
+        let conn = &mut context
+            .data::<PgPool>()
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
+            .get()?;
+        let novel = Novel::get(novel_id, conn)?;
+        match novel.site {
+            NovelSite::Qidian => novel.update_by_crawler::<QDNovel>(conn).await,
+            NovelSite::Jjwxc => novel.update_by_crawler::<JJNovel>(conn).await,
+        }
+    }
+    /// 通过 fetch 更新作者
+    #[graphql(guard = "AuthGuard")]
+    async fn update_author_by_crawler(
+        &self,
+        context: &Context<'_>,
+        author_id: i64,
+    ) -> GraphqlResult<Author> {
+        let conn = &mut context
+            .data::<PgPool>()
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
+            .get()?;
+        let author = Author::get(author_id, conn)?;
+        match author.site {
+            NovelSite::Qidian => author.update_by_crawler::<QDAuthor>(conn).await,
+            NovelSite::Jjwxc => author.update_by_crawler::<JJAuthor>(conn).await,
+        }
     }
 }

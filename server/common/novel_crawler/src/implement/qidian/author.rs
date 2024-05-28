@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use futures::future::try_join_all;
 use nom::{
     bytes::complete::{tag, take_until},
@@ -34,11 +36,12 @@ pub struct QDAuthor {
     name: String,
     description: String,
     image: String,
-    novel_ids: Vec<String>,
+    novel_ids: HashSet<String>,
 }
 
 impl AuthorFn for QDAuthor {
     type Novel = QDNovel;
+    const SITE: crate::NovelSite = crate::NovelSite::Qidian;
     async fn get_author_data(author_id: &str) -> NovelResult<Self> {
         let url = format!("https://m.qidian.com/author/{author_id}/");
         let image_doc = text_from_url(&url, "utf-8").await?;
@@ -52,7 +55,7 @@ impl AuthorFn for QDAuthor {
         let urls = image_doc
             .select(&SELECTOR_NOVEL_URLS)
             .map(map_url)
-            .collect::<NovelResult<Vec<_>>>()?;
+            .collect::<NovelResult<_>>()?;
         Ok(Self {
             id: author_id.to_string(),
             name,

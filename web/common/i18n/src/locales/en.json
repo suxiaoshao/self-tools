@@ -73,5 +73,11 @@
   "view_novel_chapters": "View Novel Chapters",
   "novel_chapters": "Novel Chapters",
   "save_draft": "Save Draft",
-  "save_draft_success": "Save draft success"
+  "save_draft_success": "Save draft success",
+  "title": "Title",
+  "time": "Time",
+  "word_count": "Word Count",
+  "update_by_crawler": "Update by Crawler",
+  "go_to_source_site": "Go to Source Site",
+  "update_by_crawler_success": "Update by Crawler Success"
 }

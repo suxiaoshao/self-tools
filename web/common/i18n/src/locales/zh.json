@@ -73,5 +73,11 @@
   "view_novel_chapters": "查看小说章节",
   "novel_chapters": "小说章节",
   "save_draft": "保存草稿",
-  "save_draft_success": "保存草稿成功"
+  "save_draft_success": "保存草稿成功",
+  "title": "标题",
+  "time": "时间",
+  "word_count": "字数",
+  "update_by_crawler": "通过爬取更新",
+  "go_to_source_site": "前往源站点",
+  "update_by_crawler_success": "通过爬取更新成功"
 }

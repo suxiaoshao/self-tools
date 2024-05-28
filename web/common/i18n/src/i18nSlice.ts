@@ -1,9 +1,19 @@
-import { AnyAction, createSlice, EnhancedStore, ThunkAction } from '@reduxjs/toolkit';
+import { createSlice, EnhancedStore } from '@reduxjs/toolkit';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 
+export enum LangMode {
+  custom = 'custom',
+  system = 'system',
+}
+
+export enum CustomLang {
+  en = 'en',
+  zh = 'zh',
+}
+
 export type I18nSliceType = {
-  langMode: 'custom' | 'system';
-  customLang: 'en' | 'zh';
+  langMode: LangMode;
+  customLang: CustomLang;
   systemLang: string;
 };
 const getLang = (data: I18nSliceType) => {
@@ -49,7 +59,6 @@ export const selectLang = (state: RootState) => getLang(state.i18n);
 type StoreType = EnhancedStore<{ i18n: I18nSliceType }>;
 
 export default i18nSlice.reducer;
-export type AppThunkAction<ReturnType = void> = ThunkAction<ReturnType, RootState, unknown, AnyAction>;
 export type RootState = ReturnType<StoreType['getState']>;
 export type AppDispatch = StoreType['dispatch'];
 export const useAppDispatch = () => useDispatch<AppDispatch>();

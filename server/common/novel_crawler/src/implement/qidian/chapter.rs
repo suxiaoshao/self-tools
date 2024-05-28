@@ -18,6 +18,8 @@ pub struct QDChapter {
 }
 
 impl ChapterFn for QDChapter {
+    type Author = crate::implement::qidian::author::QDAuthor;
+    type Novel = crate::implement::qidian::novel::QDNovel;
     fn url(&self) -> String {
         Self::get_url_from_id(&self.chapter_id, &self.novel_id)
     }

@@ -19,6 +19,7 @@ type Author {
   site: NovelSite!
   siteId: String!
   updateTime: DateTime!
+  url: String!
 }
 
 type Chapter {
@@ -30,9 +31,11 @@ type Chapter {
   site: NovelSite!
   siteId: String!
   siteNovelId: String!
+  time: DateTime!
   title: String!
   updateTime: DateTime!
   url: String!
+  wordCount: Int!
 }
 
 type Collection {
@@ -97,6 +100,10 @@ type MutationRoot {
   deleteTag(id: Int!): Tag!
   "保存 draft author"
   saveDraftAuthor(author: SaveDraftAuthor!): Author!
+  "通过 fetch 更新作者"
+  updateAuthorByCrawler(authorId: Int!): Author!
+  "通过 fetch 更新小说"
+  updateNovelByCrawler(novelId: Int!): Novel!
 }
 
 type Novel {

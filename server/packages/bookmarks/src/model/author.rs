@@ -25,17 +25,6 @@ pub struct AuthorModel {
     pub create_time: OffsetDateTime,
     pub update_time: OffsetDateTime,
 }
-#[derive(Insertable)]
-#[diesel(table_name = author)]
-pub struct NewAuthor<'a> {
-    pub name: &'a str,
-    pub avatar: &'a str,
-    pub site: NovelSite,
-    pub site_id: &'a str,
-    pub description: &'a str,
-    pub create_time: OffsetDateTime,
-    pub update_time: OffsetDateTime,
-}
 
 /// id 相关的操作
 impl AuthorModel {
@@ -108,5 +97,36 @@ impl AuthorModel {
         ))
         .get_result(conn)?;
         Ok(exists)
+    }
+}
+
+#[derive(Insertable)]
+#[diesel(table_name = author)]
+pub struct NewAuthor<'a> {
+    pub name: &'a str,
+    pub avatar: &'a str,
+    pub site: NovelSite,
+    pub site_id: &'a str,
+    pub description: &'a str,
+    pub create_time: OffsetDateTime,
+    pub update_time: OffsetDateTime,
+}
+
+#[derive(AsChangeset)]
+#[diesel(table_name = author)]
+pub struct UpdateAuthorModel<'a> {
+    pub id: i64,
+    pub name: Option<&'a str>,
+    pub avatar: Option<&'a str>,
+    pub description: Option<&'a str>,
+    pub update_time: OffsetDateTime,
+}
+
+impl UpdateAuthorModel<'_> {
+    pub fn update(&self, conn: &mut PgConnection) -> GraphqlResult<AuthorModel> {
+        let author = diesel::update(author::table.filter(author::id.eq(self.id)))
+            .set(self)
+            .get_result(conn)?;
+        Ok(author)
     }
 }

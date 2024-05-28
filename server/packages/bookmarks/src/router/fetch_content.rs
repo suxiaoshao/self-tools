@@ -7,7 +7,7 @@
  */
 
 use axum::{
-    body::Bytes,
+    body::Body,
     extract::{rejection::QueryRejection, Query},
     http::{HeaderMap, StatusCode},
 };
@@ -22,13 +22,13 @@ pub struct Data {
 
 pub async fn fetch_content(
     data: Result<Query<Data>, QueryRejection>,
-) -> GraphqlResult<(StatusCode, HeaderMap, Bytes)> {
+) -> GraphqlResult<(StatusCode, HeaderMap, Body)> {
     let data = data?;
     let url = data.0.url;
     let response = reqwest::get(url).await?;
     let status = response.status();
     let headers = response.headers().clone();
-    let body = response.bytes().await?;
-
+    let body = response.bytes_stream();
+    let body = Body::from_stream(body);
     Ok((status, headers, body))
 }
