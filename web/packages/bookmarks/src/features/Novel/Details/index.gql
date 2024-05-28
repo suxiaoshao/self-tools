@@ -71,3 +71,9 @@ query fetchNovel($id: String!, $NovelSite: NovelSite!) {
     }
   }
 }
+
+mutation updateNovelByCrawler($novelId: Int!) {
+  updateNovelByCrawler(novelId: $novelId) {
+    id
+  }
+}

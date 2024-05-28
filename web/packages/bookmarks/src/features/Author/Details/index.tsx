@@ -5,7 +5,7 @@
  * @LastEditTime: 2024-02-29 07:10:10
  * @FilePath: /self-tools/web/packages/bookmarks/src/features/Author/Details/index.tsx
  */
-import { useGetAuthorQuery } from '@bookmarks/graphql';
+import { useGetAuthorQuery, useUpdateAuthorByCrawlerMutation } from '@bookmarks/graphql';
 import { getImageUrl } from '@bookmarks/utils/image';
 import { CloudDownload, Explore, KeyboardArrowLeft, Refresh } from '@mui/icons-material';
 import {
@@ -23,6 +23,7 @@ import {
 import { useNavigate, useParams, Link as RouterLink } from 'react-router-dom';
 import { useI18n } from 'i18n';
 import { useCallback } from 'react';
+import { enqueueSnackbar } from 'notify';
 
 export default function AuthorDetails() {
   const t = useI18n();
@@ -37,6 +38,12 @@ export default function AuthorDetails() {
       window.open(data.getAuthor.url, '_blank');
     }
   }, [data?.getAuthor?.url]);
+  const [updateAuthor, { loading: updateLoading }] = useUpdateAuthorByCrawlerMutation();
+  const handleUpdateAuthor = useCallback(async () => {
+    await updateAuthor({ variables: { authorId: Number(authorId) } });
+    enqueueSnackbar(t('update_by_crawler_success'), { variant: 'success' });
+    refetch();
+  }, [authorId, refetch, updateAuthor, t]);
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', p: 2, gap: 2 }}>
       <Box sx={{ display: 'flex', width: '100%' }}>
@@ -57,7 +64,7 @@ export default function AuthorDetails() {
               action={
                 <>
                   <Tooltip title={t('update_by_crawler')}>
-                    <IconButton onClick={handleRefresh}>
+                    <IconButton disabled={updateLoading} onClick={handleUpdateAuthor}>
                       <CloudDownload />
                     </IconButton>
                   </Tooltip>

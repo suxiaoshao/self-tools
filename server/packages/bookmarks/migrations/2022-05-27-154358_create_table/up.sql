@@ -49,16 +49,17 @@ create table tag
 );
 create table chapter
 (
-    id          bigserial primary key,
-    title       varchar(255) not null,
-    site        novel_site   not null,
-    site_id     text         not null unique,
-    content     text,
-    time        timestamptz  not null,
-    word_count  bigint       not null,
-    novel_id    bigint       not null,
-    author_id   bigint       not null,
+    id            bigserial primary key,
+    title         varchar(255) not null,
+    site          novel_site   not null,
+    site_id       text         not null,
+    content       text,
+    time          timestamptz  not null,
+    word_count    bigint       not null,
+    novel_id      bigint       not null,
+    author_id     bigint       not null,
     collection_id bigint,
-    create_time timestamptz  not null,
-    update_time timestamptz  not null
+    create_time   timestamptz  not null,
+    update_time   timestamptz  not null,
+    unique (novel_id, site_id)
 );

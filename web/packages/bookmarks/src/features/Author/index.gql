@@ -99,3 +99,8 @@ mutation saveDraftAuthor($author: SaveDraftAuthor!) {
     ...AuthorAll
   }
 }
+mutation updateAuthorByCrawler($authorId: Int!) {
+  updateAuthorByCrawler(authorId: $authorId) {
+    id
+  }
+}

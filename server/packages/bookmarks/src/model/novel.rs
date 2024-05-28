@@ -296,6 +296,9 @@ impl UpdateNovelModel<'_> {
                 mut pass: diesel::query_builder::AstPass<'_, 'b, Pg>,
             ) -> QueryResult<()> {
                 if self.0.is_empty() {
+                    pass.push_sql("SELECT 1 FROM ");
+                    novel::table.walk_ast(pass.reborrow())?;
+                    pass.push_sql(" WHERE 1=0");
                     return Ok(());
                 }
                 pass.push_sql("UPDATE");

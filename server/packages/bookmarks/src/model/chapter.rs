@@ -43,6 +43,7 @@ impl ChapterModel {
     pub fn get_by_novel_id(novel_id: i64, conn: &mut PgConnection) -> GraphqlResult<Vec<Self>> {
         let chapters = chapter::table
             .filter(chapter::novel_id.eq(novel_id))
+            .order(chapter::time.asc())
             .load::<Self>(conn)?;
         Ok(chapters)
     }
@@ -154,6 +155,9 @@ impl UpdateChapterModel<'_> {
                 mut out: diesel::query_builder::AstPass<'_, 'b, Pg>,
             ) -> QueryResult<()> {
                 if self.0.is_empty() {
+                    out.push_sql("SELECT 1 FROM ");
+                    chapter::table.walk_ast(out.reborrow())?;
+                    out.push_sql(" WHERE 1=0");
                     return Ok(());
                 }
                 out.push_sql("UPDATE");

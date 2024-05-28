@@ -78,5 +78,6 @@
   "time": "时间",
   "word_count": "字数",
   "update_by_crawler": "通过爬取更新",
-  "go_to_source_site": "前往源站点"
+  "go_to_source_site": "前往源站点",
+  "update_by_crawler_success": "通过爬取更新成功"
 }

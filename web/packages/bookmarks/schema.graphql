@@ -1,261 +1,250 @@
+# This file was generated. Do not edit manually.
+
 schema {
   query: QueryRoot
   mutation: MutationRoot
 }
 
+union DraftAuthorInfo = JjAuthor | QdAuthor
+
+union DraftNovelInfo = JjNovel | QdNovel
+
 type Author {
+  avatar: String!
+  createTime: DateTime!
+  description: String!
   id: Int!
   name: String!
-  avatar: String!
+  novels: [Novel!]!
   site: NovelSite!
   siteId: String!
-  description: String!
-  createTime: DateTime!
   updateTime: DateTime!
-  novels: [Novel!]!
   url: String!
 }
 
 type Chapter {
+  content: String
+  createTime: DateTime!
   id: Int!
-  title: String!
+  novel: Novel!
+  novelId: Int!
   site: NovelSite!
   siteId: String!
-  content: String
-  time: DateTime!
-  wordCount: Int!
-  novelId: Int!
-  createTime: DateTime!
-  updateTime: DateTime!
   siteNovelId: String!
-  novel: Novel!
+  time: DateTime!
+  title: String!
+  updateTime: DateTime!
   url: String!
+  wordCount: Int!
 }
 
 type Collection {
+  "获取祖先列表"
+  ancestors: [Collection!]!
+  "获取子列表"
+  children: [Collection!]!
+  createTime: DateTime!
+  description: String
   id: Int!
   name: String!
-  path: String!
   parentId: Int
-  description: String
-  createTime: DateTime!
+  path: String!
   updateTime: DateTime!
-
-  # 获取祖先列表
-  ancestors: [Collection!]!
-
-  # 获取子列表
-  children: [Collection!]!
 }
 
-input CreateNovelInput {
-  name: String!
-  avatar: String!
+type JjAuthor {
   description: String!
+  id: String!
+  image: String!
+  name: String!
+  novels: [JjNovel!]!
+  url: String!
+}
+
+type JjChapter {
+  id: String!
+  novelId: String!
+  time: DateTime!
+  title: String!
+  url: String!
+  wordCount: Int!
+}
+
+type JjNovel {
+  author: JjAuthor!
+  chapters: [JjChapter!]!
+  description: String!
+  id: String!
+  image: String!
+  name: String!
+  status: NovelStatus!
+  url: String!
+}
+
+type MutationRoot {
+  "创建作者"
+  createAuthor(avatar: String!, description: String!, name: String!, site: NovelSite!, siteId: String!): Author!
+  "创建目录"
+  createCollection(description: String, name: String!, parentId: Int): Collection!
+  "创建小说"
+  createNovel(data: CreateNovelInput!): Novel!
+  "创建标签"
+  createTag(collectionId: Int, name: String!): Tag!
+  "删除作者"
+  deleteAuthor(id: Int!): Author!
+  "删除目录"
+  deleteCollection(id: Int!): Collection!
+  "删除小说"
+  deleteNovel(id: Int!): Novel!
+  "删除标签"
+  deleteTag(id: Int!): Tag!
+  "保存 draft author"
+  saveDraftAuthor(author: SaveDraftAuthor!): Author!
+  "通过 fetch 更新作者"
+  updateAuthorByCrawler(authorId: Int!): Author!
+  "通过 fetch 更新小说"
+  updateNovelByCrawler(novelId: Int!): Novel!
+}
+
+type Novel {
+  author: Author!
+  avatar: String!
+  "获取小说章节"
+  chapters: [Chapter!]!
+  collection: Collection
+  createTime: DateTime!
+  description: String!
+  id: Int!
+  name: String!
+  novelStatus: NovelStatus!
+  site: NovelSite!
+  siteId: String!
+  tags: [Tag!]!
+  updateTime: DateTime!
+  url: String!
+}
+
+type QdAuthor {
+  description: String!
+  id: String!
+  image: String!
+  name: String!
+  novels: [QdNovel!]!
+  url: String!
+}
+
+type QdChapter {
+  id: String!
+  novelId: String!
+  time: DateTime!
+  title: String!
+  url: String!
+  wordCount: Int!
+}
+
+type QdNovel {
+  author: QdAuthor!
+  chapters: [QdChapter!]!
+  description: String!
+  id: String!
+  image: String!
+  name: String!
+  status: NovelStatus!
+  url: String!
+}
+
+type QueryRoot {
+  "后端 fetch 作者详情"
+  fetchAuthor(id: String!, novelSite: NovelSite!): DraftAuthorInfo!
+  "后端 fetch 小说详情"
+  fetchNovel(id: String!, novelSite: NovelSite!): DraftNovelInfo!
+  "获取作者详情"
+  getAuthor(id: Int!): Author!
+  "获取目录详情"
+  getCollection(id: Int!): Collection!
+  "获取目录列表"
+  getCollections(parentId: Int): [Collection!]!
+  "获取小说详情"
+  getNovel(id: Int!): Novel!
+  "获取作者列表"
+  queryAuthors(searchName: String): [Author!]!
+  "获取小说列表"
+  queryNovels(collectionId: Int, novelStatus: NovelStatus, tagMatch: TagMatch): [Novel!]!
+  "获取标签列表"
+  queryTags(collectionId: Int, deepSearch: Boolean): [Tag!]!
+}
+
+type Tag {
+  collectionId: Int
+  createTime: DateTime!
+  id: Int!
+  name: String!
+  updateTime: DateTime!
+}
+
+enum NovelSite {
+  JJWXC
+  QIDIAN
+}
+
+enum NovelStatus {
+  COMPLETED
+  ONGOING
+}
+
+"""
+A datetime with timezone offset.
+
+The input is a string in RFC3339 format, e.g. "2022-01-12T04:00:19.12345Z"
+or "2022-01-12T04:00:19+03:00". The output is also a string in RFC3339
+format, but it is always normalized to the UTC (Z) offset, e.g.
+"2022-01-12T04:00:19.12345Z".
+"""
+scalar DateTime
+
+input CreateNovelInput {
   authorId: Int!
+  avatar: String!
+  collectionId: Int
+  description: String!
+  name: String!
   novelStatus: NovelStatus!
   site: NovelSite!
   siteId: String!
   tags: [Int!]!
-  collectionId: Int
-}
-
-# A datetime with timezone offset.
-#
-# The input is a string in RFC3339 format, e.g. "2022-01-12T04:00:19.12345Z"
-# or "2022-01-12T04:00:19+03:00". The output is also a string in RFC3339
-# format, but it is always normalized to the UTC (Z) offset, e.g.
-# "2022-01-12T04:00:19.12345Z".
-scalar DateTime
-
-union DraftAuthorInfo = QdAuthor | JjAuthor
-
-union DraftNovelInfo = QdNovel | JjNovel
-
-type JjAuthor {
-  url: String!
-  name: String!
-  description: String!
-  image: String!
-  novels: [JjNovel!]!
-  id: String!
-}
-
-type JjChapter {
-  url: String!
-  title: String!
-  time: DateTime!
-  wordCount: Int!
-  novelId: String!
-  id: String!
-}
-
-type JjNovel {
-  url: String!
-  name: String!
-  description: String!
-  image: String!
-  chapters: [JjChapter!]!
-  author: JjAuthor!
-  status: NovelStatus!
-  id: String!
-}
-
-type MutationRoot {
-  # 创建目录
-  createCollection(name: String!, parentId: Int, description: String): Collection!
-
-  # 删除目录
-  deleteCollection(id: Int!): Collection!
-
-  # 创建作者
-  createAuthor(name: String!, avatar: String!, description: String!, site: NovelSite!, siteId: String!): Author!
-
-  # 删除作者
-  deleteAuthor(id: Int!): Author!
-
-  # 创建标签
-  createTag(name: String!, collectionId: Int): Tag!
-
-  # 删除标签
-  deleteTag(id: Int!): Tag!
-
-  # 创建小说
-  createNovel(data: CreateNovelInput!): Novel!
-
-  # 删除小说
-  deleteNovel(id: Int!): Novel!
-
-  # 保存 draft author
-  saveDraftAuthor(author: SaveDraftAuthor!): Author!
-}
-
-type Novel {
-  id: Int!
-  name: String!
-  avatar: String!
-  description: String!
-  novelStatus: NovelStatus!
-  site: NovelSite!
-  siteId: String!
-  createTime: DateTime!
-  updateTime: DateTime!
-  author: Author!
-  tags: [Tag!]!
-  collection: Collection
-
-  # 获取小说章节
-  chapters: [Chapter!]!
-  url: String!
-}
-
-enum NovelSite {
-  QIDIAN
-  JJWXC
-}
-
-enum NovelStatus {
-  ONGOING
-  COMPLETED
-}
-
-type QdAuthor {
-  url: String!
-  name: String!
-  description: String!
-  image: String!
-  novels: [QdNovel!]!
-  id: String!
-}
-
-type QdChapter {
-  url: String!
-  title: String!
-  time: DateTime!
-  wordCount: Int!
-  novelId: String!
-  id: String!
-}
-
-type QdNovel {
-  url: String!
-  name: String!
-  description: String!
-  image: String!
-  chapters: [QdChapter!]!
-  author: QdAuthor!
-  status: NovelStatus!
-  id: String!
-}
-
-type QueryRoot {
-  # 获取目录列表
-  getCollections(parentId: Int): [Collection!]!
-
-  # 获取目录详情
-  getCollection(id: Int!): Collection!
-
-  # 获取作者列表
-  queryAuthors(searchName: String): [Author!]!
-
-  # 获取作者详情
-  getAuthor(id: Int!): Author!
-
-  # 获取标签列表
-  queryTags(collectionId: Int, deepSearch: Boolean): [Tag!]!
-
-  # 获取小说列表
-  queryNovels(collectionId: Int, tagMatch: TagMatch, novelStatus: NovelStatus): [Novel!]!
-
-  # 获取小说详情
-  getNovel(id: Int!): Novel!
-
-  # 后端 fetch 作者详情
-  fetchAuthor(id: String!, novelSite: NovelSite!): DraftAuthorInfo!
-
-  # 后端 fetch 小说详情
-  fetchNovel(id: String!, novelSite: NovelSite!): DraftNovelInfo!
 }
 
 input SaveChapterInfo {
   id: String!
   name: String!
   novelId: String!
-  url: String!
   time: DateTime!
+  url: String!
   wordCount: Int!
 }
 
 input SaveDraftAuthor {
+  description: String!
   id: String!
+  image: String!
+  name: String!
+  novels: [SaveNovelInfo!]!
   site: NovelSite!
   url: String!
-  name: String!
-  description: String!
-  image: String!
-  novels: [SaveNovelInfo!]!
 }
 
 input SaveNovelInfo {
+  chapters: [SaveChapterInfo!]!
+  description: String!
   id: String!
+  image: String!
+  name: String!
+  novelStatus: NovelStatus!
   site: NovelSite!
   url: String!
-  name: String!
-  description: String!
-  image: String!
-  chapters: [SaveChapterInfo!]!
-  novelStatus: NovelStatus!
-}
-
-type Tag {
-  id: Int!
-  name: String!
-  collectionId: Int
-  createTime: DateTime!
-  updateTime: DateTime!
 }
 
 input TagMatch {
-  matchSet: [Int!]!
   fullMatch: Boolean!
+  matchSet: [Int!]!
 }

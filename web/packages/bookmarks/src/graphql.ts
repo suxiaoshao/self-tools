@@ -15,6 +15,14 @@ export type Scalars = {
   Boolean: { input: boolean; output: boolean };
   Int: { input: number; output: number };
   Float: { input: number; output: number };
+  /**
+   * A datetime with timezone offset.
+   *
+   * The input is a string in RFC3339 format, e.g. "2022-01-12T04:00:19.12345Z"
+   * or "2022-01-12T04:00:19+03:00". The output is also a string in RFC3339
+   * format, but it is always normalized to the UTC (Z) offset, e.g.
+   * "2022-01-12T04:00:19.12345Z".
+   */
   DateTime: { input: any; output: any };
 };
 
@@ -51,7 +59,9 @@ export type Chapter = {
 
 export type Collection = {
   __typename?: 'Collection';
+  /** 获取祖先列表 */
   ancestors: Array<Collection>;
+  /** 获取子列表 */
   children: Array<Collection>;
   createTime: Scalars['DateTime']['output'];
   description?: Maybe<Scalars['String']['output']>;
@@ -112,15 +122,28 @@ export type JjNovel = {
 
 export type MutationRoot = {
   __typename?: 'MutationRoot';
+  /** 创建作者 */
   createAuthor: Author;
+  /** 创建目录 */
   createCollection: Collection;
+  /** 创建小说 */
   createNovel: Novel;
+  /** 创建标签 */
   createTag: Tag;
+  /** 删除作者 */
   deleteAuthor: Author;
+  /** 删除目录 */
   deleteCollection: Collection;
+  /** 删除小说 */
   deleteNovel: Novel;
+  /** 删除标签 */
   deleteTag: Tag;
+  /** 保存 draft author */
   saveDraftAuthor: Author;
+  /** 通过 fetch 更新作者 */
+  updateAuthorByCrawler: Author;
+  /** 通过 fetch 更新小说 */
+  updateNovelByCrawler: Novel;
 };
 
 export type MutationRootCreateAuthorArgs = {
@@ -166,10 +189,19 @@ export type MutationRootSaveDraftAuthorArgs = {
   author: SaveDraftAuthor;
 };
 
+export type MutationRootUpdateAuthorByCrawlerArgs = {
+  authorId: Scalars['Int']['input'];
+};
+
+export type MutationRootUpdateNovelByCrawlerArgs = {
+  novelId: Scalars['Int']['input'];
+};
+
 export type Novel = {
   __typename?: 'Novel';
   author: Author;
   avatar: Scalars['String']['output'];
+  /** 获取小说章节 */
   chapters: Array<Chapter>;
   collection?: Maybe<Collection>;
   createTime: Scalars['DateTime']['output'];
@@ -228,14 +260,23 @@ export type QdNovel = {
 
 export type QueryRoot = {
   __typename?: 'QueryRoot';
+  /** 后端 fetch 作者详情 */
   fetchAuthor: DraftAuthorInfo;
+  /** 后端 fetch 小说详情 */
   fetchNovel: DraftNovelInfo;
+  /** 获取作者详情 */
   getAuthor: Author;
+  /** 获取目录详情 */
   getCollection: Collection;
+  /** 获取目录列表 */
   getCollections: Array<Collection>;
+  /** 获取小说详情 */
   getNovel: Novel;
+  /** 获取作者列表 */
   queryAuthors: Array<Author>;
+  /** 获取小说列表 */
   queryNovels: Array<Novel>;
+  /** 获取标签列表 */
   queryTags: Array<Tag>;
 };
 
@@ -520,6 +561,15 @@ export type SaveDraftAuthorMutation = {
   };
 };
 
+export type UpdateAuthorByCrawlerMutationVariables = Exact<{
+  authorId: Scalars['Int']['input'];
+}>;
+
+export type UpdateAuthorByCrawlerMutation = {
+  __typename?: 'MutationRoot';
+  updateAuthorByCrawler: { __typename?: 'Author'; id: number };
+};
+
 export type GetCollectionsQueryVariables = Exact<{
   parentId?: InputMaybe<Scalars['Int']['input']>;
 }>;
@@ -635,6 +685,15 @@ export type FetchNovelQuery = {
         author: { __typename?: 'QdAuthor'; description: string; image: string; name: string; url: string };
         chapters: Array<{ __typename?: 'QdChapter'; title: string; url: string }>;
       };
+};
+
+export type UpdateNovelByCrawlerMutationVariables = Exact<{
+  novelId: Scalars['Int']['input'];
+}>;
+
+export type UpdateNovelByCrawlerMutation = {
+  __typename?: 'MutationRoot';
+  updateNovelByCrawler: { __typename?: 'Novel'; id: number };
 };
 
 export type GetNovelsQueryVariables = Exact<{
@@ -1188,6 +1247,50 @@ export type SaveDraftAuthorMutationOptions = Apollo.BaseMutationOptions<
   SaveDraftAuthorMutation,
   SaveDraftAuthorMutationVariables
 >;
+export const UpdateAuthorByCrawlerDocument = gql`
+  mutation updateAuthorByCrawler($authorId: Int!) {
+    updateAuthorByCrawler(authorId: $authorId) {
+      id
+    }
+  }
+`;
+export type UpdateAuthorByCrawlerMutationFn = Apollo.MutationFunction<
+  UpdateAuthorByCrawlerMutation,
+  UpdateAuthorByCrawlerMutationVariables
+>;
+
+/**
+ * __useUpdateAuthorByCrawlerMutation__
+ *
+ * To run a mutation, you first call `useUpdateAuthorByCrawlerMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateAuthorByCrawlerMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateAuthorByCrawlerMutation, { data, loading, error }] = useUpdateAuthorByCrawlerMutation({
+ *   variables: {
+ *      authorId: // value for 'authorId'
+ *   },
+ * });
+ */
+export function useUpdateAuthorByCrawlerMutation(
+  baseOptions?: Apollo.MutationHookOptions<UpdateAuthorByCrawlerMutation, UpdateAuthorByCrawlerMutationVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useMutation<UpdateAuthorByCrawlerMutation, UpdateAuthorByCrawlerMutationVariables>(
+    UpdateAuthorByCrawlerDocument,
+    options,
+  );
+}
+export type UpdateAuthorByCrawlerMutationHookResult = ReturnType<typeof useUpdateAuthorByCrawlerMutation>;
+export type UpdateAuthorByCrawlerMutationResult = Apollo.MutationResult<UpdateAuthorByCrawlerMutation>;
+export type UpdateAuthorByCrawlerMutationOptions = Apollo.BaseMutationOptions<
+  UpdateAuthorByCrawlerMutation,
+  UpdateAuthorByCrawlerMutationVariables
+>;
 export const GetCollectionsDocument = gql`
   query getCollections($parentId: Int) {
     getCollections(parentId: $parentId) {
@@ -1548,6 +1651,50 @@ export type FetchNovelQueryHookResult = ReturnType<typeof useFetchNovelQuery>;
 export type FetchNovelLazyQueryHookResult = ReturnType<typeof useFetchNovelLazyQuery>;
 export type FetchNovelSuspenseQueryHookResult = ReturnType<typeof useFetchNovelSuspenseQuery>;
 export type FetchNovelQueryResult = Apollo.QueryResult<FetchNovelQuery, FetchNovelQueryVariables>;
+export const UpdateNovelByCrawlerDocument = gql`
+  mutation updateNovelByCrawler($novelId: Int!) {
+    updateNovelByCrawler(novelId: $novelId) {
+      id
+    }
+  }
+`;
+export type UpdateNovelByCrawlerMutationFn = Apollo.MutationFunction<
+  UpdateNovelByCrawlerMutation,
+  UpdateNovelByCrawlerMutationVariables
+>;
+
+/**
+ * __useUpdateNovelByCrawlerMutation__
+ *
+ * To run a mutation, you first call `useUpdateNovelByCrawlerMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateNovelByCrawlerMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateNovelByCrawlerMutation, { data, loading, error }] = useUpdateNovelByCrawlerMutation({
+ *   variables: {
+ *      novelId: // value for 'novelId'
+ *   },
+ * });
+ */
+export function useUpdateNovelByCrawlerMutation(
+  baseOptions?: Apollo.MutationHookOptions<UpdateNovelByCrawlerMutation, UpdateNovelByCrawlerMutationVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useMutation<UpdateNovelByCrawlerMutation, UpdateNovelByCrawlerMutationVariables>(
+    UpdateNovelByCrawlerDocument,
+    options,
+  );
+}
+export type UpdateNovelByCrawlerMutationHookResult = ReturnType<typeof useUpdateNovelByCrawlerMutation>;
+export type UpdateNovelByCrawlerMutationResult = Apollo.MutationResult<UpdateNovelByCrawlerMutation>;
+export type UpdateNovelByCrawlerMutationOptions = Apollo.BaseMutationOptions<
+  UpdateNovelByCrawlerMutation,
+  UpdateNovelByCrawlerMutationVariables
+>;
 export const GetNovelsDocument = gql`
   query getNovels($collectionId: Int, $novelStatus: NovelStatus, $tagMatch: TagMatch) {
     queryNovels(collectionId: $collectionId, novelStatus: $novelStatus, tagMatch: $tagMatch) {

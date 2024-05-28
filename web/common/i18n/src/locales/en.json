@@ -78,5 +78,6 @@
   "time": "Time",
   "word_count": "Word Count",
   "update_by_crawler": "Update by Crawler",
-  "go_to_source_site": "Go to Source Site"
+  "go_to_source_site": "Go to Source Site",
+  "update_by_crawler_success": "Update by Crawler Success"
 }
