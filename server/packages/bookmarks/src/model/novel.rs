@@ -25,7 +25,6 @@ pub struct NewNovel<'a> {
     pub site: NovelSite,
     pub site_id: &'a str,
     pub tags: Vec<i64>,
-    pub collection_id: Option<i64>,
     pub create_time: OffsetDateTime,
     pub update_time: OffsetDateTime,
 }
@@ -59,7 +58,6 @@ pub struct NovelModel {
     pub site: NovelSite,
     pub site_id: String,
     pub tags: Vec<i64>,
-    pub collection_id: Option<i64>,
     pub create_time: OffsetDateTime,
     pub update_time: OffsetDateTime,
 }
@@ -102,25 +100,16 @@ impl NovelModel {
 impl NovelModel {
     /// 查询小说
     pub fn query(
-        collection_id: Option<i64>,
         tag_match: Option<TagMatch>,
         novel_status: Option<NovelStatus>,
         conn: &mut PgConnection,
     ) -> GraphqlResult<Vec<Self>> {
         // 获取数据
-        let data = match (collection_id, novel_status) {
-            (Some(collection_id), Some(novel_status)) => novel::table
-                .filter(novel::collection_id.eq(collection_id))
+        let data = match novel_status {
+            Some(novel_status) => novel::table
                 .filter(novel::novel_status.eq(novel_status))
                 .load::<Self>(conn)?,
-            (Some(collection_id), None) => novel::table
-                .filter(novel::collection_id.eq(collection_id))
-                .load(conn)?,
-            (None, Some(read_status)) => novel::table
-                .filter(novel::novel_status.eq(read_status))
-                .filter(novel::collection_id.is_null())
-                .load::<Self>(conn)?,
-            (None, None) => novel::table.load(conn)?,
+            None => novel::table.load(conn)?,
         };
         // 若 tag_match 为 None 则直接返回
         let TagMatch {
@@ -147,15 +136,6 @@ impl NovelModel {
                 .collect()
         };
         Ok(data)
-    }
-    /// 根据 collection_id 删除小说
-    pub fn delete_by_collection_id(
-        collection_id: i64,
-        conn: &mut PgConnection,
-    ) -> GraphqlResult<usize> {
-        let deleted = diesel::delete(novel::table.filter(novel::collection_id.eq(collection_id)))
-            .execute(conn)?;
-        Ok(deleted)
     }
 }
 
@@ -265,7 +245,6 @@ impl UpdateNovelModel<'_> {
                     update_time: now,
                     site: T::Author::SITE.into(),
                     tags: vec![],
-                    collection_id: None,
                     create_time: now,
                 };
                 new_novels.push(new_novel);

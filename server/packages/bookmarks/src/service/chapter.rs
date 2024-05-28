@@ -31,8 +31,6 @@ pub struct Chapter {
     pub novel_id: i64,
     #[graphql(skip)]
     pub author_id: i64,
-    #[graphql(skip)]
-    pub collection_id: Option<i64>,
     pub create_time: OffsetDateTime,
     pub update_time: OffsetDateTime,
     pub site_novel_id: String,
@@ -71,7 +69,6 @@ impl Chapter {
             word_count: value.word_count,
             novel_id: value.novel_id,
             author_id: value.author_id,
-            collection_id: value.collection_id,
             create_time: value.create_time,
             update_time: value.update_time,
             site_novel_id,

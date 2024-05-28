@@ -9,7 +9,6 @@ use diesel::PgConnection;
 use time::OffsetDateTime;
 use tracing::{event, Level};
 
-use crate::model::collection::CollectionModel;
 use crate::{
     errors::{GraphqlError, GraphqlResult},
     model::tag::TagModel,
@@ -19,7 +18,6 @@ use crate::{
 pub struct Tag {
     pub id: i64,
     pub name: String,
-    pub collection_id: Option<i64>,
     pub create_time: OffsetDateTime,
     pub update_time: OffsetDateTime,
 }
@@ -29,7 +27,6 @@ impl From<TagModel> for Tag {
         Self {
             id: value.id,
             name: value.name,
-            collection_id: value.collection_id,
             create_time: value.create_time,
             update_time: value.update_time,
         }
@@ -39,19 +36,8 @@ impl From<TagModel> for Tag {
 /// id 相关
 impl Tag {
     /// 创建标签
-    pub fn create(
-        name: &str,
-        collection_id: Option<i64>,
-        conn: &mut PgConnection,
-    ) -> GraphqlResult<Self> {
-        //  判断父目录是否存在
-        if let Some(id) = collection_id {
-            if !CollectionModel::exists(id, conn)? {
-                event!(Level::ERROR, "目录不存在: {}", id);
-                return Err(GraphqlError::NotFound("目录", id));
-            }
-        }
-        let new_tag = TagModel::create(name, collection_id, conn)?;
+    pub fn create(name: &str, conn: &mut PgConnection) -> GraphqlResult<Self> {
+        let new_tag = TagModel::create(name, conn)?;
         Ok(new_tag.into())
     }
     /// 删除标签
@@ -74,25 +60,9 @@ impl Tag {
 /// collection_id 相关
 impl Tag {
     /// 获取标签列表
-    pub fn query(
-        collection_id: Option<i64>,
-        deep_search: bool,
-        conn: &mut PgConnection,
-    ) -> GraphqlResult<Vec<Self>> {
-        //  判断父目录是否存在
-        if let Some(id) = collection_id {
-            if !CollectionModel::exists(id, conn)? {
-                event!(Level::ERROR, "目录不存在: {}", id);
-                return Err(GraphqlError::NotFound("目录", id));
-            }
-        }
+    pub fn query(conn: &mut PgConnection) -> GraphqlResult<Vec<Self>> {
         // 获取标签列表
-        let tags = match (collection_id, deep_search) {
-            (Some(id), false) => TagModel::query_by_collection(id, conn)?,
-            (None, false) => TagModel::query_root(conn)?,
-            (None, true) => TagModel::get_list(conn)?,
-            (Some(id), true) => TagModel::allow_tags(id, conn)?,
-        };
+        let tags = TagModel::get_list(conn)?;
         Ok(tags.into_iter().map(|tag| tag.into()).collect())
     }
 }

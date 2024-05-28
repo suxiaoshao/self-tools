@@ -6,17 +6,16 @@ import { useI18n } from 'i18n';
 
 export interface CreateTagButtonProps {
   refetch: () => void;
-  collectionId: number | undefined | null;
 }
 
-export default function CreateTagButton({ refetch, collectionId }: CreateTagButtonProps): JSX.Element {
+export default function CreateTagButton({ refetch }: CreateTagButtonProps): JSX.Element {
   const [createTag] = useCreateTagMutation();
 
   // 表单控制
   type FormData = Omit<CreateTagMutationVariables, 'collectionId'>;
   const { handleSubmit, register } = useForm<FormData>();
   const onSubmit: SubmitHandler<FormData> = async ({ name }) => {
-    await createTag({ variables: { name, collectionId } });
+    await createTag({ variables: { name } });
     refetch();
     handleClose();
   };

@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use async_graphql::*;
 use diesel::PgConnection;
 use time::OffsetDateTime;
@@ -5,10 +7,7 @@ use tracing::{event, Level};
 
 use crate::{
     errors::{GraphqlError, GraphqlResult},
-    model::{
-        chapter::ChapterModel, collection::CollectionModel, novel::NovelModel, tag::TagModel,
-        PgPool,
-    },
+    model::{collection::CollectionModel, PgPool},
 };
 
 #[derive(SimpleObject)]
@@ -111,32 +110,34 @@ impl Collection {
 /// id 相关
 impl Collection {
     /// 删除目录
-    pub fn delete(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
+    pub fn delete(id: i64, conn: &mut PgConnection) -> GraphqlResult<usize> {
         // 目录不存在
         if !CollectionModel::exists(id, conn)? {
             event!(Level::WARN, "目录不存在: {}", id);
             return Err(GraphqlError::NotFound("目录", id));
         }
-        let collection = conn
-            .build_transaction()
-            .run(|conn| Self::delete_inner(id, conn))?;
-        Ok(collection)
-    }
-    fn delete_inner(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
-        // 删除 小说
-        NovelModel::delete_by_collection_id(id, conn)?;
-        // 删除 tag
-        TagModel::delete_by_collection(id, conn)?;
-        // 删除章节
-        ChapterModel::delete_by_collection_id(id, conn)?;
-        //递归删除子目录
-        CollectionModel::get_list_by_parent(Some(id), conn)?
-            .into_iter()
-            .try_for_each(|CollectionModel { id, .. }| {
-                Collection::delete_inner(id, conn).map(|_| ())
-            })?;
-        let collection = CollectionModel::delete(id, conn)?;
-        Ok(collection.into())
+        let all_collections = CollectionModel::get_list(conn)?;
+        // 构建一个 `id` 到其子节点列表的映射
+        let mut lookup: HashMap<i64, Vec<i64>> = HashMap::new();
+
+        for collection in all_collections {
+            if let Some(parent_id) = collection.parent_id {
+                lookup.entry(parent_id).or_default().push(collection.id);
+            }
+        }
+        // 初始化结果列表，并调用递归函数
+        let mut ids = Vec::new();
+        fn find_all_children(ids: &mut Vec<i64>, id: i64, lookup: &HashMap<i64, Vec<i64>>) {
+            if let Some(children) = lookup.get(&id) {
+                for &child_id in children {
+                    ids.push(child_id);
+                    find_all_children(ids, child_id, lookup);
+                }
+            }
+        }
+        find_all_children(&mut ids, id, &lookup);
+        let count = CollectionModel::delete_list(&ids, conn)?;
+        Ok(count)
     }
     /// 获取目录列表
     pub fn get_list_parent_id(

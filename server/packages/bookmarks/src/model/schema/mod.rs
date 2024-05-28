@@ -49,7 +49,6 @@ diesel::table! {
         word_count -> Int8,
         novel_id -> Int8,
         author_id -> Int8,
-        collection_id -> Nullable<Int8>,
         create_time -> Timestamptz,
         update_time -> Timestamptz,
     }
@@ -82,7 +81,6 @@ diesel::table! {
         site -> NovelSite,
         site_id -> Text,
         tags -> Array<Int8>,
-        collection_id -> Nullable<Int8>,
         create_time -> Timestamptz,
         update_time -> Timestamptz,
     }
@@ -93,7 +91,6 @@ diesel::table! {
         id -> Int8,
         #[max_length = 20]
         name -> Varchar,
-        collection_id -> Nullable<Int8>,
         create_time -> Timestamptz,
         update_time -> Timestamptz,
     }

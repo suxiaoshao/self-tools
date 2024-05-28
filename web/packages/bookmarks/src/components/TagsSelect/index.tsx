@@ -15,14 +15,13 @@ const MenuProps = {
 };
 
 export interface TagsSelectProps extends Omit<FormControlProps, 'name' | 'onChange' | 'onBlur' | 'value'> {
-  collectionId: number | null | undefined;
   onChange: (event: number) => void;
   onBlur: FocusEventHandler<HTMLInputElement> | undefined;
   value: number[] | number | null | undefined;
 }
 
-export default function TagsSelect({ collectionId, value, onChange, onBlur, sx, ...props }: TagsSelectProps) {
-  const { data: { queryTags } = {}, loading } = useAllowTagsQuery({ variables: { collectionId } });
+export default function TagsSelect({ value, onChange, onBlur, sx, ...props }: TagsSelectProps) {
+  const { data: { queryTags } = {}, loading } = useAllowTagsQuery();
   const formValue = useMemo(() => {
     if (value === null || value === undefined) {
       return undefined;

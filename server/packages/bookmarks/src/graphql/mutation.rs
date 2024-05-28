@@ -48,7 +48,7 @@ impl MutationRoot {
     }
     /// 删除目录
     #[graphql(guard = "AuthGuard")]
-    async fn delete_collection(&self, context: &Context<'_>, id: i64) -> GraphqlResult<Collection> {
+    async fn delete_collection(&self, context: &Context<'_>, id: i64) -> GraphqlResult<usize> {
         let conn = &mut context
             .data::<PgPool>()
             .map_err(|_| {
@@ -56,8 +56,8 @@ impl MutationRoot {
                 GraphqlError::NotGraphqlContextData("PgPool")
             })?
             .get()?;
-        let deleted_directory = Collection::delete(id, conn)?;
-        Ok(deleted_directory)
+        let count = Collection::delete(id, conn)?;
+        Ok(count)
     }
     /// 创建作者
     #[graphql(guard = "AuthGuard")]
@@ -95,12 +95,7 @@ impl MutationRoot {
     }
     /// 创建标签
     #[graphql(guard = "AuthGuard")]
-    async fn create_tag(
-        &self,
-        context: &Context<'_>,
-        name: String,
-        collection_id: Option<i64>,
-    ) -> GraphqlResult<Tag> {
+    async fn create_tag(&self, context: &Context<'_>, name: String) -> GraphqlResult<Tag> {
         let conn = &mut context
             .data::<PgPool>()
             .map_err(|_| {
@@ -108,7 +103,7 @@ impl MutationRoot {
                 GraphqlError::NotGraphqlContextData("PgPool")
             })?
             .get()?;
-        let new_tag = Tag::create(&name, collection_id, conn)?;
+        let new_tag = Tag::create(&name, conn)?;
         Ok(new_tag)
     }
     /// 删除标签

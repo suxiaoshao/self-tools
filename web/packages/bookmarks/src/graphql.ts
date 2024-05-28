@@ -75,7 +75,6 @@ export type Collection = {
 export type CreateNovelInput = {
   authorId: Scalars['Int']['input'];
   avatar: Scalars['String']['input'];
-  collectionId?: InputMaybe<Scalars['Int']['input']>;
   description: Scalars['String']['input'];
   name: Scalars['String']['input'];
   novelStatus: NovelStatus;
@@ -133,7 +132,7 @@ export type MutationRoot = {
   /** 删除作者 */
   deleteAuthor: Author;
   /** 删除目录 */
-  deleteCollection: Collection;
+  deleteCollection: Scalars['Int']['output'];
   /** 删除小说 */
   deleteNovel: Novel;
   /** 删除标签 */
@@ -165,7 +164,6 @@ export type MutationRootCreateNovelArgs = {
 };
 
 export type MutationRootCreateTagArgs = {
-  collectionId?: InputMaybe<Scalars['Int']['input']>;
   name: Scalars['String']['input'];
 };
 
@@ -203,7 +201,6 @@ export type Novel = {
   avatar: Scalars['String']['output'];
   /** 获取小说章节 */
   chapters: Array<Chapter>;
-  collection?: Maybe<Collection>;
   createTime: Scalars['DateTime']['output'];
   description: Scalars['String']['output'];
   id: Scalars['Int']['output'];
@@ -316,11 +313,6 @@ export type QueryRootQueryNovelsArgs = {
   tagMatch?: InputMaybe<TagMatch>;
 };
 
-export type QueryRootQueryTagsArgs = {
-  collectionId?: InputMaybe<Scalars['Int']['input']>;
-  deepSearch?: InputMaybe<Scalars['Boolean']['input']>;
-};
-
 export type SaveChapterInfo = {
   id: Scalars['String']['input'];
   name: Scalars['String']['input'];
@@ -353,7 +345,6 @@ export type SaveNovelInfo = {
 
 export type Tag = {
   __typename?: 'Tag';
-  collectionId?: Maybe<Scalars['Int']['output']>;
   createTime: Scalars['DateTime']['output'];
   id: Scalars['Int']['output'];
   name: Scalars['String']['output'];
@@ -383,9 +374,7 @@ export type GetCollectionSelectQuery = {
   getCollections: Array<{ __typename?: 'Collection'; name: string; id: number }>;
 };
 
-export type AllowTagsQueryVariables = Exact<{
-  collectionId?: InputMaybe<Scalars['Int']['input']>;
-}>;
+export type AllowTagsQueryVariables = Exact<{ [key: string]: never }>;
 
 export type AllowTagsQuery = {
   __typename?: 'QueryRoot';
@@ -591,10 +580,7 @@ export type DeleteCollectionMutationVariables = Exact<{
   id: Scalars['Int']['input'];
 }>;
 
-export type DeleteCollectionMutation = {
-  __typename?: 'MutationRoot';
-  deleteCollection: { __typename?: 'Collection'; path: string };
-};
+export type DeleteCollectionMutation = { __typename?: 'MutationRoot'; deleteCollection: number };
 
 export type CreateCollectionMutationVariables = Exact<{
   parentId?: InputMaybe<Scalars['Int']['input']>;
@@ -637,13 +623,6 @@ export type GetNovelQuery = {
     updateTime: any;
     novelStatus: NovelStatus;
     url: string;
-    collection?: {
-      __typename?: 'Collection';
-      id: number;
-      name: string;
-      path: string;
-      description?: string | null;
-    } | null;
     chapters: Array<{
       __typename?: 'Chapter';
       id: number;
@@ -730,7 +709,6 @@ export type DeleteNovelMutation = { __typename?: 'MutationRoot'; deleteNovel: { 
 
 export type CreateTagMutationVariables = Exact<{
   name: Scalars['String']['input'];
-  collectionId?: InputMaybe<Scalars['Int']['input']>;
 }>;
 
 export type CreateTagMutation = {
@@ -738,20 +716,11 @@ export type CreateTagMutation = {
   createTag: { __typename?: 'Tag'; name: string; id: number };
 };
 
-export type GetTagsQueryVariables = Exact<{
-  collectionId?: InputMaybe<Scalars['Int']['input']>;
-}>;
+export type GetTagsQueryVariables = Exact<{ [key: string]: never }>;
 
 export type GetTagsQuery = {
   __typename?: 'QueryRoot';
-  queryTags: Array<{
-    __typename?: 'Tag';
-    name: string;
-    id: number;
-    createTime: any;
-    updateTime: any;
-    collectionId?: number | null;
-  }>;
+  queryTags: Array<{ __typename?: 'Tag'; name: string; id: number; createTime: any; updateTime: any }>;
 };
 
 export type DeleteTagMutationVariables = Exact<{
@@ -881,8 +850,8 @@ export type GetCollectionSelectQueryResult = Apollo.QueryResult<
   GetCollectionSelectQueryVariables
 >;
 export const AllowTagsDocument = gql`
-  query allowTags($collectionId: Int) {
-    queryTags(collectionId: $collectionId, deepSearch: true) {
+  query allowTags {
+    queryTags {
       id
       name
     }
@@ -901,7 +870,6 @@ export const AllowTagsDocument = gql`
  * @example
  * const { data, loading, error } = useAllowTagsQuery({
  *   variables: {
- *      collectionId: // value for 'collectionId'
  *   },
  * });
  */
@@ -1344,9 +1312,7 @@ export type GetCollectionsSuspenseQueryHookResult = ReturnType<typeof useGetColl
 export type GetCollectionsQueryResult = Apollo.QueryResult<GetCollectionsQuery, GetCollectionsQueryVariables>;
 export const DeleteCollectionDocument = gql`
   mutation deleteCollection($id: Int!) {
-    deleteCollection(id: $id) {
-      path
-    }
+    deleteCollection(id: $id)
   }
 `;
 export type DeleteCollectionMutationFn = Apollo.MutationFunction<
@@ -1508,12 +1474,6 @@ export const GetNovelDocument = gql`
       description
       novelStatus
       url
-      collection {
-        id
-        name
-        path
-        description
-      }
       chapters {
         id
         title
@@ -1819,8 +1779,8 @@ export type DeleteNovelMutationHookResult = ReturnType<typeof useDeleteNovelMuta
 export type DeleteNovelMutationResult = Apollo.MutationResult<DeleteNovelMutation>;
 export type DeleteNovelMutationOptions = Apollo.BaseMutationOptions<DeleteNovelMutation, DeleteNovelMutationVariables>;
 export const CreateTagDocument = gql`
-  mutation createTag($name: String!, $collectionId: Int) {
-    createTag(name: $name, collectionId: $collectionId) {
+  mutation createTag($name: String!) {
+    createTag(name: $name) {
       name
       id
     }
@@ -1842,7 +1802,6 @@ export type CreateTagMutationFn = Apollo.MutationFunction<CreateTagMutation, Cre
  * const [createTagMutation, { data, loading, error }] = useCreateTagMutation({
  *   variables: {
  *      name: // value for 'name'
- *      collectionId: // value for 'collectionId'
  *   },
  * });
  */
@@ -1856,13 +1815,12 @@ export type CreateTagMutationHookResult = ReturnType<typeof useCreateTagMutation
 export type CreateTagMutationResult = Apollo.MutationResult<CreateTagMutation>;
 export type CreateTagMutationOptions = Apollo.BaseMutationOptions<CreateTagMutation, CreateTagMutationVariables>;
 export const GetTagsDocument = gql`
-  query getTags($collectionId: Int) {
-    queryTags(collectionId: $collectionId, deepSearch: false) {
+  query getTags {
+    queryTags {
       name
       id
       createTime
       updateTime
-      collectionId
     }
   }
 `;
@@ -1879,7 +1837,6 @@ export const GetTagsDocument = gql`
  * @example
  * const { data, loading, error } = useGetTagsQuery({
  *   variables: {
- *      collectionId: // value for 'collectionId'
  *   },
  * });
  */

@@ -32,7 +32,6 @@ pub struct ChapterModel {
     pub word_count: i64,
     pub novel_id: i64,
     pub author_id: i64,
-    pub collection_id: Option<i64>,
     pub create_time: OffsetDateTime,
     pub update_time: OffsetDateTime,
 }
@@ -50,15 +49,6 @@ impl ChapterModel {
     /// 根据 author_id 删除章节
     pub fn delete_by_author_id(author_id: i64, conn: &mut PgConnection) -> GraphqlResult<usize> {
         let count = diesel::delete(chapter::table.filter(chapter::author_id.eq(author_id)))
-            .execute(conn)?;
-        Ok(count)
-    }
-    /// 根据 collection_id 删除章节
-    pub fn delete_by_collection_id(
-        collection_id: i64,
-        conn: &mut PgConnection,
-    ) -> GraphqlResult<usize> {
-        let count = diesel::delete(chapter::table.filter(chapter::collection_id.eq(collection_id)))
             .execute(conn)?;
         Ok(count)
     }
@@ -93,7 +83,6 @@ pub struct NewChapter<'a> {
     pub word_count: i64,
     pub novel_id: i64,
     pub author_id: i64,
-    pub collection_id: Option<i64>,
     pub create_time: OffsetDateTime,
     pub update_time: OffsetDateTime,
 }
@@ -206,7 +195,6 @@ impl UpdateChapterModel<'_> {
         fetch_chapters: &'a [T],
         novel_id: i64,
         author_id: i64,
-        collection_id: Option<i64>,
     ) -> (Vec<UpdateChapterModel<'a>>, Vec<NewChapter<'a>>, Vec<i64>) {
         let now = OffsetDateTime::now_utc();
         let mut update_chapters = Vec::new();
@@ -244,7 +232,6 @@ impl UpdateChapterModel<'_> {
                 new_chapters.push(NewChapter {
                     novel_id,
                     author_id,
-                    collection_id,
                     site: T::Author::SITE.into(),
                     title: fetch_chapter.title(),
                     site_id: fetch_chapter.chapter_id(),
@@ -296,7 +283,6 @@ impl UpdateChapterModel<'_> {
                     word_count: fetch_chapter.word_count() as i64,
                     novel_id: novel.id,
                     author_id: novel.author_id,
-                    collection_id: novel.collection_id,
                     create_time: now,
                     update_time: now,
                 })

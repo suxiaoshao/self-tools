@@ -96,13 +96,7 @@ impl QueryRoot {
     }
     /// 获取标签列表
     #[graphql(guard = "AuthGuard")]
-    async fn query_tags(
-        &self,
-        context: &Context<'_>,
-        collection_id: Option<i64>,
-        // 是否深度搜索
-        deep_search: Option<bool>,
-    ) -> GraphqlResult<Vec<Tag>> {
+    async fn query_tags(&self, context: &Context<'_>) -> GraphqlResult<Vec<Tag>> {
         let conn = &mut context
             .data::<PgPool>()
             .map_err(|_| {
@@ -110,7 +104,7 @@ impl QueryRoot {
                 GraphqlError::NotGraphqlContextData("PgPool")
             })?
             .get()?;
-        let tag = Tag::query(collection_id, deep_search.unwrap_or(false), conn)?;
+        let tag = Tag::query(conn)?;
         Ok(tag)
     }
     /// 获取小说列表

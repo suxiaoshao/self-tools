@@ -16,10 +16,9 @@ import { CreateNovelMutationVariables, useCreateNovelMutation } from '../../../.
 export interface CreateNovelButtonProps {
   /** 表格重新刷新 */
   refetch: () => void;
-  collectionId?: number | null;
 }
 
-export default function CreateNovelButton({ refetch, collectionId }: CreateNovelButtonProps) {
+export default function CreateNovelButton({ refetch }: CreateNovelButtonProps) {
   type FormData = Omit<CreateNovelMutationVariables['data'], 'collectionId'>;
   // 表单控制
   const { handleSubmit, register, control } = useForm<FormData>({ defaultValues: { tags: [] } });
@@ -27,7 +26,7 @@ export default function CreateNovelButton({ refetch, collectionId }: CreateNovel
   const [createNovel] = useCreateNovelMutation();
 
   const onSubmit: SubmitHandler<FormData> = async ({ ...formData }) => {
-    await createNovel({ variables: { data: { ...formData, collectionId } } });
+    await createNovel({ variables: { data: { ...formData } } });
     refetch();
     handleClose();
   };
@@ -71,7 +70,7 @@ export default function CreateNovelButton({ refetch, collectionId }: CreateNovel
             <Controller
               control={control}
               name="tags"
-              render={({ field }) => <TagsSelect sx={{ mt: 1 }} fullWidth collectionId={collectionId} {...field} />}
+              render={({ field }) => <TagsSelect sx={{ mt: 1 }} fullWidth {...field} />}
             />
             <Controller
               rules={{ required: true }}

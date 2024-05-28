@@ -1,16 +1,15 @@
-mutation createTag($name: String!, $collectionId: Int) {
-  createTag(name: $name, collectionId: $collectionId) {
+mutation createTag($name: String!) {
+  createTag(name: $name) {
     name
     id
   }
 }
-query getTags($collectionId: Int) {
-  queryTags(collectionId: $collectionId, deepSearch: false) {
+query getTags {
+  queryTags {
     name
     id
     createTime
     updateTime
-    collectionId
   }
 }
 

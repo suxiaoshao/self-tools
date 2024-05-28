@@ -9,9 +9,7 @@ query getCollections($parentId: Int) {
   }
 }
 mutation deleteCollection($id: Int!) {
-  deleteCollection(id: $id) {
-    path
-  }
+  deleteCollection(id: $id)
 }
 mutation createCollection($parentId: Int, $name: String!, $description: String) {
   createCollection(parentId: $parentId, name: $name, description: $description) {

@@ -89,11 +89,11 @@ type MutationRoot {
   "创建小说"
   createNovel(data: CreateNovelInput!): Novel!
   "创建标签"
-  createTag(collectionId: Int, name: String!): Tag!
+  createTag(name: String!): Tag!
   "删除作者"
   deleteAuthor(id: Int!): Author!
   "删除目录"
-  deleteCollection(id: Int!): Collection!
+  deleteCollection(id: Int!): Int!
   "删除小说"
   deleteNovel(id: Int!): Novel!
   "删除标签"
@@ -111,7 +111,6 @@ type Novel {
   avatar: String!
   "获取小说章节"
   chapters: [Chapter!]!
-  collection: Collection
   createTime: DateTime!
   description: String!
   id: Int!
@@ -171,11 +170,10 @@ type QueryRoot {
   "获取小说列表"
   queryNovels(collectionId: Int, novelStatus: NovelStatus, tagMatch: TagMatch): [Novel!]!
   "获取标签列表"
-  queryTags(collectionId: Int, deepSearch: Boolean): [Tag!]!
+  queryTags: [Tag!]!
 }
 
 type Tag {
-  collectionId: Int
   createTime: DateTime!
   id: Int!
   name: String!
@@ -205,7 +203,6 @@ scalar DateTime
 input CreateNovelInput {
   authorId: Int!
   avatar: String!
-  collectionId: Int
   description: String!
   name: String!
   novelStatus: NovelStatus!

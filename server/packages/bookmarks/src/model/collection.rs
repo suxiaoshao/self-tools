@@ -67,11 +67,11 @@ impl CollectionModel {
             .first(conn)?;
         Ok(collection)
     }
-    /// 删除目录
-    pub fn delete(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
-        let collection =
-            diesel::delete(collection::table.filter(collection::id.eq(id))).get_result(conn)?;
-        Ok(collection)
+    /// 根据列表删除目录
+    pub fn delete_list(ids: &[i64], conn: &mut PgConnection) -> GraphqlResult<usize> {
+        let count =
+            diesel::delete(collection::table.filter(collection::id.eq_any(ids))).execute(conn)?;
+        Ok(count)
     }
 }
 

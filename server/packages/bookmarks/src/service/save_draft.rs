@@ -76,7 +76,6 @@ impl SaveDraftAuthor {
                                 site: *site,
                                 site_id: id,
                                 tags: Vec::new(),
-                                collection_id: None,
                                 create_time: now,
                                 update_time: now,
                             }
@@ -117,7 +116,6 @@ impl SaveDraftAuthor {
                             word_count: *word_count as i64,
                             novel_id: *novel_id,
                             author_id: author.id,
-                            collection_id: None,
                             create_time: now,
                             update_time: now,
                         };

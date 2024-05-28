@@ -18,7 +18,7 @@ use novel_crawler::{JJNovel, NovelFn, QDNovel};
 use time::OffsetDateTime;
 use tracing::{event, Level};
 
-use super::{author::Author, collection::Collection, tag::Tag};
+use super::{author::Author, tag::Tag};
 
 #[derive(SimpleObject)]
 #[graphql(complex)]
@@ -34,8 +34,6 @@ pub struct Novel {
     pub site_id: String,
     #[graphql(skip)]
     pub tags: Vec<i64>,
-    #[graphql(skip)]
-    pub collection_id: Option<i64>,
     pub create_time: OffsetDateTime,
     pub update_time: OffsetDateTime,
 }
@@ -66,22 +64,6 @@ impl Novel {
         Ok(tags)
     }
 
-    async fn collection(&self, context: &Context<'_>) -> GraphqlResult<Option<Collection>> {
-        let conn = &mut context
-            .data::<PgPool>()
-            .map_err(|_| {
-                event!(Level::WARN, "graphql context data PgPool 不存在");
-                GraphqlError::NotGraphqlContextData("PgPool")
-            })?
-            .get()?;
-        if let Some(collection_id) = self.collection_id {
-            let collection = Collection::get(collection_id, conn)?;
-            Ok(Some(collection))
-        } else {
-            Ok(None)
-        }
-    }
-
     /// 获取小说章节
     async fn chapters(&self, context: &Context<'_>) -> GraphqlResult<Vec<super::chapter::Chapter>> {
         let conn = &mut context
@@ -110,7 +92,6 @@ impl From<NovelModel> for Novel {
             avatar: value.avatar,
             description: value.description,
             tags: value.tags,
-            collection_id: value.collection_id,
             create_time: value.create_time,
             update_time: value.update_time,
             novel_status: value.novel_status,
@@ -195,7 +176,6 @@ impl Novel {
                     fetch_chapters.as_slice(),
                     novel.id,
                     novel.author_id,
-                    novel.collection_id,
                 );
 
             // 更新章节
@@ -228,13 +208,12 @@ impl Novel {
         if let Some(TagMatch { match_set, .. }) = &tag_match {
             // tag 不存在
             TagModel::exists_all(match_set.iter(), conn)?;
-            // tags 都属于 collection_id
-            TagModel::belong_to_collection(collection_id, match_set.iter(), conn)?;
         }
-        let data = NovelModel::query(collection_id, tag_match, novel_status, conn)?
+        let data = NovelModel::query(tag_match, novel_status, conn)?
             .into_iter()
             .map(Into::into)
             .collect();
+        // todo!("collection_id 相关");
         Ok(data)
     }
 }
@@ -249,7 +228,6 @@ pub struct CreateNovelInput {
     site: NovelSite,
     site_id: String,
     tags: HashSet<i64>,
-    collection_id: Option<i64>,
 }
 
 impl CreateNovelInput {
@@ -259,17 +237,8 @@ impl CreateNovelInput {
             event!(Level::WARN, "作者不存在: {}", self.author_id);
             return Err(GraphqlError::NotFound("作者", self.author_id));
         }
-        //  判断父目录是否存在
-        if let Some(id) = self.collection_id {
-            if !CollectionModel::exists(id, conn)? {
-                event!(Level::WARN, "目录不存在: {}", id);
-                return Err(GraphqlError::NotFound("目录", id));
-            }
-        }
         // tag 不存在
         TagModel::exists_all(self.tags.iter(), conn)?;
-        // tags 都属于 collection_id
-        TagModel::belong_to_collection(self.collection_id, self.tags.iter(), conn)?;
         let new_novel = self.to_new_novel().create(conn)?;
         Ok(new_novel.into())
     }
@@ -284,7 +253,6 @@ impl CreateNovelInput {
             site,
             site_id,
             tags,
-            collection_id,
         } = self;
         let tags = tags.iter().copied().collect::<Vec<_>>();
         NewNovel {
@@ -296,7 +264,6 @@ impl CreateNovelInput {
             site: *site,
             site_id,
             tags,
-            collection_id: *collection_id,
             create_time: now,
             update_time: now,
         }
