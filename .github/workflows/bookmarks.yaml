@@ -7,7 +7,7 @@ on:
       - docker/server/bookmarks.Dockerfile
       - server/packages/bookmarks/**
       - server/common/middleware/**
-      - server/common/proto/**
+      - server/common/thrift/**
       - server/common/novel_crawler/**
       - .cargo/**
       - .github/workflows/bookmarks.yaml

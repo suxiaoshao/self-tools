@@ -7,7 +7,7 @@ on:
       - docker/server/collections.Dockerfile
       - server/packages/collections/**
       - server/common/middleware/**
-      - server/common/proto/**
+      - server/common/thrift/**
       - .cargo/**
       - .github/workflows/collections.yaml
 

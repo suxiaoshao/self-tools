@@ -7,7 +7,7 @@ on:
       - docker/server/auth.Dockerfile
       - server/packages/auth/**
       - server/common/errors/**
-      - server/common/proto/**
+      - server/common/thrift/**
       - .cargo/**
       - .github/workflows/auth.yaml
 
