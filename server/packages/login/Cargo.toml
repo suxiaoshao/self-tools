@@ -27,4 +27,4 @@ tracing-subscriber = "0.3.18"
 
 # thrift
 thrift = { path = "../../common/thrift" }
-volo-thrift = "0.10.0"
+volo-thrift = "0.10.1"

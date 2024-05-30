@@ -17,6 +17,7 @@ pub use chapter::{ChapterDetail, ChapterFn};
 pub use errors::NovelError;
 pub use implement::{JJAuthor, JJChapter, JJNovel, QDAuthor, QDChapter, QDNovel};
 pub use novel::{NovelFn, NovelStatus};
+pub use tag::TagFn;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum NovelSite {

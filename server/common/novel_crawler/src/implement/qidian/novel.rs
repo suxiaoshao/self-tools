@@ -15,12 +15,16 @@ use crate::{
 
 use nom::{
     bytes::{complete::tag, streaming::take_until},
-    combinator::{all_consuming, eof},
+    character::complete,
+    combinator::{all_consuming, eof, opt},
     sequence::tuple,
     IResult,
 };
 
-use super::chapter::QDChapter;
+use super::{
+    chapter::QDChapter,
+    tag::{QDTag, QDTagId},
+};
 
 static SELECTOR_NOVEL_NAME: Lazy<Selector> =
     Lazy::new(|| Selector::parse("h1.header-back-title").unwrap());
@@ -34,6 +38,8 @@ static SELECTOR_AUTHOR: Lazy<Selector> =
     Lazy::new(|| Selector::parse("a.detail__header-detail__author-link").unwrap());
 static SELECTOR_STATUS: Lazy<Selector> =
     Lazy::new(|| Selector::parse("head > meta[property=\"og:novel:status\"]").unwrap());
+static SELECTOR_TAGS: Lazy<Selector> =
+    Lazy::new(|| Selector::parse("a.detail__header-detail__category").unwrap());
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct QDNovel {
@@ -44,11 +50,13 @@ pub struct QDNovel {
     chapters: Vec<QDChapter>,
     author_id: String,
     status: NovelStatus,
+    tags: Vec<QDTag>,
 }
 
 impl NovelFn for QDNovel {
     type Chapter = QDChapter;
     type Author = QDAuthor;
+    type Tag = QDTag;
     async fn get_novel_data(novel_id: &str) -> NovelResult<Self> {
         let (html, chapter_html) = Self::get_doc(novel_id).await?;
         let html = Html::parse_document(&html);
@@ -63,6 +71,7 @@ impl NovelFn for QDNovel {
             .next()
             .ok_or(NovelError::ParseError)
             .and_then(parse_author)?;
+        let tags = parse_tags(&html)?;
         Ok(Self {
             id: novel_id.to_string(),
             name,
@@ -71,6 +80,7 @@ impl NovelFn for QDNovel {
             chapters,
             author_id,
             status,
+            tags,
         })
     }
 
@@ -104,6 +114,10 @@ impl NovelFn for QDNovel {
     }
     fn id(&self) -> &str {
         self.id.as_str()
+    }
+
+    fn tags(&self) -> &[Self::Tag] {
+        self.tags.as_slice()
     }
 }
 
@@ -229,6 +243,39 @@ fn parse_status(html: &Html) -> NovelResult<NovelStatus> {
         _ => Err(NovelError::ParseError),
     }
 }
+fn parse_tags(html: &Html) -> NovelResult<Vec<QDTag>> {
+    let tags = html.select(&SELECTOR_TAGS).map(map_tag).collect();
+    tags
+}
+
+fn map_tag(element_ref: ElementRef) -> NovelResult<QDTag> {
+    let href = element_ref
+        .value()
+        .attr("href")
+        .ok_or(NovelError::ParseError)?;
+
+    let (_, id) = tag_id(href)?;
+    let name = element_ref.inner_html();
+    Ok(QDTag { id, name })
+}
+
+fn tag_id(input: &str) -> IResult<&str, QDTagId> {
+    let (input, (_, id, _, sub_id, _)) = all_consuming(tuple((
+        tag("//m.qidian.com/category/catid"),
+        complete::u32,
+        tag("/"),
+        opt(tuple((tag("subcatid"), complete::u32, tag("-male/")))),
+        eof,
+    )))(input)?;
+    Ok((
+        input,
+        QDTagId {
+            id,
+            sub_id: sub_id.map(|(_, id, _)| id),
+        },
+    ))
+}
+
 #[cfg(test)]
 mod test {
     use crate::novel::NovelFn;
@@ -249,6 +296,28 @@ mod test {
         let input = "//m.qidian.com/author/102020/";
         let (_, data) = super::parse_author_id(input)?;
         assert_eq!(data, "102020");
+        Ok(())
+    }
+    #[test]
+    fn tag_id_test() -> anyhow::Result<()> {
+        let input = "//m.qidian.com/category/catid101010/subcatid1323-male/";
+        let (_, data) = super::tag_id(input)?;
+        assert_eq!(
+            data,
+            super::QDTagId {
+                id: 101010,
+                sub_id: Some(1323)
+            }
+        );
+        let input = "//m.qidian.com/category/catid102020/";
+        let (_, data) = super::tag_id(input)?;
+        assert_eq!(
+            data,
+            super::QDTagId {
+                id: 102020,
+                sub_id: None
+            }
+        );
         Ok(())
     }
 }

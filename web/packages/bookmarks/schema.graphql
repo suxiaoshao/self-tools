@@ -5,10 +5,6 @@ schema {
   mutation: MutationRoot
 }
 
-union DraftAuthorInfo = JjAuthor | QdAuthor
-
-union DraftNovelInfo = JjNovel | QdNovel
-
 type Author {
   avatar: String!
   createTime: DateTime!
@@ -52,31 +48,34 @@ type Collection {
   updateTime: DateTime!
 }
 
-type JjAuthor {
+type DraftAuthorInfo {
   description: String!
   id: String!
   image: String!
   name: String!
-  novels: [JjNovel!]!
+  novels: [DraftNovelInfo!]!
+  site: NovelSite!
   url: String!
 }
 
-type JjChapter {
+type DraftChapterInfo {
   id: String!
   novelId: String!
+  site: NovelSite!
   time: DateTime!
   title: String!
   url: String!
   wordCount: Int!
 }
 
-type JjNovel {
-  author: JjAuthor!
-  chapters: [JjChapter!]!
+type DraftNovelInfo {
+  author: DraftAuthorInfo!
+  chapters: [DraftChapterInfo!]!
   description: String!
   id: String!
   image: String!
   name: String!
+  site: NovelSite!
   status: NovelStatus!
   url: String!
 }
@@ -120,35 +119,6 @@ type Novel {
   siteId: String!
   tags: [Tag!]!
   updateTime: DateTime!
-  url: String!
-}
-
-type QdAuthor {
-  description: String!
-  id: String!
-  image: String!
-  name: String!
-  novels: [QdNovel!]!
-  url: String!
-}
-
-type QdChapter {
-  id: String!
-  novelId: String!
-  time: DateTime!
-  title: String!
-  url: String!
-  wordCount: Int!
-}
-
-type QdNovel {
-  author: QdAuthor!
-  chapters: [QdChapter!]!
-  description: String!
-  id: String!
-  image: String!
-  name: String!
-  status: NovelStatus!
   url: String!
 }
 

@@ -10,7 +10,7 @@ edition = "2021"
 # Thrift
 thrift = { path = "../../common/thrift" }
 volo = "0.10.0"
-volo-thrift = "0.10.0"
+volo-thrift = "0.10.1"
 tokio = { version = "1.37.0", features = ["full"] }
 
 # jwt

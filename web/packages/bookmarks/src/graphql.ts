@@ -83,38 +83,37 @@ export type CreateNovelInput = {
   tags: Array<Scalars['Int']['input']>;
 };
 
-export type DraftAuthorInfo = JjAuthor | QdAuthor;
-
-export type DraftNovelInfo = JjNovel | QdNovel;
-
-export type JjAuthor = {
-  __typename?: 'JjAuthor';
+export type DraftAuthorInfo = {
+  __typename?: 'DraftAuthorInfo';
   description: Scalars['String']['output'];
   id: Scalars['String']['output'];
   image: Scalars['String']['output'];
   name: Scalars['String']['output'];
-  novels: Array<JjNovel>;
+  novels: Array<DraftNovelInfo>;
+  site: NovelSite;
   url: Scalars['String']['output'];
 };
 
-export type JjChapter = {
-  __typename?: 'JjChapter';
+export type DraftChapterInfo = {
+  __typename?: 'DraftChapterInfo';
   id: Scalars['String']['output'];
   novelId: Scalars['String']['output'];
+  site: NovelSite;
   time: Scalars['DateTime']['output'];
   title: Scalars['String']['output'];
   url: Scalars['String']['output'];
   wordCount: Scalars['Int']['output'];
 };
 
-export type JjNovel = {
-  __typename?: 'JjNovel';
-  author: JjAuthor;
-  chapters: Array<JjChapter>;
+export type DraftNovelInfo = {
+  __typename?: 'DraftNovelInfo';
+  author: DraftAuthorInfo;
+  chapters: Array<DraftChapterInfo>;
   description: Scalars['String']['output'];
   id: Scalars['String']['output'];
   image: Scalars['String']['output'];
   name: Scalars['String']['output'];
+  site: NovelSite;
   status: NovelStatus;
   url: Scalars['String']['output'];
 };
@@ -222,38 +221,6 @@ export enum NovelStatus {
   Completed = 'COMPLETED',
   Ongoing = 'ONGOING',
 }
-
-export type QdAuthor = {
-  __typename?: 'QdAuthor';
-  description: Scalars['String']['output'];
-  id: Scalars['String']['output'];
-  image: Scalars['String']['output'];
-  name: Scalars['String']['output'];
-  novels: Array<QdNovel>;
-  url: Scalars['String']['output'];
-};
-
-export type QdChapter = {
-  __typename?: 'QdChapter';
-  id: Scalars['String']['output'];
-  novelId: Scalars['String']['output'];
-  time: Scalars['DateTime']['output'];
-  title: Scalars['String']['output'];
-  url: Scalars['String']['output'];
-  wordCount: Scalars['Int']['output'];
-};
-
-export type QdNovel = {
-  __typename?: 'QdNovel';
-  author: QdAuthor;
-  chapters: Array<QdChapter>;
-  description: Scalars['String']['output'];
-  id: Scalars['String']['output'];
-  image: Scalars['String']['output'];
-  name: Scalars['String']['output'];
-  status: NovelStatus;
-  url: Scalars['String']['output'];
-};
 
 export type QueryRoot = {
   __typename?: 'QueryRoot';
@@ -435,59 +402,35 @@ export type FetchAuthorQueryVariables = Exact<{
 
 export type FetchAuthorQuery = {
   __typename?: 'QueryRoot';
-  fetchAuthor:
-    | {
-        __typename: 'JjAuthor';
-        name: string;
-        description: string;
-        image: string;
-        url: string;
+  fetchAuthor: {
+    __typename: 'DraftAuthorInfo';
+    name: string;
+    description: string;
+    image: string;
+    url: string;
+    id: string;
+    site: NovelSite;
+    novels: Array<{
+      __typename?: 'DraftNovelInfo';
+      id: string;
+      name: string;
+      description: string;
+      image: string;
+      url: string;
+      status: NovelStatus;
+      site: NovelSite;
+      chapters: Array<{
+        __typename?: 'DraftChapterInfo';
         id: string;
-        novels: Array<{
-          __typename?: 'JjNovel';
-          id: string;
-          name: string;
-          description: string;
-          image: string;
-          url: string;
-          status: NovelStatus;
-          chapters: Array<{
-            __typename?: 'JjChapter';
-            id: string;
-            novelId: string;
-            title: string;
-            url: string;
-            time: any;
-            wordCount: number;
-          }>;
-        }>;
-      }
-    | {
-        __typename: 'QdAuthor';
-        name: string;
-        description: string;
-        image: string;
+        novelId: string;
+        title: string;
         url: string;
-        id: string;
-        novels: Array<{
-          __typename?: 'QdNovel';
-          id: string;
-          name: string;
-          description: string;
-          image: string;
-          url: string;
-          status: NovelStatus;
-          chapters: Array<{
-            __typename?: 'QdChapter';
-            id: string;
-            novelId: string;
-            title: string;
-            url: string;
-            time: any;
-            wordCount: number;
-          }>;
-        }>;
-      };
+        time: any;
+        wordCount: number;
+        site: NovelSite;
+      }>;
+    }>;
+  };
 };
 
 export type DeleteAuthorMutationVariables = Exact<{
@@ -645,25 +588,24 @@ export type FetchNovelQueryVariables = Exact<{
 
 export type FetchNovelQuery = {
   __typename?: 'QueryRoot';
-  fetchNovel:
-    | {
-        __typename?: 'JjNovel';
-        description: string;
-        image: string;
-        name: string;
-        url: string;
-        author: { __typename?: 'JjAuthor'; description: string; image: string; name: string; url: string };
-        chapters: Array<{ __typename?: 'JjChapter'; title: string; url: string }>;
-      }
-    | {
-        __typename?: 'QdNovel';
-        description: string;
-        image: string;
-        name: string;
-        url: string;
-        author: { __typename?: 'QdAuthor'; description: string; image: string; name: string; url: string };
-        chapters: Array<{ __typename?: 'QdChapter'; title: string; url: string }>;
-      };
+  fetchNovel: {
+    __typename?: 'DraftNovelInfo';
+    description: string;
+    image: string;
+    name: string;
+    url: string;
+    site: NovelSite;
+    author: { __typename?: 'DraftAuthorInfo'; description: string; image: string; name: string; url: string };
+    chapters: Array<{
+      __typename?: 'DraftChapterInfo';
+      title: string;
+      url: string;
+      site: NovelSite;
+      time: any;
+      wordCount: number;
+      id: string;
+    }>;
+  };
 };
 
 export type UpdateNovelByCrawlerMutationVariables = Exact<{
@@ -999,50 +941,28 @@ export const FetchAuthorDocument = gql`
   query fetchAuthor($id: String!, $novelSite: NovelSite!) {
     fetchAuthor(id: $id, novelSite: $novelSite) {
       __typename
-      ... on QdAuthor {
+      name
+      description
+      image
+      url
+      id
+      site
+      novels {
+        id
         name
         description
         image
         url
-        id
-        novels {
+        status
+        site
+        chapters {
           id
-          name
-          description
-          image
+          novelId
+          title
           url
-          status
-          chapters {
-            id
-            novelId
-            title
-            url
-            time
-            wordCount
-          }
-        }
-      }
-      ... on JjAuthor {
-        name
-        description
-        image
-        url
-        id
-        novels {
-          id
-          name
-          description
-          image
-          url
-          status
-          chapters {
-            id
-            novelId
-            title
-            url
-            time
-            wordCount
-          }
+          time
+          wordCount
+          site
         }
       }
     }
@@ -1535,38 +1455,25 @@ export type GetNovelQueryResult = Apollo.QueryResult<GetNovelQuery, GetNovelQuer
 export const FetchNovelDocument = gql`
   query fetchNovel($id: String!, $NovelSite: NovelSite!) {
     fetchNovel(id: $id, novelSite: $NovelSite) {
-      ... on QdNovel {
-        author {
-          description
-          image
-          name
-          url
-        }
-        chapters {
-          title
-          url
-        }
+      author {
         description
         image
         name
         url
       }
-      ... on JjNovel {
-        author {
-          description
-          image
-          name
-          url
-        }
-        chapters {
-          title
-          url
-        }
-        description
-        image
-        name
+      chapters {
+        title
         url
+        site
+        time
+        wordCount
+        id
       }
+      description
+      image
+      name
+      url
+      site
     }
   }
 `;

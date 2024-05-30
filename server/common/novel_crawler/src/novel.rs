@@ -5,15 +5,16 @@
  * @LastEditTime: 2024-03-28 09:34:17
  * @FilePath: /self-tools/server/common/novel_crawler/src/novel.rs
  */
-use crate::{chapter::ChapterFn, errors::NovelResult, AuthorFn};
+use crate::{chapter::ChapterFn, errors::NovelResult, tag::TagFn, AuthorFn};
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum NovelStatus {
     Ongoing,
     Completed,
 }
-pub trait NovelFn: Sized + Send + Sync {
+pub trait NovelFn: Sized + Send + Sync + Sized {
     type Chapter: ChapterFn;
     type Author: AuthorFn;
+    type Tag: TagFn;
     fn get_novel_data(
         novel_id: &str,
     ) -> impl std::future::Future<Output = NovelResult<Self>> + Send;
@@ -30,4 +31,5 @@ pub trait NovelFn: Sized + Send + Sync {
     fn get_url_from_id(id: &str) -> String;
     fn status(&self) -> NovelStatus;
     fn id(&self) -> &str;
+    fn tags(&self) -> &[Self::Tag];
 }
