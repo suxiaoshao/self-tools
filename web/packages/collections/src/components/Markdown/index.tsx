@@ -19,6 +19,7 @@ import {
   SxProps,
   Theme,
 } from '@mui/material';
+import { match, P } from 'ts-pattern';
 
 export interface MarkdownProps extends BoxProps {
   value: string;
@@ -37,11 +38,14 @@ function CustomLink(props: { title: string; href: string; children: string }) {
 }
 
 function CustomHead(props: TypographyProps) {
+  const marginTop = match(props.variant)
+    .with('h2', () => 30)
+    .otherwise(() => 10);
   return (
     <>
       <Typography
         sx={{
-          margin: `${props.variant !== 'h2' ? '30px' : '10px'} 0 0 10px`,
+          margin: `${marginTop}px 0 0 10px`,
         }}
         id={String(props.children)}
         variant={props.variant}
@@ -102,23 +106,23 @@ function MyPre(props: { children: string }) {
 function MyListItem(props: { children: JSX.Element[] }) {
   return (
     <li>
-      {props.children.map((value) => {
-        return typeof value === 'string' ? (
-          <Typography
-            variant="body1"
-            component="span"
-            sx={{
-              margin: '6px 0 6px 0',
-              display: 'inline-block',
-            }}
-            key={value}
-          >
-            {value}
-          </Typography>
-        ) : (
-          value
-        );
-      })}
+      {props.children.map((value) =>
+        match(value)
+          .with(P.string, (value) => (
+            <Typography
+              variant="body1"
+              component="span"
+              sx={{
+                margin: '6px 0 6px 0',
+                display: 'inline-block',
+              }}
+              key={value.toString()}
+            >
+              {value}
+            </Typography>
+          ))
+          .otherwise((value) => value),
+      )}
     </li>
   );
 }

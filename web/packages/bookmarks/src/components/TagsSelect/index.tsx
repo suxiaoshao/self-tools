@@ -2,6 +2,7 @@ import { Box, Chip, FormControl, FormControlProps, InputLabel, MenuItem, Outline
 import { useI18n } from 'i18n';
 import { FocusEventHandler, useMemo } from 'react';
 import { useAllowTagsQuery } from '../../graphql';
+import { match } from 'ts-pattern';
 
 const ITEM_HEIGHT = 48;
 const ITEM_PADDING_TOP = 8;
@@ -53,18 +54,18 @@ export default function TagsSelect({ value, onChange, onBlur, sx, ...props }: Ta
         )}
         MenuProps={MenuProps}
       >
-        {loading ? (
-          <MenuItem disabled>Loading...</MenuItem>
-        ) : (
-          <>
-            {queryTags?.map(({ name, id }) => (
-              <MenuItem key={id} value={id}>
-                {name}
-              </MenuItem>
-            ))}
-            {(queryTags?.length ?? 0) === 0 && <MenuItem disabled>No options</MenuItem>}
-          </>
-        )}
+        {match(loading)
+          .with(true, () => <MenuItem disabled>Loading...</MenuItem>)
+          .otherwise(() => (
+            <>
+              {queryTags?.map(({ name, id }) => (
+                <MenuItem key={id} value={id}>
+                  {name}
+                </MenuItem>
+              ))}
+              {(queryTags?.length ?? 0) === 0 && <MenuItem disabled>No options</MenuItem>}
+            </>
+          ))}
       </Select>
     </FormControl>
   );

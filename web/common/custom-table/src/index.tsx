@@ -9,12 +9,12 @@ import {
   TableContainerProps,
   TablePagination,
   TableFooter,
-  Box,
 } from '@mui/material';
 import TablePaginationActions from '@mui/material/TablePagination/TablePaginationActions';
 import { Table as TableType, flexRender } from '@tanstack/react-table';
 import { CustomColumnDef } from './useCustomTable';
 import { PageWithTotal } from './usePage';
+import { match } from 'ts-pattern';
 
 export interface CustomTableProps<D extends object> extends Omit<TableContainerProps, 'ref'> {
   tableInstance: TableType<D>;
@@ -59,7 +59,10 @@ export function CustomTable<D extends object>({
                     return (
                       // Apply the header cell props
                       <TableCell colSpan={header.colSpan} key={header.id} {...headerProps}>
-                        {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                        {match(header.isPlaceholder)
+                          .with(true, () => null)
+                          .with(false, () => flexRender(header.column.columnDef.header, header.getContext()))
+                          .exhaustive()}
                       </TableCell>
                     );
                   })

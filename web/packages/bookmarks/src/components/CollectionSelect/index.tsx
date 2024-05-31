@@ -11,6 +11,7 @@ import { FocusEventHandler, ForwardedRef, useImperativeHandle } from 'react';
 import { useGetCollectionAncestorsQuery, useGetCollectionSelectQuery } from '../../graphql';
 import CustomSelector from '../CustomSelector';
 import React from 'react';
+import { P, match } from 'ts-pattern';
 
 export interface CollectionSelectProps extends Omit<BoxProps, 'name' | 'onChange' | 'onBlur' | 'value'> {
   onChange: (newValue: number | null | undefined) => void;
@@ -29,14 +30,7 @@ function CollectionSelect(
   const { data } = useGetCollectionSelectQuery({ variables: { parentId: value } });
   const t = useI18n();
   const [sourceRef, setSourceRef] = React.useState<HTMLButtonElement | null>(null);
-  useImperativeHandle<HTMLButtonElement | null, HTMLButtonElement | null>(
-    ref,
-    () => {
-      const proxyRef = sourceRef ? sourceRef : null;
-      return proxyRef;
-    },
-    [sourceRef],
-  );
+  useImperativeHandle<HTMLButtonElement | null, HTMLButtonElement | null>(ref, () => sourceRef, [sourceRef]);
   return (
     <Box {...props} sx={{ display: 'flex', alignItems: 'center', ...sx }}>
       <Breadcrumbs>
@@ -61,15 +55,15 @@ function CollectionSelect(
         >
           {[
             ...(data?.getCollections?.map(({ id, name }) => ({ value: id, label: name, key: id })) ?? []),
-            ...(getCollection
-              ? [
-                  {
-                    value: getCollection?.id,
-                    label: getCollection?.name,
-                    key: getCollection?.id,
-                  },
-                ]
-              : []),
+            ...match(getCollection)
+              .with(P.nonNullable, (getCollection) => [
+                {
+                  value: getCollection?.id,
+                  label: getCollection?.name,
+                  key: getCollection?.id,
+                },
+              ])
+              .otherwise(() => []),
           ]}
         </CustomSelector>
       </Breadcrumbs>

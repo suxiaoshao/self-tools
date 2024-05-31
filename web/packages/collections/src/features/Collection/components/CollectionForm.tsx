@@ -2,6 +2,7 @@ import { Dialog, Box, DialogTitle, DialogContent, TextField, DialogActions, Butt
 import { useI18n } from 'i18n';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { CreateCollectionMutationVariables } from '../../../graphql';
+import { match } from 'ts-pattern';
 export type CollectionFormData = Omit<CreateCollectionMutationVariables, 'parentId'>;
 export interface CollectFormProps {
   afterSubmit?: (data: CollectionFormData) => Promise<void>;
@@ -30,7 +31,12 @@ export default function CollectionForm({
   return (
     <Dialog PaperProps={{ sx: { maxWidth: 700 } }} open={open} onClose={handleClose}>
       <Box sx={{ width: 500 }} onSubmit={handleSubmit(onSubmit)} component="form">
-        <DialogTitle>{mode === 'create' ? t('create_collection') : t('modify_collection')}</DialogTitle>
+        <DialogTitle>
+          {match(mode)
+            .with('create', () => t('create_collection'))
+            .with('edit', () => t('modify_collection'))
+            .exhaustive()}
+        </DialogTitle>
         <DialogContent>
           <TextField
             variant="standard"

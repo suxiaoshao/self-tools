@@ -20,6 +20,7 @@ import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import CustomEdit from '../../../components/CustomEdit';
 import { CreateItemMutationVariables } from '../../../graphql';
 import { useI18n } from 'i18n';
+import { match } from 'ts-pattern';
 export type ItemFormData = Omit<CreateItemMutationVariables, 'collectionId'>;
 
 export interface ItemFormProps {
@@ -65,7 +66,9 @@ export default function ItemForm({
               <Close />
             </IconButton>
             <Typography sx={{ ml: 2, flex: 1 }} variant="h6" component="div">
-              {mode === 'create' ? t('create_item') : t('modify_item')}
+              {match(mode)
+                .with('create', () => t('create_item'))
+                .otherwise(() => t('modify_item'))}
             </Typography>
             <Button type="submit" color="inherit">
               {t('submit')}
@@ -114,16 +117,18 @@ export default function ItemForm({
                     </ToggleButton>
                   </ToggleButtonGroup>
                 </Box>
-                {alignment === 'edit' ? (
-                  <CustomEdit
-                    wordWrap="on"
-                    sx={{ width: '100%', flex: '1 1 0', borderRadius: 2, overflow: 'hidden', mt: 1 }}
-                    language="markdown"
-                    {...field}
-                  />
-                ) : (
-                  <Markdown sx={{ overflowY: 'auto', mt: 1 }} value={field.value ?? ''} />
-                )}
+                {match(alignment)
+                  .with('edit', () => (
+                    <CustomEdit
+                      wordWrap="on"
+                      sx={{ width: '100%', flex: '1 1 0', borderRadius: 2, overflow: 'hidden', mt: 1 }}
+                      language="markdown"
+                      {...field}
+                    />
+                  ))
+                  .otherwise(() => (
+                    <Markdown sx={{ overflowY: 'auto', mt: 1 }} value={field.value ?? ''} />
+                  ))}
               </>
             )}
           />

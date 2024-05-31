@@ -12,6 +12,7 @@ import { MenuItem } from '@mui/material';
 import CollectionForm, { CollectionFormData } from './CollectionForm';
 import ItemForm, { ItemFormData } from '../../Item/Components/ItemForm';
 import { useI18n } from 'i18n';
+import { match } from 'ts-pattern';
 
 export type TableActionsProps = CollectionAndItem & {
   refetch: () => void;
@@ -64,24 +65,26 @@ export default function Actions({ id, refetch, __typename, ...data }: TableActio
           </MenuItem>,
         ]}
       </TableActions>
-      {__typename === 'Collection' ? (
-        <CollectionForm
-          mode="edit"
-          initialValues={data}
-          open={open}
-          handleClose={handleClose}
-          afterSubmit={collectionAfterSubmit}
-        />
-      ) : (
-        <ItemForm
-          loading={loading}
-          initialValues={editItemData?.getItem}
-          mode="edit"
-          open={open}
-          handleClose={handleClose}
-          afterSubmit={itemAfterSubmit}
-        />
-      )}
+      {match(__typename)
+        .with('Collection', () => (
+          <CollectionForm
+            mode="edit"
+            initialValues={data}
+            open={open}
+            handleClose={handleClose}
+            afterSubmit={collectionAfterSubmit}
+          />
+        ))
+        .otherwise(() => (
+          <ItemForm
+            loading={loading}
+            initialValues={editItemData?.getItem}
+            mode="edit"
+            open={open}
+            handleClose={handleClose}
+            afterSubmit={itemAfterSubmit}
+          />
+        ))}
     </>
   );
 }

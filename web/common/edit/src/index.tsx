@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import './init';
 import { editor } from 'monaco-editor';
 import { Box, BoxProps, useTheme } from '@mui/material';
+import { match } from 'ts-pattern';
 
 /**
  * @author sushao
@@ -40,7 +41,13 @@ export default function Edit({ onChangeCode, code, language, wordWrap, ...props 
   const [edit, setEdit] = useState<editor.IStandaloneCodeEditor | undefined>(undefined);
 
   const theme = useTheme();
-  const editTheme = useMemo(() => (theme.palette.mode === 'dark' ? 'monankai' : undefined), [theme.palette.mode]);
+  const editTheme = useMemo(
+    () =>
+      match(theme.palette.mode)
+        .with('dark', () => 'monankai')
+        .otherwise(() => undefined),
+    [theme.palette.mode],
+  );
   const createEditor = useCallback(() => {
     if (editRef === undefined) {
       return null;
