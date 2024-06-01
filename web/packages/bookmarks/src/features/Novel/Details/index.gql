@@ -14,7 +14,6 @@ query getNovel($id: Int!) {
       title
       createTime
       updateTime
-      content
       url
       wordCount
       time
@@ -26,6 +25,13 @@ query getNovel($id: Int!) {
       name
       site
     }
+    lastChapter {
+      time
+    }
+    firstChapter {
+      time
+    }
+    wordCount
   }
 }
 

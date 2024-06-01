@@ -5,27 +5,19 @@
  * @LastEditTime: 2024-03-28 09:57:11
  * @FilePath: /self-tools/web/packages/bookmarks/src/features/Novel/Details/index.tsx
  */
-import { useGetNovelQuery, useUpdateNovelByCrawlerMutation } from '@bookmarks/graphql';
+import { NovelStatus, useGetNovelQuery, useUpdateNovelByCrawlerMutation } from '@bookmarks/graphql';
 import { Explore, KeyboardArrowLeft, Refresh } from '@mui/icons-material';
-import {
-  Avatar,
-  Box,
-  Card,
-  CardContent,
-  CardHeader,
-  IconButton,
-  Tooltip,
-  Typography,
-  Link,
-  Skeleton,
-} from '@mui/material';
+import { Avatar, Box, Card, CardContent, CardHeader, IconButton, Tooltip, Link, Skeleton } from '@mui/material';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 import { useI18n } from 'i18n';
 import CloudDownloadIcon from '@mui/icons-material/CloudDownload';
 import { getImageUrl } from '@bookmarks/utils/image';
 import Chapters from './components/Chapters';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { enqueueSnackbar } from 'notify';
+import { Details, DetailsItem } from 'details';
+import { P, match } from 'ts-pattern';
+import { format } from 'time';
 
 export default function NovelDetails() {
   const { novelId } = useParams();
@@ -46,6 +38,55 @@ export default function NovelDetails() {
     enqueueSnackbar(t('update_by_crawler_success'), { variant: 'success' });
     refetch();
   }, [novelId, updateNovel, refetch, t]);
+  const items = useMemo<DetailsItem[]>(
+    () =>
+      match(data?.getNovel)
+        .with(
+          P.nonNullable,
+          (data) =>
+            [
+              {
+                label: t('author'),
+                value: (
+                  <Link to={`/bookmarks/authors/${data.author.id}`} component={RouterLink}>
+                    {data.author.name}
+                  </Link>
+                ),
+              },
+              {
+                label: t('novel_status'),
+                value: match(data.novelStatus)
+                  .with(NovelStatus.Ongoing, () => t('ongoing'))
+                  .with(NovelStatus.Completed, () => t('completed'))
+                  .exhaustive(),
+              },
+              {
+                label: t('word_count'),
+                value: data.wordCount,
+              },
+              {
+                label: t('last_update_time'),
+                value: match(data.lastChapter?.time)
+                  .with(P.string, (data) => format(data as string))
+                  .otherwise(() => '-'),
+              },
+              {
+                label: t('first_chapter_time'),
+                value: match(data.firstChapter?.time)
+                  .with(P.string, (data) => format(data))
+                  .otherwise(() => '-'),
+              },
+              {
+                label: t('description'),
+                value: data.description,
+                span: 3,
+              },
+            ] satisfies DetailsItem[],
+        )
+        .otherwise(() => []),
+    [data, t],
+  );
+  console.log('items', items);
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', p: 2, gap: 2 }}>
       <Box sx={{ display: 'flex', width: '100%' }}>
@@ -80,15 +121,7 @@ export default function NovelDetails() {
               }
             />
             <CardContent>
-              <Typography variant="body2" component="p" gutterBottom>
-                {data.getNovel.description}
-              </Typography>
-              <Typography color={'textSecondary'}>
-                {t('author')} :{' '}
-                <Link to={`/bookmarks/authors/${data.getNovel.author.id}`} component={RouterLink}>
-                  {data.getNovel.author.name}
-                </Link>
-              </Typography>
+              <Details items={items} />
             </CardContent>
           </Card>
           <Chapters chapters={data.getNovel.chapters} />

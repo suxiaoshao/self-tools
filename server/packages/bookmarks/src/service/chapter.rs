@@ -58,7 +58,7 @@ impl Chapter {
 }
 
 impl Chapter {
-    fn from(value: crate::model::chapter::ChapterModel, site_novel_id: String) -> Self {
+    pub fn from(value: crate::model::chapter::ChapterModel, site_novel_id: String) -> Self {
         Self {
             id: value.id,
             title: value.title,

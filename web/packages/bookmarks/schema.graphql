@@ -112,7 +112,11 @@ type Novel {
   chapters: [Chapter!]!
   createTime: DateTime!
   description: String!
+  "最老章节"
+  firstChapter: Chapter
   id: Int!
+  "最新章节"
+  lastChapter: Chapter
   name: String!
   novelStatus: NovelStatus!
   site: NovelSite!
@@ -120,6 +124,7 @@ type Novel {
   tags: [Tag!]!
   updateTime: DateTime!
   url: String!
+  wordCount: BigDecimal!
 }
 
 type QueryRoot {
@@ -159,6 +164,8 @@ enum NovelStatus {
   COMPLETED
   ONGOING
 }
+
+scalar BigDecimal
 
 """
 A datetime with timezone offset.

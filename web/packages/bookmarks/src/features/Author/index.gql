@@ -15,6 +15,13 @@ query getAuthor($id: Int!) {
       description
       novelStatus
       url
+      lastChapter {
+        time
+      }
+      firstChapter {
+        time
+      }
+      wordCount
     }
     ...AuthorAll
   }

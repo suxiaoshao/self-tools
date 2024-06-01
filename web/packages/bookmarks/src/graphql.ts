@@ -15,6 +15,7 @@ export type Scalars = {
   Boolean: { input: boolean; output: boolean };
   Int: { input: number; output: number };
   Float: { input: number; output: number };
+  BigDecimal: { input: any; output: any };
   /**
    * A datetime with timezone offset.
    *
@@ -202,7 +203,11 @@ export type Novel = {
   chapters: Array<Chapter>;
   createTime: Scalars['DateTime']['output'];
   description: Scalars['String']['output'];
+  /** 最老章节 */
+  firstChapter?: Maybe<Chapter>;
   id: Scalars['Int']['output'];
+  /** 最新章节 */
+  lastChapter?: Maybe<Chapter>;
   name: Scalars['String']['output'];
   novelStatus: NovelStatus;
   site: NovelSite;
@@ -210,6 +215,7 @@ export type Novel = {
   tags: Array<Tag>;
   updateTime: Scalars['DateTime']['output'];
   url: Scalars['String']['output'];
+  wordCount: Scalars['BigDecimal']['output'];
 };
 
 export enum NovelSite {
@@ -391,6 +397,9 @@ export type GetAuthorQuery = {
       description: string;
       novelStatus: NovelStatus;
       url: string;
+      wordCount: any;
+      lastChapter?: { __typename?: 'Chapter'; time: any } | null;
+      firstChapter?: { __typename?: 'Chapter'; time: any } | null;
     }>;
   };
 };
@@ -566,18 +575,20 @@ export type GetNovelQuery = {
     updateTime: any;
     novelStatus: NovelStatus;
     url: string;
+    wordCount: any;
     chapters: Array<{
       __typename?: 'Chapter';
       id: number;
       title: string;
       createTime: any;
       updateTime: any;
-      content?: string | null;
       url: string;
       wordCount: number;
       time: any;
     }>;
     author: { __typename?: 'Author'; avatar: string; description: string; id: number; name: string; site: NovelSite };
+    lastChapter?: { __typename?: 'Chapter'; time: any } | null;
+    firstChapter?: { __typename?: 'Chapter'; time: any } | null;
   };
 };
 
@@ -891,6 +902,13 @@ export const GetAuthorDocument = gql`
         description
         novelStatus
         url
+        lastChapter {
+          time
+        }
+        firstChapter {
+          time
+        }
+        wordCount
       }
       ...AuthorAll
     }
@@ -1399,7 +1417,6 @@ export const GetNovelDocument = gql`
         title
         createTime
         updateTime
-        content
         url
         wordCount
         time
@@ -1411,6 +1428,13 @@ export const GetNovelDocument = gql`
         name
         site
       }
+      lastChapter {
+        time
+      }
+      firstChapter {
+        time
+      }
+      wordCount
     }
   }
 `;

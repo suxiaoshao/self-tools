@@ -70,6 +70,42 @@ impl ChapterModel {
             .load::<Self>(conn)?;
         Ok(chapters)
     }
+    /// 获取某个 novel 下的字数
+    pub fn get_word_count_by_novel_id(
+        novel_id: i64,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<bigdecimal::BigDecimal> {
+        let word_count = chapter::table
+            .filter(chapter::novel_id.eq(novel_id))
+            .select(diesel::dsl::sum(chapter::word_count))
+            .first::<Option<bigdecimal::BigDecimal>>(conn)?
+            .unwrap_or(bigdecimal::BigDecimal::from(0));
+        Ok(word_count)
+    }
+    /// 获取某个 novel 下的最新章节
+    pub fn get_last_chapter_by_novel_id(
+        novel_id: i64,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<Option<Self>> {
+        let chapter = chapter::table
+            .filter(chapter::novel_id.eq(novel_id))
+            .order(chapter::time.desc())
+            .first::<Self>(conn)
+            .optional()?;
+        Ok(chapter)
+    }
+    /// 获取某个 novel 下的最早章节
+    pub fn get_first_chapter_by_novel_id(
+        novel_id: i64,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<Option<Self>> {
+        let chapter = chapter::table
+            .filter(chapter::novel_id.eq(novel_id))
+            .order(chapter::time.asc())
+            .first::<Self>(conn)
+            .optional()?;
+        Ok(chapter)
+    }
 }
 
 #[derive(Insertable)]

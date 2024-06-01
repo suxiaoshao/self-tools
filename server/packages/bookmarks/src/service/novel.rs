@@ -18,6 +18,7 @@ use novel_crawler::{JJNovel, NovelFn, QDNovel};
 use time::OffsetDateTime;
 use tracing::{event, Level};
 
+use super::chapter::Chapter;
 use super::{author::Author, tag::Tag};
 
 #[derive(SimpleObject)]
@@ -80,6 +81,41 @@ impl Novel {
             NovelSite::Jjwxc => JJNovel::get_url_from_id(&self.site_id),
             NovelSite::Qidian => QDNovel::get_url_from_id(&self.site_id),
         }
+    }
+    async fn word_count(&self, context: &Context<'_>) -> GraphqlResult<bigdecimal::BigDecimal> {
+        let conn = &mut context
+            .data::<PgPool>()
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
+            .get()?;
+        let word_count = ChapterModel::get_word_count_by_novel_id(self.id, conn)?;
+        Ok(word_count)
+    }
+    ///  最新章节
+    async fn last_chapter(&self, context: &Context<'_>) -> GraphqlResult<Option<Chapter>> {
+        let conn = &mut context
+            .data::<PgPool>()
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
+            .get()?;
+        let chapter = ChapterModel::get_last_chapter_by_novel_id(self.id, conn)?;
+        Ok(chapter.map(|x| Chapter::from(x, self.site_id.to_owned())))
+    }
+    /// 最老章节
+    async fn first_chapter(&self, context: &Context<'_>) -> GraphqlResult<Option<Chapter>> {
+        let conn = &mut context
+            .data::<PgPool>()
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
+            .get()?;
+        let chapter = ChapterModel::get_first_chapter_by_novel_id(self.id, conn)?;
+        Ok(chapter.map(|x| Chapter::from(x, self.site_id.to_owned())))
     }
 }
 

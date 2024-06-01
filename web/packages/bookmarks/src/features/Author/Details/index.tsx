@@ -25,7 +25,9 @@ import { useNavigate, useParams, Link as RouterLink } from 'react-router-dom';
 import { useI18n } from 'i18n';
 import { useCallback } from 'react';
 import { enqueueSnackbar } from 'notify';
-import { match } from 'ts-pattern';
+import { P, match } from 'ts-pattern';
+import { Details, DetailsItem } from 'details';
+import { format } from 'time';
 
 export default function AuthorDetails() {
   const t = useI18n();
@@ -96,38 +98,70 @@ export default function AuthorDetails() {
               pb: 2,
             }}
           >
-            {data?.getAuthor.novels.map(({ id, avatar, name, description, url, novelStatus }) => (
-              <Card key={id}>
-                <CardHeader
-                  avatar={<Avatar src={getImageUrl(avatar)} />}
-                  title={
-                    <Link to={`/bookmarks/novel/${id}`} component={RouterLink}>
-                      {name}
-                    </Link>
-                  }
-                  subheader={match(novelStatus)
-                    .with(NovelStatus.Ongoing, () => (
-                      <Chip variant="outlined" size="small" color="warning" label={t('ongoing')} />
-                    ))
-                    .with(NovelStatus.Completed, () => (
-                      <Chip variant="outlined" size="small" color="secondary" label={t('completed')} />
-                    ))
-                    .exhaustive()}
-                  action={
-                    <Tooltip title={t('go_to_source_site')}>
-                      <IconButton onClick={() => window.open(url, '_blank')}>
-                        <Explore />
-                      </IconButton>
-                    </Tooltip>
-                  }
-                />
-                <CardContent>
-                  <Typography variant="body2" component="p" gutterBottom>
-                    {description}
-                  </Typography>
-                </CardContent>
-              </Card>
-            ))}
+            {data?.getAuthor.novels.map(
+              ({ id, avatar, name, description, url, novelStatus, wordCount, lastChapter, firstChapter }) => (
+                <Card key={id}>
+                  <CardHeader
+                    avatar={<Avatar src={getImageUrl(avatar)} />}
+                    title={
+                      <Link to={`/bookmarks/novel/${id}`} component={RouterLink}>
+                        {name}
+                      </Link>
+                    }
+                    subheader={match(novelStatus)
+                      .with(NovelStatus.Ongoing, () => (
+                        <Chip variant="outlined" size="small" color="warning" label={t('ongoing')} />
+                      ))
+                      .with(NovelStatus.Completed, () => (
+                        <Chip variant="outlined" size="small" color="secondary" label={t('completed')} />
+                      ))
+                      .exhaustive()}
+                    action={
+                      <Tooltip title={t('go_to_source_site')}>
+                        <IconButton onClick={() => window.open(url, '_blank')}>
+                          <Explore />
+                        </IconButton>
+                      </Tooltip>
+                    }
+                  />
+                  <CardContent>
+                    <Typography variant="body2" component="p" gutterBottom>
+                      {description}
+                    </Typography>
+                    <Details
+                      fullSpan={2}
+                      items={
+                        [
+                          {
+                            label: t('novel_status'),
+                            value: match(novelStatus)
+                              .with(NovelStatus.Ongoing, () => t('ongoing'))
+                              .with(NovelStatus.Completed, () => t('completed'))
+                              .exhaustive(),
+                          },
+                          {
+                            label: t('word_count'),
+                            value: wordCount,
+                          },
+                          {
+                            label: t('last_update_time'),
+                            value: match(lastChapter?.time)
+                              .with(P.string, (data) => format(data))
+                              .otherwise(() => '-'),
+                          },
+                          {
+                            label: t('first_chapter_time'),
+                            value: match(firstChapter?.time)
+                              .with(P.string, (data) => format(data))
+                              .otherwise(() => '-'),
+                          },
+                        ] satisfies DetailsItem[]
+                      }
+                    />
+                  </CardContent>
+                </Card>
+              ),
+            )}
           </Box>
         </>
       )}

@@ -81,5 +81,8 @@
   "go_to_source_site": "前往源站点",
   "update_by_crawler_success": "通过爬取更新成功",
   "completed": "完结",
-  "ongoing": "连载"
+  "ongoing": "连载",
+  "novel_status": "小说状态",
+  "last_update_time": "最后更新时间",
+  "first_chapter_time": "首章时间"
 }
