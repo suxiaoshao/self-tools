@@ -23,6 +23,7 @@ export default defineConfig({
       port: '443',
     },
     assetPrefix: 'https://sushao.top',
+    lazyCompilation: true,
   },
   source: {
     entry: {

@@ -9,7 +9,7 @@
     "preview": "rsbuild preview"
   },
   "dependencies": {
-    "@material/material-color-utilities": "0.2.7",
+    "@material/material-color-utilities": "0.3.0",
     "bookmarks": "workspace:^",
     "collections": "workspace:^",
     "i18n": "workspace:^",
