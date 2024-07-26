@@ -1,4 +1,5 @@
-use once_cell::sync::Lazy;
+use std::sync::LazyLock;
+
 use scraper::{ElementRef, Html, Selector};
 use serde::{Deserialize, Serialize};
 use time::{
@@ -26,20 +27,20 @@ use super::{
     tag::{QDTag, QDTagId},
 };
 
-static SELECTOR_NOVEL_NAME: Lazy<Selector> =
-    Lazy::new(|| Selector::parse("h1.header-back-title").unwrap());
-static SELECTOR_NOVEL_DESCRIPTION: Lazy<Selector> =
-    Lazy::new(|| Selector::parse("content.detail__summary__content").unwrap());
-static SELECTOR_NOVEL_IMAGE: Lazy<Selector> =
-    Lazy::new(|| Selector::parse("img.detail__header-bg").unwrap());
-static SELECTOR_NOVEL_CHAPTERS: Lazy<Selector> =
-    Lazy::new(|| Selector::parse("#vite-plugin-ssr_pageContext").unwrap());
-static SELECTOR_AUTHOR: Lazy<Selector> =
-    Lazy::new(|| Selector::parse("a.detail__header-detail__author-link").unwrap());
-static SELECTOR_STATUS: Lazy<Selector> =
-    Lazy::new(|| Selector::parse("head > meta[property=\"og:novel:status\"]").unwrap());
-static SELECTOR_TAGS: Lazy<Selector> =
-    Lazy::new(|| Selector::parse("a.detail__header-detail__category").unwrap());
+static SELECTOR_NOVEL_NAME: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("h1.header-back-title").unwrap());
+static SELECTOR_NOVEL_DESCRIPTION: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("content.detail__summary__content").unwrap());
+static SELECTOR_NOVEL_IMAGE: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("img.detail__header-bg").unwrap());
+static SELECTOR_NOVEL_CHAPTERS: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("#vite-plugin-ssr_pageContext").unwrap());
+static SELECTOR_AUTHOR: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("a.detail__header-detail__author-link").unwrap());
+static SELECTOR_STATUS: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("head > meta[property=\"og:novel:status\"]").unwrap());
+static SELECTOR_TAGS: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("a.detail__header-detail__category").unwrap());
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct QDNovel {

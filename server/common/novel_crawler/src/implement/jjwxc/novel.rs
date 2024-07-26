@@ -1,3 +1,5 @@
+use std::sync::LazyLock;
+
 use nom::{
     bytes::{
         complete::{tag, take_while},
@@ -8,7 +10,6 @@ use nom::{
     sequence::tuple,
     IResult,
 };
-use once_cell::sync::Lazy;
 use scraper::{ElementRef, Html, Selector};
 use time::{
     macros::{format_description, offset},
@@ -24,29 +25,29 @@ use crate::{
 
 use super::{chapter::JJChapter, tag::JJTag};
 
-static SELECTOR_NOVEL_NAME: Lazy<Selector> =
-    Lazy::new(|| Selector::parse("[itemprop=name] > span").unwrap());
-static SELECTOR_NOVEL_DESCRIPTION: Lazy<Selector> =
-    Lazy::new(|| Selector::parse("#novelintro").unwrap());
-static SELECTOR_NOVEL_IMAGE: Lazy<Selector> =
-    Lazy::new(|| Selector::parse("img.noveldefaultimage").unwrap());
+static SELECTOR_NOVEL_NAME: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("[itemprop=name] > span").unwrap());
+static SELECTOR_NOVEL_DESCRIPTION: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("#novelintro").unwrap());
+static SELECTOR_NOVEL_IMAGE: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("img.noveldefaultimage").unwrap());
 
-static SELECTOR_CHAPTER: Lazy<Selector> =
-    Lazy::new(|| Selector::parse("#oneboolt > tbody > tr[itemprop=\"chapter\"]").unwrap());
-static SELECTOR_CHAPTER_NAME: Lazy<Selector> =
-    Lazy::new(|| Selector::parse("a[itemprop='url']").unwrap());
-static SELECTOR_CHAPTER_TIME: Lazy<Selector> =
-    Lazy::new(|| Selector::parse("td[title] > span").unwrap());
-static SELECTOR_CHAPTER_WORD_COUNT: Lazy<Selector> =
-    Lazy::new(|| Selector::parse("td[itemprop='wordCount']").unwrap());
+static SELECTOR_CHAPTER: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("#oneboolt > tbody > tr[itemprop=\"chapter\"]").unwrap());
+static SELECTOR_CHAPTER_NAME: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("a[itemprop='url']").unwrap());
+static SELECTOR_CHAPTER_TIME: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("td[title] > span").unwrap());
+static SELECTOR_CHAPTER_WORD_COUNT: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("td[itemprop='wordCount']").unwrap());
 
-static SELECTOR_AUTHOR: Lazy<Selector> = Lazy::new(|| {
+static SELECTOR_AUTHOR: LazyLock<Selector> = LazyLock::new(|| {
     Selector::parse("#oneboolt > tbody > tr > td > div:nth-child(3) > h2 > a").unwrap()
 });
 
-static SELECTOR_STATUS: Lazy<Selector> =
-    Lazy::new(|| Selector::parse("span[itemprop='updataStatus']").unwrap());
-static SELECTOR_TAGS: Lazy<Selector> = Lazy::new(|| {
+static SELECTOR_STATUS: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("span[itemprop='updataStatus']").unwrap());
+static SELECTOR_TAGS: LazyLock<Selector> = LazyLock::new(|| {
     Selector::parse(
         "body > table:nth-child(30) > tbody > tr > td:nth-child(1) > div:nth-child(3) > span > a",
     )

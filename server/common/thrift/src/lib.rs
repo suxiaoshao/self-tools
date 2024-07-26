@@ -9,11 +9,10 @@ mod gen {
     include!(concat!(env!("OUT_DIR"), "/volo_gen.rs"));
 }
 
-use std::net::SocketAddr;
+use std::{net::SocketAddr, sync::LazyLock};
 
 use dns_lookup::lookup_host;
 pub use gen::volo_gen::*;
-use once_cell::sync::Lazy;
 
 #[derive(Debug, thiserror::Error, serde::Serialize, Clone)]
 pub enum ClientError {
@@ -23,12 +22,13 @@ pub enum ClientError {
     LookupError(String),
 }
 
-pub static CLIENT: Lazy<Result<self::auth::ItemServiceClient, ClientError>> = Lazy::new(|| {
-    let addr: SocketAddr = get_ip()?;
-    Ok(auth::ItemServiceClientBuilder::new("auth")
-        .address(addr)
-        .build())
-});
+pub static CLIENT: LazyLock<Result<self::auth::ItemServiceClient, ClientError>> =
+    LazyLock::new(|| {
+        let addr: SocketAddr = get_ip()?;
+        Ok(auth::ItemServiceClientBuilder::new("auth")
+            .address(addr)
+            .build())
+    });
 
 pub fn get_client() -> Result<&'static self::auth::ItemServiceClient, &'static ClientError> {
     match CLIENT.as_ref() {
