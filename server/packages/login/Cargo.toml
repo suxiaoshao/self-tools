@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 # http
-tokio = { version = "1.39.1", features = ["macros", "rt-multi-thread"] }
+tokio = { version = "1.39.2", features = ["macros", "rt-multi-thread"] }
 axum = { version = "0.7.5", features = ["json"] }
 
 # error
@@ -16,7 +16,7 @@ thiserror = "1.0.63"
 
 # json
 serde = { version = "1.0.204", features = ["derive"] }
-serde_json = "1.0.120"
+serde_json = "1.0.122"
 
 # cors
 middleware = { path = "../../common/middleware", features = ["cors", "trace"] }
