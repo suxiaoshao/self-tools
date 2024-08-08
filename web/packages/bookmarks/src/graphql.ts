@@ -333,7 +333,10 @@ export type Tag = {
   createTime: Scalars['DateTime']['output'];
   id: Scalars['Int']['output'];
   name: Scalars['String']['output'];
+  site: NovelSite;
+  siteId: Scalars['String']['output'];
   updateTime: Scalars['DateTime']['output'];
+  url: Scalars['String']['output'];
 };
 
 export type TagMatch = {
@@ -589,6 +592,7 @@ export type GetNovelQuery = {
     novelStatus: NovelStatus;
     url: string;
     wordCount: any;
+    site: NovelSite;
     chapters: Array<{
       __typename?: 'Chapter';
       id: number;
@@ -602,6 +606,7 @@ export type GetNovelQuery = {
     author: { __typename?: 'Author'; avatar: string; description: string; id: number; name: string; site: NovelSite };
     lastChapter?: { __typename?: 'Chapter'; time: any } | null;
     firstChapter?: { __typename?: 'Chapter'; time: any } | null;
+    tags: Array<{ __typename?: 'Tag'; url: string; name: string; id: number }>;
   };
 };
 
@@ -658,6 +663,7 @@ export type GetNovelsQuery = {
     updateTime: any;
     novelStatus: NovelStatus;
     avatar: string;
+    site: NovelSite;
   }>;
 };
 
@@ -688,7 +694,15 @@ export type GetTagsQueryVariables = Exact<{ [key: string]: never }>;
 
 export type GetTagsQuery = {
   __typename?: 'QueryRoot';
-  queryTags: Array<{ __typename?: 'Tag'; name: string; id: number; createTime: any; updateTime: any }>;
+  queryTags: Array<{
+    __typename?: 'Tag';
+    name: string;
+    id: number;
+    site: NovelSite;
+    url: string;
+    createTime: any;
+    updateTime: any;
+  }>;
 };
 
 export type DeleteTagMutationVariables = Exact<{
@@ -1455,6 +1469,12 @@ export const GetNovelDocument = gql`
         time
       }
       wordCount
+      tags {
+        url
+        name
+        id
+      }
+      site
     }
   }
 `;
@@ -1617,6 +1637,7 @@ export const GetNovelsDocument = gql`
       description
       novelStatus
       avatar
+      site
     }
   }
 `;
@@ -1772,6 +1793,8 @@ export const GetTagsDocument = gql`
     queryTags {
       name
       id
+      site
+      url
       createTime
       updateTime
     }

@@ -165,7 +165,10 @@ type Tag {
   createTime: DateTime!
   id: Int!
   name: String!
+  site: NovelSite!
+  siteId: String!
   updateTime: DateTime!
+  url: String!
 }
 
 enum NovelSite {

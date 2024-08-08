@@ -1,7 +1,7 @@
-import { Box, IconButton } from '@mui/material';
+import { Box, IconButton, Link } from '@mui/material';
 import { GetTagsQuery, useDeleteTagMutation, useGetTagsLazyQuery } from '../../graphql';
 import { Search } from '@mui/icons-material';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import {
   CustomColumnDefArray,
   CustomTable,
@@ -13,6 +13,7 @@ import {
 import { format } from 'time';
 import CreateTagButton from './components/CreateTagButton';
 import { useI18n } from 'i18n';
+import { getLabelKeyBySite } from '@bookmarks/utils/novel_site';
 
 const rowModel = getCoreRowModel();
 
@@ -24,13 +25,33 @@ export default function Tags() {
   const onSearch = useCallback(() => {
     getTags();
   }, [getTags]);
+  useEffect(() => {
+    onSearch();
+  }, [onSearch]);
   const t = useI18n();
   const columns = useMemo<CustomColumnDefArray<Data>>(
     () => [
       {
         header: t('name'),
         id: 'name',
-        accessorKey: 'name',
+        accessorFn: ({ url, name }) => (
+          <Link
+            underline="hover"
+            onClick={() => {
+              window.open(url, '_blank');
+            }}
+            sx={{ cursor: 'pointer' }}
+          >
+            {name}
+          </Link>
+        ),
+        cell: (context) => context.getValue(),
+      },
+      {
+        header: t('novel_site'),
+        id: 'site',
+        accessorFn: ({ site }) => t(getLabelKeyBySite(site)),
+        cell: (context) => context.getValue(),
       },
       {
         header: t('create_time'),

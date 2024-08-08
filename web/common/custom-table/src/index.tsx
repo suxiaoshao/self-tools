@@ -107,7 +107,6 @@ export function CustomTable<D extends object>({
                 rowsPerPage={page.pageSize}
                 page={page.pageIndex - 1}
                 onPageChange={(_, p) => {
-                  console.log('onPageChange', p);
                   page.setPage(p + 1);
                 }}
                 ActionsComponent={TablePaginationActions}

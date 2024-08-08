@@ -12,6 +12,9 @@ pub trait TagFn {
     type Novel: NovelFn;
     type Chapter: ChapterFn;
     fn name(&self) -> &str;
-    fn url(&self) -> String;
+    fn url(&self) -> String {
+        Self::get_url_from_id(self.id())
+    }
     fn id(&self) -> &str;
+    fn get_url_from_id(id: &str) -> String;
 }

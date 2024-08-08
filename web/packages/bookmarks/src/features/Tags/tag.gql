@@ -8,6 +8,8 @@ query getTags {
   queryTags {
     name
     id
+    site
+    url
     createTime
     updateTime
   }

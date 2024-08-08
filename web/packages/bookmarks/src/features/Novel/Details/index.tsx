@@ -7,7 +7,7 @@
  */
 import { NovelStatus, useGetNovelQuery, useUpdateNovelByCrawlerMutation } from '@bookmarks/graphql';
 import { Explore, KeyboardArrowLeft, Refresh } from '@mui/icons-material';
-import { Avatar, Box, Card, CardContent, CardHeader, IconButton, Tooltip, Link, Skeleton } from '@mui/material';
+import { Avatar, Box, Card, CardContent, CardHeader, IconButton, Tooltip, Link, Skeleton, Chip } from '@mui/material';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 import { useI18n } from 'i18n';
 import CloudDownloadIcon from '@mui/icons-material/CloudDownload';
@@ -77,6 +77,28 @@ export default function NovelDetails() {
                   .otherwise(() => '-'),
               },
               {
+                label: t('tags'),
+                value: match(data.tags?.length)
+                  .with(P.nullish, () => '-')
+                  .with(0, () => '-')
+                  .otherwise(() => (
+                    <Box sx={{ gap: 1, display: 'flex' }}>
+                      {data.tags.map((tag) => (
+                        <Chip
+                          color="primary"
+                          variant="outlined"
+                          label={tag.name}
+                          onClick={() => {
+                            window.open(tag.url, '_blank');
+                          }}
+                          key={tag.id}
+                        />
+                      ))}
+                    </Box>
+                  )),
+                span: 3,
+              },
+              {
                 label: t('description'),
                 value: data.description,
                 span: 3,
@@ -86,7 +108,6 @@ export default function NovelDetails() {
         .otherwise(() => []),
     [data, t],
   );
-  console.log('items', items);
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', p: 2, gap: 2 }}>
       <Box sx={{ display: 'flex', width: '100%' }}>

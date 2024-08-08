@@ -4,8 +4,9 @@
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
  * @LastEditTime: 2024-03-27 05:32:19
  */
-use async_graphql::SimpleObject;
+use async_graphql::{ComplexObject, SimpleObject};
 use diesel::PgConnection;
+use novel_crawler::{JJTag, QDTag, TagFn};
 use time::OffsetDateTime;
 use tracing::{event, Level};
 
@@ -14,12 +15,25 @@ use crate::{
     model::{schema::custom_type::NovelSite, tag::TagModel},
 };
 
-#[derive(SimpleObject, Hash, Eq, PartialEq)]
+#[derive(SimpleObject, Eq, PartialEq)]
+#[graphql(complex)]
 pub(crate) struct Tag {
     pub(crate) id: i64,
     pub(crate) name: String,
+    pub(crate) site: NovelSite,
+    pub(crate) site_id: String,
     pub(crate) create_time: OffsetDateTime,
     pub(crate) update_time: OffsetDateTime,
+}
+
+#[ComplexObject]
+impl Tag {
+    async fn url(&self) -> String {
+        match self.site {
+            NovelSite::Jjwxc => JJTag::get_url_from_id(&self.site_id),
+            NovelSite::Qidian => QDTag::get_url_from_id(&self.site_id),
+        }
+    }
 }
 
 impl From<TagModel> for Tag {
@@ -27,6 +41,8 @@ impl From<TagModel> for Tag {
         Self {
             id: value.id,
             name: value.name,
+            site: value.site,
+            site_id: value.site_id,
             create_time: value.create_time,
             update_time: value.update_time,
         }

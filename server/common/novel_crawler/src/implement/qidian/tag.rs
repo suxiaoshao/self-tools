@@ -16,11 +16,11 @@ impl TagFn for QDTag {
         self.name.as_str()
     }
 
-    fn url(&self) -> String {
-        format!("https://www.qidian.com/all/tag{}/", self.name)
-    }
-
     fn id(&self) -> &str {
         &self.name
+    }
+
+    fn get_url_from_id(id: &str) -> String {
+        format!("https://www.qidian.com/all/tag{}/", id)
     }
 }

@@ -18,6 +18,7 @@ import { GetNovelsQuery, GetNovelsQueryVariables, useDeleteNovelMutation, useGet
 import CreateNovelButton from './Components/CreateNovelButton';
 import { convertFormToVariables } from './utils';
 import { getImageUrl } from '@bookmarks/utils/image';
+import { getLabelKeyBySite } from '@bookmarks/utils/novel_site';
 
 type Data = GetNovelsQuery['queryNovels'][0];
 
@@ -41,6 +42,12 @@ export default function NovelList() {
         cell: (context) => context.getValue(),
       },
       {
+        header: t('novel_site'),
+        id: 'site',
+        accessorFn: ({ site }) => t(getLabelKeyBySite(site)),
+        cell: (context) => context.getValue(),
+      },
+      {
         header: t('avatar'),
         id: 'avatar',
         accessorFn: ({ avatar }) => <Avatar src={getImageUrl(avatar)} />,
@@ -52,6 +59,9 @@ export default function NovelList() {
         accessorFn: ({ description }) => description ?? '-',
         cellProps: {
           align: 'center',
+          sx: {
+            maxWidth: 700,
+          },
         },
         cell: (context) => context.getValue(),
       },

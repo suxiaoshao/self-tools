@@ -17,11 +17,11 @@ impl TagFn for JJTag {
         &self.name
     }
 
-    fn url(&self) -> String {
-        format!("https://www.jjwxc.net/bookbase.php?bq={}", self.id)
-    }
-
     fn id(&self) -> &str {
         &self.id
+    }
+
+    fn get_url_from_id(id: &str) -> String {
+        format!("https://www.jjwxc.net/bookbase.php?bq={}", id)
     }
 }

@@ -8,6 +8,7 @@ query getNovels($collectionId: Int, $novelStatus: NovelStatus, $tagMatch: TagMat
     description
     novelStatus
     avatar
+    site
   }
 }
 
