@@ -15,21 +15,21 @@ use diesel::prelude::*;
 use time::OffsetDateTime;
 
 #[derive(Queryable)]
-pub struct AuthorModel {
-    pub id: i64,
-    pub name: String,
-    pub avatar: String,
-    pub site: NovelSite,
-    pub site_id: String,
-    pub description: String,
-    pub create_time: OffsetDateTime,
-    pub update_time: OffsetDateTime,
+pub(crate) struct AuthorModel {
+    pub(crate) id: i64,
+    pub(crate) name: String,
+    pub(crate) avatar: String,
+    pub(crate) site: NovelSite,
+    pub(crate) site_id: String,
+    pub(crate) description: String,
+    pub(crate) create_time: OffsetDateTime,
+    pub(crate) update_time: OffsetDateTime,
 }
 
 /// id 相关的操作
 impl AuthorModel {
     /// 创建作者
-    pub fn create(
+    pub(crate) fn create(
         name: &str,
         avatar: &str,
         site: NovelSite,
@@ -54,18 +54,18 @@ impl AuthorModel {
         Ok(new_author)
     }
     /// 是否存在
-    pub fn exists(id: i64, conn: &mut PgConnection) -> GraphqlResult<bool> {
+    pub(crate) fn exists(id: i64, conn: &mut PgConnection) -> GraphqlResult<bool> {
         let exists = diesel::select(diesel::dsl::exists(author::table.filter(author::id.eq(id))))
             .get_result(conn)?;
         Ok(exists)
     }
     /// 删除作者
-    pub fn delete(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
+    pub(crate) fn delete(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
         let deleted = diesel::delete(author::table.filter(author::id.eq(id))).get_result(conn)?;
         Ok(deleted)
     }
     /// 获取作者
-    pub fn get(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
+    pub(crate) fn get(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
         let author = author::table.filter(author::id.eq(id)).first(conn)?;
         Ok(author)
     }
@@ -73,12 +73,12 @@ impl AuthorModel {
 
 impl AuthorModel {
     /// 获取所有作者
-    pub fn get_list(conn: &mut PgConnection) -> GraphqlResult<Vec<Self>> {
+    pub(crate) fn get_list(conn: &mut PgConnection) -> GraphqlResult<Vec<Self>> {
         let authors = author::table.load(conn)?;
         Ok(authors)
     }
     /// 获取作者搜索列表
-    pub fn get_search_list(
+    pub(crate) fn get_search_list(
         search_name: String,
         conn: &mut PgConnection,
     ) -> GraphqlResult<Vec<Self>> {
@@ -91,7 +91,7 @@ impl AuthorModel {
 
 /// site_id 相关的操作
 impl AuthorModel {
-    pub fn exists_by_site_id(site_id: &str, conn: &mut PgConnection) -> GraphqlResult<bool> {
+    pub(crate) fn exists_by_site_id(site_id: &str, conn: &mut PgConnection) -> GraphqlResult<bool> {
         let exists = diesel::select(diesel::dsl::exists(
             author::table.filter(author::site_id.eq(site_id)),
         ))
@@ -102,28 +102,28 @@ impl AuthorModel {
 
 #[derive(Insertable)]
 #[diesel(table_name = author)]
-pub struct NewAuthor<'a> {
-    pub name: &'a str,
-    pub avatar: &'a str,
-    pub site: NovelSite,
-    pub site_id: &'a str,
-    pub description: &'a str,
-    pub create_time: OffsetDateTime,
-    pub update_time: OffsetDateTime,
+pub(crate) struct NewAuthor<'a> {
+    pub(crate) name: &'a str,
+    pub(crate) avatar: &'a str,
+    pub(crate) site: NovelSite,
+    pub(crate) site_id: &'a str,
+    pub(crate) description: &'a str,
+    pub(crate) create_time: OffsetDateTime,
+    pub(crate) update_time: OffsetDateTime,
 }
 
 #[derive(AsChangeset)]
 #[diesel(table_name = author)]
-pub struct UpdateAuthorModel<'a> {
-    pub id: i64,
-    pub name: Option<&'a str>,
-    pub avatar: Option<&'a str>,
-    pub description: Option<&'a str>,
-    pub update_time: OffsetDateTime,
+pub(crate) struct UpdateAuthorModel<'a> {
+    pub(crate) id: i64,
+    pub(crate) name: Option<&'a str>,
+    pub(crate) avatar: Option<&'a str>,
+    pub(crate) description: Option<&'a str>,
+    pub(crate) update_time: OffsetDateTime,
 }
 
 impl UpdateAuthorModel<'_> {
-    pub fn update(&self, conn: &mut PgConnection) -> GraphqlResult<AuthorModel> {
+    pub(crate) fn update(&self, conn: &mut PgConnection) -> GraphqlResult<AuthorModel> {
         let author = diesel::update(author::table.filter(author::id.eq(self.id)))
             .set(self)
             .get_result(conn)?;

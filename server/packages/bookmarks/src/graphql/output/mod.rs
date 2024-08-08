@@ -7,7 +7,8 @@
  */
 use async_graphql::Object;
 use novel_crawler::{
-    AuthorFn, ChapterFn, JJAuthor, JJChapter, JJNovel, NovelFn, QDAuthor, QDChapter, QDNovel,
+    AuthorFn, ChapterFn, JJAuthor, JJChapter, JJNovel, JJTag, NovelFn, QDAuthor, QDChapter,
+    QDNovel, QDTag, TagFn,
 };
 use time::OffsetDateTime;
 
@@ -17,7 +18,7 @@ use crate::{
 };
 
 #[derive(Clone, Eq, PartialEq, Debug)]
-pub enum DraftAuthorInfo {
+pub(crate) enum DraftAuthorInfo {
     Qidian(QDAuthor),
     Jjwxc(JJAuthor),
 }
@@ -75,7 +76,7 @@ impl DraftAuthorInfo {
 }
 
 impl DraftAuthorInfo {
-    pub async fn new(id: String, novel_site: NovelSite) -> GraphqlResult<Self> {
+    pub(crate) async fn new(id: String, novel_site: NovelSite) -> GraphqlResult<Self> {
         match novel_site {
             NovelSite::Qidian => Ok(DraftAuthorInfo::Qidian(
                 novel_crawler::QDAuthor::get_author_data(&id).await?,
@@ -88,7 +89,7 @@ impl DraftAuthorInfo {
 }
 
 #[derive(Clone, Eq, PartialEq, Debug)]
-pub enum DraftNovelInfo {
+pub(crate) enum DraftNovelInfo {
     Qidian(QDNovel),
     Jjwxc(JJNovel),
 }
@@ -161,10 +162,18 @@ impl DraftNovelInfo {
             DraftNovelInfo::Jjwxc(_) => NovelSite::Jjwxc,
         }
     }
+    async fn tags(&self) -> Vec<DraftTagInfo> {
+        match self {
+            DraftNovelInfo::Qidian(inner) => {
+                inner.tags().iter().map(DraftTagInfo::Qidian).collect()
+            }
+            DraftNovelInfo::Jjwxc(inner) => inner.tags().iter().map(DraftTagInfo::Jjwxc).collect(),
+        }
+    }
 }
 
 impl DraftNovelInfo {
-    pub async fn new(id: String, novel_site: NovelSite) -> GraphqlResult<Self> {
+    pub(crate) async fn new(id: String, novel_site: NovelSite) -> GraphqlResult<Self> {
         match novel_site {
             NovelSite::Qidian => Ok(DraftNovelInfo::Qidian(
                 novel_crawler::QDNovel::get_novel_data(&id).await?,
@@ -177,7 +186,7 @@ impl DraftNovelInfo {
 }
 
 #[derive(Clone, Eq, PartialEq, Debug)]
-pub enum DraftChapterInfo {
+pub(crate) enum DraftChapterInfo {
     Qidian(QDChapter),
     Jjwxc(JJChapter),
 }
@@ -224,6 +233,34 @@ impl DraftChapterInfo {
         match self {
             DraftChapterInfo::Qidian(_) => NovelSite::Qidian,
             DraftChapterInfo::Jjwxc(_) => NovelSite::Jjwxc,
+        }
+    }
+}
+
+#[derive(Clone, Eq, PartialEq, Debug)]
+pub(crate) enum DraftTagInfo<'a> {
+    Qidian(&'a QDTag),
+    Jjwxc(&'a JJTag),
+}
+
+#[Object]
+impl<'a> DraftTagInfo<'a> {
+    async fn url(&self) -> String {
+        match self {
+            DraftTagInfo::Qidian(inner) => inner.url(),
+            DraftTagInfo::Jjwxc(inner) => inner.url(),
+        }
+    }
+    async fn id(&self) -> String {
+        match self {
+            DraftTagInfo::Qidian(inner) => inner.id().to_owned(),
+            DraftTagInfo::Jjwxc(inner) => inner.id().to_owned(),
+        }
+    }
+    async fn name(&self) -> String {
+        match self {
+            DraftTagInfo::Qidian(inner) => inner.name().to_owned(),
+            DraftTagInfo::Jjwxc(inner) => inner.name().to_owned(),
         }
     }
 }

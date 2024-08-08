@@ -16,27 +16,27 @@ use time::OffsetDateTime;
 
 #[derive(Insertable)]
 #[diesel(table_name = novel)]
-pub struct NewNovel<'a> {
-    pub name: &'a str,
-    pub avatar: &'a str,
-    pub description: &'a str,
-    pub author_id: i64,
-    pub novel_status: NovelStatus,
-    pub site: NovelSite,
-    pub site_id: &'a str,
-    pub tags: Vec<i64>,
-    pub create_time: OffsetDateTime,
-    pub update_time: OffsetDateTime,
+pub(crate) struct NewNovel<'a> {
+    pub(crate) name: &'a str,
+    pub(crate) avatar: &'a str,
+    pub(crate) description: &'a str,
+    pub(crate) author_id: i64,
+    pub(crate) novel_status: NovelStatus,
+    pub(crate) site: NovelSite,
+    pub(crate) site_id: &'a str,
+    pub(crate) tags: Vec<i64>,
+    pub(crate) create_time: OffsetDateTime,
+    pub(crate) update_time: OffsetDateTime,
 }
 
 impl NewNovel<'_> {
-    pub fn create(&self, conn: &mut PgConnection) -> GraphqlResult<NovelModel> {
+    pub(crate) fn create(&self, conn: &mut PgConnection) -> GraphqlResult<NovelModel> {
         let new_novel = diesel::insert_into(novel::table)
             .values(self)
             .get_result(conn)?;
         Ok(new_novel)
     }
-    pub fn create_many(
+    pub(crate) fn create_many(
         data: &[NewNovel],
         conn: &mut PgConnection,
     ) -> GraphqlResult<Vec<NovelModel>> {
@@ -48,18 +48,18 @@ impl NewNovel<'_> {
 }
 
 #[derive(Queryable)]
-pub struct NovelModel {
-    pub id: i64,
-    pub name: String,
-    pub avatar: String,
-    pub description: String,
-    pub author_id: i64,
-    pub novel_status: NovelStatus,
-    pub site: NovelSite,
-    pub site_id: String,
-    pub tags: Vec<i64>,
-    pub create_time: OffsetDateTime,
-    pub update_time: OffsetDateTime,
+pub(crate) struct NovelModel {
+    pub(crate) id: i64,
+    pub(crate) name: String,
+    pub(crate) avatar: String,
+    pub(crate) description: String,
+    pub(crate) author_id: i64,
+    pub(crate) novel_status: NovelStatus,
+    pub(crate) site: NovelSite,
+    pub(crate) site_id: String,
+    pub(crate) tags: Vec<i64>,
+    pub(crate) create_time: OffsetDateTime,
+    pub(crate) update_time: OffsetDateTime,
 }
 
 impl<T: NovelFn> PartialEq<T> for NovelModel {
@@ -74,23 +74,23 @@ impl<T: NovelFn> PartialEq<T> for NovelModel {
 /// id 相关
 impl NovelModel {
     /// 删除小说
-    pub fn delete(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
+    pub(crate) fn delete(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
         let novel = diesel::delete(novel::table.filter(novel::id.eq(id))).get_result(conn)?;
         Ok(novel)
     }
     /// 查找小说
-    pub fn find_one(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
+    pub(crate) fn find_one(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
         let novel = novel::table.filter(novel::id.eq(id)).first::<Self>(conn)?;
         Ok(novel)
     }
     /// 判断是否存在
-    pub fn exists(id: i64, conn: &mut PgConnection) -> GraphqlResult<bool> {
+    pub(crate) fn exists(id: i64, conn: &mut PgConnection) -> GraphqlResult<bool> {
         let exists = diesel::select(diesel::dsl::exists(novel::table.filter(novel::id.eq(id))))
             .get_result(conn)?;
         Ok(exists)
     }
     /// 删除多个小说
-    pub fn delete_many(ids: &[i64], conn: &mut PgConnection) -> GraphqlResult<usize> {
+    pub(crate) fn delete_many(ids: &[i64], conn: &mut PgConnection) -> GraphqlResult<usize> {
         let deleted = diesel::delete(novel::table.filter(novel::id.eq_any(ids))).execute(conn)?;
         Ok(deleted)
     }
@@ -99,7 +99,7 @@ impl NovelModel {
 /// collection_id 相关
 impl NovelModel {
     /// 查询小说
-    pub fn query(
+    pub(crate) fn query(
         tag_match: Option<TagMatch>,
         novel_status: Option<NovelStatus>,
         conn: &mut PgConnection,
@@ -142,14 +142,20 @@ impl NovelModel {
 /// 作者相关
 impl NovelModel {
     /// 查询小说
-    pub fn query_by_author_id(author_id: i64, conn: &mut PgConnection) -> GraphqlResult<Vec<Self>> {
+    pub(crate) fn query_by_author_id(
+        author_id: i64,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<Vec<Self>> {
         let data = novel::table
             .filter(novel::author_id.eq(author_id))
             .load(conn)?;
         Ok(data)
     }
     /// 删除小说
-    pub fn delete_by_author_id(author_id: i64, conn: &mut PgConnection) -> GraphqlResult<usize> {
+    pub(crate) fn delete_by_author_id(
+        author_id: i64,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<usize> {
         let deleted =
             diesel::delete(novel::table.filter(novel::author_id.eq(author_id))).execute(conn)?;
         Ok(deleted)
@@ -176,23 +182,23 @@ mod test {
 
 #[derive(AsChangeset)]
 #[diesel(table_name = novel)]
-pub struct UpdateNovelModel<'a> {
-    pub id: i64,
-    pub name: Option<&'a str>,
-    pub avatar: Option<&'a str>,
-    pub description: Option<&'a str>,
-    pub novel_status: Option<NovelStatus>,
-    pub update_time: OffsetDateTime,
+pub(crate) struct UpdateNovelModel<'a> {
+    pub(crate) id: i64,
+    pub(crate) name: Option<&'a str>,
+    pub(crate) avatar: Option<&'a str>,
+    pub(crate) description: Option<&'a str>,
+    pub(crate) novel_status: Option<NovelStatus>,
+    pub(crate) update_time: OffsetDateTime,
 }
 
 impl UpdateNovelModel<'_> {
-    pub fn update(self, conn: &mut PgConnection) -> GraphqlResult<NovelModel> {
+    pub(crate) fn update(self, conn: &mut PgConnection) -> GraphqlResult<NovelModel> {
         let novel = diesel::update(novel::table.filter(novel::id.eq(self.id)))
             .set(self)
             .get_result(conn)?;
         Ok(novel)
     }
-    pub fn from_author<'a, T: NovelFn>(
+    pub(crate) fn from_author<'a, T: NovelFn>(
         novels: &'a [NovelModel],
         fetch_novels: &'a [T],
         author_id: i64,
@@ -253,7 +259,7 @@ impl UpdateNovelModel<'_> {
         (update_novels, new_novels, novel_ids)
     }
 
-    pub fn update_many<'a>(
+    pub(crate) fn update_many<'a>(
         data: &'a [UpdateNovelModel<'a>],
         conn: &mut PgConnection,
     ) -> GraphqlResult<()> {

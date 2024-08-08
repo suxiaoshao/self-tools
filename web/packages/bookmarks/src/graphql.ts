@@ -116,6 +116,14 @@ export type DraftNovelInfo = {
   name: Scalars['String']['output'];
   site: NovelSite;
   status: NovelStatus;
+  tags: Array<DraftTagInfo>;
+  url: Scalars['String']['output'];
+};
+
+export type DraftTagInfo = {
+  __typename?: 'DraftTagInfo';
+  id: Scalars['String']['output'];
+  name: Scalars['String']['output'];
   url: Scalars['String']['output'];
 };
 
@@ -165,6 +173,8 @@ export type MutationRootCreateNovelArgs = {
 
 export type MutationRootCreateTagArgs = {
   name: Scalars['String']['input'];
+  site: NovelSite;
+  siteId: Scalars['String']['input'];
 };
 
 export type MutationRootDeleteAuthorArgs = {
@@ -289,9 +299,7 @@ export type QueryRootQueryNovelsArgs = {
 export type SaveChapterInfo = {
   id: Scalars['String']['input'];
   name: Scalars['String']['input'];
-  novelId: Scalars['String']['input'];
   time: Scalars['DateTime']['input'];
-  url: Scalars['String']['input'];
   wordCount: Scalars['Int']['input'];
 };
 
@@ -302,7 +310,6 @@ export type SaveDraftAuthor = {
   name: Scalars['String']['input'];
   novels: Array<SaveNovelInfo>;
   site: NovelSite;
-  url: Scalars['String']['input'];
 };
 
 export type SaveNovelInfo = {
@@ -313,7 +320,12 @@ export type SaveNovelInfo = {
   name: Scalars['String']['input'];
   novelStatus: NovelStatus;
   site: NovelSite;
-  url: Scalars['String']['input'];
+  tags: Array<SaveTagInfo>;
+};
+
+export type SaveTagInfo = {
+  id: Scalars['String']['input'];
+  name: Scalars['String']['input'];
 };
 
 export type Tag = {
@@ -438,6 +450,7 @@ export type FetchAuthorQuery = {
         wordCount: number;
         site: NovelSite;
       }>;
+      tags: Array<{ __typename?: 'DraftTagInfo'; id: string; name: string; url: string }>;
     }>;
   };
 };
@@ -662,6 +675,8 @@ export type DeleteNovelMutation = { __typename?: 'MutationRoot'; deleteNovel: { 
 
 export type CreateTagMutationVariables = Exact<{
   name: Scalars['String']['input'];
+  site: NovelSite;
+  siteId: Scalars['String']['input'];
 }>;
 
 export type CreateTagMutation = {
@@ -981,6 +996,11 @@ export const FetchAuthorDocument = gql`
           time
           wordCount
           site
+        }
+        tags {
+          id
+          name
+          url
         }
       }
     }
@@ -1710,8 +1730,8 @@ export type DeleteNovelMutationHookResult = ReturnType<typeof useDeleteNovelMuta
 export type DeleteNovelMutationResult = Apollo.MutationResult<DeleteNovelMutation>;
 export type DeleteNovelMutationOptions = Apollo.BaseMutationOptions<DeleteNovelMutation, DeleteNovelMutationVariables>;
 export const CreateTagDocument = gql`
-  mutation createTag($name: String!) {
-    createTag(name: $name) {
+  mutation createTag($name: String!, $site: NovelSite!, $siteId: String!) {
+    createTag(name: $name, site: $site, siteId: $siteId) {
       name
       id
     }
@@ -1733,6 +1753,8 @@ export type CreateTagMutationFn = Apollo.MutationFunction<CreateTagMutation, Cre
  * const [createTagMutation, { data, loading, error }] = useCreateTagMutation({
  *   variables: {
  *      name: // value for 'name'
+ *      site: // value for 'site'
+ *      siteId: // value for 'siteId'
  *   },
  * });
  */

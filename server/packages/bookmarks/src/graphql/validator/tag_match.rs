@@ -3,7 +3,7 @@ use tracing::{event, Level};
 
 use crate::graphql::input::TagMatch;
 
-pub struct TagMatchValidator;
+pub(crate) struct TagMatchValidator;
 
 impl CustomValidator<TagMatch> for TagMatchValidator {
     fn check(&self, input: &TagMatch) -> Result<(), InputValueError<TagMatch>> {

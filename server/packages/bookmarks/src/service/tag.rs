@@ -11,15 +11,15 @@ use tracing::{event, Level};
 
 use crate::{
     errors::{GraphqlError, GraphqlResult},
-    model::tag::TagModel,
+    model::{schema::custom_type::NovelSite, tag::TagModel},
 };
 
 #[derive(SimpleObject, Hash, Eq, PartialEq)]
-pub struct Tag {
-    pub id: i64,
-    pub name: String,
-    pub create_time: OffsetDateTime,
-    pub update_time: OffsetDateTime,
+pub(crate) struct Tag {
+    pub(crate) id: i64,
+    pub(crate) name: String,
+    pub(crate) create_time: OffsetDateTime,
+    pub(crate) update_time: OffsetDateTime,
 }
 
 impl From<TagModel> for Tag {
@@ -36,12 +36,17 @@ impl From<TagModel> for Tag {
 /// id 相关
 impl Tag {
     /// 创建标签
-    pub fn create(name: &str, conn: &mut PgConnection) -> GraphqlResult<Self> {
-        let new_tag = TagModel::create(name, conn)?;
+    pub(crate) fn create(
+        name: &str,
+        site: NovelSite,
+        site_id: &str,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<Self> {
+        let new_tag = TagModel::create(name, site, site_id, conn)?;
         Ok(new_tag.into())
     }
     /// 删除标签
-    pub fn delete(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
+    pub(crate) fn delete(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
         // 标签不存在
         if !TagModel::exists(id, conn)? {
             event!(Level::ERROR, "标签不存在: {}", id);
@@ -51,7 +56,7 @@ impl Tag {
         Ok(deleted_tag.into())
     }
     /// 获取标签列表
-    pub fn get_by_ids(ids: &[i64], conn: &mut PgConnection) -> GraphqlResult<Vec<Self>> {
+    pub(crate) fn get_by_ids(ids: &[i64], conn: &mut PgConnection) -> GraphqlResult<Vec<Self>> {
         let tags = TagModel::get_by_ids(ids, conn)?;
         Ok(tags.into_iter().map(|x| x.into()).collect())
     }
@@ -60,7 +65,7 @@ impl Tag {
 /// collection_id 相关
 impl Tag {
     /// 获取标签列表
-    pub fn query(conn: &mut PgConnection) -> GraphqlResult<Vec<Self>> {
+    pub(crate) fn query(conn: &mut PgConnection) -> GraphqlResult<Vec<Self>> {
         // 获取标签列表
         let tags = TagModel::get_list(conn)?;
         Ok(tags.into_iter().map(|tag| tag.into()).collect())

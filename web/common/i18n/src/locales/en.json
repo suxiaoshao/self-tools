@@ -84,5 +84,6 @@
   "ongoing": "Ongoing",
   "novel_status": "Novel Status",
   "last_update_time": "Last Update Time",
-  "first_chapter_time": "First Chapter Time"
+  "first_chapter_time": "First Chapter Time",
+  "tag_site_id": "Site Tag Id"
 }

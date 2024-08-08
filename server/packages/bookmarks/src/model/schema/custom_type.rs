@@ -22,7 +22,7 @@ use diesel::{
 
 #[derive(Debug, FromSqlRow, AsExpression, QueryId, Enum, Copy, Clone, Eq, PartialEq)]
 #[diesel(sql_type = super::sql_types::NovelStatus)]
-pub enum NovelStatus {
+pub(crate) enum NovelStatus {
     Ongoing,
     Completed,
 }

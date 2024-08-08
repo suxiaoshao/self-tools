@@ -2,7 +2,7 @@ use crate::{JJAuthor, JJChapter, JJNovel, TagFn};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct JJTag {
-    pub(crate) id: u32,
+    pub(crate) id: String,
     pub(crate) name: String,
 }
 
@@ -13,8 +13,6 @@ impl TagFn for JJTag {
 
     type Chapter = JJChapter;
 
-    type Id = u32;
-
     fn name(&self) -> &str {
         &self.name
     }
@@ -23,7 +21,7 @@ impl TagFn for JJTag {
         format!("https://www.jjwxc.net/bookbase.php?bq={}", self.id)
     }
 
-    fn id(&self) -> &Self::Id {
+    fn id(&self) -> &str {
         &self.id
     }
 }

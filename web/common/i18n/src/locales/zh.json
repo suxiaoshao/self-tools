@@ -84,5 +84,6 @@
   "ongoing": "连载",
   "novel_status": "小说状态",
   "last_update_time": "最后更新时间",
-  "first_chapter_time": "首章时间"
+  "first_chapter_time": "首章时间",
+  "tag_site_id": "小说站点 id"
 }

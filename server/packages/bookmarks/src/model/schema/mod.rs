@@ -9,7 +9,7 @@
 pub mod custom_type;
 
 pub mod sql_types {
-    #[derive(diesel::sql_types::SqlType)]
+    #[derive(diesel::sql_types::SqlType, diesel::QueryId)]
     #[diesel(postgres_type(name = "novel_site"))]
     pub struct NovelSite;
 
@@ -87,10 +87,15 @@ diesel::table! {
 }
 
 diesel::table! {
+    use diesel::sql_types::*;
+    use super::sql_types::NovelSite;
+
     tag (id) {
         id -> Int8,
         #[max_length = 20]
         name -> Varchar,
+        site -> NovelSite,
+        site_id -> Text,
         create_time -> Timestamptz,
         update_time -> Timestamptz,
     }

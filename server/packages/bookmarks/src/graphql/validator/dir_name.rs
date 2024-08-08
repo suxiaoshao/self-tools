@@ -1,7 +1,7 @@
 use async_graphql::{CustomValidator, InputValueError};
 use tracing::{event, Level};
 
-pub struct DirNameValidator;
+pub(crate) struct DirNameValidator;
 
 impl CustomValidator<String> for DirNameValidator {
     fn check(&self, input: &String) -> Result<(), InputValueError<String>> {

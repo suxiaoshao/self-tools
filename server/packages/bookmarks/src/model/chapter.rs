@@ -22,24 +22,27 @@ use super::{
 use crate::errors::GraphqlResult;
 
 #[derive(Queryable)]
-pub struct ChapterModel {
-    pub id: i64,
-    pub title: String,
-    pub site: NovelSite,
-    pub site_id: String,
-    pub content: Option<String>,
-    pub time: OffsetDateTime,
-    pub word_count: i64,
-    pub novel_id: i64,
-    pub author_id: i64,
-    pub create_time: OffsetDateTime,
-    pub update_time: OffsetDateTime,
+pub(crate) struct ChapterModel {
+    pub(crate) id: i64,
+    pub(crate) title: String,
+    pub(crate) site: NovelSite,
+    pub(crate) site_id: String,
+    pub(crate) content: Option<String>,
+    pub(crate) time: OffsetDateTime,
+    pub(crate) word_count: i64,
+    pub(crate) novel_id: i64,
+    pub(crate) author_id: i64,
+    pub(crate) create_time: OffsetDateTime,
+    pub(crate) update_time: OffsetDateTime,
 }
 
 /// 小说章节
 impl ChapterModel {
     /// 获取小说章节列表
-    pub fn get_by_novel_id(novel_id: i64, conn: &mut PgConnection) -> GraphqlResult<Vec<Self>> {
+    pub(crate) fn get_by_novel_id(
+        novel_id: i64,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<Vec<Self>> {
         let chapters = chapter::table
             .filter(chapter::novel_id.eq(novel_id))
             .order(chapter::time.asc())
@@ -47,31 +50,40 @@ impl ChapterModel {
         Ok(chapters)
     }
     /// 根据 author_id 删除章节
-    pub fn delete_by_author_id(author_id: i64, conn: &mut PgConnection) -> GraphqlResult<usize> {
+    pub(crate) fn delete_by_author_id(
+        author_id: i64,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<usize> {
         let count = diesel::delete(chapter::table.filter(chapter::author_id.eq(author_id)))
             .execute(conn)?;
         Ok(count)
     }
     /// 根据 novel_id 删除章节
-    pub fn delete_by_novel_id(novel_id: i64, conn: &mut PgConnection) -> GraphqlResult<usize> {
+    pub(crate) fn delete_by_novel_id(
+        novel_id: i64,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<usize> {
         let count =
             diesel::delete(chapter::table.filter(chapter::novel_id.eq(novel_id))).execute(conn)?;
         Ok(count)
     }
     /// ids 删除章节
-    pub fn delete_by_ids(ids: &[i64], conn: &mut PgConnection) -> GraphqlResult<usize> {
+    pub(crate) fn delete_by_ids(ids: &[i64], conn: &mut PgConnection) -> GraphqlResult<usize> {
         let count = diesel::delete(chapter::table.filter(chapter::id.eq_any(ids))).execute(conn)?;
         Ok(count)
     }
     /// 获取 author_id 的章节
-    pub fn get_by_author_id(author_id: i64, conn: &mut PgConnection) -> GraphqlResult<Vec<Self>> {
+    pub(crate) fn get_by_author_id(
+        author_id: i64,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<Vec<Self>> {
         let chapters = chapter::table
             .filter(chapter::author_id.eq(author_id))
             .load::<Self>(conn)?;
         Ok(chapters)
     }
     /// 获取某个 novel 下的字数
-    pub fn get_word_count_by_novel_id(
+    pub(crate) fn get_word_count_by_novel_id(
         novel_id: i64,
         conn: &mut PgConnection,
     ) -> GraphqlResult<bigdecimal::BigDecimal> {
@@ -83,7 +95,7 @@ impl ChapterModel {
         Ok(word_count)
     }
     /// 获取某个 novel 下的最新章节
-    pub fn get_last_chapter_by_novel_id(
+    pub(crate) fn get_last_chapter_by_novel_id(
         novel_id: i64,
         conn: &mut PgConnection,
     ) -> GraphqlResult<Option<Self>> {
@@ -95,7 +107,7 @@ impl ChapterModel {
         Ok(chapter)
     }
     /// 获取某个 novel 下的最早章节
-    pub fn get_first_chapter_by_novel_id(
+    pub(crate) fn get_first_chapter_by_novel_id(
         novel_id: i64,
         conn: &mut PgConnection,
     ) -> GraphqlResult<Option<Self>> {
@@ -110,22 +122,22 @@ impl ChapterModel {
 
 #[derive(Insertable)]
 #[diesel(table_name = chapter)]
-pub struct NewChapter<'a> {
-    pub title: &'a str,
-    pub site: NovelSite,
-    pub site_id: &'a str,
-    pub content: Option<&'a str>,
-    pub time: OffsetDateTime,
-    pub word_count: i64,
-    pub novel_id: i64,
-    pub author_id: i64,
-    pub create_time: OffsetDateTime,
-    pub update_time: OffsetDateTime,
+pub(crate) struct NewChapter<'a> {
+    pub(crate) title: &'a str,
+    pub(crate) site: NovelSite,
+    pub(crate) site_id: &'a str,
+    pub(crate) content: Option<&'a str>,
+    pub(crate) time: OffsetDateTime,
+    pub(crate) word_count: i64,
+    pub(crate) novel_id: i64,
+    pub(crate) author_id: i64,
+    pub(crate) create_time: OffsetDateTime,
+    pub(crate) update_time: OffsetDateTime,
 }
 
 impl NewChapter<'_> {
     /// 创建多个章节
-    pub fn create_many(
+    pub(crate) fn create_many(
         data: &[NewChapter],
         conn: &mut PgConnection,
     ) -> GraphqlResult<Vec<ChapterModel>> {
@@ -138,12 +150,12 @@ impl NewChapter<'_> {
 
 #[derive(AsChangeset, Identifiable)]
 #[diesel(table_name = chapter)]
-pub struct UpdateChapterModel<'a> {
-    pub id: i64,
-    pub title: &'a str,
-    pub time: OffsetDateTime,
-    pub word_count: i64,
-    pub update_time: OffsetDateTime,
+pub(crate) struct UpdateChapterModel<'a> {
+    pub(crate) id: i64,
+    pub(crate) title: &'a str,
+    pub(crate) time: OffsetDateTime,
+    pub(crate) word_count: i64,
+    pub(crate) update_time: OffsetDateTime,
 }
 
 impl<T: ChapterFn> PartialEq<T> for ChapterModel {
@@ -157,7 +169,7 @@ impl<T: ChapterFn> PartialEq<T> for ChapterModel {
 
 impl UpdateChapterModel<'_> {
     /// 更新章节
-    pub fn update_many<'a>(
+    pub(crate) fn update_many<'a>(
         data: &'a [UpdateChapterModel<'a>],
         conn: &mut PgConnection,
     ) -> GraphqlResult<()> {
@@ -226,7 +238,7 @@ impl UpdateChapterModel<'_> {
         Ok(())
     }
     /// 根据 novel 获取待更新的章节
-    pub fn from_novel<'a, T: ChapterFn>(
+    pub(crate) fn from_novel<'a, T: ChapterFn>(
         chapters: &'a [ChapterModel],
         fetch_chapters: &'a [T],
         novel_id: i64,
@@ -282,7 +294,7 @@ impl UpdateChapterModel<'_> {
         (update_chapters, new_chapters, delete_chapters)
     }
     /// 根据 author 获取待更新的章节
-    pub fn from_author<'a, T: ChapterFn>(
+    pub(crate) fn from_author<'a, T: ChapterFn>(
         chapters: &'a [ChapterModel],
         fetch_chapters: &'a [T],
         new_novels: &'a [NovelModel],

@@ -23,7 +23,7 @@ use crate::{
     },
 };
 
-pub struct MutationRoot;
+pub(crate) struct MutationRoot;
 
 #[Object]
 impl MutationRoot {
@@ -95,7 +95,13 @@ impl MutationRoot {
     }
     /// 创建标签
     #[graphql(guard = "AuthGuard")]
-    async fn create_tag(&self, context: &Context<'_>, name: String) -> GraphqlResult<Tag> {
+    async fn create_tag(
+        &self,
+        context: &Context<'_>,
+        name: String,
+        site: NovelSite,
+        site_id: String,
+    ) -> GraphqlResult<Tag> {
         let conn = &mut context
             .data::<PgPool>()
             .map_err(|_| {
@@ -103,7 +109,7 @@ impl MutationRoot {
                 GraphqlError::NotGraphqlContextData("PgPool")
             })?
             .get()?;
-        let new_tag = Tag::create(&name, conn)?;
+        let new_tag = Tag::create(&name, site, &site_id, conn)?;
         Ok(new_tag)
     }
     /// 删除标签

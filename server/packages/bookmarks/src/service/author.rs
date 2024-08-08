@@ -26,15 +26,15 @@ use super::novel::Novel;
 
 #[derive(SimpleObject)]
 #[graphql(complex)]
-pub struct Author {
-    pub id: i64,
-    pub name: String,
-    pub avatar: String,
-    pub site: NovelSite,
-    pub site_id: String,
-    pub description: String,
-    pub create_time: OffsetDateTime,
-    pub update_time: OffsetDateTime,
+pub(crate) struct Author {
+    pub(crate) id: i64,
+    pub(crate) name: String,
+    pub(crate) avatar: String,
+    pub(crate) site: NovelSite,
+    pub(crate) site_id: String,
+    pub(crate) description: String,
+    pub(crate) create_time: OffsetDateTime,
+    pub(crate) update_time: OffsetDateTime,
 }
 
 #[ComplexObject]
@@ -101,7 +101,7 @@ impl<'a, T: AuthorFn> From<(&'a Author, &'a T)> for UpdateAuthorModel<'a> {
 
 impl Author {
     /// 创建作者
-    pub fn create(
+    pub(crate) fn create(
         name: &str,
         avatar: &str,
         description: &str,
@@ -113,7 +113,7 @@ impl Author {
         Ok(new_author.into())
     }
     /// 删除作者
-    pub fn delete(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
+    pub(crate) fn delete(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
         // 作者不存在
         if !AuthorModel::exists(id, conn)? {
             event!(Level::WARN, "作者不存在: {}", id);
@@ -127,7 +127,10 @@ impl Author {
         })
     }
     /// 获取作者列表
-    pub fn query(search_name: Option<String>, conn: &mut PgConnection) -> GraphqlResult<Vec<Self>> {
+    pub(crate) fn query(
+        search_name: Option<String>,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<Vec<Self>> {
         let authors = match search_name {
             Some(search_name) => AuthorModel::get_search_list(search_name, conn)?,
             None => AuthorModel::get_list(conn)?,
@@ -135,7 +138,7 @@ impl Author {
         Ok(authors.into_iter().map(|x| x.into()).collect())
     }
     /// 获取作者
-    pub fn get(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
+    pub(crate) fn get(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
         // 作者不存在
         if !AuthorModel::exists(id, conn)? {
             event!(Level::WARN, "作者不存在: {}", id);
@@ -145,7 +148,7 @@ impl Author {
         Ok(author.into())
     }
     /// update by crawler
-    pub async fn update_by_crawler<T: novel_crawler::AuthorFn>(
+    pub(crate) async fn update_by_crawler<T: novel_crawler::AuthorFn>(
         &self,
         conn: &mut PgConnection,
     ) -> GraphqlResult<Self> {

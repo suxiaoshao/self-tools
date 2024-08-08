@@ -53,6 +53,11 @@ query fetchAuthor($id: String!, $novelSite: NovelSite!) {
         wordCount
         site
       }
+      tags {
+        id
+        name
+        url
+      }
     }
   }
 }

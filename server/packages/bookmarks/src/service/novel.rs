@@ -23,20 +23,20 @@ use super::{author::Author, tag::Tag};
 
 #[derive(SimpleObject)]
 #[graphql(complex)]
-pub struct Novel {
-    pub id: i64,
-    pub name: String,
-    pub avatar: String,
-    pub description: String,
+pub(crate) struct Novel {
+    pub(crate) id: i64,
+    pub(crate) name: String,
+    pub(crate) avatar: String,
+    pub(crate) description: String,
     #[graphql(skip)]
-    pub author_id: i64,
-    pub novel_status: NovelStatus,
-    pub site: NovelSite,
-    pub site_id: String,
+    pub(crate) author_id: i64,
+    pub(crate) novel_status: NovelStatus,
+    pub(crate) site: NovelSite,
+    pub(crate) site_id: String,
     #[graphql(skip)]
-    pub tags: Vec<i64>,
-    pub create_time: OffsetDateTime,
-    pub update_time: OffsetDateTime,
+    pub(crate) tags: Vec<i64>,
+    pub(crate) create_time: OffsetDateTime,
+    pub(crate) update_time: OffsetDateTime,
 }
 
 #[ComplexObject]
@@ -171,7 +171,7 @@ impl<'a, T: NovelFn> From<(&'a Novel, &'a T)> for UpdateNovelModel<'a> {
 
 impl Novel {
     /// 删除小说
-    pub fn delete(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
+    pub(crate) fn delete(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
         if !NovelModel::exists(id, conn)? {
             event!(Level::WARN, "小说不存在: {}", id);
             return Err(GraphqlError::NotFound("小说", id));
@@ -184,7 +184,7 @@ impl Novel {
         Ok(novel)
     }
     /// 获取小说
-    pub fn get(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
+    pub(crate) fn get(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
         if !NovelModel::exists(id, conn)? {
             event!(Level::WARN, "小说不存在: {}", id);
             return Err(GraphqlError::NotFound("小说", id));
@@ -193,7 +193,7 @@ impl Novel {
         Ok(novel.into())
     }
     /// update by crawler
-    pub async fn update_by_crawler<T: novel_crawler::NovelFn>(
+    pub(crate) async fn update_by_crawler<T: novel_crawler::NovelFn>(
         &self,
         conn: &mut PgConnection,
     ) -> GraphqlResult<Self> {
@@ -228,7 +228,7 @@ impl Novel {
 /// collection_id 相关
 impl Novel {
     /// 选择小说
-    pub fn query(
+    pub(crate) fn query(
         collection_id: Option<i64>,
         tag_match: Option<TagMatch>,
         novel_status: Option<NovelStatus>,
@@ -255,7 +255,7 @@ impl Novel {
 }
 
 #[derive(InputObject)]
-pub struct CreateNovelInput {
+pub(crate) struct CreateNovelInput {
     name: String,
     avatar: String,
     description: String,
@@ -267,7 +267,7 @@ pub struct CreateNovelInput {
 }
 
 impl CreateNovelInput {
-    pub fn create(self, conn: &mut PgConnection) -> GraphqlResult<Novel> {
+    pub(crate) fn create(self, conn: &mut PgConnection) -> GraphqlResult<Novel> {
         // 作者不存在
         if !AuthorModel::exists(self.author_id, conn)? {
             event!(Level::WARN, "作者不存在: {}", self.author_id);

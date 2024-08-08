@@ -1,5 +1,5 @@
-mutation createTag($name: String!) {
-  createTag(name: $name) {
+mutation createTag($name: String!, $site: NovelSite!, $siteId: String!) {
+  createTag(name: $name, site: $site, siteId: $siteId) {
     name
     id
   }

@@ -24,7 +24,7 @@ use super::{
     validator::TagMatchValidator,
 };
 
-pub struct QueryRoot;
+pub(crate) struct QueryRoot;
 
 #[Object]
 impl QueryRoot {

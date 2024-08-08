@@ -33,17 +33,21 @@ create table author
     name        text        not null,
     avatar      text        not null,
     site        novel_site  not null,
-    site_id     text        not null unique,
+    site_id     text        not null,
     description text        not null,
     create_time timestamptz not null,
-    update_time timestamptz not null
+    update_time timestamptz not null,
+    unique (site, site_id)
 );
 create table tag
 (
     id          bigserial primary key,
     name        varchar(20) not null,
+    site        novel_site  not null,
+    site_id     text        not null,
     create_time timestamptz not null,
-    update_time timestamptz not null
+    update_time timestamptz not null,
+    unique (site, site_id)
 );
 create table chapter
 (
@@ -58,5 +62,5 @@ create table chapter
     author_id   bigint       not null,
     create_time timestamptz  not null,
     update_time timestamptz  not null,
-    unique (novel_id, site_id)
+    unique (site, novel_id, site_id)
 );

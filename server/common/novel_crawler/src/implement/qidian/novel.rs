@@ -16,16 +16,12 @@ use crate::{
 
 use nom::{
     bytes::{complete::tag, streaming::take_until},
-    character::complete,
-    combinator::{all_consuming, eof, opt},
+    combinator::{all_consuming, eof},
     sequence::tuple,
     IResult,
 };
 
-use super::{
-    chapter::QDChapter,
-    tag::{QDTag, QDTagId},
-};
+use super::{chapter::QDChapter, tag::QDTag};
 
 static SELECTOR_NOVEL_NAME: LazyLock<Selector> =
     LazyLock::new(|| Selector::parse("h1.header-back-title").unwrap());
@@ -40,7 +36,7 @@ static SELECTOR_AUTHOR: LazyLock<Selector> =
 static SELECTOR_STATUS: LazyLock<Selector> =
     LazyLock::new(|| Selector::parse("head > meta[property=\"og:novel:status\"]").unwrap());
 static SELECTOR_TAGS: LazyLock<Selector> =
-    LazyLock::new(|| Selector::parse("a.detail__header-detail__category").unwrap());
+    LazyLock::new(|| Selector::parse("div.search-tags > a").unwrap());
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct QDNovel {
@@ -250,31 +246,8 @@ fn parse_tags(html: &Html) -> NovelResult<Vec<QDTag>> {
 }
 
 fn map_tag(element_ref: ElementRef) -> NovelResult<QDTag> {
-    let href = element_ref
-        .value()
-        .attr("href")
-        .ok_or(NovelError::ParseError)?;
-
-    let (_, id) = tag_id(href)?;
     let name = element_ref.inner_html();
-    Ok(QDTag { id, name })
-}
-
-fn tag_id(input: &str) -> IResult<&str, QDTagId> {
-    let (input, (_, id, _, sub_id, _)) = all_consuming(tuple((
-        tag("//m.qidian.com/category/catid"),
-        complete::u32,
-        tag("/"),
-        opt(tuple((tag("subcatid"), complete::u32, tag("-male/")))),
-        eof,
-    )))(input)?;
-    Ok((
-        input,
-        QDTagId {
-            id,
-            sub_id: sub_id.map(|(_, id, _)| id),
-        },
-    ))
+    Ok(QDTag { name })
 }
 
 #[cfg(test)]
@@ -283,7 +256,7 @@ mod test {
 
     #[tokio::test]
     async fn qd_novel_test() -> anyhow::Result<()> {
-        let novel_id = "1029006481";
+        let novel_id = "1040796068";
         let novel = super::QDNovel::get_novel_data(novel_id).await?;
         println!("{novel:#?}");
         Ok(())
@@ -297,28 +270,6 @@ mod test {
         let input = "//m.qidian.com/author/102020/";
         let (_, data) = super::parse_author_id(input)?;
         assert_eq!(data, "102020");
-        Ok(())
-    }
-    #[test]
-    fn tag_id_test() -> anyhow::Result<()> {
-        let input = "//m.qidian.com/category/catid101010/subcatid1323-male/";
-        let (_, data) = super::tag_id(input)?;
-        assert_eq!(
-            data,
-            super::QDTagId {
-                id: 101010,
-                sub_id: Some(1323)
-            }
-        );
-        let input = "//m.qidian.com/category/catid102020/";
-        let (_, data) = super::tag_id(input)?;
-        assert_eq!(
-            data,
-            super::QDTagId {
-                id: 102020,
-                sub_id: None
-            }
-        );
         Ok(())
     }
 }

@@ -20,20 +20,20 @@ use super::novel::Novel;
 
 #[derive(SimpleObject)]
 #[graphql(complex)]
-pub struct Chapter {
-    pub id: i64,
-    pub title: String,
-    pub site: NovelSite,
-    pub site_id: String,
-    pub content: Option<String>,
-    pub time: OffsetDateTime,
-    pub word_count: i64,
-    pub novel_id: i64,
+pub(crate) struct Chapter {
+    pub(crate) id: i64,
+    pub(crate) title: String,
+    pub(crate) site: NovelSite,
+    pub(crate) site_id: String,
+    pub(crate) content: Option<String>,
+    pub(crate) time: OffsetDateTime,
+    pub(crate) word_count: i64,
+    pub(crate) novel_id: i64,
     #[graphql(skip)]
-    pub author_id: i64,
-    pub create_time: OffsetDateTime,
-    pub update_time: OffsetDateTime,
-    pub site_novel_id: String,
+    pub(crate) author_id: i64,
+    pub(crate) create_time: OffsetDateTime,
+    pub(crate) update_time: OffsetDateTime,
+    pub(crate) site_novel_id: String,
 }
 
 #[ComplexObject]
@@ -58,7 +58,7 @@ impl Chapter {
 }
 
 impl Chapter {
-    pub fn from(value: crate::model::chapter::ChapterModel, site_novel_id: String) -> Self {
+    pub(crate) fn from(value: crate::model::chapter::ChapterModel, site_novel_id: String) -> Self {
         Self {
             id: value.id,
             title: value.title,
@@ -78,7 +78,7 @@ impl Chapter {
 
 /// 小说相关
 impl Chapter {
-    pub fn get_by_novel_id(
+    pub(crate) fn get_by_novel_id(
         novel_id: i64,
         site_novel_id: &str,
         conn: &mut PgConnection,

@@ -5,6 +5,12 @@ schema {
   mutation: MutationRoot
 }
 
+"""
+Indicates that an Input Object is a OneOf Input Object (and thus requires
+exactly one of its field be provided)
+"""
+directive @oneOf on INPUT_OBJECT
+
 type Author {
   avatar: String!
   createTime: DateTime!
@@ -77,6 +83,13 @@ type DraftNovelInfo {
   name: String!
   site: NovelSite!
   status: NovelStatus!
+  tags: [DraftTagInfo!]!
+  url: String!
+}
+
+type DraftTagInfo {
+  id: String!
+  name: String!
   url: String!
 }
 
@@ -88,7 +101,7 @@ type MutationRoot {
   "创建小说"
   createNovel(data: CreateNovelInput!): Novel!
   "创建标签"
-  createTag(name: String!): Tag!
+  createTag(name: String!, site: NovelSite!, siteId: String!): Tag!
   "删除作者"
   deleteAuthor(id: Int!): Author!
   "删除目录"
@@ -191,9 +204,7 @@ input CreateNovelInput {
 input SaveChapterInfo {
   id: String!
   name: String!
-  novelId: String!
   time: DateTime!
-  url: String!
   wordCount: Int!
 }
 
@@ -204,7 +215,6 @@ input SaveDraftAuthor {
   name: String!
   novels: [SaveNovelInfo!]!
   site: NovelSite!
-  url: String!
 }
 
 input SaveNovelInfo {
@@ -215,7 +225,12 @@ input SaveNovelInfo {
   name: String!
   novelStatus: NovelStatus!
   site: NovelSite!
-  url: String!
+  tags: [SaveTagInfo!]!
+}
+
+input SaveTagInfo {
+  id: String!
+  name: String!
 }
 
 input TagMatch {

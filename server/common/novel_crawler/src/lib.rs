@@ -15,7 +15,7 @@ mod tag;
 pub use author::AuthorFn;
 pub use chapter::{ChapterDetail, ChapterFn};
 pub use errors::NovelError;
-pub use implement::{JJAuthor, JJChapter, JJNovel, QDAuthor, QDChapter, QDNovel};
+pub use implement::{JJAuthor, JJChapter, JJNovel, JJTag, QDAuthor, QDChapter, QDNovel, QDTag};
 pub use novel::{NovelFn, NovelStatus};
 pub use tag::TagFn;
 

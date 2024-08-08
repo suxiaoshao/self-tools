@@ -2,10 +2,9 @@ use std::sync::LazyLock;
 
 use nom::{
     bytes::{
-        complete::{tag, take_while},
+        complete::{is_not, tag, take_while},
         streaming::take_until,
     },
-    character::complete::{self},
     combinator::{all_consuming, eof},
     sequence::tuple,
     IResult,
@@ -47,12 +46,8 @@ static SELECTOR_AUTHOR: LazyLock<Selector> = LazyLock::new(|| {
 
 static SELECTOR_STATUS: LazyLock<Selector> =
     LazyLock::new(|| Selector::parse("span[itemprop='updataStatus']").unwrap());
-static SELECTOR_TAGS: LazyLock<Selector> = LazyLock::new(|| {
-    Selector::parse(
-        "body > table:nth-child(30) > tbody > tr > td:nth-child(1) > div:nth-child(3) > span > a",
-    )
-    .unwrap()
-});
+static SELECTOR_TAGS: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("div.smallreadbody > span > a").unwrap());
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct JJNovel {
     id: String,
@@ -253,13 +248,13 @@ fn map_tag(element_ref: ElementRef) -> NovelResult<JJTag> {
     Ok(JJTag { id, name })
 }
 
-fn tag_id(input: &str) -> IResult<&str, u32> {
+fn tag_id(input: &str) -> IResult<&str, String> {
     let (input, (_, data, _)) = all_consuming(tuple((
         tag("//www.jjwxc.net/bookbase.php?bq="),
-        complete::u32,
+        is_not("&"),
         eof,
     )))(input)?;
-    Ok((input, data))
+    Ok((input, data.to_string()))
 }
 
 #[cfg(test)]
@@ -293,7 +288,7 @@ mod test {
         let novel_id = "6357210";
         let novel = super::JJNovel::get_novel_data(novel_id).await?;
         println!("{novel:#?}");
-        let novel_id = "1972045";
+        let novel_id = "4177492";
         let novel = super::JJNovel::get_novel_data(novel_id).await?;
         println!("{novel:#?}");
         Ok(())
@@ -302,10 +297,10 @@ mod test {
     fn tag_id_test() -> anyhow::Result<()> {
         let input = "//www.jjwxc.net/bookbase.php?bq=1";
         let (_, data) = super::tag_id(input)?;
-        assert_eq!(data, 1);
+        assert_eq!(data, "1");
         let input = "//www.jjwxc.net/bookbase.php?bq=2";
         let (_, data) = super::tag_id(input)?;
-        assert_eq!(data, 2);
+        assert_eq!(data, "2");
         Ok(())
     }
 }

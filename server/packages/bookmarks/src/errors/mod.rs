@@ -5,7 +5,7 @@ use std::{env::VarError, sync::Arc};
 use thrift::auth::ItemServiceCheckException;
 
 #[derive(Debug)]
-pub enum GraphqlError {
+pub(crate) enum GraphqlError {
     /// 数据库连接池
     R2d2(String),
     /// 数据库操作错误
@@ -64,7 +64,7 @@ impl IntoResponse for GraphqlError {
 }
 
 impl GraphqlError {
-    pub fn message(&self) -> String {
+    pub(crate) fn message(&self) -> String {
         match self {
             GraphqlError::R2d2(_) => "数据库连接错误".to_string(),
             GraphqlError::Diesel(data) => format!("数据库错误:{data}"),
@@ -107,7 +107,7 @@ impl GraphqlError {
             GraphqlError::NovelTimeParseError(tag) => format!("小说时间解析错误:{tag}"),
         }
     }
-    pub fn code(&self) -> &str {
+    pub(crate) fn code(&self) -> &str {
         match self {
             GraphqlError::R2d2(_) => "FailedPrecondition",
             GraphqlError::Diesel(_) => "Internal",
@@ -239,7 +239,7 @@ impl From<VarError> for GraphqlError {
     }
 }
 
-pub type GraphqlResult<T> = Result<T, GraphqlError>;
+pub(crate) type GraphqlResult<T> = Result<T, GraphqlError>;
 
 impl From<GraphqlError> for async_graphql::Error {
     fn from(value: GraphqlError) -> async_graphql::Error {

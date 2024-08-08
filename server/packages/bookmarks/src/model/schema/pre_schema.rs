@@ -79,10 +79,15 @@ diesel::table! {
 }
 
 diesel::table! {
+    use diesel::sql_types::*;
+    use super::sql_types::NovelSite;
+
     tag (id) {
         id -> Int8,
         #[max_length = 20]
         name -> Varchar,
+        site -> NovelSite,
+        site_id -> Text,
         create_time -> Timestamptz,
         update_time -> Timestamptz,
     }
