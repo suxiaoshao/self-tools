@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 
 use crate::model::chapter::{ChapterModel, NewChapter, UpdateChapterModel};
+use crate::model::collection_novel::CollectionNovelModel;
 use crate::model::novel::UpdateNovelModel;
 use crate::model::{collection::CollectionModel, schema::custom_type::NovelSite, tag::TagModel};
 use crate::model::{
@@ -179,6 +180,7 @@ impl Novel {
         let novel = conn.build_transaction().run::<_, GraphqlError, _>(|conn| {
             let novel = NovelModel::delete(id, conn)?;
             ChapterModel::delete_by_novel_id(id, conn)?;
+            CollectionNovelModel::delete_by_novel_id(id, conn)?;
             Ok(novel.into())
         })?;
         Ok(novel)
@@ -251,6 +253,54 @@ impl Novel {
             .collect();
         // todo!("collection_id 相关");
         Ok(data)
+    }
+    /// 添加集合
+    pub(crate) fn add_collection(
+        collection_id: i64,
+        novel_id: i64,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<Novel> {
+        if !CollectionModel::exists(collection_id, conn)? {
+            event!(Level::WARN, "目录不存在: {}", collection_id);
+            return Err(GraphqlError::NotFound("目录", collection_id));
+        }
+        if !NovelModel::exists(novel_id, conn)? {
+            event!(Level::WARN, "小说不存在: {}", novel_id);
+            return Err(GraphqlError::NotFound("小说", novel_id));
+        }
+        if CollectionNovelModel::exists(collection_id, novel_id, conn)? {
+            event!(Level::WARN, "小说集合关系存在: {}", novel_id);
+            return Err(GraphqlError::AlreadyExists(format!(
+                "{collection_id}/{novel_id}"
+            )));
+        }
+        CollectionNovelModel::save(collection_id, novel_id, conn)?;
+        let novel = NovelModel::find_one(novel_id, conn)?;
+        Ok(novel.into())
+    }
+    /// 删除
+    pub(crate) fn delete_collection(
+        collection_id: i64,
+        novel_id: i64,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<Novel> {
+        if !CollectionModel::exists(collection_id, conn)? {
+            event!(Level::WARN, "目录不存在: {}", collection_id);
+            return Err(GraphqlError::NotFound("目录", collection_id));
+        }
+        if !NovelModel::exists(novel_id, conn)? {
+            event!(Level::WARN, "小说不存在: {}", novel_id);
+            return Err(GraphqlError::NotFound("小说", novel_id));
+        }
+        if CollectionNovelModel::exists(collection_id, novel_id, conn)? {
+            event!(Level::WARN, "小说集合关系存在: {}", novel_id);
+            return Err(GraphqlError::AlreadyExists(format!(
+                "{collection_id}/{novel_id}"
+            )));
+        }
+        CollectionNovelModel::delete(collection_id, novel_id, conn)?;
+        let novel = NovelModel::find_one(novel_id, conn)?;
+        Ok(novel.into())
     }
 }
 

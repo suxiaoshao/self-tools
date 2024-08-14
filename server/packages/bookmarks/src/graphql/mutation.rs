@@ -210,4 +210,38 @@ impl MutationRoot {
             NovelSite::Jjwxc => author.update_by_crawler::<JJAuthor>(conn).await,
         }
     }
+    /// 给小说添加集合
+    #[graphql(guard = "AuthGuard")]
+    async fn add_collection_for_novel(
+        &self,
+        context: &Context<'_>,
+        collection_id: i64,
+        novel_id: i64,
+    ) -> GraphqlResult<Novel> {
+        let conn = &mut context
+            .data::<PgPool>()
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
+            .get()?;
+        Novel::add_collection(collection_id, novel_id, conn)
+    }
+    /// 给小说删除集合
+    #[graphql(guard = "AuthGuard")]
+    async fn delete_collection_for_novel(
+        &self,
+        context: &Context<'_>,
+        collection_id: i64,
+        novel_id: i64,
+    ) -> GraphqlResult<Novel> {
+        let conn = &mut context
+            .data::<PgPool>()
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
+            .get()?;
+        Novel::delete_collection(collection_id, novel_id, conn)
+    }
 }

@@ -64,3 +64,12 @@ create table chapter
     update_time timestamptz  not null,
     unique (site, novel_id, site_id)
 );
+
+create table collection_novel
+(
+    collection_id bigint not null,
+    novel_id      bigint not null,
+    primary key (collection_id, novel_id),
+    foreign key (collection_id) references collection (id),
+    foreign key (novel_id) references novel (id)
+);

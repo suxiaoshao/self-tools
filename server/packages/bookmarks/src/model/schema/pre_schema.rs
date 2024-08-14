@@ -59,6 +59,13 @@ diesel::table! {
 }
 
 diesel::table! {
+    collection_novel (collection_id, novel_id) {
+        collection_id -> Int8,
+        novel_id -> Int8,
+    }
+}
+
+diesel::table! {
     use diesel::sql_types::*;
     use super::sql_types::NovelStatus;
     use super::sql_types::NovelSite;
@@ -93,10 +100,14 @@ diesel::table! {
     }
 }
 
+diesel::joinable!(collection_novel -> collection (collection_id));
+diesel::joinable!(collection_novel -> novel (novel_id));
+
 diesel::allow_tables_to_appear_in_same_query!(
     author,
     chapter,
     collection,
+    collection_novel,
     novel,
     tag,
 );

@@ -10,7 +10,7 @@ edition = "2021"
 volo = "0.10.1"
 volo-thrift = "0.10.2"
 pilota = "0.11.3"
-serde = { version = "1.0.204", features = ["derive"] }
+serde = { version = "1.0.205", features = ["derive"] }
 # ip
 dns-lookup = "2.0.4"
 

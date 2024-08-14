@@ -16,6 +16,7 @@ use crate::{
     model::{
         author::{AuthorModel, UpdateAuthorModel},
         chapter::{ChapterModel, NewChapter, UpdateChapterModel},
+        collection_novel::CollectionNovelModel,
         novel::{NewNovel, NovelModel, UpdateNovelModel},
         schema::custom_type::NovelSite,
         PgPool,
@@ -120,9 +121,11 @@ impl Author {
             return Err(GraphqlError::NotFound("作者", id));
         }
         conn.build_transaction().run(|conn| {
+            let novel_ids = NovelModel::ids_by_author_id(id, conn)?;
             let deleted_author = AuthorModel::delete(id, conn)?;
             NovelModel::delete_by_author_id(id, conn)?;
             ChapterModel::delete_by_author_id(id, conn)?;
+            CollectionNovelModel::delete_by_novel_ids(&novel_ids, conn)?;
             Ok(deleted_author.into())
         })
     }

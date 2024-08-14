@@ -16,7 +16,7 @@ use crate::{
     model::{schema::custom_type::NovelSite, PgPool},
 };
 
-use super::novel::Novel;
+use super::{author::Author, novel::Novel};
 
 #[derive(SimpleObject)]
 #[graphql(complex)]
@@ -54,6 +54,17 @@ impl Chapter {
             NovelSite::Jjwxc => JJChapter::get_url_from_id(&self.site_id, &self.site_novel_id),
             NovelSite::Qidian => QDChapter::get_url_from_id(&self.site_id, &self.site_novel_id),
         }
+    }
+    async fn author(&self, context: &Context<'_>) -> GraphqlResult<Author> {
+        let conn = &mut context
+            .data::<PgPool>()
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
+            .get()?;
+        let novel = Author::get(self.author_id, conn)?;
+        Ok(novel)
     }
 }
 

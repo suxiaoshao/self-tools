@@ -17,6 +17,7 @@ use crate::errors::GraphqlResult;
 pub(crate) mod author;
 pub(crate) mod chapter;
 pub(crate) mod collection;
+pub(crate) mod collection_novel;
 pub(crate) mod novel;
 pub(crate) mod tag;
 

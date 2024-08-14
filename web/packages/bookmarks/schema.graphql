@@ -25,6 +25,7 @@ type Author {
 }
 
 type Chapter {
+  author: Author!
   content: String
   createTime: DateTime!
   id: Int!
@@ -94,6 +95,8 @@ type DraftTagInfo {
 }
 
 type MutationRoot {
+  "给小说添加集合"
+  addCollectionForNovel(collectionId: Int!, novelId: Int!): Novel!
   "创建作者"
   createAuthor(avatar: String!, description: String!, name: String!, site: NovelSite!, siteId: String!): Author!
   "创建目录"
@@ -106,6 +109,8 @@ type MutationRoot {
   deleteAuthor(id: Int!): Author!
   "删除目录"
   deleteCollection(id: Int!): Int!
+  "给小说删除集合"
+  deleteCollectionForNovel(collectionId: Int!, novelId: Int!): Novel!
   "删除小说"
   deleteNovel(id: Int!): Novel!
   "删除标签"

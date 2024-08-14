@@ -7,7 +7,7 @@ use tracing::{event, Level};
 
 use crate::{
     errors::{GraphqlError, GraphqlResult},
-    model::{collection::CollectionModel, PgPool},
+    model::{collection::CollectionModel, collection_novel::CollectionNovelModel, PgPool},
 };
 
 #[derive(SimpleObject)]
@@ -136,8 +136,11 @@ impl Collection {
             }
         }
         find_all_children(&mut ids, id, &lookup);
-        let count = CollectionModel::delete_list(&ids, conn)?;
-        Ok(count)
+        conn.build_transaction().run(|conn| {
+            CollectionNovelModel::delete_by_collection_ids(&ids, conn)?;
+            let count = CollectionModel::delete_list(&ids, conn)?;
+            Ok(count)
+        })
     }
     /// 获取目录列表
     pub(crate) fn get_list_parent_id(

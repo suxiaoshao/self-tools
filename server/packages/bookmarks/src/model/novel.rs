@@ -160,6 +160,16 @@ impl NovelModel {
             diesel::delete(novel::table.filter(novel::author_id.eq(author_id))).execute(conn)?;
         Ok(deleted)
     }
+    pub(crate) fn ids_by_author_id(
+        author_id: i64,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<Vec<i64>> {
+        let data = novel::table
+            .filter(novel::author_id.eq(author_id))
+            .select(novel::id)
+            .load::<i64>(conn)?;
+        Ok(data)
+    }
 }
 
 #[cfg(test)]

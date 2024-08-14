@@ -1,4 +1,5 @@
 -- This file should undo anything in `up.sql`
+drop table collection_novel;
 drop table chapter;
 drop table tag;
 drop table collection;
