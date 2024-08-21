@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use async_graphql::*;
 use diesel::PgConnection;
 use time::OffsetDateTime;
@@ -9,6 +7,8 @@ use crate::{
     errors::{GraphqlError, GraphqlResult},
     model::{collection::CollectionModel, collection_novel::CollectionNovelModel, PgPool},
 };
+
+use super::utils::find_all_children;
 
 #[derive(SimpleObject)]
 #[graphql(complex)]
@@ -116,25 +116,10 @@ impl Collection {
             event!(Level::WARN, "目录不存在: {}", id);
             return Err(GraphqlError::NotFound("目录", id));
         }
-        let all_collections = CollectionModel::get_list(conn)?;
         // 构建一个 `id` 到其子节点列表的映射
-        let mut lookup: HashMap<i64, Vec<i64>> = HashMap::new();
-
-        for collection in all_collections {
-            if let Some(parent_id) = collection.parent_id {
-                lookup.entry(parent_id).or_default().push(collection.id);
-            }
-        }
+        let lookup = CollectionModel::get_map(conn)?;
         // 初始化结果列表，并调用递归函数
         let mut ids = Vec::new();
-        fn find_all_children(ids: &mut Vec<i64>, id: i64, lookup: &HashMap<i64, Vec<i64>>) {
-            if let Some(children) = lookup.get(&id) {
-                for &child_id in children {
-                    ids.push(child_id);
-                    find_all_children(ids, child_id, lookup);
-                }
-            }
-        }
         find_all_children(&mut ids, id, &lookup);
         conn.build_transaction().run(|conn| {
             CollectionNovelModel::delete_by_collection_ids(&ids, conn)?;

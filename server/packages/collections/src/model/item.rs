@@ -6,28 +6,28 @@ use time::OffsetDateTime;
 
 #[derive(Queryable)]
 #[cfg_attr(test, derive(Debug))]
-pub struct ItemModel {
-    pub id: i64,
-    pub name: String,
-    pub content: String,
-    pub collection_id: i64,
-    pub create_time: OffsetDateTime,
-    pub update_time: OffsetDateTime,
+pub(crate) struct ItemModel {
+    pub(crate) id: i64,
+    pub(crate) name: String,
+    pub(crate) content: String,
+    pub(crate) collection_id: i64,
+    pub(crate) create_time: OffsetDateTime,
+    pub(crate) update_time: OffsetDateTime,
 }
 #[derive(Insertable)]
 #[diesel(table_name = item)]
 struct NewItem<'a> {
-    pub name: &'a str,
-    pub content: &'a str,
-    pub collection_id: i64,
-    pub create_time: OffsetDateTime,
-    pub update_time: OffsetDateTime,
+    pub(crate) name: &'a str,
+    pub(crate) content: &'a str,
+    pub(crate) collection_id: i64,
+    pub(crate) create_time: OffsetDateTime,
+    pub(crate) update_time: OffsetDateTime,
 }
 
 /// id 相关
 impl ItemModel {
     /// 创建记录
-    pub fn create(
+    pub(crate) fn create(
         name: &str,
         content: &str,
         collection_id: i64,
@@ -47,22 +47,22 @@ impl ItemModel {
         Ok(new_item)
     }
     /// 删除记录
-    pub fn delete(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
+    pub(crate) fn delete(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
         let item = diesel::delete(item::table.filter(item::id.eq(id))).get_result(conn)?;
         Ok(item)
     }
     /// 查找记录
-    pub fn find_one(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
+    pub(crate) fn find_one(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
         let item = item::table.filter(item::id.eq(id)).first::<Self>(conn)?;
         Ok(item)
     }
     /// 判断是否存在
-    pub fn exists(id: i64, conn: &mut PgConnection) -> GraphqlResult<bool> {
+    pub(crate) fn exists(id: i64, conn: &mut PgConnection) -> GraphqlResult<bool> {
         let exists = diesel::select(diesel::dsl::exists(item::table.find(id))).get_result(conn)?;
         Ok(exists)
     }
     /// 更新记录
-    pub fn update(
+    pub(crate) fn update(
         id: i64,
         name: &str,
         content: &str,
@@ -83,7 +83,7 @@ impl ItemModel {
 /// collection_id 相关
 impl ItemModel {
     /// 查询记录
-    pub fn query(
+    pub(crate) fn query(
         collection_id: i64,
         create_time: Option<TimeRange>,
         update_time: Option<TimeRange>,
@@ -131,7 +131,7 @@ impl ItemModel {
         }
     }
     /// 查询记录数量
-    pub fn count(
+    pub(crate) fn count(
         collection_id: i64,
         create_time: Option<TimeRange>,
         update_time: Option<TimeRange>,
@@ -173,7 +173,7 @@ impl ItemModel {
         }
     }
     /// 根据 collection_id 删除记录
-    pub fn delete_by_collection_id(
+    pub(crate) fn delete_by_collection_id(
         collection_id: i64,
         conn: &mut PgConnection,
     ) -> GraphqlResult<usize> {

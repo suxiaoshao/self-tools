@@ -1,8 +1,11 @@
-use crate::errors::GraphqlResult;
+use std::collections::{HashMap, HashSet};
+
+use crate::errors::{GraphqlError, GraphqlResult};
 
 use super::schema::collection::{self};
 use diesel::prelude::*;
 use time::OffsetDateTime;
+use tracing::{event, Level};
 
 #[derive(Queryable)]
 #[cfg_attr(test, derive(Debug))]
@@ -73,6 +76,18 @@ impl CollectionModel {
             diesel::delete(collection::table.filter(collection::id.eq_any(ids))).execute(conn)?;
         Ok(count)
     }
+    /// 判断集合是否全部存在
+    pub(crate) fn exists_all(tag_ids: &HashSet<i64>, conn: &mut PgConnection) -> GraphqlResult<()> {
+        let database_tags = CollectionModel::get_list(conn)?;
+        let database_tags: HashSet<i64> = database_tags.into_iter().map(|tag| tag.id).collect();
+        for id in tag_ids {
+            if !database_tags.contains(id) {
+                event!(Level::ERROR, "集合不存在: {}", id);
+                return Err(GraphqlError::NotFound("集合", *id));
+            }
+        }
+        Ok(())
+    }
 }
 
 /// path 相关
@@ -117,6 +132,21 @@ impl CollectionModel {
     pub(crate) fn get_list(conn: &mut PgConnection) -> GraphqlResult<Vec<Self>> {
         let collections = collection::table.load(conn)?;
         Ok(collections)
+    }
+    /// 获取所有目录映射
+    pub(crate) fn get_map(conn: &mut PgConnection) -> GraphqlResult<HashMap<i64, Vec<i64>>> {
+        let all_collections = collection::table
+            .select((collection::id, collection::parent_id))
+            .get_results::<(i64, Option<i64>)>(conn)?;
+        // 构建一个 `id` 到其子节点列表的映射
+        let mut lookup: HashMap<i64, Vec<i64>> = HashMap::new();
+        for (id, parent_id) in all_collections {
+            if let Some(parent_id) = parent_id {
+                lookup.entry(parent_id).or_default().push(id);
+            }
+        }
+
+        Ok(lookup)
     }
 }
 

@@ -11,11 +11,11 @@ use time::OffsetDateTime;
 use crate::common::Paginate;
 
 #[derive(InputObject, Debug, Clone, Copy)]
-pub struct Pagination {
+pub(crate) struct Pagination {
     #[graphql(validator(minimum = 1))]
-    pub page: i64,
+    pub(crate) page: i64,
     #[graphql(validator(minimum = 5, maximum = 100))]
-    pub page_size: i64,
+    pub(crate) page_size: i64,
 }
 
 impl Paginate for Pagination {
@@ -31,15 +31,15 @@ impl Paginate for Pagination {
 }
 
 #[derive(InputObject, Debug, Clone, Copy)]
-pub struct TimeRange {
-    pub start: OffsetDateTime,
-    pub end: OffsetDateTime,
+pub(crate) struct TimeRange {
+    pub(crate) start: OffsetDateTime,
+    pub(crate) end: OffsetDateTime,
 }
 
 #[derive(InputObject, Debug, Clone, Copy)]
-pub struct CollectionItemQuery {
-    pub id: Option<i64>,
-    pub create_time: Option<TimeRange>,
-    pub update_time: Option<TimeRange>,
-    pub pagination: Pagination,
+pub(crate) struct CollectionItemQuery {
+    pub(crate) id: Option<i64>,
+    pub(crate) create_time: Option<TimeRange>,
+    pub(crate) update_time: Option<TimeRange>,
+    pub(crate) pagination: Pagination,
 }

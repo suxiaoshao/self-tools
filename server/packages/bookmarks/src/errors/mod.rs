@@ -16,13 +16,6 @@ pub(crate) enum GraphqlError {
     NotFound(&'static str, i64),
     /// 已存在
     AlreadyExists(String),
-    /// scope 错误
-    Scope {
-        sub_tag: &'static str,
-        super_tag: &'static str,
-        sub_value: i64,
-        super_value: Option<i64>,
-    },
     Jwt,
     PasswordError,
     AuthTimeout,
@@ -71,21 +64,6 @@ impl GraphqlError {
             GraphqlError::Unauthenticated => "没有发送 token".to_string(),
             GraphqlError::NotFound(tag, id) => format!(r#"{tag}"{id}"不存在"#),
             GraphqlError::AlreadyExists(name) => format!("{name}已存在"),
-            GraphqlError::Scope {
-                super_tag,
-                sub_tag,
-                sub_value,
-                super_value,
-            } => format!(
-                r#"{}"{}"不属于{}"{}""#,
-                sub_tag,
-                sub_value,
-                super_tag,
-                match super_value {
-                    Some(super_value) => super_value.to_string(),
-                    None => "无".to_string(),
-                }
-            ),
             GraphqlError::Jwt => "jwt 解析错误".to_string(),
             GraphqlError::PasswordError => "密码错误".to_string(),
             GraphqlError::AuthTimeout => "登陆过期".to_string(),
@@ -112,9 +90,7 @@ impl GraphqlError {
             GraphqlError::R2d2(_) => "FailedPrecondition",
             GraphqlError::Diesel(_) => "Internal",
             GraphqlError::Unauthenticated => "Unauthenticated",
-            GraphqlError::NotFound(..)
-            | GraphqlError::AlreadyExists(_)
-            | GraphqlError::Scope { .. } => "InvalidArgument",
+            GraphqlError::NotFound(..) | GraphqlError::AlreadyExists(_) => "InvalidArgument",
             GraphqlError::Jwt => "Jwt",
             GraphqlError::PasswordError => "PasswordError",
             GraphqlError::AuthTimeout => "AuthTimeout",
@@ -144,17 +120,6 @@ impl Clone for GraphqlError {
             GraphqlError::Unauthenticated => Self::Unauthenticated,
             GraphqlError::NotFound(tag, id) => Self::NotFound(tag, *id),
             GraphqlError::AlreadyExists(name) => Self::AlreadyExists(name.clone()),
-            GraphqlError::Scope {
-                sub_tag,
-                super_tag,
-                sub_value,
-                super_value,
-            } => Self::Scope {
-                sub_tag,
-                super_tag,
-                sub_value: *sub_value,
-                super_value: *super_value,
-            },
             GraphqlError::Jwt => Self::Jwt,
             GraphqlError::PasswordError => Self::PasswordError,
             GraphqlError::AuthTimeout => Self::AuthTimeout,

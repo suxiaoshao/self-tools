@@ -5,12 +5,12 @@ use diesel::{
     PgConnection,
 };
 
-pub mod collection;
-pub mod item;
-pub mod schema;
+pub(crate) mod collection;
+pub(crate) mod item;
+pub(crate) mod schema;
 
 type PgPool = Pool<ConnectionManager<PgConnection>>;
-pub static CONNECTION: LazyLock<PgPool> = LazyLock::new(|| {
+pub(crate) static CONNECTION: LazyLock<PgPool> = LazyLock::new(|| {
     let database_url = env::var("COLLECTIONS_PG").expect("DATABASE_URL must be set");
     let manager = ConnectionManager::<PgConnection>::new(database_url);
 

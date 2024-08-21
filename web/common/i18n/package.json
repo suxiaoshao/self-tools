@@ -7,7 +7,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "i18next": "^23.12.2",
+    "i18next": "^23.13.0",
     "react-i18next": "^15.0.1",
     "types": "workspace:*"
   }

@@ -7,7 +7,7 @@
  */
 use std::{cmp::Ordering, fmt::Debug};
 
-pub trait Paginate: Debug {
+pub(crate) trait Paginate: Debug {
     fn offset(&self) -> i64;
     fn offset_plus_limit(&self) -> i64;
     fn limit(&self) -> i64 {
@@ -40,14 +40,14 @@ impl Offset {
     }
 }
 
-pub trait Queryable {
+pub(crate) trait Queryable {
     type Item;
     type Error;
     async fn len(&self) -> Result<i64, Self::Error>;
     async fn query<P: Paginate>(&self, pagination: P) -> Result<Vec<Self::Item>, Self::Error>;
 }
 
-pub struct QueryStack<T, P> {
+pub(crate) struct QueryStack<T, P> {
     left: T,
     right: P,
 }
@@ -56,10 +56,10 @@ impl<I, E, T> QueryStack<T, ()>
 where
     T: Queryable<Item = I, Error = E>,
 {
-    pub fn new(left: T) -> Self {
+    pub(crate) fn new(left: T) -> Self {
         Self { left, right: () }
     }
-    pub fn add_query<P: Queryable<Item = I, Error = E>>(self, right: P) -> QueryStack<T, P> {
+    pub(crate) fn add_query<P: Queryable<Item = I, Error = E>>(self, right: P) -> QueryStack<T, P> {
         QueryStack {
             left: self.left,
             right,
@@ -73,7 +73,7 @@ where
     P: Queryable<Item = I, Error = E>,
 {
     #[allow(dead_code)]
-    pub fn add_query<X: Queryable<Item = I, Error = E>>(
+    pub(crate) fn add_query<X: Queryable<Item = I, Error = E>>(
         self,
         right: X,
     ) -> QueryStack<T, QueryStack<P, X>> {

@@ -112,7 +112,7 @@ impl QueryRoot {
     async fn query_novels(
         &self,
         context: &Context<'_>,
-        collection_id: Option<i64>,
+        #[graphql(validator(custom = "TagMatchValidator"))] collection_id: Option<TagMatch>,
         #[graphql(validator(custom = "TagMatchValidator"))] tag_match: Option<TagMatch>,
         novel_status: Option<NovelStatus>,
     ) -> GraphqlResult<Vec<Novel>> {

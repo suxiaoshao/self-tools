@@ -1,2 +1,2 @@
 mod dir_name;
-pub use dir_name::DirNameValidator;
+pub(crate) use dir_name::DirNameValidator;

@@ -20,6 +20,7 @@ use time::OffsetDateTime;
 use tracing::{event, Level};
 
 use super::chapter::Chapter;
+use super::utils::find_all_children;
 use super::{author::Author, tag::Tag};
 
 #[derive(SimpleObject)]
@@ -231,27 +232,54 @@ impl Novel {
 impl Novel {
     /// 选择小说
     pub(crate) fn query(
-        collection_id: Option<i64>,
+        collection_match: Option<TagMatch>,
         tag_match: Option<TagMatch>,
         novel_status: Option<NovelStatus>,
         conn: &mut PgConnection,
     ) -> GraphqlResult<Vec<Self>> {
-        //  判断父目录是否存在
-        if let Some(id) = collection_id {
-            if !CollectionModel::exists(id, conn)? {
-                event!(Level::WARN, "目录不存在: {}", id);
-                return Err(GraphqlError::NotFound("目录", id));
-            }
+        if let Some(TagMatch { match_set, .. }) = &collection_match {
+            // collection 不存在
+            CollectionModel::exists_all(match_set, conn)?;
         }
         if let Some(TagMatch { match_set, .. }) = &tag_match {
             // tag 不存在
-            TagModel::exists_all(match_set.iter(), conn)?;
+            TagModel::exists_all(match_set, conn)?;
         }
-        let data = NovelModel::query(tag_match, novel_status, conn)?
+        let mut data: Vec<Novel> = NovelModel::query(tag_match, novel_status, conn)?
             .into_iter()
             .map(Into::into)
             .collect();
-        // todo!("collection_id 相关");
+        if let Some(TagMatch {
+            match_set,
+            full_match,
+        }) = collection_match
+        {
+            // 构建一个 `id` 到其子节点列表的映射
+            let lookup = CollectionModel::get_map(conn)?;
+            // 初始化结果列表，并调用递归函数
+            let mut ids = Vec::new();
+            for id in &match_set {
+                find_all_children(&mut ids, *id, &lookup);
+            }
+            let lookup = CollectionNovelModel::map_novel_collection(conn)?;
+            if full_match {
+                data.retain(|Novel { id, .. }| {
+                    let novel_collection = match lookup.get(id) {
+                        Some(novel_collection) => novel_collection,
+                        None => return false,
+                    };
+                    match_set.is_subset(novel_collection)
+                });
+            } else {
+                data.retain(|Novel { id, .. }| {
+                    let novel_collection = match lookup.get(id) {
+                        Some(novel_collection) => novel_collection,
+                        None => return false,
+                    };
+                    !match_set.is_disjoint(novel_collection)
+                });
+            }
+        }
         Ok(data)
     }
     /// 添加集合
@@ -324,7 +352,7 @@ impl CreateNovelInput {
             return Err(GraphqlError::NotFound("作者", self.author_id));
         }
         // tag 不存在
-        TagModel::exists_all(self.tags.iter(), conn)?;
+        TagModel::exists_all(&self.tags, conn)?;
         let new_novel = self.to_new_novel().create(conn)?;
         Ok(new_novel.into())
     }

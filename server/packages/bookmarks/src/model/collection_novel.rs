@@ -1,3 +1,5 @@
+use std::collections::{HashMap, HashSet};
+
 use diesel::prelude::*;
 
 use crate::{errors::GraphqlResult, model::schema::collection_novel};
@@ -76,5 +78,18 @@ impl CollectionNovelModel {
         diesel::delete(collection_novel::table.filter(collection_novel::novel_id.eq_any(novel_id)))
             .execute(conn)?;
         Ok(())
+    }
+    pub(crate) fn map_novel_collection(
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<HashMap<i64, HashSet<i64>>> {
+        let all_data = collection_novel::table
+            .select((collection_novel::collection_id, collection_novel::novel_id))
+            .get_results::<(i64, i64)>(conn)?;
+        // 构建一个 `id` 到其子节点列表的映射
+        let mut lookup: HashMap<i64, HashSet<i64>> = HashMap::new();
+        for (collection_id, novel_id) in all_data {
+            lookup.entry(novel_id).or_default().insert(collection_id);
+        }
+        Ok(lookup)
     }
 }

@@ -11,3 +11,4 @@ pub(crate) mod collection;
 pub(crate) mod novel;
 pub(crate) mod save_draft;
 pub(crate) mod tag;
+mod utils;

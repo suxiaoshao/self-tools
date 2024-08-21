@@ -16,14 +16,14 @@ use super::collection::Collection;
 
 #[derive(SimpleObject)]
 #[graphql(complex)]
-pub struct Item {
-    pub id: i64,
-    pub name: String,
-    pub content: String,
+pub(crate) struct Item {
+    pub(crate) id: i64,
+    pub(crate) name: String,
+    pub(crate) content: String,
     #[graphql(skip)]
-    pub collection_id: i64,
-    pub create_time: OffsetDateTime,
-    pub update_time: OffsetDateTime,
+    pub(crate) collection_id: i64,
+    pub(crate) create_time: OffsetDateTime,
+    pub(crate) update_time: OffsetDateTime,
 }
 
 #[ComplexObject]
@@ -49,7 +49,7 @@ impl From<ItemModel> for Item {
 
 impl Item {
     /// 创建记录
-    pub fn create(name: String, content: String, collection_id: i64) -> GraphqlResult<Self> {
+    pub(crate) fn create(name: String, content: String, collection_id: i64) -> GraphqlResult<Self> {
         let conn = &mut CONNECTION.get()?;
         //  判断父目录是否存在
         if !CollectionModel::exists(collection_id, conn)? {
@@ -60,7 +60,7 @@ impl Item {
         Ok(new_item.into())
     }
     /// 删除记录
-    pub fn delete(id: i64) -> GraphqlResult<Self> {
+    pub(crate) fn delete(id: i64) -> GraphqlResult<Self> {
         let conn = &mut CONNECTION.get()?;
         if !ItemModel::exists(id, conn)? {
             event!(Level::WARN, "记录不存在: {}", id);
@@ -70,7 +70,7 @@ impl Item {
         Ok(item.into())
     }
     /// 获取记录
-    pub fn get(id: i64) -> GraphqlResult<Self> {
+    pub(crate) fn get(id: i64) -> GraphqlResult<Self> {
         let conn = &mut CONNECTION.get()?;
         if !ItemModel::exists(id, conn)? {
             event!(Level::WARN, "记录不存在: {}", id);
@@ -80,7 +80,7 @@ impl Item {
         Ok(item.into())
     }
     /// 更新记录
-    pub fn update(id: i64, name: &str, content: &str) -> GraphqlResult<Self> {
+    pub(crate) fn update(id: i64, name: &str, content: &str) -> GraphqlResult<Self> {
         let conn = &mut CONNECTION.get()?;
         if !ItemModel::exists(id, conn)? {
             event!(Level::WARN, "记录不存在: {}", id);
@@ -91,13 +91,13 @@ impl Item {
     }
 }
 
-pub struct ItemQueryRunner {
+pub(crate) struct ItemQueryRunner {
     query: CollectionItemQuery,
     count: i64,
 }
 
 impl ItemQueryRunner {
-    pub async fn new(query: CollectionItemQuery) -> GraphqlResult<Self> {
+    pub(crate) async fn new(query: CollectionItemQuery) -> GraphqlResult<Self> {
         let CollectionItemQuery {
             id,
             create_time,

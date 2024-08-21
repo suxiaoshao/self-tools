@@ -57,17 +57,13 @@ impl TagModel {
         Ok(tags)
     }
     /// 判断标签是否全部存在
-    pub(crate) fn exists_all<'a, T: Iterator<Item = &'a i64>>(
-        tags: T,
-        conn: &mut PgConnection,
-    ) -> GraphqlResult<()> {
-        let tag_ids: HashSet<i64> = tags.cloned().collect();
+    pub(crate) fn exists_all(tag_ids: &HashSet<i64>, conn: &mut PgConnection) -> GraphqlResult<()> {
         let database_tags = TagModel::get_list(conn)?;
         let database_tags: HashSet<i64> = database_tags.into_iter().map(|tag| tag.id).collect();
         for id in tag_ids {
-            if !database_tags.contains(&id) {
+            if !database_tags.contains(id) {
                 event!(Level::ERROR, "标签不存在: {}", id);
-                return Err(GraphqlError::NotFound("标签", id));
+                return Err(GraphqlError::NotFound("标签", *id));
             }
         }
         Ok(())

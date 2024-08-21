@@ -12,14 +12,14 @@ use crate::{
 
 #[derive(SimpleObject)]
 #[graphql(complex)]
-pub struct Collection {
-    pub id: i64,
-    pub name: String,
-    pub path: String,
-    pub parent_id: Option<i64>,
-    pub description: Option<String>,
-    pub create_time: OffsetDateTime,
-    pub update_time: OffsetDateTime,
+pub(crate) struct Collection {
+    pub(crate) id: i64,
+    pub(crate) name: String,
+    pub(crate) path: String,
+    pub(crate) parent_id: Option<i64>,
+    pub(crate) description: Option<String>,
+    pub(crate) create_time: OffsetDateTime,
+    pub(crate) update_time: OffsetDateTime,
 }
 #[ComplexObject]
 impl Collection {
@@ -46,7 +46,7 @@ impl From<CollectionModel> for Collection {
 
 impl Collection {
     /// 创建目录
-    pub fn create(
+    pub(crate) fn create(
         name: &str,
         parent_id: Option<i64>,
         description: Option<String>,
@@ -91,7 +91,7 @@ impl Collection {
 /// id 相关
 impl Collection {
     /// 删除目录
-    pub fn delete(id: i64) -> GraphqlResult<Self> {
+    pub(crate) fn delete(id: i64) -> GraphqlResult<Self> {
         let conn = &mut CONNECTION.get()?;
         conn.transaction(|conn| {
             let collection = Self::delete_inner(id, conn)?;
@@ -115,7 +115,7 @@ impl Collection {
         Ok(collection.into())
     }
     /// 获取祖先目录列表
-    pub fn get_ancestors(id: i64) -> GraphqlResult<Vec<Self>> {
+    pub(crate) fn get_ancestors(id: i64) -> GraphqlResult<Vec<Self>> {
         let conn = &mut CONNECTION.get()?;
         //  判断目录是否存在
         if !CollectionModel::exists(id, conn)? {
@@ -134,7 +134,7 @@ impl Collection {
         Ok(collections)
     }
     /// 获取集合详情
-    pub fn get(id: i64) -> GraphqlResult<Self> {
+    pub(crate) fn get(id: i64) -> GraphqlResult<Self> {
         let conn = &mut CONNECTION.get()?;
         //  判断目录是否存在
         if !CollectionModel::exists(id, conn)? {
@@ -145,7 +145,7 @@ impl Collection {
         Ok(collection.into())
     }
     /// 修改集合
-    pub fn update(id: i64, name: &str, description: Option<&str>) -> GraphqlResult<Self> {
+    pub(crate) fn update(id: i64, name: &str, description: Option<&str>) -> GraphqlResult<Self> {
         let conn = &mut CONNECTION.get()?;
         //  判断目录是否存在
         if !CollectionModel::exists(id, conn)? {
@@ -191,13 +191,13 @@ impl Collection {
     }
 }
 
-pub struct CollectionQueryRunner {
+pub(crate) struct CollectionQueryRunner {
     query: CollectionItemQuery,
     count: i64,
 }
 
 impl CollectionQueryRunner {
-    pub async fn new(query: CollectionItemQuery) -> GraphqlResult<Self> {
+    pub(crate) async fn new(query: CollectionItemQuery) -> GraphqlResult<Self> {
         let CollectionItemQuery {
             id,
             create_time,

@@ -20,7 +20,7 @@ use crate::{
     },
 };
 
-pub struct QueryRoot;
+pub(crate) struct QueryRoot;
 
 #[Object]
 impl QueryRoot {
