@@ -28,6 +28,19 @@ pub(crate) struct QueryRoot;
 
 #[Object]
 impl QueryRoot {
+    /// 获取所有集合
+    #[graphql(guard = "AuthGuard")]
+    async fn all_collections(&self, context: &Context<'_>) -> GraphqlResult<Vec<Collection>> {
+        let conn = &mut context
+            .data::<PgPool>()
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
+            .get()?;
+        let directory = Collection::all_collections(conn)?;
+        Ok(directory)
+    }
     /// 获取目录列表
     #[graphql(guard = "AuthGuard")]
     async fn get_collections(
@@ -112,7 +125,7 @@ impl QueryRoot {
     async fn query_novels(
         &self,
         context: &Context<'_>,
-        #[graphql(validator(custom = "TagMatchValidator"))] collection_id: Option<TagMatch>,
+        #[graphql(validator(custom = "TagMatchValidator"))] collection_match: Option<TagMatch>,
         #[graphql(validator(custom = "TagMatchValidator"))] tag_match: Option<TagMatch>,
         novel_status: Option<NovelStatus>,
     ) -> GraphqlResult<Vec<Novel>> {
@@ -123,7 +136,7 @@ impl QueryRoot {
                 GraphqlError::NotGraphqlContextData("PgPool")
             })?
             .get()?;
-        let novel = Novel::query(collection_id, tag_match, novel_status, conn)?;
+        let novel = Novel::query(collection_match, tag_match, novel_status, conn)?;
         Ok(novel)
     }
     /// 获取小说详情

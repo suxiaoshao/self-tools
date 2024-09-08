@@ -92,4 +92,14 @@ impl CollectionNovelModel {
         }
         Ok(lookup)
     }
+    pub(crate) fn many_by_novel_id(
+        novel_id: i64,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<Vec<i64>> {
+        let data = collection_novel::table
+            .select(collection_novel::collection_id)
+            .filter(collection_novel::novel_id.eq(novel_id))
+            .get_results(conn)?;
+        Ok(data)
+    }
 }

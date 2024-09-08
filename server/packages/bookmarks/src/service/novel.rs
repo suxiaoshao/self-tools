@@ -20,6 +20,7 @@ use time::OffsetDateTime;
 use tracing::{event, Level};
 
 use super::chapter::Chapter;
+use super::collection::Collection;
 use super::utils::find_all_children;
 use super::{author::Author, tag::Tag};
 
@@ -118,6 +119,17 @@ impl Novel {
             .get()?;
         let chapter = ChapterModel::get_first_chapter_by_novel_id(self.id, conn)?;
         Ok(chapter.map(|x| Chapter::from(x, self.site_id.to_owned())))
+    }
+    /// 集合列表
+    async fn collections(&self, context: &Context<'_>) -> GraphqlResult<Vec<Collection>> {
+        let conn = &mut context
+            .data::<PgPool>()
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
+            .get()?;
+        Collection::many_by_novel_id(self.id, conn)
     }
 }
 

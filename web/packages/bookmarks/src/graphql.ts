@@ -43,6 +43,7 @@ export type Author = {
 
 export type Chapter = {
   __typename?: 'Chapter';
+  author: Author;
   content?: Maybe<Scalars['String']['output']>;
   createTime: Scalars['DateTime']['output'];
   id: Scalars['Int']['output'];
@@ -129,6 +130,8 @@ export type DraftTagInfo = {
 
 export type MutationRoot = {
   __typename?: 'MutationRoot';
+  /** 给小说添加集合 */
+  addCollectionForNovel: Novel;
   /** 创建作者 */
   createAuthor: Author;
   /** 创建目录 */
@@ -141,6 +144,8 @@ export type MutationRoot = {
   deleteAuthor: Author;
   /** 删除目录 */
   deleteCollection: Scalars['Int']['output'];
+  /** 给小说删除集合 */
+  deleteCollectionForNovel: Novel;
   /** 删除小说 */
   deleteNovel: Novel;
   /** 删除标签 */
@@ -151,6 +156,11 @@ export type MutationRoot = {
   updateAuthorByCrawler: Author;
   /** 通过 fetch 更新小说 */
   updateNovelByCrawler: Novel;
+};
+
+export type MutationRootAddCollectionForNovelArgs = {
+  collectionId: Scalars['Int']['input'];
+  novelId: Scalars['Int']['input'];
 };
 
 export type MutationRootCreateAuthorArgs = {
@@ -185,6 +195,11 @@ export type MutationRootDeleteCollectionArgs = {
   id: Scalars['Int']['input'];
 };
 
+export type MutationRootDeleteCollectionForNovelArgs = {
+  collectionId: Scalars['Int']['input'];
+  novelId: Scalars['Int']['input'];
+};
+
 export type MutationRootDeleteNovelArgs = {
   id: Scalars['Int']['input'];
 };
@@ -211,6 +226,8 @@ export type Novel = {
   avatar: Scalars['String']['output'];
   /** 获取小说章节 */
   chapters: Array<Chapter>;
+  /** 集合列表 */
+  collections: Array<Collection>;
   createTime: Scalars['DateTime']['output'];
   description: Scalars['String']['output'];
   /** 最老章节 */
@@ -291,7 +308,7 @@ export type QueryRootQueryAuthorsArgs = {
 };
 
 export type QueryRootQueryNovelsArgs = {
-  collectionId?: InputMaybe<Scalars['Int']['input']>;
+  collectionMatch?: InputMaybe<TagMatch>;
   novelStatus?: InputMaybe<NovelStatus>;
   tagMatch?: InputMaybe<TagMatch>;
 };
@@ -607,6 +624,13 @@ export type GetNovelQuery = {
     lastChapter?: { __typename?: 'Chapter'; time: any } | null;
     firstChapter?: { __typename?: 'Chapter'; time: any } | null;
     tags: Array<{ __typename?: 'Tag'; url: string; name: string; id: number }>;
+    collections: Array<{
+      __typename?: 'Collection';
+      name: string;
+      id: number;
+      description?: string | null;
+      path: string;
+    }>;
   };
 };
 
@@ -647,7 +671,7 @@ export type UpdateNovelByCrawlerMutation = {
 };
 
 export type GetNovelsQueryVariables = Exact<{
-  collectionId?: InputMaybe<Scalars['Int']['input']>;
+  collectionMatch?: InputMaybe<TagMatch>;
   novelStatus?: InputMaybe<NovelStatus>;
   tagMatch?: InputMaybe<TagMatch>;
 }>;
@@ -1475,6 +1499,12 @@ export const GetNovelDocument = gql`
         id
       }
       site
+      collections {
+        name
+        id
+        description
+        path
+      }
     }
   }
 `;
@@ -1627,8 +1657,8 @@ export type UpdateNovelByCrawlerMutationOptions = Apollo.BaseMutationOptions<
   UpdateNovelByCrawlerMutationVariables
 >;
 export const GetNovelsDocument = gql`
-  query getNovels($collectionId: Int, $novelStatus: NovelStatus, $tagMatch: TagMatch) {
-    queryNovels(collectionId: $collectionId, novelStatus: $novelStatus, tagMatch: $tagMatch) {
+  query getNovels($collectionMatch: TagMatch, $novelStatus: NovelStatus, $tagMatch: TagMatch) {
+    queryNovels(collectionMatch: $collectionMatch, novelStatus: $novelStatus, tagMatch: $tagMatch) {
       id
       name
       description
@@ -1654,7 +1684,7 @@ export const GetNovelsDocument = gql`
  * @example
  * const { data, loading, error } = useGetNovelsQuery({
  *   variables: {
- *      collectionId: // value for 'collectionId'
+ *      collectionMatch: // value for 'collectionMatch'
  *      novelStatus: // value for 'novelStatus'
  *      tagMatch: // value for 'tagMatch'
  *   },

@@ -9,12 +9,20 @@ import { GetNovelsQueryVariables } from '@bookmarks/graphql';
 import { match, P } from 'ts-pattern';
 
 export function convertFormToVariables({
-  collectionId,
+  collectionMatch,
   novelStatus,
   tagMatch,
 }: GetNovelsQueryVariables): GetNovelsQueryVariables {
   return {
-    collectionId,
+    collectionMatch: match(collectionMatch)
+      .with(
+        {
+          fullMatch: P.nonNullable,
+          matchSet: P.nonNullable,
+        },
+        ({ fullMatch, matchSet }) => ({ fullMatch, matchSet }),
+      )
+      .otherwise(() => undefined),
     novelStatus,
     tagMatch: match(tagMatch)
       .with(

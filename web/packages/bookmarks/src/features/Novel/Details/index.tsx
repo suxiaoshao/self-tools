@@ -99,6 +99,20 @@ export default function NovelDetails() {
                 span: 3,
               },
               {
+                label: t('collections'),
+                value: match(data.collections?.length)
+                  .with(P.nullish, () => '-')
+                  .with(0, () => '-')
+                  .otherwise(() => (
+                    <Box sx={{ gap: 1, display: 'flex' }}>
+                      {data.collections.map((tag) => (
+                        <Chip color="primary" variant="outlined" label={tag.name} onClick={() => {}} key={tag.id} />
+                      ))}
+                    </Box>
+                  )),
+                span: 3,
+              },
+              {
                 label: t('description'),
                 value: data.description,
                 span: 3,

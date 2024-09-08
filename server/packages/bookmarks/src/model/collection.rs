@@ -30,7 +30,7 @@ struct NewCollection<'a> {
     pub(crate) update_time: OffsetDateTime,
 }
 
-/// path 相关
+/// id 相关
 impl CollectionModel {
     /// 创建目录
     pub(crate) fn create(
@@ -87,6 +87,13 @@ impl CollectionModel {
             }
         }
         Ok(())
+    }
+    /// 根据 ids 获取数据
+    pub(crate) fn many_by_ids(ids: &[i64], conn: &mut PgConnection) -> GraphqlResult<Vec<Self>> {
+        let data = collection::table
+            .filter(collection::id.eq_any(ids))
+            .load(conn)?;
+        Ok(data)
     }
 }
 

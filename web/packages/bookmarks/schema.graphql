@@ -128,6 +128,8 @@ type Novel {
   avatar: String!
   "获取小说章节"
   chapters: [Chapter!]!
+  "集合列表"
+  collections: [Collection!]!
   createTime: DateTime!
   description: String!
   "最老章节"
@@ -146,6 +148,8 @@ type Novel {
 }
 
 type QueryRoot {
+  "获取所有集合"
+  allCollections: [Collection!]!
   "后端 fetch 作者详情"
   fetchAuthor(id: String!, novelSite: NovelSite!): DraftAuthorInfo!
   "后端 fetch 小说详情"
@@ -161,7 +165,7 @@ type QueryRoot {
   "获取作者列表"
   queryAuthors(searchName: String): [Author!]!
   "获取小说列表"
-  queryNovels(collectionId: Int, novelStatus: NovelStatus, tagMatch: TagMatch): [Novel!]!
+  queryNovels(collectionMatch: TagMatch, novelStatus: NovelStatus, tagMatch: TagMatch): [Novel!]!
   "获取标签列表"
   queryTags: [Tag!]!
 }

@@ -38,6 +38,12 @@ query getNovel($id: Int!) {
       id
     }
     site
+    collections {
+      name
+      id
+      description
+      path
+    }
   }
 }
 

@@ -114,7 +114,7 @@ export default function NovelList() {
           display: 'flex',
         }}
       >
-        <Controller control={control} name="collectionId" render={({ field }) => <CollectionSelect {...field} />} />
+        <Controller control={control} name="collectionMatch" render={({ field }) => <CollectionSelect {...field} />} />
         <CreateNovelButton refetch={refetch} />
         <IconButton sx={{ marginLeft: 'auto' }} onClick={() => refetch()}>
           <Refresh />

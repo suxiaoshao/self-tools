@@ -105,6 +105,20 @@ impl Collection {
             }
         }
     }
+    /// 根据 novel id 获取列表
+    pub(crate) fn many_by_novel_id(
+        novel_id: i64,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<Vec<Self>> {
+        let collection_ids = CollectionNovelModel::many_by_novel_id(novel_id, conn)?;
+        let data = CollectionModel::many_by_ids(&collection_ids, conn)?;
+        Ok(data.into_iter().map(From::from).collect())
+    }
+    /// 获取所有 collections
+    pub(crate) fn all_collections(conn: &mut PgConnection) -> GraphqlResult<Vec<Self>> {
+        let data = CollectionModel::get_list(conn)?;
+        Ok(data.into_iter().map(From::from).collect())
+    }
 }
 
 /// id 相关

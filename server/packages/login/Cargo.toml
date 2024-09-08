@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 # http
-tokio = { version = "1.39.2", features = ["macros", "rt-multi-thread"] }
+tokio = { version = "1.39.3", features = ["macros", "rt-multi-thread"] }
 axum = { version = "0.7.5", features = ["json"] }
 
 # error
@@ -15,8 +15,8 @@ anyhow = "1.0.86"
 thiserror = "1.0.63"
 
 # json
-serde = { version = "1.0.205", features = ["derive"] }
-serde_json = "1.0.122"
+serde = { version = "1.0.209", features = ["derive"] }
+serde_json = "1.0.127"
 
 # cors
 middleware = { path = "../../common/middleware", features = ["cors", "trace"] }
@@ -27,4 +27,4 @@ tracing-subscriber = "0.3.18"
 
 # thrift
 thrift = { path = "../../common/thrift" }
-volo-thrift = "0.10.2"
+volo-thrift = "0.10.3"

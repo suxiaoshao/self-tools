@@ -1,4 +1,4 @@
-import { createSlice, EnhancedStore, PayloadAction, ThunkAction } from '@reduxjs/toolkit';
+import { createSlice, EnhancedStore, PayloadAction } from '@reduxjs/toolkit';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 import { argbFromHex, themeFromSourceColor } from '@material/material-color-utilities';
 import { youThemeToMuiTheme } from './utils/youTheme';
