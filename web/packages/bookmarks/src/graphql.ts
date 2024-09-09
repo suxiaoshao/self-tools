@@ -257,6 +257,8 @@ export enum NovelStatus {
 
 export type QueryRoot = {
   __typename?: 'QueryRoot';
+  /** 获取所有集合 */
+  allCollections: Array<Collection>;
   /** 后端 fetch 作者详情 */
   fetchAuthor: DraftAuthorInfo;
   /** 后端 fetch 小说详情 */
@@ -590,6 +592,22 @@ export type GetCollectionAncestorsQuery = {
     name: string;
     ancestors: Array<{ __typename?: 'Collection'; id: number; name: string }>;
   };
+};
+
+export type AllCollectionsQueryVariables = Exact<{ [key: string]: never }>;
+
+export type AllCollectionsQuery = {
+  __typename?: 'QueryRoot';
+  allCollections: Array<{
+    __typename?: 'Collection';
+    name: string;
+    id: number;
+    path: string;
+    createTime: any;
+    updateTime: any;
+    description?: string | null;
+    parentId?: number | null;
+  }>;
 };
 
 export type GetNovelQueryVariables = Exact<{
@@ -1458,6 +1476,57 @@ export type GetCollectionAncestorsQueryResult = Apollo.QueryResult<
   GetCollectionAncestorsQuery,
   GetCollectionAncestorsQueryVariables
 >;
+export const AllCollectionsDocument = gql`
+  query allCollections {
+    allCollections {
+      name
+      id
+      path
+      createTime
+      updateTime
+      description
+      parentId
+    }
+  }
+`;
+
+/**
+ * __useAllCollectionsQuery__
+ *
+ * To run a query within a React component, call `useAllCollectionsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useAllCollectionsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useAllCollectionsQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useAllCollectionsQuery(
+  baseOptions?: Apollo.QueryHookOptions<AllCollectionsQuery, AllCollectionsQueryVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useQuery<AllCollectionsQuery, AllCollectionsQueryVariables>(AllCollectionsDocument, options);
+}
+export function useAllCollectionsLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<AllCollectionsQuery, AllCollectionsQueryVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useLazyQuery<AllCollectionsQuery, AllCollectionsQueryVariables>(AllCollectionsDocument, options);
+}
+export function useAllCollectionsSuspenseQuery(
+  baseOptions?: Apollo.SuspenseQueryHookOptions<AllCollectionsQuery, AllCollectionsQueryVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useSuspenseQuery<AllCollectionsQuery, AllCollectionsQueryVariables>(AllCollectionsDocument, options);
+}
+export type AllCollectionsQueryHookResult = ReturnType<typeof useAllCollectionsQuery>;
+export type AllCollectionsLazyQueryHookResult = ReturnType<typeof useAllCollectionsLazyQuery>;
+export type AllCollectionsSuspenseQueryHookResult = ReturnType<typeof useAllCollectionsSuspenseQuery>;
+export type AllCollectionsQueryResult = Apollo.QueryResult<AllCollectionsQuery, AllCollectionsQueryVariables>;
 export const GetNovelDocument = gql`
   query getNovel($id: Int!) {
     getNovel(id: $id) {

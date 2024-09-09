@@ -28,7 +28,8 @@
     "./web/common/*/src",
     "./web/config",
     "./jest.config.ts",
-    "./web/packages/*/rsbuild.config.ts"
+    "./web/packages/*/rsbuild.config.ts",
+    "./web/packages/*/codegen.ts"
   ],
   "exclude": ["./**/node_modules"]
 }

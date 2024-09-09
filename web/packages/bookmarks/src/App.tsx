@@ -7,11 +7,11 @@
  */
 import { Outlet } from 'react-router-dom';
 import { ApolloProvider } from '@apollo/client';
-import { getClient } from 'custom-graphql';
+import { apolloClient } from './utils/apolloClient';
 
 function App() {
   return (
-    <ApolloProvider client={getClient('https://bookmarks.sushao.top/graphql')}>
+    <ApolloProvider client={apolloClient}>
       <Outlet />
     </ApolloProvider>
   );

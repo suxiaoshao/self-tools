@@ -1,4 +1,4 @@
-import { Box, IconButton, Link } from '@mui/material';
+import { Box, Button, CircularProgress, IconButton, Link } from '@mui/material';
 import { GetCollectionsQuery, useDeleteCollectionMutation, useGetCollectionsQuery } from '../../graphql';
 import { useMemo } from 'react';
 import {
@@ -16,6 +16,9 @@ import { Link as RouterLink, createSearchParams } from 'react-router-dom';
 import AncestorsPath from './components/AncestorsPath';
 import useParentId from './components/useParentId';
 import { useI18n } from 'i18n';
+import { CollectionLoadingState, useCollectionTree } from './collectionSlice';
+import { match } from 'ts-pattern';
+import CollectionTree from './components/CollectionTree';
 
 type Data = GetCollectionsQuery['getCollections'][0];
 
@@ -92,6 +95,22 @@ export default function Collections() {
   );
   const tableInstance = useCustomTable(tableOptions);
 
+  const { value, fetchData } = useCollectionTree();
+  const tree = useMemo(
+    () =>
+      match(value)
+        .with({ tag: CollectionLoadingState.init }, () => null)
+        .with({ tag: CollectionLoadingState.error }, ({ value }) => (
+          <Box>
+            {value.toString()} <Button onClick={fetchData}>{t('refresh')}</Button>
+          </Box>
+        ))
+        .with({ tag: CollectionLoadingState.loading }, () => <CircularProgress />)
+        .with({ tag: CollectionLoadingState.state }, ({ value }) => <CollectionTree value={value} />)
+        .otherwise(() => null),
+    [value, t],
+  );
+
   return (
     <Box sx={{ width: '100%', height: '100%', p: 2, display: 'flex', flexDirection: 'column' }}>
       <AncestorsPath />
@@ -108,6 +127,7 @@ export default function Collections() {
         </IconButton>
       </Box>
       <CustomTable tableInstance={tableInstance} />
+      {tree}
     </Box>
   );
 }
