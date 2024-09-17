@@ -1,5 +1,5 @@
 import { Refresh } from '@mui/icons-material';
-import { Avatar, Box, IconButton, Link } from '@mui/material';
+import { Avatar, Box, FormControl, FormLabel, IconButton, Link, Paper } from '@mui/material';
 import {
   CustomColumnDefArray,
   CustomTable,
@@ -13,12 +13,12 @@ import { useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Link as RouterLink } from 'react-router-dom';
 import { format } from 'time';
-import CollectionSelect from '../../../components/CollectionSelect';
 import { GetNovelsQuery, GetNovelsQueryVariables, useDeleteNovelMutation, useGetNovelsQuery } from '../../../graphql';
 import CreateNovelButton from './Components/CreateNovelButton';
 import { convertFormToVariables } from './utils';
 import { getImageUrl } from '@bookmarks/utils/image';
 import { getLabelKeyBySite } from '@bookmarks/utils/novel_site';
+import CollectionMultiSelect from '@bookmarks/components/CollectionMultiSelect';
 
 type Data = GetNovelsQuery['queryNovels'][0];
 
@@ -107,19 +107,35 @@ export default function NovelList() {
   const tableInstance = useCustomTable(tableOptions);
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', p: 2 }}>
-      <Box
-        sx={{
-          flex: '0 0 auto',
-          marginBottom: 2,
-          display: 'flex',
-        }}
-      >
-        {/* <Controller control={control} name="collectionMatch" render={({ field }) => <CollectionSelect {...field} />} /> */}
-        <CreateNovelButton refetch={refetch} />
-        <IconButton sx={{ marginLeft: 'auto' }} onClick={() => refetch()}>
-          <Refresh />
-        </IconButton>
-      </Box>
+      <Paper sx={{ display: 'flex', flexDirection: 'column', p: 1, marginBottom: 2, gap: 1 }}>
+        <Box
+          sx={{
+            flex: '0 0 auto',
+
+            display: 'flex',
+          }}
+        >
+          <CreateNovelButton refetch={refetch} />
+          <IconButton sx={{ marginLeft: 'auto' }} onClick={() => refetch()}>
+            <Refresh />
+          </IconButton>
+        </Box>
+        <Box
+          sx={{
+            flex: '0 0 auto',
+            display: 'flex',
+          }}
+        >
+          <FormControl component="fieldset" variant="standard">
+            <FormLabel component="legend">{t('match_collections')}</FormLabel>
+            <Controller
+              control={control}
+              name="collectionMatch.matchSet"
+              render={({ field }) => <CollectionMultiSelect {...field} />}
+            />
+          </FormControl>
+        </Box>
+      </Paper>
       <CustomTable tableInstance={tableInstance} />
     </Box>
   );

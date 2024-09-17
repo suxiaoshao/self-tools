@@ -16,9 +16,10 @@ import { Link as RouterLink, createSearchParams } from 'react-router-dom';
 import AncestorsPath from './components/AncestorsPath';
 import useParentId from './components/useParentId';
 import { useI18n } from 'i18n';
-import { CollectionLoadingState, useCollectionTree } from './collectionSlice';
+import { CollectionLoadingState, useAllCollection } from './collectionSlice';
 import { match } from 'ts-pattern';
 import CollectionTree from './components/CollectionTree';
+import { getCollectionTreeFromCollectionList } from './utils';
 
 type Data = GetCollectionsQuery['getCollections'][0];
 
@@ -95,7 +96,7 @@ export default function Collections() {
   );
   const tableInstance = useCustomTable(tableOptions);
 
-  const { value, fetchData } = useCollectionTree();
+  const { value, fetchData } = useAllCollection();
   const tree = useMemo(
     () =>
       match(value)
@@ -106,7 +107,9 @@ export default function Collections() {
           </Box>
         ))
         .with({ tag: CollectionLoadingState.loading }, () => <CircularProgress />)
-        .with({ tag: CollectionLoadingState.state }, ({ value }) => <CollectionTree value={value} />)
+        .with({ tag: CollectionLoadingState.state }, ({ value }) => (
+          <CollectionTree value={getCollectionTreeFromCollectionList(value.values())} />
+        ))
         .otherwise(() => null),
     [value, t],
   );

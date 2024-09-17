@@ -1,9 +1,10 @@
 import { AllCollectionItem, CollectionTreeItem } from './collectionSlice';
 
-export function getCollectionTreeFromCollectionList(data: AllCollectionItem[]): CollectionTreeItem[] {
+export function getCollectionTreeFromCollectionList(data: Iterable<AllCollectionItem>): CollectionTreeItem[] {
+  const list = [...data];
   const result: CollectionTreeItem[] = [];
   const lookup: Map<number, AllCollectionItem[]> = new Map();
-  for (const collection of data) {
+  for (const collection of list) {
     if (collection.parentId !== null && collection.parentId !== undefined) {
       const list = lookup.get(collection.parentId);
       if (list) {
@@ -16,7 +17,7 @@ export function getCollectionTreeFromCollectionList(data: AllCollectionItem[]): 
       lookup.set(collection.id, []);
     }
   }
-  for (const collection of data) {
+  for (const collection of list) {
     if (collection.parentId === null || collection.parentId === undefined) {
       result.push(getTreeItem(collection, lookup));
     }

@@ -34,7 +34,7 @@ time = { version = "0.3.36" }
 bigdecimal = "0.4.5"
 
 # error
-anyhow = "1.0.87"
+anyhow = "1.0.88"
 thiserror = "1.0.63"
 
 # cors

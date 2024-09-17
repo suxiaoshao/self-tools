@@ -9,7 +9,6 @@ import { AllCollectionsQuery, useAllCollectionsLazyQuery } from '@bookmarks/grap
 import { Enum } from 'types';
 import { create } from 'zustand';
 import { useShallow } from 'zustand/react/shallow';
-import { getCollectionTreeFromCollectionList } from './utils';
 import { useCallback, useEffect } from 'react';
 
 export type AllCollectionItem = AllCollectionsQuery['allCollections'][0];
@@ -34,13 +33,16 @@ export interface CollectionTreeItem {
 export type CollectionData =
   | Enum<CollectionLoadingState.init>
   | Enum<CollectionLoadingState.loading>
-  | Enum<CollectionLoadingState.state, CollectionTreeItem[]>
+  | Enum<CollectionLoadingState.state, Map<number, AllCollectionItem>>
   | Enum<CollectionLoadingState.error, Error>;
 
 export interface CollectionSliceType {
   value: CollectionData;
+
   setAllCollections(allCollection: AllCollectionItem[]): void;
+
   setLoading(): void;
+
   setError(error: Error): void;
 }
 
@@ -52,14 +54,14 @@ export const useCollectionsStore = create<CollectionSliceType>((set) => ({
     set({
       value: {
         tag: CollectionLoadingState.state,
-        value: getCollectionTreeFromCollectionList(allCollection),
+        value: new Map(allCollection.map((item) => [item.id, item])),
       },
     }),
   setLoading: () => set({ value: { tag: CollectionLoadingState.loading } }),
   setError: (error: Error) => set({ value: { tag: CollectionLoadingState.error, value: error } }),
 }));
 
-export function useCollectionTree() {
+export function useAllCollection() {
   const { value, setAllCollections, setLoading, setError } = useCollectionsStore(
     useShallow((state) => ({
       value: state.value,

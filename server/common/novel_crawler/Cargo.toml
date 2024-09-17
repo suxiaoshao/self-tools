@@ -26,4 +26,4 @@ thiserror = "1.0.63"
 time = { version = "0.3.36", features = ["parsing", "macros"] }
 
 [dev-dependencies]
-anyhow = "1.0.87"
+anyhow = "1.0.88"
