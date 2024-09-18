@@ -5,7 +5,12 @@
  * @LastEditTime: 2024-03-28 09:57:11
  * @FilePath: /self-tools/web/packages/bookmarks/src/features/Novel/Details/index.tsx
  */
-import { NovelStatus, useGetNovelQuery, useUpdateNovelByCrawlerMutation } from '@bookmarks/graphql';
+import {
+  NovelStatus,
+  useDeleteCollectionForNovelMutation,
+  useGetNovelQuery,
+  useUpdateNovelByCrawlerMutation,
+} from '@bookmarks/graphql';
 import { Explore, KeyboardArrowLeft, Refresh } from '@mui/icons-material';
 import { Avatar, Box, Card, CardContent, CardHeader, IconButton, Tooltip, Link, Skeleton, Chip } from '@mui/material';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
@@ -18,6 +23,7 @@ import { enqueueSnackbar } from 'notify';
 import { Details, DetailsItem } from 'details';
 import { P, match } from 'ts-pattern';
 import { format } from 'time';
+import AddCollection from './components/AddCollection';
 
 export default function NovelDetails() {
   const { novelId } = useParams();
@@ -38,6 +44,7 @@ export default function NovelDetails() {
     enqueueSnackbar(t('update_by_crawler_success'), { variant: 'success' });
     refetch();
   }, [novelId, updateNovel, refetch, t]);
+  const [deleteCollectionForNovel] = useDeleteCollectionForNovelMutation();
   const items = useMemo<DetailsItem[]>(
     () =>
       match(data?.getNovel)
@@ -100,16 +107,26 @@ export default function NovelDetails() {
               },
               {
                 label: t('collections'),
-                value: match(data.collections?.length)
-                  .with(P.nullish, () => '-')
-                  .with(0, () => '-')
-                  .otherwise(() => (
-                    <Box sx={{ gap: 1, display: 'flex' }}>
-                      {data.collections.map((tag) => (
-                        <Chip color="primary" variant="outlined" label={tag.name} onClick={() => {}} key={tag.id} />
-                      ))}
-                    </Box>
-                  )),
+                value: (
+                  <Box sx={{ gap: 1, display: 'flex' }}>
+                    {data.collections.map(({ id, name }) => (
+                      <Chip
+                        color="primary"
+                        variant="outlined"
+                        label={name}
+                        onClick={() => {
+                          navigate(`/bookmarks/collections?parentId=${id}`);
+                        }}
+                        onDelete={async () => {
+                          await deleteCollectionForNovel({ variables: { collectionId: id, novelId: data.id } });
+                          refetch();
+                        }}
+                        key={id}
+                      />
+                    ))}
+                    <AddCollection novelId={data.id} refetch={refetch} />
+                  </Box>
+                ),
                 span: 3,
               },
               {
@@ -120,7 +137,7 @@ export default function NovelDetails() {
             ] satisfies DetailsItem[],
         )
         .otherwise(() => []),
-    [data, t],
+    [data, t, deleteCollectionForNovel, navigate],
   );
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', p: 2, gap: 2 }}>

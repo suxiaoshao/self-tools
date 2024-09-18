@@ -311,6 +311,7 @@
     "constructor-super": "warn",
     "getter-return": "warn",
     "no-unreachable": "warn",
+    "export": "warn",
     "no-return-in-finally": "warn",
     "require-render-return": "warn",
     "rules-of-hooks": "warn"

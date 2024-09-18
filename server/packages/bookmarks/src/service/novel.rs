@@ -332,11 +332,9 @@ impl Novel {
             event!(Level::WARN, "小说不存在: {}", novel_id);
             return Err(GraphqlError::NotFound("小说", novel_id));
         }
-        if CollectionNovelModel::exists(collection_id, novel_id, conn)? {
-            event!(Level::WARN, "小说集合关系存在: {}", novel_id);
-            return Err(GraphqlError::AlreadyExists(format!(
-                "{collection_id}/{novel_id}"
-            )));
+        if !CollectionNovelModel::exists(collection_id, novel_id, conn)? {
+            event!(Level::WARN, "小说集合关系不存在: {}", novel_id);
+            return Err(GraphqlError::NotFound("小说集合关系", collection_id));
         }
         CollectionNovelModel::delete(collection_id, novel_id, conn)?;
         let novel = NovelModel::find_one(novel_id, conn)?;

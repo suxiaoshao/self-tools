@@ -5,8 +5,8 @@
  * @LastEditTime: 2024-01-23 00:25:08
  * @FilePath: /self-tools/web/packages/bookmarks/src/components/CollectionSelect/index.tsx
  */
-import { Collapse, IconButton, List, ListItem, ListItemButton, ListItemText } from '@mui/material';
-import { Dispatch, SetStateAction, useMemo, useState } from 'react';
+import { Collapse, FormHelperText, IconButton, List, ListItem, ListItemButton, ListItemText } from '@mui/material';
+import { useMemo, useState } from 'react';
 import { AllCollectionItem, CollectionTreeItem } from '@bookmarks/features/Collections/collectionSlice';
 import { getCollectionTreeFromCollectionList } from '@bookmarks/features/Collections/utils';
 import { ExpandLess, ExpandMore } from '@mui/icons-material';
@@ -14,20 +14,22 @@ import { match } from 'ts-pattern';
 
 export interface CollectionSelectProps {
   allCollections: Map<number, AllCollectionItem>;
-  onAddItem: (newValue: number) => void;
-  onDelete: (removeId: number) => void;
-  selected: number | null;
-  setSelected: Dispatch<SetStateAction<number | null>>;
+  value: number | null;
+  onChange: (value: number | null) => void;
+  errorMessage?: string;
 }
 
-export default function CollectionSelect({ allCollections, selected, setSelected }: CollectionSelectProps) {
+export default function CollectionSelect({ allCollections, value, onChange, errorMessage }: CollectionSelectProps) {
   const treeData = useMemo(() => getCollectionTreeFromCollectionList(allCollections.values()), [allCollections]);
 
   return (
     <List>
       {treeData.map((item) => (
-        <CollectionItem value={item} key={item.id} selected={selected} setSelected={setSelected} />
+        <CollectionItem value={item} key={item.id} selected={value} setSelected={onChange} />
       ))}
+      <FormHelperText sx={{ ml: 2, mr: 2 }} error>
+        {errorMessage}
+      </FormHelperText>
     </List>
   );
 }
@@ -35,7 +37,7 @@ export default function CollectionSelect({ allCollections, selected, setSelected
 interface CollectionItemProps {
   value: CollectionTreeItem;
   selected: number | null;
-  setSelected: Dispatch<SetStateAction<number | null>>;
+  setSelected: (value: number | null) => void;
 }
 
 function CollectionItem({ value: { path, description, id, children }, selected, setSelected }: CollectionItemProps) {
@@ -89,7 +91,7 @@ function CollectionItem({ value: { path, description, id, children }, selected, 
 interface CollectionListProps {
   children: CollectionTreeItem[];
   selected: number | null;
-  setSelected: Dispatch<SetStateAction<number | null>>;
+  setSelected: (value: number | null) => void;
   open: boolean;
 }
 

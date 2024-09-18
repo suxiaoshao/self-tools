@@ -19,12 +19,13 @@ import { convertFormToVariables } from './utils';
 import { getImageUrl } from '@bookmarks/utils/image';
 import { getLabelKeyBySite } from '@bookmarks/utils/novelSite';
 import CollectionMultiSelect from '@bookmarks/components/CollectionMultiSelect';
+import TagsSelect from '@bookmarks/components/TagsSelect';
 
 type Data = GetNovelsQuery['queryNovels'][0];
 
 export default function NovelList() {
   type FormData = GetNovelsQueryVariables;
-  const { control, watch, register } = useForm<FormData>({ defaultValues: {} });
+  const { control, watch, register } = useForm<FormData>({ defaultValues: { tagMatch: { matchSet: [] } } });
   const form = watch();
   const { data, refetch } = useGetNovelsQuery({ variables: convertFormToVariables(form) });
   const [deleteNovel] = useDeleteNovelMutation();
@@ -144,11 +145,7 @@ export default function NovelList() {
 
           <FormControl component="fieldset" variant="standard">
             <FormLabel component="legend">{t('match_tags')}</FormLabel>
-            <Controller
-              control={control}
-              name="tagMatch.matchSet"
-              render={({ field }) => <CollectionMultiSelect {...field} />}
-            />
+            <Controller control={control} name="tagMatch.matchSet" render={({ field }) => <TagsSelect {...field} />} />
           </FormControl>
         </Paper>
         <CustomTable

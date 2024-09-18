@@ -26,6 +26,15 @@ import { useI18n } from 'i18n';
 import React, { FocusEventHandler, ForwardedRef, useImperativeHandle, useMemo, useState } from 'react';
 import { match } from 'ts-pattern';
 import CollectionSelect from '../CollectionSelect';
+import { Controller, useForm } from 'react-hook-form';
+import { number, object, InferInput } from 'valibot';
+import { valibotResolver } from '@hookform/resolvers/valibot';
+
+const selectCollectionSchema = object({
+  collectionId: number(),
+});
+
+type SelectCollectionType = InferInput<typeof selectCollectionSchema>;
 
 export interface CollectionMultiSelectProps extends Omit<BoxProps, 'name' | 'onChange' | 'onBlur' | 'value'> {
   onChange: (newValue: number[] | null | undefined) => void;
@@ -79,32 +88,34 @@ function InnerCollectionSelect({ allCollections, onChange, value }: InnerCollect
   );
   // 控制 dialog
   const [open, setOpen] = useState(false);
-  const handleClose = () => {
-    setOpen(false);
-  };
-  const [selected, setSelected] = useState<number | null>(null);
 
   const t = useI18n();
-  const onAddItem = () => {
-    if (!selected) {
-      return;
-    }
-    if (!value) {
-      onChange([selected]);
-      handleClose();
-      return;
-    }
-    if (!value.includes(selected)) {
-      onChange([...value, selected]);
-    }
-    handleClose();
-  };
   const onDelete = (id: number) => {
     if (!value) {
       return;
     }
     onChange(value.filter((item) => item !== id));
   };
+
+  const { reset, control, handleSubmit } = useForm<SelectCollectionType>({
+    resolver: valibotResolver(selectCollectionSchema),
+  });
+
+  const handleClose = () => {
+    reset();
+    setOpen(false);
+  };
+  const onSubmit = handleSubmit(({ collectionId }) => {
+    if (!value) {
+      onChange([collectionId]);
+      handleClose();
+      return;
+    }
+    if (!value.includes(collectionId)) {
+      onChange([...value, collectionId]);
+    }
+    handleClose();
+  });
 
   return (
     <Box sx={{ display: 'flex', gap: 1 }}>
@@ -115,22 +126,19 @@ function InnerCollectionSelect({ allCollections, onChange, value }: InnerCollect
         <Add />
       </IconButton>
       <Dialog PaperProps={{ sx: { maxWidth: 700 } }} open={open} onClose={handleClose}>
-        <Box sx={{ width: 500 }} component="form">
+        <Box sx={{ width: 500 }} component="form" onSubmit={onSubmit}>
           <DialogTitle>{t('select_collection')}</DialogTitle>
-
-          <CollectionSelect
-            selected={selected}
-            setSelected={setSelected}
-            allCollections={allCollections}
-            onAddItem={onAddItem}
-            onDelete={onDelete}
+          <Controller
+            control={control}
+            name="collectionId"
+            render={({ field, fieldState }) => (
+              <CollectionSelect {...field} allCollections={allCollections} errorMessage={fieldState.error?.message} />
+            )}
           />
 
           <DialogActions>
             <Button onClick={handleClose}>{t('cancel')}</Button>
-            <Button disabled={selected === null} onClick={onAddItem}>
-              {t('submit')}
-            </Button>
+            <Button type="submit">{t('submit')}</Button>
           </DialogActions>
         </Box>
       </Dialog>

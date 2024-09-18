@@ -76,3 +76,15 @@ mutation updateNovelByCrawler($novelId: Int!) {
     id
   }
 }
+
+mutation addCollectionForNovel($novelId: Int!, $collectionId: Int!) {
+  addCollectionForNovel(collectionId: $collectionId, novelId: $novelId) {
+    id
+  }
+}
+
+mutation deleteCollectionForNovel($novelId: Int!, $collectionId: Int!) {
+  deleteCollectionForNovel(collectionId: $collectionId, novelId: $novelId) {
+    id
+  }
+}

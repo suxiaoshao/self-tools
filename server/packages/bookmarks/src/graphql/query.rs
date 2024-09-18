@@ -41,19 +41,6 @@ impl QueryRoot {
         let directory = Collection::all_collections(conn)?;
         Ok(directory)
     }
-    /// 获取所有tag
-    #[graphql(guard = "AuthGuard")]
-    async fn all_tags(&self, context: &Context<'_>) -> GraphqlResult<Vec<Tag>> {
-        let conn = &mut context
-            .data::<PgPool>()
-            .map_err(|_| {
-                event!(Level::WARN, "graphql context data PgPool 不存在");
-                GraphqlError::NotGraphqlContextData("PgPool")
-            })?
-            .get()?;
-        let directory = Tag::all(conn)?;
-        Ok(directory)
-    }
     /// 获取目录列表
     #[graphql(guard = "AuthGuard")]
     async fn get_collections(

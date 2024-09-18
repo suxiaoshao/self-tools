@@ -372,15 +372,6 @@ export type SearchAuthorQuery = {
   queryAuthors: Array<{ __typename?: 'Author'; id: number; name: string; description: string; avatar: string }>;
 };
 
-export type GetCollectionSelectQueryVariables = Exact<{
-  parentId?: InputMaybe<Scalars['Int']['input']>;
-}>;
-
-export type GetCollectionSelectQuery = {
-  __typename?: 'QueryRoot';
-  getCollections: Array<{ __typename?: 'Collection'; name: string; id: number }>;
-};
-
 export type AllowTagsQueryVariables = Exact<{ [key: string]: never }>;
 
 export type AllowTagsQuery = {
@@ -688,6 +679,26 @@ export type UpdateNovelByCrawlerMutation = {
   updateNovelByCrawler: { __typename?: 'Novel'; id: number };
 };
 
+export type AddCollectionForNovelMutationVariables = Exact<{
+  novelId: Scalars['Int']['input'];
+  collectionId: Scalars['Int']['input'];
+}>;
+
+export type AddCollectionForNovelMutation = {
+  __typename?: 'MutationRoot';
+  addCollectionForNovel: { __typename?: 'Novel'; id: number };
+};
+
+export type DeleteCollectionForNovelMutationVariables = Exact<{
+  novelId: Scalars['Int']['input'];
+  collectionId: Scalars['Int']['input'];
+}>;
+
+export type DeleteCollectionForNovelMutation = {
+  __typename?: 'MutationRoot';
+  deleteCollectionForNovel: { __typename?: 'Novel'; id: number };
+};
+
 export type GetNovelsQueryVariables = Exact<{
   collectionMatch?: InputMaybe<TagMatch>;
   novelStatus?: InputMaybe<NovelStatus>;
@@ -805,74 +816,15 @@ export function useSearchAuthorLazyQuery(
   return Apollo.useLazyQuery<SearchAuthorQuery, SearchAuthorQueryVariables>(SearchAuthorDocument, options);
 }
 export function useSearchAuthorSuspenseQuery(
-  baseOptions?: Apollo.SuspenseQueryHookOptions<SearchAuthorQuery, SearchAuthorQueryVariables>,
+  baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<SearchAuthorQuery, SearchAuthorQueryVariables>,
 ) {
-  const options = { ...defaultOptions, ...baseOptions };
+  const options = baseOptions === Apollo.skipToken ? baseOptions : { ...defaultOptions, ...baseOptions };
   return Apollo.useSuspenseQuery<SearchAuthorQuery, SearchAuthorQueryVariables>(SearchAuthorDocument, options);
 }
 export type SearchAuthorQueryHookResult = ReturnType<typeof useSearchAuthorQuery>;
 export type SearchAuthorLazyQueryHookResult = ReturnType<typeof useSearchAuthorLazyQuery>;
 export type SearchAuthorSuspenseQueryHookResult = ReturnType<typeof useSearchAuthorSuspenseQuery>;
 export type SearchAuthorQueryResult = Apollo.QueryResult<SearchAuthorQuery, SearchAuthorQueryVariables>;
-export const GetCollectionSelectDocument = gql`
-  query getCollectionSelect($parentId: Int) {
-    getCollections(parentId: $parentId) {
-      name
-      id
-    }
-  }
-`;
-
-/**
- * __useGetCollectionSelectQuery__
- *
- * To run a query within a React component, call `useGetCollectionSelectQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetCollectionSelectQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetCollectionSelectQuery({
- *   variables: {
- *      parentId: // value for 'parentId'
- *   },
- * });
- */
-export function useGetCollectionSelectQuery(
-  baseOptions?: Apollo.QueryHookOptions<GetCollectionSelectQuery, GetCollectionSelectQueryVariables>,
-) {
-  const options = { ...defaultOptions, ...baseOptions };
-  return Apollo.useQuery<GetCollectionSelectQuery, GetCollectionSelectQueryVariables>(
-    GetCollectionSelectDocument,
-    options,
-  );
-}
-export function useGetCollectionSelectLazyQuery(
-  baseOptions?: Apollo.LazyQueryHookOptions<GetCollectionSelectQuery, GetCollectionSelectQueryVariables>,
-) {
-  const options = { ...defaultOptions, ...baseOptions };
-  return Apollo.useLazyQuery<GetCollectionSelectQuery, GetCollectionSelectQueryVariables>(
-    GetCollectionSelectDocument,
-    options,
-  );
-}
-export function useGetCollectionSelectSuspenseQuery(
-  baseOptions?: Apollo.SuspenseQueryHookOptions<GetCollectionSelectQuery, GetCollectionSelectQueryVariables>,
-) {
-  const options = { ...defaultOptions, ...baseOptions };
-  return Apollo.useSuspenseQuery<GetCollectionSelectQuery, GetCollectionSelectQueryVariables>(
-    GetCollectionSelectDocument,
-    options,
-  );
-}
-export type GetCollectionSelectQueryHookResult = ReturnType<typeof useGetCollectionSelectQuery>;
-export type GetCollectionSelectLazyQueryHookResult = ReturnType<typeof useGetCollectionSelectLazyQuery>;
-export type GetCollectionSelectSuspenseQueryHookResult = ReturnType<typeof useGetCollectionSelectSuspenseQuery>;
-export type GetCollectionSelectQueryResult = Apollo.QueryResult<
-  GetCollectionSelectQuery,
-  GetCollectionSelectQueryVariables
->;
 export const AllowTagsDocument = gql`
   query allowTags {
     queryTags {
@@ -908,9 +860,9 @@ export function useAllowTagsLazyQuery(
   return Apollo.useLazyQuery<AllowTagsQuery, AllowTagsQueryVariables>(AllowTagsDocument, options);
 }
 export function useAllowTagsSuspenseQuery(
-  baseOptions?: Apollo.SuspenseQueryHookOptions<AllowTagsQuery, AllowTagsQueryVariables>,
+  baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<AllowTagsQuery, AllowTagsQueryVariables>,
 ) {
-  const options = { ...defaultOptions, ...baseOptions };
+  const options = baseOptions === Apollo.skipToken ? baseOptions : { ...defaultOptions, ...baseOptions };
   return Apollo.useSuspenseQuery<AllowTagsQuery, AllowTagsQueryVariables>(AllowTagsDocument, options);
 }
 export type AllowTagsQueryHookResult = ReturnType<typeof useAllowTagsQuery>;
@@ -952,9 +904,9 @@ export function useGetAuthorsLazyQuery(
   return Apollo.useLazyQuery<GetAuthorsQuery, GetAuthorsQueryVariables>(GetAuthorsDocument, options);
 }
 export function useGetAuthorsSuspenseQuery(
-  baseOptions?: Apollo.SuspenseQueryHookOptions<GetAuthorsQuery, GetAuthorsQueryVariables>,
+  baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetAuthorsQuery, GetAuthorsQueryVariables>,
 ) {
-  const options = { ...defaultOptions, ...baseOptions };
+  const options = baseOptions === Apollo.skipToken ? baseOptions : { ...defaultOptions, ...baseOptions };
   return Apollo.useSuspenseQuery<GetAuthorsQuery, GetAuthorsQueryVariables>(GetAuthorsDocument, options);
 }
 export type GetAuthorsQueryHookResult = ReturnType<typeof useGetAuthorsQuery>;
@@ -1017,9 +969,9 @@ export function useGetAuthorLazyQuery(
   return Apollo.useLazyQuery<GetAuthorQuery, GetAuthorQueryVariables>(GetAuthorDocument, options);
 }
 export function useGetAuthorSuspenseQuery(
-  baseOptions?: Apollo.SuspenseQueryHookOptions<GetAuthorQuery, GetAuthorQueryVariables>,
+  baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetAuthorQuery, GetAuthorQueryVariables>,
 ) {
-  const options = { ...defaultOptions, ...baseOptions };
+  const options = baseOptions === Apollo.skipToken ? baseOptions : { ...defaultOptions, ...baseOptions };
   return Apollo.useSuspenseQuery<GetAuthorQuery, GetAuthorQueryVariables>(GetAuthorDocument, options);
 }
 export type GetAuthorQueryHookResult = ReturnType<typeof useGetAuthorQuery>;
@@ -1094,9 +1046,9 @@ export function useFetchAuthorLazyQuery(
   return Apollo.useLazyQuery<FetchAuthorQuery, FetchAuthorQueryVariables>(FetchAuthorDocument, options);
 }
 export function useFetchAuthorSuspenseQuery(
-  baseOptions?: Apollo.SuspenseQueryHookOptions<FetchAuthorQuery, FetchAuthorQueryVariables>,
+  baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<FetchAuthorQuery, FetchAuthorQueryVariables>,
 ) {
-  const options = { ...defaultOptions, ...baseOptions };
+  const options = baseOptions === Apollo.skipToken ? baseOptions : { ...defaultOptions, ...baseOptions };
   return Apollo.useSuspenseQuery<FetchAuthorQuery, FetchAuthorQueryVariables>(FetchAuthorDocument, options);
 }
 export type FetchAuthorQueryHookResult = ReturnType<typeof useFetchAuthorQuery>;
@@ -1315,9 +1267,9 @@ export function useGetCollectionsLazyQuery(
   return Apollo.useLazyQuery<GetCollectionsQuery, GetCollectionsQueryVariables>(GetCollectionsDocument, options);
 }
 export function useGetCollectionsSuspenseQuery(
-  baseOptions?: Apollo.SuspenseQueryHookOptions<GetCollectionsQuery, GetCollectionsQueryVariables>,
+  baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetCollectionsQuery, GetCollectionsQueryVariables>,
 ) {
-  const options = { ...defaultOptions, ...baseOptions };
+  const options = baseOptions === Apollo.skipToken ? baseOptions : { ...defaultOptions, ...baseOptions };
   return Apollo.useSuspenseQuery<GetCollectionsQuery, GetCollectionsQueryVariables>(GetCollectionsDocument, options);
 }
 export type GetCollectionsQueryHookResult = ReturnType<typeof useGetCollectionsQuery>;
@@ -1461,9 +1413,11 @@ export function useGetCollectionAncestorsLazyQuery(
   );
 }
 export function useGetCollectionAncestorsSuspenseQuery(
-  baseOptions?: Apollo.SuspenseQueryHookOptions<GetCollectionAncestorsQuery, GetCollectionAncestorsQueryVariables>,
+  baseOptions?:
+    | Apollo.SkipToken
+    | Apollo.SuspenseQueryHookOptions<GetCollectionAncestorsQuery, GetCollectionAncestorsQueryVariables>,
 ) {
-  const options = { ...defaultOptions, ...baseOptions };
+  const options = baseOptions === Apollo.skipToken ? baseOptions : { ...defaultOptions, ...baseOptions };
   return Apollo.useSuspenseQuery<GetCollectionAncestorsQuery, GetCollectionAncestorsQueryVariables>(
     GetCollectionAncestorsDocument,
     options,
@@ -1518,9 +1472,9 @@ export function useAllCollectionsLazyQuery(
   return Apollo.useLazyQuery<AllCollectionsQuery, AllCollectionsQueryVariables>(AllCollectionsDocument, options);
 }
 export function useAllCollectionsSuspenseQuery(
-  baseOptions?: Apollo.SuspenseQueryHookOptions<AllCollectionsQuery, AllCollectionsQueryVariables>,
+  baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<AllCollectionsQuery, AllCollectionsQueryVariables>,
 ) {
-  const options = { ...defaultOptions, ...baseOptions };
+  const options = baseOptions === Apollo.skipToken ? baseOptions : { ...defaultOptions, ...baseOptions };
   return Apollo.useSuspenseQuery<AllCollectionsQuery, AllCollectionsQueryVariables>(AllCollectionsDocument, options);
 }
 export type AllCollectionsQueryHookResult = ReturnType<typeof useAllCollectionsQuery>;
@@ -1606,9 +1560,9 @@ export function useGetNovelLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<G
   return Apollo.useLazyQuery<GetNovelQuery, GetNovelQueryVariables>(GetNovelDocument, options);
 }
 export function useGetNovelSuspenseQuery(
-  baseOptions?: Apollo.SuspenseQueryHookOptions<GetNovelQuery, GetNovelQueryVariables>,
+  baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetNovelQuery, GetNovelQueryVariables>,
 ) {
-  const options = { ...defaultOptions, ...baseOptions };
+  const options = baseOptions === Apollo.skipToken ? baseOptions : { ...defaultOptions, ...baseOptions };
   return Apollo.useSuspenseQuery<GetNovelQuery, GetNovelQueryVariables>(GetNovelDocument, options);
 }
 export type GetNovelQueryHookResult = ReturnType<typeof useGetNovelQuery>;
@@ -1672,9 +1626,9 @@ export function useFetchNovelLazyQuery(
   return Apollo.useLazyQuery<FetchNovelQuery, FetchNovelQueryVariables>(FetchNovelDocument, options);
 }
 export function useFetchNovelSuspenseQuery(
-  baseOptions?: Apollo.SuspenseQueryHookOptions<FetchNovelQuery, FetchNovelQueryVariables>,
+  baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<FetchNovelQuery, FetchNovelQueryVariables>,
 ) {
-  const options = { ...defaultOptions, ...baseOptions };
+  const options = baseOptions === Apollo.skipToken ? baseOptions : { ...defaultOptions, ...baseOptions };
   return Apollo.useSuspenseQuery<FetchNovelQuery, FetchNovelQueryVariables>(FetchNovelDocument, options);
 }
 export type FetchNovelQueryHookResult = ReturnType<typeof useFetchNovelQuery>;
@@ -1725,6 +1679,96 @@ export type UpdateNovelByCrawlerMutationOptions = Apollo.BaseMutationOptions<
   UpdateNovelByCrawlerMutation,
   UpdateNovelByCrawlerMutationVariables
 >;
+export const AddCollectionForNovelDocument = gql`
+  mutation addCollectionForNovel($novelId: Int!, $collectionId: Int!) {
+    addCollectionForNovel(collectionId: $collectionId, novelId: $novelId) {
+      id
+    }
+  }
+`;
+export type AddCollectionForNovelMutationFn = Apollo.MutationFunction<
+  AddCollectionForNovelMutation,
+  AddCollectionForNovelMutationVariables
+>;
+
+/**
+ * __useAddCollectionForNovelMutation__
+ *
+ * To run a mutation, you first call `useAddCollectionForNovelMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAddCollectionForNovelMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [addCollectionForNovelMutation, { data, loading, error }] = useAddCollectionForNovelMutation({
+ *   variables: {
+ *      novelId: // value for 'novelId'
+ *      collectionId: // value for 'collectionId'
+ *   },
+ * });
+ */
+export function useAddCollectionForNovelMutation(
+  baseOptions?: Apollo.MutationHookOptions<AddCollectionForNovelMutation, AddCollectionForNovelMutationVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useMutation<AddCollectionForNovelMutation, AddCollectionForNovelMutationVariables>(
+    AddCollectionForNovelDocument,
+    options,
+  );
+}
+export type AddCollectionForNovelMutationHookResult = ReturnType<typeof useAddCollectionForNovelMutation>;
+export type AddCollectionForNovelMutationResult = Apollo.MutationResult<AddCollectionForNovelMutation>;
+export type AddCollectionForNovelMutationOptions = Apollo.BaseMutationOptions<
+  AddCollectionForNovelMutation,
+  AddCollectionForNovelMutationVariables
+>;
+export const DeleteCollectionForNovelDocument = gql`
+  mutation deleteCollectionForNovel($novelId: Int!, $collectionId: Int!) {
+    deleteCollectionForNovel(collectionId: $collectionId, novelId: $novelId) {
+      id
+    }
+  }
+`;
+export type DeleteCollectionForNovelMutationFn = Apollo.MutationFunction<
+  DeleteCollectionForNovelMutation,
+  DeleteCollectionForNovelMutationVariables
+>;
+
+/**
+ * __useDeleteCollectionForNovelMutation__
+ *
+ * To run a mutation, you first call `useDeleteCollectionForNovelMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteCollectionForNovelMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteCollectionForNovelMutation, { data, loading, error }] = useDeleteCollectionForNovelMutation({
+ *   variables: {
+ *      novelId: // value for 'novelId'
+ *      collectionId: // value for 'collectionId'
+ *   },
+ * });
+ */
+export function useDeleteCollectionForNovelMutation(
+  baseOptions?: Apollo.MutationHookOptions<DeleteCollectionForNovelMutation, DeleteCollectionForNovelMutationVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useMutation<DeleteCollectionForNovelMutation, DeleteCollectionForNovelMutationVariables>(
+    DeleteCollectionForNovelDocument,
+    options,
+  );
+}
+export type DeleteCollectionForNovelMutationHookResult = ReturnType<typeof useDeleteCollectionForNovelMutation>;
+export type DeleteCollectionForNovelMutationResult = Apollo.MutationResult<DeleteCollectionForNovelMutation>;
+export type DeleteCollectionForNovelMutationOptions = Apollo.BaseMutationOptions<
+  DeleteCollectionForNovelMutation,
+  DeleteCollectionForNovelMutationVariables
+>;
 export const GetNovelsDocument = gql`
   query getNovels($collectionMatch: TagMatch, $novelStatus: NovelStatus, $tagMatch: TagMatch) {
     queryNovels(collectionMatch: $collectionMatch, novelStatus: $novelStatus, tagMatch: $tagMatch) {
@@ -1770,9 +1814,9 @@ export function useGetNovelsLazyQuery(
   return Apollo.useLazyQuery<GetNovelsQuery, GetNovelsQueryVariables>(GetNovelsDocument, options);
 }
 export function useGetNovelsSuspenseQuery(
-  baseOptions?: Apollo.SuspenseQueryHookOptions<GetNovelsQuery, GetNovelsQueryVariables>,
+  baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetNovelsQuery, GetNovelsQueryVariables>,
 ) {
-  const options = { ...defaultOptions, ...baseOptions };
+  const options = baseOptions === Apollo.skipToken ? baseOptions : { ...defaultOptions, ...baseOptions };
   return Apollo.useSuspenseQuery<GetNovelsQuery, GetNovelsQueryVariables>(GetNovelsDocument, options);
 }
 export type GetNovelsQueryHookResult = ReturnType<typeof useGetNovelsQuery>;
@@ -1924,9 +1968,9 @@ export function useGetTagsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<Ge
   return Apollo.useLazyQuery<GetTagsQuery, GetTagsQueryVariables>(GetTagsDocument, options);
 }
 export function useGetTagsSuspenseQuery(
-  baseOptions?: Apollo.SuspenseQueryHookOptions<GetTagsQuery, GetTagsQueryVariables>,
+  baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetTagsQuery, GetTagsQueryVariables>,
 ) {
-  const options = { ...defaultOptions, ...baseOptions };
+  const options = baseOptions === Apollo.skipToken ? baseOptions : { ...defaultOptions, ...baseOptions };
   return Apollo.useSuspenseQuery<GetTagsQuery, GetTagsQueryVariables>(GetTagsDocument, options);
 }
 export type GetTagsQueryHookResult = ReturnType<typeof useGetTagsQuery>;

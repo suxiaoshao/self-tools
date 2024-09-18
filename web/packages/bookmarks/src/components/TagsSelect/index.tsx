@@ -1,8 +1,8 @@
 import { Box, Chip, FormControl, FormControlProps, InputLabel, MenuItem, OutlinedInput, Select } from '@mui/material';
 import { useI18n } from 'i18n';
 import { FocusEventHandler, useMemo } from 'react';
+import { match, P } from 'ts-pattern';
 import { useAllowTagsQuery } from '../../graphql';
-import { match } from 'ts-pattern';
 
 const ITEM_HEIGHT = 48;
 const ITEM_PADDING_TOP = 8;
@@ -16,7 +16,7 @@ const MenuProps = {
 };
 
 export interface TagsSelectProps extends Omit<FormControlProps, 'name' | 'onChange' | 'onBlur' | 'value'> {
-  onChange: (event: number) => void;
+  onChange: (event: number[]) => void;
   onBlur: FocusEventHandler<HTMLInputElement> | undefined;
   value: number[] | number | null | undefined;
 }
@@ -24,13 +24,13 @@ export interface TagsSelectProps extends Omit<FormControlProps, 'name' | 'onChan
 export default function TagsSelect({ value, onChange, onBlur, sx, ...props }: TagsSelectProps) {
   const { data: { queryTags } = {}, loading } = useAllowTagsQuery();
   const formValue = useMemo(() => {
-    if (value === null || value === undefined) {
-      return;
-    } else if (typeof value === 'number') {
-      return [value];
-    } else {
-      return value;
-    }
+    return (
+      match(value)
+        // eslint-disable-next-line no-useless-undefined
+        .with(null, undefined, () => undefined)
+        .with(P.number, (v) => [v])
+        .otherwise((v) => v)
+    );
   }, [value]);
   const t = useI18n();
 
@@ -41,9 +41,7 @@ export default function TagsSelect({ value, onChange, onBlur, sx, ...props }: Ta
         multiple
         value={formValue}
         onChange={(e) => {
-          if (typeof e.target.value === 'number') {
-            onChange(e.target.value);
-          }
+          match(e.target.value).with(P.array(P.number), (value) => onChange(value));
         }}
         onBlur={onBlur}
         input={<OutlinedInput label={t('tags')} />}
@@ -54,17 +52,17 @@ export default function TagsSelect({ value, onChange, onBlur, sx, ...props }: Ta
         )}
         MenuProps={MenuProps}
       >
-        {match(loading)
-          .with(true, () => <MenuItem disabled>Loading...</MenuItem>)
+        {match([loading, queryTags?.length])
+          .with([true, P._], () => <MenuItem disabled>Loading...</MenuItem>)
+          .with([P._, P.number.gt(0)], () =>
+            queryTags?.map(({ name, id }) => (
+              <MenuItem key={id} value={id}>
+                {name}
+              </MenuItem>
+            )),
+          )
           .otherwise(() => (
-            <>
-              {queryTags?.map(({ name, id }) => (
-                <MenuItem key={id} value={id}>
-                  {name}
-                </MenuItem>
-              ))}
-              {(queryTags?.length ?? 0) === 0 && <MenuItem disabled>No options</MenuItem>}
-            </>
+            <MenuItem disabled>No options</MenuItem>
           ))}
       </Select>
     </FormControl>

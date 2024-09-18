@@ -9,4 +9,4 @@ export { default as Details } from './Details';
 
 export { type DetailsItem } from './types';
 
-export * from './Details';
+export { type DetailsProps } from './Details';
