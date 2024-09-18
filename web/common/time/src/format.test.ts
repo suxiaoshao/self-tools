@@ -9,6 +9,7 @@ describe('format', () => {
     timezoneMock.unregister();
   });
   it('format time timestamp', () => {
+    // eslint-disable-next-line  numeric-separators-style
     expect(format(1677554648753)).toBe('2023-02-27 19:24:08');
   });
   it('format time string', () => {
@@ -16,6 +17,7 @@ describe('format', () => {
   });
   it('format time empty', () => {
     expect(format(null)).toBe('~');
+    // eslint-disable-next-line no-useless-undefined
     expect(format(undefined)).toBe('~');
   });
 });

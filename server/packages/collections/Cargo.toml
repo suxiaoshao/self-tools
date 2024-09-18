@@ -20,7 +20,7 @@ diesel = { version = "2.2.4", features = ["postgres", "time", "r2d2"] }
 time = "0.3.36"
 
 # error
-anyhow = "1.0.88"
+anyhow = "1.0.89"
 thiserror = "1.0.63"
 
 # cors

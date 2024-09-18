@@ -10,6 +10,7 @@ import { Dispatch, SetStateAction, useMemo, useState } from 'react';
 import { AllCollectionItem, CollectionTreeItem } from '@bookmarks/features/Collections/collectionSlice';
 import { getCollectionTreeFromCollectionList } from '@bookmarks/features/Collections/utils';
 import { ExpandLess, ExpandMore } from '@mui/icons-material';
+import { match } from 'ts-pattern';
 
 export interface CollectionSelectProps {
   allCollections: Map<number, AllCollectionItem>;
@@ -66,7 +67,10 @@ function CollectionItem({ value: { path, description, id, children }, selected, 
         disablePadding
         secondaryAction={
           <IconButton onClick={handleClick} edge="start">
-            {open ? <ExpandLess /> : <ExpandMore />}
+            {match(open)
+              .with(true, () => <ExpandLess />)
+              .with(false, () => <ExpandMore />)
+              .exhaustive()}
           </IconButton>
         }
         dense

@@ -7,4 +7,6 @@
  */
 export { default as Details } from './Details';
 
+export { type DetailsItem } from './types';
+
 export * from './Details';

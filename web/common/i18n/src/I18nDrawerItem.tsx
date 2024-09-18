@@ -21,7 +21,7 @@ import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import { useAppDispatch, useAppSelector, setLangSetting, LangMode, CustomLang } from './i18nSlice';
 import { object, enum_, InferInput } from 'valibot';
 import { valibotResolver } from '@hookform/resolvers/valibot';
-import { useI18n } from '.';
+import { useI18n } from './useI18n';
 
 export default function I18nDrawerItem() {
   const t = useI18n();
@@ -49,7 +49,7 @@ export default function I18nDrawerItem() {
     resolver: valibotResolver(createColorSchema),
   });
   const dispatch = useAppDispatch();
-  const onSubmit: SubmitHandler<FormData> = async (data) => {
+  const onSubmit: SubmitHandler<FormData> = (data) => {
     dispatch(setLangSetting(data));
     handleClose();
   };

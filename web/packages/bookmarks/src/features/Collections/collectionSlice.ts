@@ -6,15 +6,15 @@
  * @FilePath: /self-tools/web/packages/bookmarks/src/features/Collections/collectionSlice.ts
  */
 import { AllCollectionsQuery, useAllCollectionsLazyQuery } from '@bookmarks/graphql';
+import { useCallback, useEffect } from 'react';
 import { Enum } from 'types';
 import { create } from 'zustand';
 import { useShallow } from 'zustand/react/shallow';
-import { useCallback, useEffect } from 'react';
 
-export type AllCollectionItem = AllCollectionsQuery['allCollections'][0];
+export type AllCollectionItem = AllCollectionsQuery['allCollections'][number];
 
 export enum CollectionLoadingState {
-  init,
+  init = 0,
   loading,
   state,
   error,

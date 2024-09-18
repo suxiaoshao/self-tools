@@ -87,5 +87,8 @@
   "first_chapter_time": "首章时间",
   "tag_site_id": "小说站点 id",
   "select_collection": "选择集合",
-  "match_collections": "匹配集合"
+  "match_collections": "匹配集合",
+  "collection_whether_full_match": "集合是否全匹配",
+  "match_tags": "匹配标签",
+  "tag_whether_full_match": "标签是否全匹配"
 }

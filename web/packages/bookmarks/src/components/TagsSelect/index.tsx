@@ -25,7 +25,7 @@ export default function TagsSelect({ value, onChange, onBlur, sx, ...props }: Ta
   const { data: { queryTags } = {}, loading } = useAllowTagsQuery();
   const formValue = useMemo(() => {
     if (value === null || value === undefined) {
-      return undefined;
+      return;
     } else if (typeof value === 'number') {
       return [value];
     } else {

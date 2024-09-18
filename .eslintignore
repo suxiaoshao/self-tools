@@ -1,0 +1,2 @@
+web/packages/*/src/graphql.ts
+web/packages/*/apollo.config.js

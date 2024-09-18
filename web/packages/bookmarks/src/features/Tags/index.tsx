@@ -13,7 +13,7 @@ import {
 import { format } from 'time';
 import CreateTagButton from './components/CreateTagButton';
 import { useI18n } from 'i18n';
-import { getLabelKeyBySite } from '@bookmarks/utils/novel_site';
+import { getLabelKeyBySite } from '@bookmarks/utils/novelSite';
 
 const rowModel = getCoreRowModel();
 

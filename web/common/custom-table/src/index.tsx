@@ -112,7 +112,7 @@ export function CustomTable<D extends object>({
                 ActionsComponent={TablePaginationActions}
                 rowsPerPageOptions={page.pageSizeOptions}
                 onRowsPerPageChange={(event) => {
-                  page.setPageSize(parseInt(event.target.value, 10));
+                  page.setPageSize(Number.parseInt(event.target.value, 10));
                   page.setPage(1);
                 }}
               />

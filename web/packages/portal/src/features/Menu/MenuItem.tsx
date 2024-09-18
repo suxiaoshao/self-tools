@@ -59,7 +59,7 @@ export default function MenuItem({ menu, ...props }: MenuItemProps) {
           matchPaths={[path]}
           text={t(menu.name as I18nKey)}
           toPath={path}
-        ></RouterItem>
+        />
       );
     })
     .otherwise(() => null);

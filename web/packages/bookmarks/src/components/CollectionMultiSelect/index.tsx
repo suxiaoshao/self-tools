@@ -6,6 +6,12 @@
  * @FilePath: /self-tools/web/packages/bookmarks/src/components/CollectionSelect/index.tsx
  */
 import {
+  AllCollectionItem,
+  CollectionLoadingState,
+  useAllCollection,
+} from '@bookmarks/features/Collections/collectionSlice';
+import { Add } from '@mui/icons-material';
+import {
   Box,
   BoxProps,
   Button,
@@ -17,15 +23,8 @@ import {
   IconButton,
 } from '@mui/material';
 import { useI18n } from 'i18n';
-import { FocusEventHandler, ForwardedRef, useImperativeHandle, useMemo, useState } from 'react';
-import React from 'react';
+import React, { FocusEventHandler, ForwardedRef, useImperativeHandle, useMemo, useState } from 'react';
 import { match } from 'ts-pattern';
-import {
-  AllCollectionItem,
-  CollectionLoadingState,
-  useAllCollection,
-} from '@bookmarks/features/Collections/collectionSlice';
-import { Add } from '@mui/icons-material';
 import CollectionSelect from '../CollectionSelect';
 
 export interface CollectionMultiSelectProps extends Omit<BoxProps, 'name' | 'onChange' | 'onBlur' | 'value'> {

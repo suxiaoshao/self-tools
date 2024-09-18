@@ -32,7 +32,7 @@ export default function ChapterModal({ chapters }: ChapterModalProps) {
           <ViewList />
         </IconButton>
       </Tooltip>
-      <Dialog fullWidth maxWidth={'xs'} onClose={handleClose} open={open}>
+      <Dialog fullWidth maxWidth="xs" onClose={handleClose} open={open}>
         <DialogTitle>{t('novel_chapters')}</DialogTitle>
         <List sx={{ pt: 0 }}>
           {chapters.map((chapter) => (

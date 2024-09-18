@@ -8,6 +8,10 @@
  */
 import { useMemo, useState } from 'react';
 
+const INIT_PAGE_INDEX = 1;
+const INIT_PAGE_SIZE = 10;
+const INIT_PAGE_SIZE_OPTIONS = [5, 10, 15, 20, 50, 100];
+
 export interface PageState {
   setPage: (num: number) => void;
   pageIndex: number;
@@ -18,9 +22,9 @@ export interface PageState {
   pageSizeOptions?: number[];
 }
 export function usePage({
-  initPageIndex = 1,
-  initPageSize = 10,
-  pageSizeOptions: initPageSizeOptions = [5, 10, 15, 20, 50, 100],
+  initPageIndex = INIT_PAGE_INDEX,
+  initPageSize = INIT_PAGE_SIZE,
+  pageSizeOptions: initPageSizeOptions = INIT_PAGE_SIZE_OPTIONS,
 }: {
   initPageSize?: number;
   initPageIndex?: number;
@@ -45,8 +49,6 @@ export function usePageWithTotal(page: Omit<PageState, 'limit' | 'offset'>, tota
   const pageWithTotal = useMemo(() => {
     if (total) {
       return { ...page, total };
-    } else {
-      return undefined;
     }
   }, [page, total]);
   return pageWithTotal;

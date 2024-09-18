@@ -63,9 +63,9 @@ export const selectAuth = (state: RootState) => state.auth.value;
 
 export default authSlice.reducer;
 
-export type RootState = {
+export interface RootState {
   auth: AuthSliceType;
-};
+}
 export type AppDispatch = ThunkDispatch<
   {
     auth: AuthSliceType;

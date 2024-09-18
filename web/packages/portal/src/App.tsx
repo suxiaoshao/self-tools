@@ -4,7 +4,6 @@ import { SnackbarProvider } from 'notify';
 import { Provider } from 'react-redux';
 import store from './app/store';
 import I18next from 'i18n';
-import './micro';
 import { CustomTheme } from './features/Theme';
 
 function App() {

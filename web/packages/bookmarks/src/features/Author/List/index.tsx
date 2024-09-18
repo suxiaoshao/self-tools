@@ -16,7 +16,7 @@ import { format } from 'time';
 import { useI18n } from 'i18n';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { getImageUrl } from '@bookmarks/utils/image';
-import { getLabelKeyBySite } from '@bookmarks/utils/novel_site';
+import { getLabelKeyBySite } from '@bookmarks/utils/novelSite';
 
 type TableItem = GetAuthorsQuery['queryAuthors'][0];
 

@@ -1,23 +1,23 @@
 import { TableCellProps } from '@mui/material';
 import {
-  ColumnDef,
-  RowData,
-  TableOptions,
-  useReactTable,
-  Table,
   AccessorFn,
+  ColumnDef,
+  createColumnHelper,
   DeepKeys,
   DeepValue,
   DisplayColumnDef,
   GroupColumnDef,
   IdentifiedColumnDef,
+  RowData,
+  Table,
+  TableOptions,
+  useReactTable,
 } from '@tanstack/react-table';
-import { createColumnHelper } from '@tanstack/react-table';
 
-export type CustomExtendsType = {
+export interface CustomExtendsType {
   cellProps?: TableCellProps;
   headerCellProps?: TableCellProps;
-};
+}
 export type CustomColumnDef<T extends RowData, TValue = unknown> = ColumnDef<T, TValue> & CustomExtendsType;
 
 export type CustomColumnDefArray<T extends RowData> = CustomColumnDef<T>[];
@@ -34,7 +34,7 @@ export function createCustomColumnHelper<TData extends RowData>(): CustomColumnH
   return createColumnHelper<TData>();
 }
 
-export type CustomColumnHelper<TData extends RowData> = {
+export interface CustomColumnHelper<TData extends RowData> {
   accessor: <
     TAccessor extends AccessorFn<TData> | DeepKeys<TData>,
     TValue extends TAccessor extends AccessorFn<TData, infer TReturn>
@@ -51,4 +51,4 @@ export type CustomColumnHelper<TData extends RowData> = {
   ) => CustomColumnDef<TData, TValue>;
   display: (column: DisplayColumnDef<TData>) => CustomColumnDef<TData, unknown> & CustomExtendsType;
   group: (column: GroupColumnDef<TData>) => CustomColumnDef<TData, unknown> & CustomExtendsType;
-};
+}

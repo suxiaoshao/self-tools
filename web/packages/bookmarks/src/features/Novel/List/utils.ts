@@ -18,20 +18,22 @@ export function convertFormToVariables({
       .with(
         {
           fullMatch: P.nonNullable,
-          matchSet: P.nonNullable,
+          matchSet: P.when((matchSet) => matchSet?.length > 0),
         },
         ({ fullMatch, matchSet }) => ({ fullMatch, matchSet }),
       )
+      // eslint-disable-next-line no-useless-undefined
       .otherwise(() => undefined),
     novelStatus,
     tagMatch: match(tagMatch)
       .with(
         {
           fullMatch: P.nonNullable,
-          matchSet: P.nonNullable,
+          matchSet: P.when((matchSet) => matchSet?.length > 0),
         },
         ({ fullMatch, matchSet }) => ({ fullMatch, matchSet }),
       )
+      // eslint-disable-next-line no-useless-undefined
       .otherwise(() => undefined),
   };
 }

@@ -26,7 +26,7 @@ export interface MarkdownProps extends BoxProps {
 }
 
 function CustomImage(props: React.ImgHTMLAttributes<HTMLImageElement>) {
-  return <Box component={'img'} {...props} />;
+  return <Box component="img" {...props} />;
 }
 
 function CustomLink(props: { title: string; href: string; children: string }) {
@@ -62,12 +62,12 @@ function CustomHead(props: TypographyProps) {
 }
 
 function MyCode(props: { children: string; className?: string }) {
-  if (props.className !== undefined) {
+  if (props.className) {
     return <code className={props.className}>{props.children}</code>;
   } else {
     return (
       <Box
-        component={'span'}
+        component="span"
         sx={({
           palette: {
             secondary: { main, contrastText },

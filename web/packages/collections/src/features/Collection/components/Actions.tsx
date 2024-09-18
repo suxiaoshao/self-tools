@@ -1,5 +1,8 @@
-import { CollectionAndItem } from '../hooks/useTableColumns';
+import { MenuItem } from '@mui/material';
 import { TableActions } from 'custom-table';
+import { useI18n } from 'i18n';
+import { match } from 'ts-pattern';
+import { CollectionAndItem } from '../types';
 import {
   useDeleteCollectionMutation,
   useDeleteItemMutation,
@@ -8,11 +11,8 @@ import {
   useUpdateItemMutation,
 } from '../../../graphql';
 import useDialog from '../../../hooks/useDialog';
-import { MenuItem } from '@mui/material';
-import CollectionForm, { CollectionFormData } from './CollectionForm';
 import ItemForm, { ItemFormData } from '../../Item/Components/ItemForm';
-import { useI18n } from 'i18n';
-import { match } from 'ts-pattern';
+import CollectionForm, { CollectionFormData } from './CollectionForm';
 
 export type TableActionsProps = CollectionAndItem & {
   refetch: () => void;
@@ -52,6 +52,7 @@ export default function Actions({ id, refetch, __typename, ...data }: TableActio
             },
           },
           <MenuItem
+            // eslint-disable-next-line jsx-curly-brace-presence
             key={'edit'}
             onClick={() => {
               if (__typename === 'Item') {

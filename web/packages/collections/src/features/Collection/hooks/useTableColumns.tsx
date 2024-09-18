@@ -8,6 +8,7 @@ import Actions from '../components/Actions';
 import { Article, Folder } from '@mui/icons-material';
 import { useI18n } from 'i18n';
 import { match, P } from 'ts-pattern';
+import { CollectionAndItem } from '../types';
 
 const Typename = ({ __typename }: { __typename: CollectionAndItem['__typename'] }) => {
   const t = useI18n();
@@ -16,8 +17,6 @@ const Typename = ({ __typename }: { __typename: CollectionAndItem['__typename'] 
     .with('Item', () => <Chip icon={<Article />} variant="outlined" label={t('item')} color="secondary" />)
     .exhaustive();
 };
-
-export type CollectionAndItem = CollectionAndItemsQuery['collectionAndItem']['data'][0];
 
 export default function useTableColumns(refetch: () => void) {
   const t = useI18n();

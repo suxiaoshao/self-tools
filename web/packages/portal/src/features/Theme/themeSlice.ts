@@ -10,11 +10,11 @@ export enum ColorSetting {
   system = 'system',
 }
 
-export type ThemeSliceType = {
+export interface ThemeSliceType {
   color: string;
   colorSetting: ColorSetting;
   systemColorScheme: 'light' | 'dark';
-};
+}
 const getColorScheme = (
   colorSetting: ThemeSliceType['colorSetting'],
   systemColorScheme: ThemeSliceType['systemColorScheme'],

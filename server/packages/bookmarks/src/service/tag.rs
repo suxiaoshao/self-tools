@@ -76,6 +76,11 @@ impl Tag {
         let tags = TagModel::get_by_ids(ids, conn)?;
         Ok(tags.into_iter().map(|x| x.into()).collect())
     }
+    /// 获取所有 tag
+    pub(crate) fn all(conn: &mut PgConnection) -> GraphqlResult<Vec<Self>> {
+        let tags = TagModel::get_list(conn)?;
+        Ok(tags.into_iter().map(|x| x.into()).collect())
+    }
 }
 
 /// collection_id 相关

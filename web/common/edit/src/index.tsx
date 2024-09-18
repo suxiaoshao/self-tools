@@ -34,17 +34,18 @@ export default function Edit({ onChangeCode, code, language, wordWrap, ...props 
   /**
    * 编辑器绑定的 dom 的引用
    * */
-  const [editRef, setEditRef] = useState<HTMLDivElement | undefined>(undefined);
+  const [editRef, setEditRef] = useState<HTMLDivElement | undefined>();
   /**
    * 编辑器实体
    * */
-  const [edit, setEdit] = useState<editor.IStandaloneCodeEditor | undefined>(undefined);
+  const [edit, setEdit] = useState<editor.IStandaloneCodeEditor | undefined>();
 
   const theme = useTheme();
   const editTheme = useMemo(
     () =>
       match(theme.palette.mode)
         .with('dark', () => 'monankai')
+        // eslint-disable-next-line no-useless-undefined
         .otherwise(() => undefined),
     [theme.palette.mode],
   );
