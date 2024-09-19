@@ -71,7 +71,7 @@ impl CollectionModel {
         Ok(collection)
     }
     /// 根据列表删除目录
-    pub(crate) fn delete_list(ids: &[i64], conn: &mut PgConnection) -> GraphqlResult<usize> {
+    pub(crate) fn delete_list(ids: &HashSet<i64>, conn: &mut PgConnection) -> GraphqlResult<usize> {
         let count =
             diesel::delete(collection::table.filter(collection::id.eq_any(ids))).execute(conn)?;
         Ok(count)

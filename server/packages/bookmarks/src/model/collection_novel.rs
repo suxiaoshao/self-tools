@@ -57,7 +57,7 @@ impl CollectionNovelModel {
         Ok(exists)
     }
     pub(crate) fn delete_by_collection_ids(
-        collection_id: &[i64],
+        collection_id: &HashSet<i64>,
         conn: &mut PgConnection,
     ) -> GraphqlResult<()> {
         diesel::delete(
@@ -89,6 +89,19 @@ impl CollectionNovelModel {
         let mut lookup: HashMap<i64, HashSet<i64>> = HashMap::new();
         for (collection_id, novel_id) in all_data {
             lookup.entry(novel_id).or_default().insert(collection_id);
+        }
+        Ok(lookup)
+    }
+    pub(crate) fn map_collection_novel(
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<HashMap<i64, HashSet<i64>>> {
+        let all_data = collection_novel::table
+            .select((collection_novel::collection_id, collection_novel::novel_id))
+            .get_results::<(i64, i64)>(conn)?;
+        // 构建一个 `id` 到其子节点列表的映射
+        let mut lookup: HashMap<i64, HashSet<i64>> = HashMap::new();
+        for (collection_id, novel_id) in all_data {
+            lookup.entry(collection_id).or_default().insert(novel_id);
         }
         Ok(lookup)
     }

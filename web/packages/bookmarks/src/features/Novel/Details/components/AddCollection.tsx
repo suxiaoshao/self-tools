@@ -21,7 +21,7 @@ const selectCollectionSchema = object({
 
 type SelectCollectionType = InferInput<typeof selectCollectionSchema>;
 
-export default function index({ novelId, refetch }: AddCollectionProps) {
+export default function AddCollection({ novelId, refetch }: AddCollectionProps) {
   const [open, setOpen] = useState(false);
   const { value: allCollection, fetchData } = useAllCollection();
 

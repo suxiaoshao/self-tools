@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use async_graphql::*;
 use diesel::PgConnection;
 use time::OffsetDateTime;
@@ -133,7 +135,8 @@ impl Collection {
         // 构建一个 `id` 到其子节点列表的映射
         let lookup = CollectionModel::get_map(conn)?;
         // 初始化结果列表，并调用递归函数
-        let mut ids = Vec::new();
+        let mut ids = HashSet::new();
+        ids.insert(id);
         find_all_children(&mut ids, id, &lookup);
         conn.build_transaction().run(|conn| {
             CollectionNovelModel::delete_by_collection_ids(&ids, conn)?;
