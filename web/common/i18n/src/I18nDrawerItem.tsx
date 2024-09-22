@@ -18,10 +18,11 @@ import {
 } from '@mui/material';
 import { useState } from 'react';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
-import { useAppDispatch, useAppSelector, setLangSetting, LangMode, CustomLang } from './i18nSlice';
+import { useI18nStore, LangMode, CustomLang } from './i18nSlice';
 import { object, enum_, InferInput } from 'valibot';
 import { valibotResolver } from '@hookform/resolvers/valibot';
 import { useI18n } from './useI18n';
+import { useShallow } from 'zustand/react/shallow';
 
 export default function I18nDrawerItem() {
   const t = useI18n();
@@ -35,7 +36,12 @@ export default function I18nDrawerItem() {
   const handleClose = () => {
     setOpen(false);
   };
-  const i18n = useAppSelector((state) => state.i18n);
+  const { i18n, setLangSetting } = useI18nStore(
+    useShallow((state) => ({
+      i18n: state.value,
+      setLangSetting: state.setLangSetting,
+    })),
+  );
   const {
     handleSubmit,
     control,
@@ -48,9 +54,8 @@ export default function I18nDrawerItem() {
     },
     resolver: valibotResolver(createColorSchema),
   });
-  const dispatch = useAppDispatch();
   const onSubmit: SubmitHandler<FormData> = (data) => {
-    dispatch(setLangSetting(data));
+    setLangSetting(data);
     handleClose();
   };
   const watchTag = watch('langMode');

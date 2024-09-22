@@ -1,5 +1,4 @@
 import { AnyAction, configureStore, ThunkAction } from '@reduxjs/toolkit';
-import { i18nReducer } from 'i18n';
 import { authReducer } from '@portal/features/Auth';
 import { themeReducer } from '@portal/features/Theme';
 
@@ -7,7 +6,6 @@ const store = configureStore({
   reducer: {
     auth: authReducer,
     theme: themeReducer,
-    i18n: i18nReducer,
   },
 });
 export default store;
