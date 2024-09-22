@@ -1,13 +1,14 @@
 import { Logout } from '@mui/icons-material';
 import { ListItemButton, ListItemIcon, ListItemText } from '@mui/material';
-import { logout, useAppDispatch } from './authSlice';
+import { useAuthStore } from './authSlice';
 import { useI18n } from 'i18n';
+import { useShallow } from 'zustand/react/shallow';
 
 export default function AuthDrawerItem() {
-  const dispatch = useAppDispatch();
+  const logout = useAuthStore(useShallow(({ logout }) => logout));
   const t = useI18n();
   return (
-    <ListItemButton onClick={() => dispatch(logout())}>
+    <ListItemButton onClick={() => logout()}>
       <ListItemIcon>
         <Logout />
       </ListItemIcon>

@@ -10,17 +10,20 @@ import { SubmitHandler, useForm } from 'react-hook-form';
 import { LockOutlined } from '@mui/icons-material';
 import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { login, LoginForm, selectAuth, useAppDispatch, useAppSelector } from './authSlice';
+import { LoginForm, useAuthStore } from './authSlice';
 import { useI18n } from 'i18n';
-
-export { default as authReducer, login, logout } from './authSlice';
+import { useShallow } from 'zustand/react/shallow';
 
 export { default as useLogin } from './useLogin';
 
 export default function Login() {
   const { register, handleSubmit } = useForm<LoginForm>();
-  const auth = useAppSelector(selectAuth);
-  const dispatch = useAppDispatch();
+  const { login, auth } = useAuthStore(
+    useShallow(({ login, value }) => ({
+      login,
+      auth: value,
+    })),
+  );
   /** 跳转 */
   const navigate = useNavigate();
   const [urlSearch] = useSearchParams();
@@ -35,7 +38,7 @@ export default function Login() {
     }
   }, [auth, navigate, urlSearch]);
   const onSubmit: SubmitHandler<LoginForm> = (data) => {
-    dispatch(login(data));
+    login(data);
   };
   const t = useI18n();
   return (
