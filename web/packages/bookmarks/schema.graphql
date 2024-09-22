@@ -5,9 +5,11 @@ schema {
   mutation: MutationRoot
 }
 
-union DraftAuthorInfo = JjAuthor | QdAuthor
-
-union DraftNovelInfo = JjNovel | QdNovel
+"""
+Indicates that an Input Object is a OneOf Input Object (and thus requires
+exactly one of its field be provided)
+"""
+directive @oneOf on INPUT_OBJECT
 
 type Author {
   avatar: String!
@@ -23,6 +25,7 @@ type Author {
 }
 
 type Chapter {
+  author: Author!
   content: String
   createTime: DateTime!
   id: Int!
@@ -52,36 +55,48 @@ type Collection {
   updateTime: DateTime!
 }
 
-type JjAuthor {
+type DraftAuthorInfo {
   description: String!
   id: String!
   image: String!
   name: String!
-  novels: [JjNovel!]!
+  novels: [DraftNovelInfo!]!
+  site: NovelSite!
   url: String!
 }
 
-type JjChapter {
+type DraftChapterInfo {
   id: String!
   novelId: String!
+  site: NovelSite!
   time: DateTime!
   title: String!
   url: String!
   wordCount: Int!
 }
 
-type JjNovel {
-  author: JjAuthor!
-  chapters: [JjChapter!]!
+type DraftNovelInfo {
+  author: DraftAuthorInfo!
+  chapters: [DraftChapterInfo!]!
   description: String!
   id: String!
   image: String!
   name: String!
+  site: NovelSite!
   status: NovelStatus!
+  tags: [DraftTagInfo!]!
+  url: String!
+}
+
+type DraftTagInfo {
+  id: String!
+  name: String!
   url: String!
 }
 
 type MutationRoot {
+  "给小说添加集合"
+  addCollectionForNovel(collectionId: Int!, novelId: Int!): Novel!
   "创建作者"
   createAuthor(avatar: String!, description: String!, name: String!, site: NovelSite!, siteId: String!): Author!
   "创建目录"
@@ -89,11 +104,13 @@ type MutationRoot {
   "创建小说"
   createNovel(data: CreateNovelInput!): Novel!
   "创建标签"
-  createTag(collectionId: Int, name: String!): Tag!
+  createTag(name: String!, site: NovelSite!, siteId: String!): Tag!
   "删除作者"
   deleteAuthor(id: Int!): Author!
   "删除目录"
-  deleteCollection(id: Int!): Collection!
+  deleteCollection(id: Int!): Int!
+  "给小说删除集合"
+  deleteCollectionForNovel(collectionId: Int!, novelId: Int!): Novel!
   "删除小说"
   deleteNovel(id: Int!): Novel!
   "删除标签"
@@ -111,10 +128,15 @@ type Novel {
   avatar: String!
   "获取小说章节"
   chapters: [Chapter!]!
-  collection: Collection
+  "集合列表"
+  collections: [Collection!]!
   createTime: DateTime!
   description: String!
+  "最老章节"
+  firstChapter: Chapter
   id: Int!
+  "最新章节"
+  lastChapter: Chapter
   name: String!
   novelStatus: NovelStatus!
   site: NovelSite!
@@ -122,38 +144,12 @@ type Novel {
   tags: [Tag!]!
   updateTime: DateTime!
   url: String!
-}
-
-type QdAuthor {
-  description: String!
-  id: String!
-  image: String!
-  name: String!
-  novels: [QdNovel!]!
-  url: String!
-}
-
-type QdChapter {
-  id: String!
-  novelId: String!
-  time: DateTime!
-  title: String!
-  url: String!
-  wordCount: Int!
-}
-
-type QdNovel {
-  author: QdAuthor!
-  chapters: [QdChapter!]!
-  description: String!
-  id: String!
-  image: String!
-  name: String!
-  status: NovelStatus!
-  url: String!
+  wordCount: BigDecimal!
 }
 
 type QueryRoot {
+  "获取所有集合"
+  allCollections: [Collection!]!
   "后端 fetch 作者详情"
   fetchAuthor(id: String!, novelSite: NovelSite!): DraftAuthorInfo!
   "后端 fetch 小说详情"
@@ -169,17 +165,19 @@ type QueryRoot {
   "获取作者列表"
   queryAuthors(searchName: String): [Author!]!
   "获取小说列表"
-  queryNovels(collectionId: Int, novelStatus: NovelStatus, tagMatch: TagMatch): [Novel!]!
+  queryNovels(collectionMatch: TagMatch, novelStatus: NovelStatus, tagMatch: TagMatch): [Novel!]!
   "获取标签列表"
-  queryTags(collectionId: Int, deepSearch: Boolean): [Tag!]!
+  queryTags: [Tag!]!
 }
 
 type Tag {
-  collectionId: Int
   createTime: DateTime!
   id: Int!
   name: String!
+  site: NovelSite!
+  siteId: String!
   updateTime: DateTime!
+  url: String!
 }
 
 enum NovelSite {
@@ -191,6 +189,8 @@ enum NovelStatus {
   COMPLETED
   ONGOING
 }
+
+scalar BigDecimal
 
 """
 A datetime with timezone offset.
@@ -205,7 +205,6 @@ scalar DateTime
 input CreateNovelInput {
   authorId: Int!
   avatar: String!
-  collectionId: Int
   description: String!
   name: String!
   novelStatus: NovelStatus!
@@ -217,9 +216,7 @@ input CreateNovelInput {
 input SaveChapterInfo {
   id: String!
   name: String!
-  novelId: String!
   time: DateTime!
-  url: String!
   wordCount: Int!
 }
 
@@ -230,7 +227,6 @@ input SaveDraftAuthor {
   name: String!
   novels: [SaveNovelInfo!]!
   site: NovelSite!
-  url: String!
 }
 
 input SaveNovelInfo {
@@ -241,7 +237,12 @@ input SaveNovelInfo {
   name: String!
   novelStatus: NovelStatus!
   site: NovelSite!
-  url: String!
+  tags: [SaveTagInfo!]!
+}
+
+input SaveTagInfo {
+  id: String!
+  name: String!
 }
 
 input TagMatch {

@@ -6,7 +6,7 @@
  * @FilePath: /self-tools/web/packages/bookmarks/src/components/ChapterModal/index.tsx
  */
 import { FetchAuthorQuery } from '@bookmarks/graphql';
-import { Dialog, DialogTitle, IconButton, List, ListItem, ListItemButton, ListItemText, Tooltip } from '@mui/material';
+import { Dialog, DialogTitle, IconButton, List, ListItem, ListItemText, Tooltip } from '@mui/material';
 import { useCallback, useState } from 'react';
 import { useI18n } from 'i18n';
 import { ViewList } from '@mui/icons-material';
@@ -32,7 +32,7 @@ export default function ChapterModal({ chapters }: ChapterModalProps) {
           <ViewList />
         </IconButton>
       </Tooltip>
-      <Dialog fullWidth maxWidth={'xs'} onClose={handleClose} open={open}>
+      <Dialog fullWidth maxWidth="xs" onClose={handleClose} open={open}>
         <DialogTitle>{t('novel_chapters')}</DialogTitle>
         <List sx={{ pt: 0 }}>
           {chapters.map((chapter) => (

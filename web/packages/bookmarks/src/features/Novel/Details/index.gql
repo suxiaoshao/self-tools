@@ -9,18 +9,11 @@ query getNovel($id: Int!) {
     description
     novelStatus
     url
-    collection {
-      id
-      name
-      path
-      description
-    }
     chapters {
       id
       title
       createTime
       updateTime
-      content
       url
       wordCount
       time
@@ -32,48 +25,66 @@ query getNovel($id: Int!) {
       name
       site
     }
+    lastChapter {
+      time
+    }
+    firstChapter {
+      time
+    }
+    wordCount
+    tags {
+      url
+      name
+      id
+    }
+    site
+    collections {
+      name
+      id
+      description
+      path
+    }
   }
 }
 
 query fetchNovel($id: String!, $NovelSite: NovelSite!) {
   fetchNovel(id: $id, novelSite: $NovelSite) {
-    ... on QdNovel {
-      author {
-        description
-        image
-        name
-        url
-      }
-      chapters {
-        title
-        url
-      }
+    author {
       description
       image
       name
       url
     }
-    ... on JjNovel {
-      author {
-        description
-        image
-        name
-        url
-      }
-      chapters {
-        title
-        url
-      }
-      description
-      image
-      name
+    chapters {
+      title
       url
+      site
+      time
+      wordCount
+      id
     }
+    description
+    image
+    name
+    url
+    site
   }
 }
 
 mutation updateNovelByCrawler($novelId: Int!) {
   updateNovelByCrawler(novelId: $novelId) {
+    id
+  }
+}
+
+mutation addCollectionForNovel($novelId: Int!, $collectionId: Int!) {
+  addCollectionForNovel(collectionId: $collectionId, novelId: $novelId) {
+    id
+  }
+}
+
+mutation deleteCollectionForNovel($novelId: Int!, $collectionId: Int!) {
+  deleteCollectionForNovel(collectionId: $collectionId, novelId: $novelId) {
     id
   }
 }

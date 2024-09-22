@@ -11,24 +11,27 @@ import Home from '../features/Home';
 import Login, { useLogin } from '../features/Auth';
 import { microConfigs } from '@portal/micro';
 import { Menu } from 'types';
+import { match } from 'ts-pattern';
 
 function MenuRouter({ path }: Menu) {
-  switch (path.tag) {
-    case 'path':
+  return match(path)
+    .with({ tag: 'path' }, ({ value }) => {
       return (
-        <Route key={path.value.path} path={path.value.path} element={path.value.element}>
-          {path.value.children}
+        <Route key={value.path} path={value.path} element={value.element}>
+          {value.children}
         </Route>
       );
-    case 'menu':
+    })
+    .with({ tag: 'menu' }, ({ value }) => {
       return (
         <>
-          {path.value.map((item) => (
+          {value.map((item) => (
             <MenuRouter key={item.name} {...item} />
           ))}
         </>
       );
-  }
+    })
+    .exhaustive();
 }
 
 export default function AppRouter() {

@@ -1,5 +1,5 @@
-query getNovels($collectionId: Int, $novelStatus: NovelStatus, $tagMatch: TagMatch) {
-  queryNovels(collectionId: $collectionId, novelStatus: $novelStatus, tagMatch: $tagMatch) {
+query getNovels($collectionMatch: TagMatch, $novelStatus: NovelStatus, $tagMatch: TagMatch) {
+  queryNovels(collectionMatch: $collectionMatch, novelStatus: $novelStatus, tagMatch: $tagMatch) {
     id
     name
     description
@@ -8,6 +8,7 @@ query getNovels($collectionId: Int, $novelStatus: NovelStatus, $tagMatch: TagMat
     description
     novelStatus
     avatar
+    site
   }
 }
 

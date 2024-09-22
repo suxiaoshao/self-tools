@@ -3,7 +3,7 @@ use self::graphql::{graphql_handler, graphql_playground};
 use crate::graphql::get_schema;
 use axum::{routing::post, Router};
 
-pub fn get_router() -> Router {
+pub(crate) fn get_router() -> Router {
     let schema = get_schema();
 
     Router::new()
@@ -11,4 +11,4 @@ pub fn get_router() -> Router {
         .with_state(schema)
 }
 
-pub use self::graphql::Auth;
+pub(crate) use self::graphql::Auth;

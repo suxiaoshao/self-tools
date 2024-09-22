@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use async_graphql::*;
 use diesel::PgConnection;
 use time::OffsetDateTime;
@@ -5,22 +7,21 @@ use tracing::{event, Level};
 
 use crate::{
     errors::{GraphqlError, GraphqlResult},
-    model::{
-        chapter::ChapterModel, collection::CollectionModel, novel::NovelModel, tag::TagModel,
-        PgPool,
-    },
+    model::{collection::CollectionModel, collection_novel::CollectionNovelModel, PgPool},
 };
+
+use super::utils::find_all_children;
 
 #[derive(SimpleObject)]
 #[graphql(complex)]
-pub struct Collection {
-    pub id: i64,
-    pub name: String,
-    pub path: String,
-    pub parent_id: Option<i64>,
-    pub description: Option<String>,
-    pub create_time: OffsetDateTime,
-    pub update_time: OffsetDateTime,
+pub(crate) struct Collection {
+    pub(crate) id: i64,
+    pub(crate) name: String,
+    pub(crate) path: String,
+    pub(crate) parent_id: Option<i64>,
+    pub(crate) description: Option<String>,
+    pub(crate) create_time: OffsetDateTime,
+    pub(crate) update_time: OffsetDateTime,
 }
 #[ComplexObject]
 impl Collection {
@@ -66,7 +67,7 @@ impl From<CollectionModel> for Collection {
 
 impl Collection {
     /// 创建目录
-    pub fn create(
+    pub(crate) fn create(
         name: &str,
         parent_id: Option<i64>,
         description: Option<String>,
@@ -106,40 +107,45 @@ impl Collection {
             }
         }
     }
+    /// 根据 novel id 获取列表
+    pub(crate) fn many_by_novel_id(
+        novel_id: i64,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<Vec<Self>> {
+        let collection_ids = CollectionNovelModel::many_by_novel_id(novel_id, conn)?;
+        let data = CollectionModel::many_by_ids(&collection_ids, conn)?;
+        Ok(data.into_iter().map(From::from).collect())
+    }
+    /// 获取所有 collections
+    pub(crate) fn all_collections(conn: &mut PgConnection) -> GraphqlResult<Vec<Self>> {
+        let data = CollectionModel::get_list(conn)?;
+        Ok(data.into_iter().map(From::from).collect())
+    }
 }
 
 /// id 相关
 impl Collection {
     /// 删除目录
-    pub fn delete(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
+    pub(crate) fn delete(id: i64, conn: &mut PgConnection) -> GraphqlResult<usize> {
         // 目录不存在
         if !CollectionModel::exists(id, conn)? {
             event!(Level::WARN, "目录不存在: {}", id);
             return Err(GraphqlError::NotFound("目录", id));
         }
-        let collection = conn
-            .build_transaction()
-            .run(|conn| Self::delete_inner(id, conn))?;
-        Ok(collection)
-    }
-    fn delete_inner(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
-        // 删除 小说
-        NovelModel::delete_by_collection_id(id, conn)?;
-        // 删除 tag
-        TagModel::delete_by_collection(id, conn)?;
-        // 删除章节
-        ChapterModel::delete_by_collection_id(id, conn)?;
-        //递归删除子目录
-        CollectionModel::get_list_by_parent(Some(id), conn)?
-            .into_iter()
-            .try_for_each(|CollectionModel { id, .. }| {
-                Collection::delete_inner(id, conn).map(|_| ())
-            })?;
-        let collection = CollectionModel::delete(id, conn)?;
-        Ok(collection.into())
+        // 构建一个 `id` 到其子节点列表的映射
+        let lookup = CollectionModel::get_map(conn)?;
+        // 初始化结果列表，并调用递归函数
+        let mut ids = HashSet::new();
+        ids.insert(id);
+        find_all_children(&mut ids, id, &lookup);
+        conn.build_transaction().run(|conn| {
+            CollectionNovelModel::delete_by_collection_ids(&ids, conn)?;
+            let count = CollectionModel::delete_list(&ids, conn)?;
+            Ok(count)
+        })
     }
     /// 获取目录列表
-    pub fn get_list_parent_id(
+    pub(crate) fn get_list_parent_id(
         parent_id: Option<i64>,
         conn: &mut PgConnection,
     ) -> GraphqlResult<Vec<Self>> {
@@ -154,7 +160,7 @@ impl Collection {
         Ok(collections.into_iter().map(|d| d.into()).collect())
     }
     /// 获取祖先目录列表
-    pub fn get_ancestors(id: i64, conn: &mut PgConnection) -> GraphqlResult<Vec<Self>> {
+    pub(crate) fn get_ancestors(id: i64, conn: &mut PgConnection) -> GraphqlResult<Vec<Self>> {
         //  判断目录是否存在
         if !CollectionModel::exists(id, conn)? {
             event!(Level::WARN, "目录不存在: {}", id);
@@ -172,7 +178,7 @@ impl Collection {
         Ok(collections)
     }
     /// 获取集合详情
-    pub fn get(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
+    pub(crate) fn get(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
         //  判断目录是否存在
         if !CollectionModel::exists(id, conn)? {
             event!(Level::WARN, "目录不存在: {}", id);

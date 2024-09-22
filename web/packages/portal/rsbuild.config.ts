@@ -7,11 +7,10 @@
 import { defineConfig } from '@rsbuild/core';
 import { pluginReact } from '@rsbuild/plugin-react';
 import { RsdoctorRspackPlugin } from '@rsdoctor/rspack-plugin';
-import { pluginLightningcss } from '@rsbuild/plugin-lightningcss';
 import { codeInspectorPlugin } from 'code-inspector-plugin';
 
 export default defineConfig({
-  plugins: [pluginReact(), pluginLightningcss()],
+  plugins: [pluginReact()],
   server: {
     port: 3000,
   },
@@ -23,6 +22,7 @@ export default defineConfig({
       port: '443',
     },
     assetPrefix: 'https://sushao.top',
+    lazyCompilation: true,
   },
   source: {
     entry: {

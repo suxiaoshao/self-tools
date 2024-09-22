@@ -4,24 +4,36 @@
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
  * @LastEditTime: 2024-03-27 05:32:19
  */
-use async_graphql::SimpleObject;
+use async_graphql::{ComplexObject, SimpleObject};
 use diesel::PgConnection;
+use novel_crawler::{JJTag, QDTag, TagFn};
 use time::OffsetDateTime;
 use tracing::{event, Level};
 
-use crate::model::collection::CollectionModel;
 use crate::{
     errors::{GraphqlError, GraphqlResult},
-    model::tag::TagModel,
+    model::{schema::custom_type::NovelSite, tag::TagModel},
 };
 
-#[derive(SimpleObject, Hash, Eq, PartialEq)]
-pub struct Tag {
-    pub id: i64,
-    pub name: String,
-    pub collection_id: Option<i64>,
-    pub create_time: OffsetDateTime,
-    pub update_time: OffsetDateTime,
+#[derive(SimpleObject, Eq, PartialEq)]
+#[graphql(complex)]
+pub(crate) struct Tag {
+    pub(crate) id: i64,
+    pub(crate) name: String,
+    pub(crate) site: NovelSite,
+    pub(crate) site_id: String,
+    pub(crate) create_time: OffsetDateTime,
+    pub(crate) update_time: OffsetDateTime,
+}
+
+#[ComplexObject]
+impl Tag {
+    async fn url(&self) -> String {
+        match self.site {
+            NovelSite::Jjwxc => JJTag::get_url_from_id(&self.site_id),
+            NovelSite::Qidian => QDTag::get_url_from_id(&self.site_id),
+        }
+    }
 }
 
 impl From<TagModel> for Tag {
@@ -29,7 +41,8 @@ impl From<TagModel> for Tag {
         Self {
             id: value.id,
             name: value.name,
-            collection_id: value.collection_id,
+            site: value.site,
+            site_id: value.site_id,
             create_time: value.create_time,
             update_time: value.update_time,
         }
@@ -39,23 +52,17 @@ impl From<TagModel> for Tag {
 /// id 相关
 impl Tag {
     /// 创建标签
-    pub fn create(
+    pub(crate) fn create(
         name: &str,
-        collection_id: Option<i64>,
+        site: NovelSite,
+        site_id: &str,
         conn: &mut PgConnection,
     ) -> GraphqlResult<Self> {
-        //  判断父目录是否存在
-        if let Some(id) = collection_id {
-            if !CollectionModel::exists(id, conn)? {
-                event!(Level::ERROR, "目录不存在: {}", id);
-                return Err(GraphqlError::NotFound("目录", id));
-            }
-        }
-        let new_tag = TagModel::create(name, collection_id, conn)?;
+        let new_tag = TagModel::create(name, site, site_id, conn)?;
         Ok(new_tag.into())
     }
     /// 删除标签
-    pub fn delete(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
+    pub(crate) fn delete(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
         // 标签不存在
         if !TagModel::exists(id, conn)? {
             event!(Level::ERROR, "标签不存在: {}", id);
@@ -65,7 +72,7 @@ impl Tag {
         Ok(deleted_tag.into())
     }
     /// 获取标签列表
-    pub fn get_by_ids(ids: &[i64], conn: &mut PgConnection) -> GraphqlResult<Vec<Self>> {
+    pub(crate) fn get_by_ids(ids: &[i64], conn: &mut PgConnection) -> GraphqlResult<Vec<Self>> {
         let tags = TagModel::get_by_ids(ids, conn)?;
         Ok(tags.into_iter().map(|x| x.into()).collect())
     }
@@ -74,25 +81,9 @@ impl Tag {
 /// collection_id 相关
 impl Tag {
     /// 获取标签列表
-    pub fn query(
-        collection_id: Option<i64>,
-        deep_search: bool,
-        conn: &mut PgConnection,
-    ) -> GraphqlResult<Vec<Self>> {
-        //  判断父目录是否存在
-        if let Some(id) = collection_id {
-            if !CollectionModel::exists(id, conn)? {
-                event!(Level::ERROR, "目录不存在: {}", id);
-                return Err(GraphqlError::NotFound("目录", id));
-            }
-        }
+    pub(crate) fn query(conn: &mut PgConnection) -> GraphqlResult<Vec<Self>> {
         // 获取标签列表
-        let tags = match (collection_id, deep_search) {
-            (Some(id), false) => TagModel::query_by_collection(id, conn)?,
-            (None, false) => TagModel::query_root(conn)?,
-            (None, true) => TagModel::get_list(conn)?,
-            (Some(id), true) => TagModel::allow_tags(id, conn)?,
-        };
+        let tags = TagModel::get_list(conn)?;
         Ok(tags.into_iter().map(|tag| tag.into()).collect())
     }
 }

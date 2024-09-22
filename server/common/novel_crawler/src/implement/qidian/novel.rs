@@ -1,4 +1,5 @@
-use once_cell::sync::Lazy;
+use std::sync::LazyLock;
+
 use scraper::{ElementRef, Html, Selector};
 use serde::{Deserialize, Serialize};
 use time::{
@@ -20,20 +21,22 @@ use nom::{
     IResult,
 };
 
-use super::chapter::QDChapter;
+use super::{chapter::QDChapter, tag::QDTag};
 
-static SELECTOR_NOVEL_NAME: Lazy<Selector> =
-    Lazy::new(|| Selector::parse("h1.header-back-title").unwrap());
-static SELECTOR_NOVEL_DESCRIPTION: Lazy<Selector> =
-    Lazy::new(|| Selector::parse("content.detail__summary__content").unwrap());
-static SELECTOR_NOVEL_IMAGE: Lazy<Selector> =
-    Lazy::new(|| Selector::parse("img.detail__header-bg").unwrap());
-static SELECTOR_NOVEL_CHAPTERS: Lazy<Selector> =
-    Lazy::new(|| Selector::parse("#vite-plugin-ssr_pageContext").unwrap());
-static SELECTOR_AUTHOR: Lazy<Selector> =
-    Lazy::new(|| Selector::parse("a.detail__header-detail__author-link").unwrap());
-static SELECTOR_STATUS: Lazy<Selector> =
-    Lazy::new(|| Selector::parse("head > meta[property=\"og:novel:status\"]").unwrap());
+static SELECTOR_NOVEL_NAME: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("h1.header-back-title").unwrap());
+static SELECTOR_NOVEL_DESCRIPTION: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("content.detail__summary__content").unwrap());
+static SELECTOR_NOVEL_IMAGE: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("img.detail__header-bg").unwrap());
+static SELECTOR_NOVEL_CHAPTERS: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("#vite-plugin-ssr_pageContext").unwrap());
+static SELECTOR_AUTHOR: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("a.detail__header-detail__author-link").unwrap());
+static SELECTOR_STATUS: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("head > meta[property=\"og:novel:status\"]").unwrap());
+static SELECTOR_TAGS: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("div.search-tags > a").unwrap());
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct QDNovel {
@@ -44,11 +47,13 @@ pub struct QDNovel {
     chapters: Vec<QDChapter>,
     author_id: String,
     status: NovelStatus,
+    tags: Vec<QDTag>,
 }
 
 impl NovelFn for QDNovel {
     type Chapter = QDChapter;
     type Author = QDAuthor;
+    type Tag = QDTag;
     async fn get_novel_data(novel_id: &str) -> NovelResult<Self> {
         let (html, chapter_html) = Self::get_doc(novel_id).await?;
         let html = Html::parse_document(&html);
@@ -63,6 +68,7 @@ impl NovelFn for QDNovel {
             .next()
             .ok_or(NovelError::ParseError)
             .and_then(parse_author)?;
+        let tags = parse_tags(&html)?;
         Ok(Self {
             id: novel_id.to_string(),
             name,
@@ -71,6 +77,7 @@ impl NovelFn for QDNovel {
             chapters,
             author_id,
             status,
+            tags,
         })
     }
 
@@ -104,6 +111,10 @@ impl NovelFn for QDNovel {
     }
     fn id(&self) -> &str {
         self.id.as_str()
+    }
+
+    fn tags(&self) -> &[Self::Tag] {
+        self.tags.as_slice()
     }
 }
 
@@ -229,13 +240,23 @@ fn parse_status(html: &Html) -> NovelResult<NovelStatus> {
         _ => Err(NovelError::ParseError),
     }
 }
+fn parse_tags(html: &Html) -> NovelResult<Vec<QDTag>> {
+    let tags = html.select(&SELECTOR_TAGS).map(map_tag).collect();
+    tags
+}
+
+fn map_tag(element_ref: ElementRef) -> NovelResult<QDTag> {
+    let name = element_ref.inner_html();
+    Ok(QDTag { name })
+}
+
 #[cfg(test)]
 mod test {
     use crate::novel::NovelFn;
 
     #[tokio::test]
     async fn qd_novel_test() -> anyhow::Result<()> {
-        let novel_id = "1029006481";
+        let novel_id = "1040796068";
         let novel = super::QDNovel::get_novel_data(novel_id).await?;
         println!("{novel:#?}");
         Ok(())

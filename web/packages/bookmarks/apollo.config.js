@@ -5,6 +5,7 @@
  * @LastEditTime: 2024-01-07 05:21:19
  * @FilePath: /self-tools/web/packages/bookmarks/apollo.config.js
  */
+/* eslint-disable prefer-node-protocol */
 const { resolve } = require('path');
 module.exports = {
   client: {

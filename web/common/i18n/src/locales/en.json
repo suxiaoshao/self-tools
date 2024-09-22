@@ -79,5 +79,16 @@
   "word_count": "Word Count",
   "update_by_crawler": "Update by Crawler",
   "go_to_source_site": "Go to Source Site",
-  "update_by_crawler_success": "Update by Crawler Success"
+  "update_by_crawler_success": "Update by Crawler Success",
+  "completed": "Completed",
+  "ongoing": "Ongoing",
+  "novel_status": "Novel Status",
+  "last_update_time": "Last Update Time",
+  "first_chapter_time": "First Chapter Time",
+  "tag_site_id": "Site Tag Id",
+  "select_collection": "Select Collection",
+  "match_collections": "Match Collections List",
+  "collection_whether_full_match": "Whether Collection Full Match",
+  "match_tags": "Match Tags List",
+  "tag_whether_full_match": "Whether Tag Full Match"
 }

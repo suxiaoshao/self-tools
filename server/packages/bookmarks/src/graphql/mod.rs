@@ -14,14 +14,14 @@ use crate::{errors::GraphqlResult, model::get_pool};
 use self::{mutation::MutationRoot, query::QueryRoot};
 
 mod guard;
-pub mod input;
+pub(crate) mod input;
 mod mutation;
 mod output;
 mod query;
 mod validator;
-pub type RootSchema = Schema<QueryRoot, MutationRoot, EmptySubscription>;
+pub(crate) type RootSchema = Schema<QueryRoot, MutationRoot, EmptySubscription>;
 
-pub fn get_schema() -> GraphqlResult<RootSchema> {
+pub(crate) fn get_schema() -> GraphqlResult<RootSchema> {
     let pool = get_pool()?;
     let schema = Schema::build(QueryRoot, MutationRoot, EmptySubscription)
         .extension(Logger)

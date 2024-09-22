@@ -1,7 +1,8 @@
-import { createSlice, EnhancedStore, PayloadAction, ThunkAction } from '@reduxjs/toolkit';
+import { createSlice, EnhancedStore, PayloadAction } from '@reduxjs/toolkit';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 import { argbFromHex, themeFromSourceColor } from '@material/material-color-utilities';
 import { youThemeToMuiTheme } from './utils/youTheme';
+import { match } from 'ts-pattern';
 
 export enum ColorSetting {
   dark = 'dark',
@@ -9,11 +10,11 @@ export enum ColorSetting {
   system = 'system',
 }
 
-export type ThemeSliceType = {
+export interface ThemeSliceType {
   color: string;
   colorSetting: ColorSetting;
   systemColorScheme: 'light' | 'dark';
-};
+}
 const getColorScheme = (
   colorSetting: ThemeSliceType['colorSetting'],
   systemColorScheme: ThemeSliceType['systemColorScheme'],
@@ -29,7 +30,9 @@ export const colorSchemaMatch = window.matchMedia('(prefers-color-scheme: dark)'
 function getInitDate(): ThemeSliceType {
   const color = window.localStorage.getItem('color') ?? '#9cd67e';
   const colorSetting = (window.localStorage.getItem('colorSetting') ?? 'system') as ThemeSliceType['colorSetting'];
-  const systemColorScheme = colorSchemaMatch.matches ? 'dark' : 'light';
+  const systemColorScheme = match(colorSchemaMatch.matches)
+    .with(true, () => 'dark' as const)
+    .otherwise(() => 'light' as const);
   window.localStorage.setItem('color', color);
   window.localStorage.setItem('colorSetting', colorSetting);
   return {

@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 
 use crate::model::chapter::{ChapterModel, NewChapter, UpdateChapterModel};
+use crate::model::collection_novel::CollectionNovelModel;
 use crate::model::novel::UpdateNovelModel;
 use crate::model::{collection::CollectionModel, schema::custom_type::NovelSite, tag::TagModel};
 use crate::model::{
@@ -18,26 +19,27 @@ use novel_crawler::{JJNovel, NovelFn, QDNovel};
 use time::OffsetDateTime;
 use tracing::{event, Level};
 
-use super::{author::Author, collection::Collection, tag::Tag};
+use super::chapter::Chapter;
+use super::collection::Collection;
+use super::utils::{find_all_children, find_all_novel_by_collection};
+use super::{author::Author, tag::Tag};
 
 #[derive(SimpleObject)]
 #[graphql(complex)]
-pub struct Novel {
-    pub id: i64,
-    pub name: String,
-    pub avatar: String,
-    pub description: String,
+pub(crate) struct Novel {
+    pub(crate) id: i64,
+    pub(crate) name: String,
+    pub(crate) avatar: String,
+    pub(crate) description: String,
     #[graphql(skip)]
-    pub author_id: i64,
-    pub novel_status: NovelStatus,
-    pub site: NovelSite,
-    pub site_id: String,
+    pub(crate) author_id: i64,
+    pub(crate) novel_status: NovelStatus,
+    pub(crate) site: NovelSite,
+    pub(crate) site_id: String,
     #[graphql(skip)]
-    pub tags: Vec<i64>,
-    #[graphql(skip)]
-    pub collection_id: Option<i64>,
-    pub create_time: OffsetDateTime,
-    pub update_time: OffsetDateTime,
+    pub(crate) tags: Vec<i64>,
+    pub(crate) create_time: OffsetDateTime,
+    pub(crate) update_time: OffsetDateTime,
 }
 
 #[ComplexObject]
@@ -66,22 +68,6 @@ impl Novel {
         Ok(tags)
     }
 
-    async fn collection(&self, context: &Context<'_>) -> GraphqlResult<Option<Collection>> {
-        let conn = &mut context
-            .data::<PgPool>()
-            .map_err(|_| {
-                event!(Level::WARN, "graphql context data PgPool 不存在");
-                GraphqlError::NotGraphqlContextData("PgPool")
-            })?
-            .get()?;
-        if let Some(collection_id) = self.collection_id {
-            let collection = Collection::get(collection_id, conn)?;
-            Ok(Some(collection))
-        } else {
-            Ok(None)
-        }
-    }
-
     /// 获取小说章节
     async fn chapters(&self, context: &Context<'_>) -> GraphqlResult<Vec<super::chapter::Chapter>> {
         let conn = &mut context
@@ -99,6 +85,52 @@ impl Novel {
             NovelSite::Qidian => QDNovel::get_url_from_id(&self.site_id),
         }
     }
+    async fn word_count(&self, context: &Context<'_>) -> GraphqlResult<bigdecimal::BigDecimal> {
+        let conn = &mut context
+            .data::<PgPool>()
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
+            .get()?;
+        let word_count = ChapterModel::get_word_count_by_novel_id(self.id, conn)?;
+        Ok(word_count)
+    }
+    ///  最新章节
+    async fn last_chapter(&self, context: &Context<'_>) -> GraphqlResult<Option<Chapter>> {
+        let conn = &mut context
+            .data::<PgPool>()
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
+            .get()?;
+        let chapter = ChapterModel::get_last_chapter_by_novel_id(self.id, conn)?;
+        Ok(chapter.map(|x| Chapter::from(x, self.site_id.to_owned())))
+    }
+    /// 最老章节
+    async fn first_chapter(&self, context: &Context<'_>) -> GraphqlResult<Option<Chapter>> {
+        let conn = &mut context
+            .data::<PgPool>()
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
+            .get()?;
+        let chapter = ChapterModel::get_first_chapter_by_novel_id(self.id, conn)?;
+        Ok(chapter.map(|x| Chapter::from(x, self.site_id.to_owned())))
+    }
+    /// 集合列表
+    async fn collections(&self, context: &Context<'_>) -> GraphqlResult<Vec<Collection>> {
+        let conn = &mut context
+            .data::<PgPool>()
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
+            .get()?;
+        Collection::many_by_novel_id(self.id, conn)
+    }
 }
 
 impl From<NovelModel> for Novel {
@@ -110,7 +142,6 @@ impl From<NovelModel> for Novel {
             avatar: value.avatar,
             description: value.description,
             tags: value.tags,
-            collection_id: value.collection_id,
             create_time: value.create_time,
             update_time: value.update_time,
             novel_status: value.novel_status,
@@ -154,7 +185,7 @@ impl<'a, T: NovelFn> From<(&'a Novel, &'a T)> for UpdateNovelModel<'a> {
 
 impl Novel {
     /// 删除小说
-    pub fn delete(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
+    pub(crate) fn delete(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
         if !NovelModel::exists(id, conn)? {
             event!(Level::WARN, "小说不存在: {}", id);
             return Err(GraphqlError::NotFound("小说", id));
@@ -162,12 +193,13 @@ impl Novel {
         let novel = conn.build_transaction().run::<_, GraphqlError, _>(|conn| {
             let novel = NovelModel::delete(id, conn)?;
             ChapterModel::delete_by_novel_id(id, conn)?;
+            CollectionNovelModel::delete_by_novel_id(id, conn)?;
             Ok(novel.into())
         })?;
         Ok(novel)
     }
     /// 获取小说
-    pub fn get(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
+    pub(crate) fn get(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
         if !NovelModel::exists(id, conn)? {
             event!(Level::WARN, "小说不存在: {}", id);
             return Err(GraphqlError::NotFound("小说", id));
@@ -176,7 +208,7 @@ impl Novel {
         Ok(novel.into())
     }
     /// update by crawler
-    pub async fn update_by_crawler<T: novel_crawler::NovelFn>(
+    pub(crate) async fn update_by_crawler<T: novel_crawler::NovelFn>(
         &self,
         conn: &mut PgConnection,
     ) -> GraphqlResult<Self> {
@@ -195,7 +227,6 @@ impl Novel {
                     fetch_chapters.as_slice(),
                     novel.id,
                     novel.author_id,
-                    novel.collection_id,
                 );
 
             // 更新章节
@@ -212,35 +243,129 @@ impl Novel {
 /// collection_id 相关
 impl Novel {
     /// 选择小说
-    pub fn query(
-        collection_id: Option<i64>,
+    pub(crate) fn query(
+        collection_match: Option<TagMatch>,
         tag_match: Option<TagMatch>,
         novel_status: Option<NovelStatus>,
         conn: &mut PgConnection,
     ) -> GraphqlResult<Vec<Self>> {
-        //  判断父目录是否存在
-        if let Some(id) = collection_id {
-            if !CollectionModel::exists(id, conn)? {
-                event!(Level::WARN, "目录不存在: {}", id);
-                return Err(GraphqlError::NotFound("目录", id));
-            }
+        if let Some(TagMatch { match_set, .. }) = &collection_match {
+            // collection 不存在
+            CollectionModel::exists_all(match_set, conn)?;
         }
         if let Some(TagMatch { match_set, .. }) = &tag_match {
             // tag 不存在
-            TagModel::exists_all(match_set.iter(), conn)?;
-            // tags 都属于 collection_id
-            TagModel::belong_to_collection(collection_id, match_set.iter(), conn)?;
+            TagModel::exists_all(match_set, conn)?;
         }
-        let data = NovelModel::query(collection_id, tag_match, novel_status, conn)?
+        let mut data: Vec<Novel> = NovelModel::query(tag_match, novel_status, conn)?
             .into_iter()
             .map(Into::into)
             .collect();
+        if let Some(TagMatch {
+            match_set,
+            full_match,
+        }) = collection_match
+        {
+            // 构建一个 `id` 到其子节点列表的映射
+            let collection_collection_map = CollectionModel::get_map(conn)?;
+
+            if full_match {
+                let collection_novel_map = CollectionNovelModel::map_collection_novel(conn)?;
+                // 找到所有集合对应的子小说，然后取他们的交集
+                let novel_ids = match match_set.into_iter().try_fold(
+                    HashSet::new(),
+                    |mut acc, collection_id| -> Option<HashSet<i64>> {
+                        let mut novel_ids = HashSet::new();
+                        find_all_novel_by_collection(
+                            &mut novel_ids,
+                            collection_id,
+                            &collection_collection_map,
+                            &collection_novel_map,
+                        );
+                        match (acc.is_empty(), novel_ids.is_empty()) {
+                            (_, true) => None,
+                            (true, false) => Some(novel_ids),
+                            (false, false) => {
+                                acc.retain(|e| novel_ids.contains(e));
+                                Some(acc)
+                            }
+                        }
+                    },
+                ) {
+                    Some(id) => id,
+                    None => return Ok(vec![]),
+                };
+
+                data.retain(|Novel { id, .. }| novel_ids.contains(id));
+            } else {
+                // 初始化结果列表，并调用递归函数
+                let mut all_set = HashSet::new();
+                for id in &match_set {
+                    all_set.insert(*id);
+                    find_all_children(&mut all_set, *id, &collection_collection_map);
+                }
+                let novel_collection_map = CollectionNovelModel::map_novel_collection(conn)?;
+                data.retain(|Novel { id, .. }| {
+                    let novel_collection = match novel_collection_map.get(id) {
+                        Some(novel_collection) => novel_collection,
+                        None => return false,
+                    };
+                    !all_set.is_disjoint(novel_collection)
+                });
+            }
+        }
         Ok(data)
+    }
+    /// 添加集合
+    pub(crate) fn add_collection(
+        collection_id: i64,
+        novel_id: i64,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<Novel> {
+        if !CollectionModel::exists(collection_id, conn)? {
+            event!(Level::WARN, "目录不存在: {}", collection_id);
+            return Err(GraphqlError::NotFound("目录", collection_id));
+        }
+        if !NovelModel::exists(novel_id, conn)? {
+            event!(Level::WARN, "小说不存在: {}", novel_id);
+            return Err(GraphqlError::NotFound("小说", novel_id));
+        }
+        if CollectionNovelModel::exists(collection_id, novel_id, conn)? {
+            event!(Level::WARN, "小说集合关系存在: {}", novel_id);
+            return Err(GraphqlError::AlreadyExists(format!(
+                "{collection_id}/{novel_id}"
+            )));
+        }
+        CollectionNovelModel::save(collection_id, novel_id, conn)?;
+        let novel = NovelModel::find_one(novel_id, conn)?;
+        Ok(novel.into())
+    }
+    /// 删除
+    pub(crate) fn delete_collection(
+        collection_id: i64,
+        novel_id: i64,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<Novel> {
+        if !CollectionModel::exists(collection_id, conn)? {
+            event!(Level::WARN, "目录不存在: {}", collection_id);
+            return Err(GraphqlError::NotFound("目录", collection_id));
+        }
+        if !NovelModel::exists(novel_id, conn)? {
+            event!(Level::WARN, "小说不存在: {}", novel_id);
+            return Err(GraphqlError::NotFound("小说", novel_id));
+        }
+        if !CollectionNovelModel::exists(collection_id, novel_id, conn)? {
+            event!(Level::WARN, "小说集合关系不存在: {}", novel_id);
+            return Err(GraphqlError::NotFound("小说集合关系", collection_id));
+        }
+        CollectionNovelModel::delete(collection_id, novel_id, conn)?;
+        let novel = NovelModel::find_one(novel_id, conn)?;
+        Ok(novel.into())
     }
 }
 
 #[derive(InputObject)]
-pub struct CreateNovelInput {
+pub(crate) struct CreateNovelInput {
     name: String,
     avatar: String,
     description: String,
@@ -249,27 +374,17 @@ pub struct CreateNovelInput {
     site: NovelSite,
     site_id: String,
     tags: HashSet<i64>,
-    collection_id: Option<i64>,
 }
 
 impl CreateNovelInput {
-    pub fn create(self, conn: &mut PgConnection) -> GraphqlResult<Novel> {
+    pub(crate) fn create(self, conn: &mut PgConnection) -> GraphqlResult<Novel> {
         // 作者不存在
         if !AuthorModel::exists(self.author_id, conn)? {
             event!(Level::WARN, "作者不存在: {}", self.author_id);
             return Err(GraphqlError::NotFound("作者", self.author_id));
         }
-        //  判断父目录是否存在
-        if let Some(id) = self.collection_id {
-            if !CollectionModel::exists(id, conn)? {
-                event!(Level::WARN, "目录不存在: {}", id);
-                return Err(GraphqlError::NotFound("目录", id));
-            }
-        }
         // tag 不存在
-        TagModel::exists_all(self.tags.iter(), conn)?;
-        // tags 都属于 collection_id
-        TagModel::belong_to_collection(self.collection_id, self.tags.iter(), conn)?;
+        TagModel::exists_all(&self.tags, conn)?;
         let new_novel = self.to_new_novel().create(conn)?;
         Ok(new_novel.into())
     }
@@ -284,7 +399,6 @@ impl CreateNovelInput {
             site,
             site_id,
             tags,
-            collection_id,
         } = self;
         let tags = tags.iter().copied().collect::<Vec<_>>();
         NewNovel {
@@ -296,7 +410,6 @@ impl CreateNovelInput {
             site: *site,
             site_id,
             tags,
-            collection_id: *collection_id,
             create_time: now,
             update_time: now,
         }

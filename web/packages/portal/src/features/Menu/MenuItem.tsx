@@ -11,6 +11,7 @@ import { useState } from 'react';
 import { Avatar, Collapse, List, ListItemButton, ListItemButtonProps, ListItemIcon, ListItemText } from '@mui/material';
 import { I18nKey, useI18n } from 'i18n';
 import { Menu } from 'types';
+import { match } from 'ts-pattern';
 
 export interface MenuItemProps extends ListItemButtonProps {
   menu: Menu;
@@ -22,29 +23,30 @@ export default function MenuItem({ menu, ...props }: MenuItemProps) {
     setOpen((value) => !value);
   };
   const t = useI18n();
-
-  switch (menu.path.tag) {
-    case 'menu':
-      return (
-        <>
-          <ListItemButton {...props} onClick={handleClick}>
-            <ListItemIcon>
-              <Avatar sx={{ bgcolor: 'transparent' }}>{menu.icon}</Avatar>
-            </ListItemIcon>
-            <ListItemText primary={t(menu.name as I18nKey)} />
-            {open ? <ExpandLess /> : <ExpandMore />}
-          </ListItemButton>
-          <Collapse in={open} timeout="auto" unmountOnExit>
-            <List component="div" disablePadding>
-              {menu.path.value.map((item) => (
-                <MenuItem sx={{ pl: 4 }} menu={item} key={item.name} />
-              ))}
-            </List>
-          </Collapse>
-        </>
-      );
-    case 'path':
-      const path = menu.path.value.path;
+  return match(menu)
+    .with({ path: { tag: 'menu' } }, ({ path: { value } }) => (
+      <>
+        <ListItemButton {...props} onClick={handleClick}>
+          <ListItemIcon>
+            <Avatar sx={{ bgcolor: 'transparent' }}>{menu.icon}</Avatar>
+          </ListItemIcon>
+          <ListItemText primary={t(menu.name as I18nKey)} />
+          {match(open)
+            .with(true, () => <ExpandLess />)
+            .with(false, () => <ExpandMore />)
+            .otherwise(() => null)}
+        </ListItemButton>
+        <Collapse in={open} timeout="auto" unmountOnExit>
+          <List component="div" disablePadding>
+            {value.map((item) => (
+              <MenuItem sx={{ pl: 4 }} menu={item} key={item.name} />
+            ))}
+          </List>
+        </Collapse>
+      </>
+    ))
+    .with({ path: { tag: 'path' } }, ({ path: { value } }) => {
+      const path = value.path;
       return (
         <RouterItem
           key={path}
@@ -57,9 +59,8 @@ export default function MenuItem({ menu, ...props }: MenuItemProps) {
           matchPaths={[path]}
           text={t(menu.name as I18nKey)}
           toPath={path}
-        ></RouterItem>
+        />
       );
-    default:
-      return null;
-  }
+    })
+    .otherwise(() => null);
 }

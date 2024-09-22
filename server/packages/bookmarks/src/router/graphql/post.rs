@@ -18,9 +18,9 @@ use middleware::TraceIdExt;
 
 use crate::graphql::RootSchema;
 
-pub struct Auth(pub String);
+pub(crate) struct Auth(pub(crate) String);
 
-pub async fn graphql_handler(
+pub(crate) async fn graphql_handler(
     State(schema): State<RootSchema>,
     header: HeaderMap,
     trace_id: Option<Extension<TraceIdExt>>,

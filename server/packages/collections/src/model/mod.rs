@@ -1,17 +1,16 @@
-use std::env;
+use std::{env, sync::LazyLock};
 
 use diesel::{
     r2d2::{ConnectionManager, Pool},
     PgConnection,
 };
-use once_cell::sync::Lazy;
 
-pub mod collection;
-pub mod item;
-pub mod schema;
+pub(crate) mod collection;
+pub(crate) mod item;
+pub(crate) mod schema;
 
 type PgPool = Pool<ConnectionManager<PgConnection>>;
-pub static CONNECTION: Lazy<PgPool> = Lazy::new(|| {
+pub(crate) static CONNECTION: LazyLock<PgPool> = LazyLock::new(|| {
     let database_url = env::var("COLLECTIONS_PG").expect("DATABASE_URL must be set");
     let manager = ConnectionManager::<PgConnection>::new(database_url);
 

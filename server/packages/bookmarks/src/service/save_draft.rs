@@ -12,16 +12,16 @@ use crate::{
         chapter::NewChapter,
         novel::NewNovel,
         schema::custom_type::{NovelSite, NovelStatus},
+        tag::{NewTag, TagModel},
     },
 };
 
 use super::author::Author;
 
 #[derive(InputObject, Clone, Eq, PartialEq, Debug)]
-pub struct SaveDraftAuthor {
+pub(crate) struct SaveDraftAuthor {
     id: String,
     site: NovelSite,
-    url: String,
     name: String,
     description: String,
     image: String,
@@ -29,7 +29,7 @@ pub struct SaveDraftAuthor {
 }
 
 impl SaveDraftAuthor {
-    pub fn save(self, conn: &mut PgConnection) -> GraphqlResult<Author> {
+    pub(crate) fn save(self, conn: &mut PgConnection) -> GraphqlResult<Author> {
         let SaveDraftAuthor {
             id,
             site,
@@ -53,6 +53,33 @@ impl SaveDraftAuthor {
                 // 保存作者
                 let author = Author::create(&name, &image, &description, site, &id, conn)?;
 
+                // 保存 tag
+                let all_tag = TagModel::many_site_id_by_site(site, conn)?;
+                let new_tags = novels
+                    .iter()
+                    .flat_map(|x| &x.tags)
+                    .filter_map(|SaveTagInfo { id, name }| {
+                        if all_tag.contains_key(id) {
+                            None
+                        } else {
+                            Some((
+                                id,
+                                NewTag {
+                                    name,
+                                    site,
+                                    site_id: id,
+                                    create_time: now,
+                                    update_time: now,
+                                },
+                            ))
+                        }
+                    })
+                    .collect::<HashMap<_, _>>()
+                    .into_values()
+                    .collect::<Vec<_>>();
+                NewTag::save_many(&new_tags, conn)?;
+                let all_tag = TagModel::many_site_id_by_site(site, conn)?;
+
                 // 保存小说
                 let new_novels = novels
                     .iter()
@@ -63,10 +90,14 @@ impl SaveDraftAuthor {
                              name,
                              description,
                              image,
-
                              novel_status,
+                             tags,
                              ..
                          }| {
+                            let tags = tags
+                                .iter()
+                                .filter_map(|SaveTagInfo { id, .. }| all_tag.get(id).copied())
+                                .collect();
                             NewNovel {
                                 name,
                                 avatar: image,
@@ -75,8 +106,7 @@ impl SaveDraftAuthor {
                                 novel_status: *novel_status,
                                 site: *site,
                                 site_id: id,
-                                tags: Vec::new(),
-                                collection_id: None,
+                                tags,
                                 create_time: now,
                                 update_time: now,
                             }
@@ -117,7 +147,6 @@ impl SaveDraftAuthor {
                             word_count: *word_count as i64,
                             novel_id: *novel_id,
                             author_id: author.id,
-                            collection_id: None,
                             create_time: now,
                             update_time: now,
                         };
@@ -132,23 +161,27 @@ impl SaveDraftAuthor {
 }
 
 #[derive(InputObject, Clone, Eq, PartialEq, Debug)]
-pub struct SaveNovelInfo {
+pub(crate) struct SaveNovelInfo {
     id: String,
     site: NovelSite,
-    url: String,
     name: String,
     description: String,
     image: String,
     chapters: Vec<SaveChapterInfo>,
+    tags: Vec<SaveTagInfo>,
     novel_status: NovelStatus,
 }
 
 #[derive(InputObject, Clone, Eq, PartialEq, Debug)]
-pub struct SaveChapterInfo {
+pub(crate) struct SaveChapterInfo {
     id: String,
     name: String,
-    novel_id: String,
-    url: String,
     time: OffsetDateTime,
     word_count: u32,
+}
+
+#[derive(InputObject, Clone, Eq, PartialEq, Debug)]
+pub(crate) struct SaveTagInfo {
+    id: String,
+    name: String,
 }

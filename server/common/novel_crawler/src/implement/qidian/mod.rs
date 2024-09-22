@@ -8,7 +8,9 @@
 pub(crate) mod author;
 pub(crate) mod chapter;
 pub(crate) mod novel;
+pub(crate) mod tag;
 
 pub use author::QDAuthor;
 pub use chapter::QDChapter;
 pub use novel::QDNovel;
+pub use tag::QDTag;

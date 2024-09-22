@@ -15,6 +15,13 @@ query getAuthor($id: Int!) {
       description
       novelStatus
       url
+      lastChapter {
+        time
+      }
+      firstChapter {
+        time
+      }
+      wordCount
     }
     ...AuthorAll
   }
@@ -23,50 +30,33 @@ query getAuthor($id: Int!) {
 query fetchAuthor($id: String!, $novelSite: NovelSite!) {
   fetchAuthor(id: $id, novelSite: $novelSite) {
     __typename
-    ... on QdAuthor {
+    name
+    description
+    image
+    url
+    id
+    site
+    novels {
+      id
       name
       description
       image
       url
-      id
-      novels {
+      status
+      site
+      chapters {
         id
-        name
-        description
-        image
+        novelId
+        title
         url
-        status
-        chapters {
-          id
-          novelId
-          title
-          url
-          time
-          wordCount
-        }
+        time
+        wordCount
+        site
       }
-    }
-    ... on JjAuthor {
-      name
-      description
-      image
-      url
-      id
-      novels {
+      tags {
         id
         name
-        description
-        image
         url
-        status
-        chapters {
-          id
-          novelId
-          title
-          url
-          time
-          wordCount
-        }
       }
     }
   }

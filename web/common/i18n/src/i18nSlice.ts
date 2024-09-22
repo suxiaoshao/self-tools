@@ -11,11 +11,11 @@ export enum CustomLang {
   zh = 'zh',
 }
 
-export type I18nSliceType = {
+export interface I18nSliceType {
   langMode: LangMode;
   customLang: CustomLang;
   systemLang: string;
-};
+}
 const getLang = (data: I18nSliceType) => {
   if (data.langMode === 'custom') {
     return data.customLang;

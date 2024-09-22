@@ -5,9 +5,10 @@
  * @LastEditTime: 2024-03-31 14:26:04
  * @FilePath: /self-tools/server/packages/bookmarks/src/service/mod.rs
  */
-pub mod author;
-pub mod chapter;
-pub mod collection;
-pub mod novel;
-pub mod save_draft;
-pub mod tag;
+pub(crate) mod author;
+pub(crate) mod chapter;
+pub(crate) mod collection;
+pub(crate) mod novel;
+pub(crate) mod save_draft;
+pub(crate) mod tag;
+mod utils;

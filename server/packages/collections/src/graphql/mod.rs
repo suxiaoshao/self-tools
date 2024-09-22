@@ -13,13 +13,13 @@ use self::{mutation::MutationRoot, query::QueryRoot};
 
 mod mutation;
 mod query;
-pub mod types;
+pub(crate) mod types;
 mod validator;
-pub type RootSchema = Schema<QueryRoot, MutationRoot, EmptySubscription>;
+pub(crate) type RootSchema = Schema<QueryRoot, MutationRoot, EmptySubscription>;
 mod guard;
 mod middleware;
 
-pub fn get_schema() -> RootSchema {
+pub(crate) fn get_schema() -> RootSchema {
     Schema::build(QueryRoot, MutationRoot, EmptySubscription)
         .extension(Logger)
         .finish()

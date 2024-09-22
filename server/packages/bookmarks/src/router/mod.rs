@@ -14,7 +14,7 @@ use axum::{
     Router,
 };
 
-pub fn get_router() -> GraphqlResult<Router> {
+pub(crate) fn get_router() -> GraphqlResult<Router> {
     let schema = get_schema()?;
 
     let router = Router::new()
@@ -24,4 +24,4 @@ pub fn get_router() -> GraphqlResult<Router> {
     Ok(router)
 }
 
-pub use self::graphql::Auth;
+pub(crate) use self::graphql::Auth;

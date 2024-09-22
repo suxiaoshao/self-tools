@@ -16,7 +16,7 @@ use crate::{
 };
 
 #[derive(Default)]
-pub struct AuthGuard;
+pub(crate) struct AuthGuard;
 impl Guard for AuthGuard {
     async fn check(&self, ctx: &Context<'_>) -> Result<()> {
         let auth = ctx.data_opt::<Auth>();

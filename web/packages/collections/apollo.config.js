@@ -5,6 +5,8 @@
  * @LastEditTime: 2024-01-07 05:21:31
  * @FilePath: /self-tools/web/packages/collections/apollo.config.js
  */
+
+/* eslint-disable */
 const { resolve } = require('path');
 module.exports = {
   client: {

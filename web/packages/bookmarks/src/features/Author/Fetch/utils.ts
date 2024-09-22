@@ -5,10 +5,10 @@
  * @LastEditTime: 2024-03-28 09:47:56
  * @FilePath: /self-tools/web/packages/bookmarks/src/features/Author/Fetch/utils.ts
  */
-import { FetchAuthorQuery, NovelSite, SaveChapterInfo, SaveDraftAuthor } from '@bookmarks/graphql';
+import { FetchAuthorQuery, SaveChapterInfo, SaveDraftAuthor, SaveTagInfo } from '@bookmarks/graphql';
 
 export function convertFetchToDraftAuthor(fetchAuthor: FetchAuthorQuery['fetchAuthor']): SaveDraftAuthor {
-  const site = convertFetchToDraftSite(fetchAuthor?.__typename);
+  const site = fetchAuthor?.site;
   return {
     description: fetchAuthor?.description,
     name: fetchAuthor?.name,
@@ -18,8 +18,6 @@ export function convertFetchToDraftAuthor(fetchAuthor: FetchAuthorQuery['fetchAu
       chapters: novel.chapters?.map<SaveChapterInfo>((chapter) => ({
         id: chapter.id,
         name: chapter.title,
-        url: chapter.url,
-        novelId: novel.id,
         time: chapter.time,
         wordCount: chapter.wordCount,
       })),
@@ -29,18 +27,8 @@ export function convertFetchToDraftAuthor(fetchAuthor: FetchAuthorQuery['fetchAu
       description: novel.description,
       image: novel.image,
       novelStatus: novel.status,
-      url: novel.url,
+      tags: novel.tags?.map<SaveTagInfo>(({ id, name }) => ({ id, name })),
     })),
     site,
-    url: fetchAuthor?.url,
   };
-}
-
-function convertFetchToDraftSite(fetchAuthor: FetchAuthorQuery['fetchAuthor']['__typename']): NovelSite {
-  switch (fetchAuthor) {
-    case 'JjAuthor':
-      return NovelSite.Jjwxc;
-    case 'QdAuthor':
-      return NovelSite.Qidian;
-  }
 }

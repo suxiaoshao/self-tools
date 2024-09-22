@@ -1,7 +1,8 @@
+/* eslint-disable no-console no-fallthrough */
 export function proxy<T>(source: T): T {
   switch (typeof source) {
     case 'object':
-    case 'function':
+    case 'function': {
       if (source !== null) {
         return new Proxy(source, {
           get(target, p) {
@@ -58,7 +59,9 @@ export function proxy<T>(source: T): T {
           },
         });
       }
-    default:
+    }
+    default: {
       return source;
+    }
   }
 }

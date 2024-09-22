@@ -7,7 +7,7 @@
  */
 use crate::{errors::NovelResult, novel::NovelFn};
 
-pub trait AuthorFn: Sized + Send + Sync {
+pub trait AuthorFn: Sized + Send + Sync + Sized {
     type Novel: NovelFn;
     const SITE: crate::NovelSite;
     fn get_author_data(

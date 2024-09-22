@@ -14,6 +14,7 @@ import {
   useAppDispatch,
   useAppSelector,
 } from './themeSlice';
+import { match } from 'ts-pattern';
 
 export interface CustomThemeProps {
   children?: React.ReactNode;
@@ -29,7 +30,9 @@ export function CustomTheme({ children }: CustomThemeProps): JSX.Element {
   }, [youTheme]);
   useEffect(() => {
     colorSchemaMatch.addEventListener('change', (e) => {
-      const colorScheme = e.matches ? 'dark' : 'light';
+      const colorScheme = match(e.matches)
+        .with(true, () => 'dark' as const)
+        .otherwise(() => 'light' as const);
       dispatch(setSystemColorScheme(colorScheme));
     });
   }, [dispatch]);

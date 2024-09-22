@@ -23,7 +23,7 @@ use crate::{
     },
 };
 
-pub struct MutationRoot;
+pub(crate) struct MutationRoot;
 
 #[Object]
 impl MutationRoot {
@@ -48,7 +48,7 @@ impl MutationRoot {
     }
     /// 删除目录
     #[graphql(guard = "AuthGuard")]
-    async fn delete_collection(&self, context: &Context<'_>, id: i64) -> GraphqlResult<Collection> {
+    async fn delete_collection(&self, context: &Context<'_>, id: i64) -> GraphqlResult<usize> {
         let conn = &mut context
             .data::<PgPool>()
             .map_err(|_| {
@@ -56,8 +56,8 @@ impl MutationRoot {
                 GraphqlError::NotGraphqlContextData("PgPool")
             })?
             .get()?;
-        let deleted_directory = Collection::delete(id, conn)?;
-        Ok(deleted_directory)
+        let count = Collection::delete(id, conn)?;
+        Ok(count)
     }
     /// 创建作者
     #[graphql(guard = "AuthGuard")]
@@ -99,7 +99,8 @@ impl MutationRoot {
         &self,
         context: &Context<'_>,
         name: String,
-        collection_id: Option<i64>,
+        site: NovelSite,
+        site_id: String,
     ) -> GraphqlResult<Tag> {
         let conn = &mut context
             .data::<PgPool>()
@@ -108,7 +109,7 @@ impl MutationRoot {
                 GraphqlError::NotGraphqlContextData("PgPool")
             })?
             .get()?;
-        let new_tag = Tag::create(&name, collection_id, conn)?;
+        let new_tag = Tag::create(&name, site, &site_id, conn)?;
         Ok(new_tag)
     }
     /// 删除标签
@@ -208,5 +209,39 @@ impl MutationRoot {
             NovelSite::Qidian => author.update_by_crawler::<QDAuthor>(conn).await,
             NovelSite::Jjwxc => author.update_by_crawler::<JJAuthor>(conn).await,
         }
+    }
+    /// 给小说添加集合
+    #[graphql(guard = "AuthGuard")]
+    async fn add_collection_for_novel(
+        &self,
+        context: &Context<'_>,
+        collection_id: i64,
+        novel_id: i64,
+    ) -> GraphqlResult<Novel> {
+        let conn = &mut context
+            .data::<PgPool>()
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
+            .get()?;
+        Novel::add_collection(collection_id, novel_id, conn)
+    }
+    /// 给小说删除集合
+    #[graphql(guard = "AuthGuard")]
+    async fn delete_collection_for_novel(
+        &self,
+        context: &Context<'_>,
+        collection_id: i64,
+        novel_id: i64,
+    ) -> GraphqlResult<Novel> {
+        let conn = &mut context
+            .data::<PgPool>()
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
+            .get()?;
+        Novel::delete_collection(collection_id, novel_id, conn)
     }
 }

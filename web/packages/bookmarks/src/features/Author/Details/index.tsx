@@ -5,7 +5,7 @@
  * @LastEditTime: 2024-02-29 07:10:10
  * @FilePath: /self-tools/web/packages/bookmarks/src/features/Author/Details/index.tsx
  */
-import { useGetAuthorQuery, useUpdateAuthorByCrawlerMutation } from '@bookmarks/graphql';
+import { NovelStatus, useGetAuthorQuery, useUpdateAuthorByCrawlerMutation } from '@bookmarks/graphql';
 import { getImageUrl } from '@bookmarks/utils/image';
 import { CloudDownload, Explore, KeyboardArrowLeft, Refresh } from '@mui/icons-material';
 import {
@@ -14,6 +14,7 @@ import {
   Card,
   CardContent,
   CardHeader,
+  Chip,
   IconButton,
   Link,
   Skeleton,
@@ -24,6 +25,9 @@ import { useNavigate, useParams, Link as RouterLink } from 'react-router-dom';
 import { useI18n } from 'i18n';
 import { useCallback } from 'react';
 import { enqueueSnackbar } from 'notify';
+import { P, match } from 'ts-pattern';
+import { Details, DetailsItem } from 'details';
+import { format } from 'time';
 
 export default function AuthorDetails() {
   const t = useI18n();
@@ -45,7 +49,7 @@ export default function AuthorDetails() {
     refetch();
   }, [authorId, refetch, updateAuthor, t]);
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', p: 2, gap: 2 }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', p: 2, gap: 2, pb: 0 }}>
       <Box sx={{ display: 'flex', width: '100%' }}>
         <IconButton onClick={() => navigate(-1)}>
           <KeyboardArrowLeft />
@@ -87,35 +91,77 @@ export default function AuthorDetails() {
               flex: '1 1 0',
               overflowY: 'auto',
               display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
-              gap: 1,
+              gridTemplateColumns: (theme) => `repeat(auto-fill, minmax(${theme.spacing(40)},1fr))`,
+              gridTemplateRows: 'masonry',
+              gap: 2,
               gridAutoRows: 'max-content',
+              pb: 2,
             }}
           >
-            {data?.getAuthor.novels.map(({ id, avatar, name, description, url }) => (
-              <Card key={id}>
-                <CardHeader
-                  avatar={<Avatar src={getImageUrl(avatar)} />}
-                  title={
-                    <Link to={`/bookmarks/novel/${id}`} component={RouterLink}>
-                      {name}
-                    </Link>
-                  }
-                  action={
-                    <Tooltip title={t('go_to_source_site')}>
-                      <IconButton onClick={() => window.open(url, '_blank')}>
-                        <Explore />
-                      </IconButton>
-                    </Tooltip>
-                  }
-                />
-                <CardContent>
-                  <Typography variant="body2" component="p" gutterBottom>
-                    {description}
-                  </Typography>
-                </CardContent>
-              </Card>
-            ))}
+            {data?.getAuthor.novels.map(
+              ({ id, avatar, name, description, url, novelStatus, wordCount, lastChapter, firstChapter }) => (
+                <Card key={id}>
+                  <CardHeader
+                    avatar={<Avatar src={getImageUrl(avatar)} />}
+                    title={
+                      <Link to={`/bookmarks/novel/${id}`} component={RouterLink}>
+                        {name}
+                      </Link>
+                    }
+                    subheader={match(novelStatus)
+                      .with(NovelStatus.Ongoing, () => (
+                        <Chip variant="outlined" size="small" color="warning" label={t('ongoing')} />
+                      ))
+                      .with(NovelStatus.Completed, () => (
+                        <Chip variant="outlined" size="small" color="secondary" label={t('completed')} />
+                      ))
+                      .exhaustive()}
+                    action={
+                      <Tooltip title={t('go_to_source_site')}>
+                        <IconButton onClick={() => window.open(url, '_blank')}>
+                          <Explore />
+                        </IconButton>
+                      </Tooltip>
+                    }
+                  />
+                  <CardContent>
+                    <Typography variant="body2" component="p" gutterBottom>
+                      {description}
+                    </Typography>
+                    <Details
+                      fullSpan={2}
+                      items={
+                        [
+                          {
+                            label: t('novel_status'),
+                            value: match(novelStatus)
+                              .with(NovelStatus.Ongoing, () => t('ongoing'))
+                              .with(NovelStatus.Completed, () => t('completed'))
+                              .exhaustive(),
+                          },
+                          {
+                            label: t('word_count'),
+                            value: wordCount,
+                          },
+                          {
+                            label: t('last_update_time'),
+                            value: match(lastChapter?.time)
+                              .with(P.string, (data) => format(data))
+                              .otherwise(() => '-'),
+                          },
+                          {
+                            label: t('first_chapter_time'),
+                            value: match(firstChapter?.time)
+                              .with(P.string, (data) => format(data))
+                              .otherwise(() => '-'),
+                          },
+                        ] satisfies DetailsItem[]
+                      }
+                    />
+                  </CardContent>
+                </Card>
+              ),
+            )}
           </Box>
         </>
       )}

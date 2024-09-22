@@ -10,7 +10,7 @@ use std::collections::HashSet;
 use async_graphql::InputObject;
 
 #[derive(InputObject)]
-pub struct TagMatch {
-    pub match_set: HashSet<i64>,
-    pub full_match: bool,
+pub(crate) struct TagMatch {
+    pub(crate) match_set: HashSet<i64>,
+    pub(crate) full_match: bool,
 }

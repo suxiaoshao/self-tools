@@ -16,6 +16,7 @@ import { format } from 'time';
 import { useI18n } from 'i18n';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { getImageUrl } from '@bookmarks/utils/image';
+import { getLabelKeyBySite } from '@bookmarks/utils/novelSite';
 
 type TableItem = GetAuthorsQuery['queryAuthors'][0];
 
@@ -41,6 +42,12 @@ export default function AuthorList() {
             meta: {},
           },
         ),
+        {
+          header: t('novel_site'),
+          id: 'site',
+          accessorFn: ({ site }) => t(getLabelKeyBySite(site)),
+          cell: (context) => context.getValue(),
+        },
         columnHelper.accessor(({ avatar }) => <Avatar src={getImageUrl(avatar)} />, {
           header: t('avatar'),
           id: 'avatar',

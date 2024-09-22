@@ -13,6 +13,7 @@
     "i18n": "workspace:^",
     "time": "workspace:^",
     "types": "workspace:^",
-    "notify": "workspace:^"
+    "notify": "workspace:^",
+    "details": "workspace:^"
   }
 }

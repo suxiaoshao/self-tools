@@ -6,16 +6,34 @@
  * @FilePath: /self-tools/web/packages/bookmarks/src/features/Novel/utils.ts
  */
 import { GetNovelsQueryVariables } from '@bookmarks/graphql';
+import { match, P } from 'ts-pattern';
 
 export function convertFormToVariables({
-  collectionId,
+  collectionMatch,
   novelStatus,
   tagMatch,
 }: GetNovelsQueryVariables): GetNovelsQueryVariables {
-  const { fullMatch, matchSet } = tagMatch ?? {};
   return {
-    collectionId,
+    collectionMatch: match(collectionMatch)
+      .with(
+        {
+          fullMatch: P.nonNullable,
+          matchSet: P.when((matchSet) => matchSet?.length > 0),
+        },
+        ({ fullMatch, matchSet }) => ({ fullMatch, matchSet }),
+      )
+      // eslint-disable-next-line no-useless-undefined
+      .otherwise(() => undefined),
     novelStatus,
-    tagMatch: fullMatch !== undefined && matchSet !== undefined ? { fullMatch, matchSet } : undefined,
+    tagMatch: match(tagMatch)
+      .with(
+        {
+          fullMatch: P.nonNullable,
+          matchSet: P.when((matchSet) => matchSet?.length > 0),
+        },
+        ({ fullMatch, matchSet }) => ({ fullMatch, matchSet }),
+      )
+      // eslint-disable-next-line no-useless-undefined
+      .otherwise(() => undefined),
   };
 }

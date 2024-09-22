@@ -16,11 +16,11 @@ use serde::Deserialize;
 use crate::errors::GraphqlResult;
 
 #[derive(Deserialize, Debug)]
-pub struct Data {
+pub(crate) struct Data {
     url: String,
 }
 
-pub async fn fetch_content(
+pub(crate) async fn fetch_content(
     data: Result<Query<Data>, QueryRejection>,
 ) -> GraphqlResult<(StatusCode, HeaderMap, Body)> {
     let data = data?;

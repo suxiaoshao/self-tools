@@ -16,26 +16,24 @@ use crate::{
     model::{schema::custom_type::NovelSite, PgPool},
 };
 
-use super::novel::Novel;
+use super::{author::Author, novel::Novel};
 
 #[derive(SimpleObject)]
 #[graphql(complex)]
-pub struct Chapter {
-    pub id: i64,
-    pub title: String,
-    pub site: NovelSite,
-    pub site_id: String,
-    pub content: Option<String>,
-    pub time: OffsetDateTime,
-    pub word_count: i64,
-    pub novel_id: i64,
+pub(crate) struct Chapter {
+    pub(crate) id: i64,
+    pub(crate) title: String,
+    pub(crate) site: NovelSite,
+    pub(crate) site_id: String,
+    pub(crate) content: Option<String>,
+    pub(crate) time: OffsetDateTime,
+    pub(crate) word_count: i64,
+    pub(crate) novel_id: i64,
     #[graphql(skip)]
-    pub author_id: i64,
-    #[graphql(skip)]
-    pub collection_id: Option<i64>,
-    pub create_time: OffsetDateTime,
-    pub update_time: OffsetDateTime,
-    pub site_novel_id: String,
+    pub(crate) author_id: i64,
+    pub(crate) create_time: OffsetDateTime,
+    pub(crate) update_time: OffsetDateTime,
+    pub(crate) site_novel_id: String,
 }
 
 #[ComplexObject]
@@ -57,10 +55,21 @@ impl Chapter {
             NovelSite::Qidian => QDChapter::get_url_from_id(&self.site_id, &self.site_novel_id),
         }
     }
+    async fn author(&self, context: &Context<'_>) -> GraphqlResult<Author> {
+        let conn = &mut context
+            .data::<PgPool>()
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
+            .get()?;
+        let novel = Author::get(self.author_id, conn)?;
+        Ok(novel)
+    }
 }
 
 impl Chapter {
-    fn from(value: crate::model::chapter::ChapterModel, site_novel_id: String) -> Self {
+    pub(crate) fn from(value: crate::model::chapter::ChapterModel, site_novel_id: String) -> Self {
         Self {
             id: value.id,
             title: value.title,
@@ -71,7 +80,6 @@ impl Chapter {
             word_count: value.word_count,
             novel_id: value.novel_id,
             author_id: value.author_id,
-            collection_id: value.collection_id,
             create_time: value.create_time,
             update_time: value.update_time,
             site_novel_id,
@@ -81,7 +89,7 @@ impl Chapter {
 
 /// 小说相关
 impl Chapter {
-    pub fn get_by_novel_id(
+    pub(crate) fn get_by_novel_id(
         novel_id: i64,
         site_novel_id: &str,
         conn: &mut PgConnection,

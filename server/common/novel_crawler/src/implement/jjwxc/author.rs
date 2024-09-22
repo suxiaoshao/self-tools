@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::{collections::HashSet, sync::LazyLock};
 
 use futures::future::try_join_all;
 use nom::{
@@ -8,7 +8,6 @@ use nom::{
     IResult,
 };
 
-use once_cell::sync::Lazy;
 use scraper::{ElementRef, Html, Selector};
 
 use crate::{
@@ -20,14 +19,14 @@ use crate::{
 
 use super::novel::JJNovel;
 
-static SELECTOR_AUTHOR_NAME: Lazy<Selector> =
-    Lazy::new(|| Selector::parse("[itemprop=name]").unwrap());
-static SELECTOR_AUTHOR_DESCRIPTION: Lazy<Selector> =
-    Lazy::new(|| Selector::parse("[itemprop=description]").unwrap());
-static SELECTOR_AUTHOR_IMAGE: Lazy<Selector> =
-    Lazy::new(|| Selector::parse(".authordefaultimage").unwrap());
-static SELECTOR_NOVEL_URLS: Lazy<Selector> =
-    Lazy::new(|| Selector::parse("a[href^=\"onebook.php?novelid=\"]:not(.tooltip)").unwrap());
+static SELECTOR_AUTHOR_NAME: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("[itemprop=name]").unwrap());
+static SELECTOR_AUTHOR_DESCRIPTION: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("[itemprop=description]").unwrap());
+static SELECTOR_AUTHOR_IMAGE: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse(".authordefaultimage").unwrap());
+static SELECTOR_NOVEL_URLS: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("a[href^=\"onebook.php?novelid=\"]:not(.tooltip)").unwrap());
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct JJAuthor {

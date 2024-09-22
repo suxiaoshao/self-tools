@@ -5,7 +5,7 @@ use std::{env::VarError, sync::Arc};
 use thrift::auth::ItemServiceCheckException;
 
 #[derive(Debug)]
-pub enum GraphqlError {
+pub(crate) enum GraphqlError {
     /// 数据库连接池
     R2d2(String),
     /// 数据库操作错误
@@ -16,13 +16,6 @@ pub enum GraphqlError {
     NotFound(&'static str, i64),
     /// 已存在
     AlreadyExists(String),
-    /// scope 错误
-    Scope {
-        sub_tag: &'static str,
-        super_tag: &'static str,
-        sub_value: i64,
-        super_value: Option<i64>,
-    },
     Jwt,
     PasswordError,
     AuthTimeout,
@@ -64,28 +57,13 @@ impl IntoResponse for GraphqlError {
 }
 
 impl GraphqlError {
-    pub fn message(&self) -> String {
+    pub(crate) fn message(&self) -> String {
         match self {
             GraphqlError::R2d2(_) => "数据库连接错误".to_string(),
             GraphqlError::Diesel(data) => format!("数据库错误:{data}"),
             GraphqlError::Unauthenticated => "没有发送 token".to_string(),
             GraphqlError::NotFound(tag, id) => format!(r#"{tag}"{id}"不存在"#),
             GraphqlError::AlreadyExists(name) => format!("{name}已存在"),
-            GraphqlError::Scope {
-                super_tag,
-                sub_tag,
-                sub_value,
-                super_value,
-            } => format!(
-                r#"{}"{}"不属于{}"{}""#,
-                sub_tag,
-                sub_value,
-                super_tag,
-                match super_value {
-                    Some(super_value) => super_value.to_string(),
-                    None => "无".to_string(),
-                }
-            ),
             GraphqlError::Jwt => "jwt 解析错误".to_string(),
             GraphqlError::PasswordError => "密码错误".to_string(),
             GraphqlError::AuthTimeout => "登陆过期".to_string(),
@@ -107,14 +85,12 @@ impl GraphqlError {
             GraphqlError::NovelTimeParseError(tag) => format!("小说时间解析错误:{tag}"),
         }
     }
-    pub fn code(&self) -> &str {
+    pub(crate) fn code(&self) -> &str {
         match self {
             GraphqlError::R2d2(_) => "FailedPrecondition",
             GraphqlError::Diesel(_) => "Internal",
             GraphqlError::Unauthenticated => "Unauthenticated",
-            GraphqlError::NotFound(..)
-            | GraphqlError::AlreadyExists(_)
-            | GraphqlError::Scope { .. } => "InvalidArgument",
+            GraphqlError::NotFound(..) | GraphqlError::AlreadyExists(_) => "InvalidArgument",
             GraphqlError::Jwt => "Jwt",
             GraphqlError::PasswordError => "PasswordError",
             GraphqlError::AuthTimeout => "AuthTimeout",
@@ -144,17 +120,6 @@ impl Clone for GraphqlError {
             GraphqlError::Unauthenticated => Self::Unauthenticated,
             GraphqlError::NotFound(tag, id) => Self::NotFound(tag, *id),
             GraphqlError::AlreadyExists(name) => Self::AlreadyExists(name.clone()),
-            GraphqlError::Scope {
-                sub_tag,
-                super_tag,
-                sub_value,
-                super_value,
-            } => Self::Scope {
-                sub_tag,
-                super_tag,
-                sub_value: *sub_value,
-                super_value: *super_value,
-            },
             GraphqlError::Jwt => Self::Jwt,
             GraphqlError::PasswordError => Self::PasswordError,
             GraphqlError::AuthTimeout => Self::AuthTimeout,
@@ -239,7 +204,7 @@ impl From<VarError> for GraphqlError {
     }
 }
 
-pub type GraphqlResult<T> = Result<T, GraphqlError>;
+pub(crate) type GraphqlResult<T> = Result<T, GraphqlError>;
 
 impl From<GraphqlError> for async_graphql::Error {
     fn from(value: GraphqlError) -> async_graphql::Error {

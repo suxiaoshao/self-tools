@@ -1,13 +1,14 @@
+use std::sync::LazyLock;
+
 use nom::{
     bytes::{
-        complete::{tag, take_while},
+        complete::{is_not, tag, take_while},
         streaming::take_until,
     },
     combinator::{all_consuming, eof},
     sequence::tuple,
     IResult,
 };
-use once_cell::sync::Lazy;
 use scraper::{ElementRef, Html, Selector};
 use time::{
     macros::{format_description, offset},
@@ -21,31 +22,32 @@ use crate::{
     JJAuthor,
 };
 
-use super::chapter::JJChapter;
+use super::{chapter::JJChapter, tag::JJTag};
 
-static SELECTOR_NOVEL_NAME: Lazy<Selector> =
-    Lazy::new(|| Selector::parse("[itemprop=name] > span").unwrap());
-static SELECTOR_NOVEL_DESCRIPTION: Lazy<Selector> =
-    Lazy::new(|| Selector::parse("#novelintro").unwrap());
-static SELECTOR_NOVEL_IMAGE: Lazy<Selector> =
-    Lazy::new(|| Selector::parse("img.noveldefaultimage").unwrap());
+static SELECTOR_NOVEL_NAME: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("[itemprop=name] > span").unwrap());
+static SELECTOR_NOVEL_DESCRIPTION: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("#novelintro").unwrap());
+static SELECTOR_NOVEL_IMAGE: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("img.noveldefaultimage").unwrap());
 
-static SELECTOR_CHAPTER: Lazy<Selector> =
-    Lazy::new(|| Selector::parse("#oneboolt > tbody > tr[itemprop=\"chapter\"]").unwrap());
-static SELECTOR_CHAPTER_NAME: Lazy<Selector> =
-    Lazy::new(|| Selector::parse("a[itemprop='url']").unwrap());
-static SELECTOR_CHAPTER_TIME: Lazy<Selector> =
-    Lazy::new(|| Selector::parse("td[title] > span").unwrap());
-static SELECTOR_CHAPTER_WORD_COUNT: Lazy<Selector> =
-    Lazy::new(|| Selector::parse("td[itemprop='wordCount']").unwrap());
+static SELECTOR_CHAPTER: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("#oneboolt > tbody > tr[itemprop=\"chapter\"]").unwrap());
+static SELECTOR_CHAPTER_NAME: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("a[itemprop='url']").unwrap());
+static SELECTOR_CHAPTER_TIME: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("td[title] > span").unwrap());
+static SELECTOR_CHAPTER_WORD_COUNT: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("td[itemprop='wordCount']").unwrap());
 
-static SELECTOR_AUTHOR: Lazy<Selector> = Lazy::new(|| {
+static SELECTOR_AUTHOR: LazyLock<Selector> = LazyLock::new(|| {
     Selector::parse("#oneboolt > tbody > tr > td > div:nth-child(3) > h2 > a").unwrap()
 });
 
-static SELECTOR_STATUS: Lazy<Selector> =
-    Lazy::new(|| Selector::parse("span[itemprop='updataStatus']").unwrap());
-
+static SELECTOR_STATUS: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("span[itemprop='updataStatus']").unwrap());
+static SELECTOR_TAGS: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("div.smallreadbody > span > a").unwrap());
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct JJNovel {
     id: String,
@@ -55,11 +57,13 @@ pub struct JJNovel {
     chapters: Vec<JJChapter>,
     author_id: String,
     status: NovelStatus,
+    tags: Vec<JJTag>,
 }
 
 impl NovelFn for JJNovel {
     type Chapter = JJChapter;
     type Author = JJAuthor;
+    type Tag = JJTag;
     async fn get_novel_data(novel_id: &str) -> NovelResult<Self> {
         let url = format!("https://www.jjwxc.net/onebook.php?novelid={novel_id}");
         let html = get_doc(&url, "gb18030").await?;
@@ -73,6 +77,7 @@ impl NovelFn for JJNovel {
             .ok_or(NovelError::ParseError)
             .and_then(parse_author)?;
         let status = parse_status(&html)?;
+        let tags = parse_tags(&html)?;
 
         Ok(Self {
             id: novel_id.to_string(),
@@ -82,6 +87,7 @@ impl NovelFn for JJNovel {
             chapters,
             author_id,
             status,
+            tags,
         })
     }
 
@@ -101,12 +107,12 @@ impl NovelFn for JJNovel {
         self.image.as_str()
     }
 
-    fn author_id(&self) -> &str {
-        self.author_id.as_str()
-    }
-
     async fn chapters(&self) -> NovelResult<Vec<Self::Chapter>> {
         Ok(self.chapters.clone())
+    }
+
+    fn author_id(&self) -> &str {
+        self.author_id.as_str()
     }
     fn get_url_from_id(id: &str) -> String {
         format!("https://www.jjwxc.net/onebook.php?novelid={}", id)
@@ -116,6 +122,10 @@ impl NovelFn for JJNovel {
     }
     fn id(&self) -> &str {
         self.id.as_str()
+    }
+
+    fn tags(&self) -> &[Self::Tag] {
+        self.tags.as_slice()
     }
 }
 
@@ -222,6 +232,31 @@ fn parse_status(html: &Html) -> NovelResult<NovelStatus> {
     }
 }
 
+fn parse_tags(html: &Html) -> NovelResult<Vec<JJTag>> {
+    let tags = html.select(&SELECTOR_TAGS).map(map_tag).collect();
+    tags
+}
+
+fn map_tag(element_ref: ElementRef) -> NovelResult<JJTag> {
+    let href = element_ref
+        .value()
+        .attr("href")
+        .ok_or(NovelError::ParseError)?;
+
+    let (_, id) = tag_id(href)?;
+    let name = element_ref.inner_html();
+    Ok(JJTag { id, name })
+}
+
+fn tag_id(input: &str) -> IResult<&str, String> {
+    let (input, (_, data, _)) = all_consuming(tuple((
+        tag("//www.jjwxc.net/bookbase.php?bq="),
+        is_not("&"),
+        eof,
+    )))(input)?;
+    Ok((input, data.to_string()))
+}
+
 #[cfg(test)]
 mod test {
     use crate::novel::NovelFn;
@@ -253,9 +288,19 @@ mod test {
         let novel_id = "6357210";
         let novel = super::JJNovel::get_novel_data(novel_id).await?;
         println!("{novel:#?}");
-        let novel_id = "1972045";
+        let novel_id = "4177492";
         let novel = super::JJNovel::get_novel_data(novel_id).await?;
         println!("{novel:#?}");
+        Ok(())
+    }
+    #[test]
+    fn tag_id_test() -> anyhow::Result<()> {
+        let input = "//www.jjwxc.net/bookbase.php?bq=1";
+        let (_, data) = super::tag_id(input)?;
+        assert_eq!(data, "1");
+        let input = "//www.jjwxc.net/bookbase.php?bq=2";
+        let (_, data) = super::tag_id(input)?;
+        assert_eq!(data, "2");
         Ok(())
     }
 }

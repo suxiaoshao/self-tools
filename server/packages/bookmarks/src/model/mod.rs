@@ -6,7 +6,7 @@
  * @FilePath: /self-tools/server/packages/bookmarks/src/model/mod.rs
  */
 use std::env;
-pub mod schema;
+pub(crate) mod schema;
 use diesel::{
     r2d2::{ConnectionManager, Pool},
     PgConnection,
@@ -14,15 +14,16 @@ use diesel::{
 
 use crate::errors::GraphqlResult;
 
-pub mod author;
-pub mod chapter;
-pub mod collection;
-pub mod novel;
-pub mod tag;
+pub(crate) mod author;
+pub(crate) mod chapter;
+pub(crate) mod collection;
+pub(crate) mod collection_novel;
+pub(crate) mod novel;
+pub(crate) mod tag;
 
-pub type PgPool = Pool<ConnectionManager<PgConnection>>;
+pub(crate) type PgPool = Pool<ConnectionManager<PgConnection>>;
 
-pub fn get_pool() -> GraphqlResult<PgPool> {
+pub(crate) fn get_pool() -> GraphqlResult<PgPool> {
     let database_url = env::var("BOOKMARKS_PG")?;
     let manager = ConnectionManager::<PgConnection>::new(database_url);
 

@@ -24,10 +24,23 @@ use super::{
     validator::TagMatchValidator,
 };
 
-pub struct QueryRoot;
+pub(crate) struct QueryRoot;
 
 #[Object]
 impl QueryRoot {
+    /// 获取所有集合
+    #[graphql(guard = "AuthGuard")]
+    async fn all_collections(&self, context: &Context<'_>) -> GraphqlResult<Vec<Collection>> {
+        let conn = &mut context
+            .data::<PgPool>()
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
+            .get()?;
+        let directory = Collection::all_collections(conn)?;
+        Ok(directory)
+    }
     /// 获取目录列表
     #[graphql(guard = "AuthGuard")]
     async fn get_collections(
@@ -96,13 +109,7 @@ impl QueryRoot {
     }
     /// 获取标签列表
     #[graphql(guard = "AuthGuard")]
-    async fn query_tags(
-        &self,
-        context: &Context<'_>,
-        collection_id: Option<i64>,
-        // 是否深度搜索
-        deep_search: Option<bool>,
-    ) -> GraphqlResult<Vec<Tag>> {
+    async fn query_tags(&self, context: &Context<'_>) -> GraphqlResult<Vec<Tag>> {
         let conn = &mut context
             .data::<PgPool>()
             .map_err(|_| {
@@ -110,7 +117,7 @@ impl QueryRoot {
                 GraphqlError::NotGraphqlContextData("PgPool")
             })?
             .get()?;
-        let tag = Tag::query(collection_id, deep_search.unwrap_or(false), conn)?;
+        let tag = Tag::query(conn)?;
         Ok(tag)
     }
     /// 获取小说列表
@@ -118,7 +125,7 @@ impl QueryRoot {
     async fn query_novels(
         &self,
         context: &Context<'_>,
-        collection_id: Option<i64>,
+        #[graphql(validator(custom = "TagMatchValidator"))] collection_match: Option<TagMatch>,
         #[graphql(validator(custom = "TagMatchValidator"))] tag_match: Option<TagMatch>,
         novel_status: Option<NovelStatus>,
     ) -> GraphqlResult<Vec<Novel>> {
@@ -129,7 +136,7 @@ impl QueryRoot {
                 GraphqlError::NotGraphqlContextData("PgPool")
             })?
             .get()?;
-        let novel = Novel::query(collection_id, tag_match, novel_status, conn)?;
+        let novel = Novel::query(collection_match, tag_match, novel_status, conn)?;
         Ok(novel)
     }
     /// 获取小说详情

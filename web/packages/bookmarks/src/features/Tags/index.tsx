@@ -1,9 +1,7 @@
-import { Box, IconButton } from '@mui/material';
-import { Controller, useForm, useWatch } from 'react-hook-form';
-import CollectionSelect from '../../components/CollectionSelect';
-import { CreateTagMutationVariables, GetTagsQuery, useDeleteTagMutation, useGetTagsLazyQuery } from '../../graphql';
+import { Box, IconButton, Link } from '@mui/material';
+import { GetTagsQuery, useDeleteTagMutation, useGetTagsLazyQuery } from '../../graphql';
 import { Search } from '@mui/icons-material';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import {
   CustomColumnDefArray,
   CustomTable,
@@ -15,34 +13,45 @@ import {
 import { format } from 'time';
 import CreateTagButton from './components/CreateTagButton';
 import { useI18n } from 'i18n';
+import { getLabelKeyBySite } from '@bookmarks/utils/novelSite';
 
 const rowModel = getCoreRowModel();
 
 type Data = GetTagsQuery['queryTags'][0];
 
 export default function Tags() {
-  type FormData = CreateTagMutationVariables;
-  const {
-    control,
-    handleSubmit,
-    formState: { isValid },
-  } = useForm<FormData>();
   const [getTags, { data, refetch }] = useGetTagsLazyQuery();
   const [deleteTag] = useDeleteTagMutation();
-  const onSearch = useCallback(
-    ({ collectionId }: FormData) => {
-      getTags({ variables: { collectionId } });
-    },
-    [getTags],
-  );
-  const collectionId = useWatch({ control, name: 'collectionId' });
+  const onSearch = useCallback(() => {
+    getTags();
+  }, [getTags]);
+  useEffect(() => {
+    onSearch();
+  }, [onSearch]);
   const t = useI18n();
   const columns = useMemo<CustomColumnDefArray<Data>>(
     () => [
       {
         header: t('name'),
         id: 'name',
-        accessorKey: 'name',
+        accessorFn: ({ url, name }) => (
+          <Link
+            underline="hover"
+            onClick={() => {
+              window.open(url, '_blank');
+            }}
+            sx={{ cursor: 'pointer' }}
+          >
+            {name}
+          </Link>
+        ),
+        cell: (context) => context.getValue(),
+      },
+      {
+        header: t('novel_site'),
+        id: 'site',
+        accessorFn: ({ site }) => t(getLabelKeyBySite(site)),
+        cell: (context) => context.getValue(),
       },
       {
         header: t('create_time'),
@@ -94,20 +103,13 @@ export default function Tags() {
           display: 'flex',
         }}
       >
-        <Controller
-          rules={{ required: true }}
-          control={control}
-          name="collectionId"
-          render={({ field }) => <CollectionSelect {...field} />}
-        />
-        {/* todo */}
-        <CreateTagButton refetch={refetch} collectionId={collectionId} />
-        <IconButton disabled={!isValid} sx={{ marginLeft: 'auto' }} onClick={handleSubmit(onSearch)}>
+        <CreateTagButton refetch={refetch} />
+        <IconButton sx={{ marginLeft: 'auto' }} onClick={onSearch}>
           <Search />
         </IconButton>
       </Box>
     );
-  }, [collectionId, control, handleSubmit, isValid, onSearch, refetch]);
+  }, [onSearch, refetch]);
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', p: 2 }}>

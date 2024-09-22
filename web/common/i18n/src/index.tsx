@@ -7,8 +7,8 @@
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
 import i18n, { Resource } from 'i18next';
-import { useEffect, useMemo } from 'react';
-import { initReactI18next, useTranslation } from 'react-i18next';
+import { useEffect } from 'react';
+import { initReactI18next } from 'react-i18next';
 import { selectLang, useAppSelector } from './i18nSlice';
 import en from './locales/en.json';
 import zh from './locales/zh.json';
@@ -45,12 +45,7 @@ export default function I18next({ children }: I18nextProps) {
 
 export { default as i18nReducer } from './i18nSlice';
 
-export type I18nKey = keyof typeof en;
-
-export function useI18n(): (key: I18nKey) => string {
-  const trans = useTranslation();
-  return useMemo(() => trans.t, [trans]);
-}
+export { type I18nKey, useI18n } from './useI18n';
 
 export { default as I18nDrawerItem } from './I18nDrawerItem';
 

@@ -8,7 +8,9 @@
 pub mod author;
 pub mod chapter;
 pub mod novel;
+pub mod tag;
 
 pub use author::JJAuthor;
 pub use chapter::JJChapter;
 pub use novel::JJNovel;
+pub use tag::JJTag;

@@ -34,7 +34,7 @@ export default function Login() {
       }
     }
   }, [auth, navigate, urlSearch]);
-  const onSubmit: SubmitHandler<LoginForm> = async (data) => {
+  const onSubmit: SubmitHandler<LoginForm> = (data) => {
     dispatch(login(data));
   };
   const t = useI18n();

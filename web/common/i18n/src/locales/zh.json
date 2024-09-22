@@ -79,5 +79,16 @@
   "word_count": "字数",
   "update_by_crawler": "通过爬取更新",
   "go_to_source_site": "前往源站点",
-  "update_by_crawler_success": "通过爬取更新成功"
+  "update_by_crawler_success": "通过爬取更新成功",
+  "completed": "完结",
+  "ongoing": "连载",
+  "novel_status": "小说状态",
+  "last_update_time": "最后更新时间",
+  "first_chapter_time": "首章时间",
+  "tag_site_id": "小说站点 id",
+  "select_collection": "选择集合",
+  "match_collections": "匹配集合",
+  "collection_whether_full_match": "集合是否全匹配",
+  "match_tags": "匹配标签",
+  "tag_whether_full_match": "标签是否全匹配"
 }

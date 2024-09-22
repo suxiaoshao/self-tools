@@ -6,9 +6,9 @@
  * @FilePath: /self-tools/web/common/types/src/micro.ts
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
+import { ReactNode } from 'react';
 import { ThemeOptions } from '@mui/material';
 import { Enum } from './enum';
-import { ReactNode } from 'react';
 
 export interface MicroState {
   theme: MicroTheme;
@@ -19,16 +19,20 @@ export type MicroTheme = Pick<ThemeOptions, 'palette'>;
 
 export interface PathItem {
   path: string;
-  element?: React.ReactNode;
+  element?: ReactNode;
   children?: ReactNode;
 }
 
-export type Menu = { name: string; path: Enum<'path', PathItem> | Enum<'menu', Menu[]>; icon: string };
+export interface Menu {
+  name: string;
+  path: Enum<'path', PathItem> | Enum<'menu', Menu[]>;
+  icon: string;
+}
 
 export interface MicroConfig {
   getName(): string;
   getIcon(): string;
   getActiveRule(): string;
   getMenu(): Menu[];
-  getElement(): React.ReactNode;
+  getElement(): ReactNode;
 }

@@ -1,6 +1,0 @@
-query getCollectionSelect($parentId: Int) {
-  getCollections(parentId: $parentId) {
-    name
-    id
-  }
-}

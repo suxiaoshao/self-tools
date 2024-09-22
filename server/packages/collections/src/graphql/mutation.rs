@@ -13,7 +13,7 @@ use crate::{
     service::{collection::Collection, item::Item},
 };
 
-pub struct MutationRoot;
+pub(crate) struct MutationRoot;
 
 #[Object]
 impl MutationRoot {

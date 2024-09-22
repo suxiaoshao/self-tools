@@ -22,31 +22,29 @@ use diesel::{
 
 #[derive(Debug, FromSqlRow, AsExpression, QueryId, Enum, Copy, Clone, Eq, PartialEq)]
 #[diesel(sql_type = super::sql_types::NovelStatus)]
-pub enum NovelStatus {
+pub(crate) enum NovelStatus {
     Ongoing,
     Completed,
 }
 
-impl From<&novel_crawler::novel::NovelStatus> for NovelStatus {
-    fn from(value: &novel_crawler::novel::NovelStatus) -> Self {
+impl From<&novel_crawler::NovelStatus> for NovelStatus {
+    fn from(value: &novel_crawler::NovelStatus) -> Self {
         match value {
-            novel_crawler::novel::NovelStatus::Ongoing => NovelStatus::Ongoing,
-            novel_crawler::novel::NovelStatus::Completed => NovelStatus::Completed,
+            novel_crawler::NovelStatus::Ongoing => NovelStatus::Ongoing,
+            novel_crawler::NovelStatus::Completed => NovelStatus::Completed,
         }
     }
 }
 
-impl PartialEq<novel_crawler::novel::NovelStatus> for NovelStatus {
-    fn eq(&self, other: &novel_crawler::novel::NovelStatus) -> bool {
+impl PartialEq<novel_crawler::NovelStatus> for NovelStatus {
+    fn eq(&self, other: &novel_crawler::NovelStatus) -> bool {
         matches!(
             (self, other),
-            (
-                NovelStatus::Ongoing,
-                novel_crawler::novel::NovelStatus::Ongoing
-            ) | (
-                NovelStatus::Completed,
-                novel_crawler::novel::NovelStatus::Completed
-            )
+            (NovelStatus::Ongoing, novel_crawler::NovelStatus::Ongoing)
+                | (
+                    NovelStatus::Completed,
+                    novel_crawler::NovelStatus::Completed
+                )
         )
     }
 }
@@ -78,11 +76,11 @@ impl FromSql<super::sql_types::NovelStatus, Pg> for NovelStatus {
     }
 }
 
-impl From<novel_crawler::novel::NovelStatus> for NovelStatus {
-    fn from(value: novel_crawler::novel::NovelStatus) -> Self {
+impl From<novel_crawler::NovelStatus> for NovelStatus {
+    fn from(value: novel_crawler::NovelStatus) -> Self {
         match value {
-            novel_crawler::novel::NovelStatus::Ongoing => NovelStatus::Ongoing,
-            novel_crawler::novel::NovelStatus::Completed => NovelStatus::Completed,
+            novel_crawler::NovelStatus::Ongoing => NovelStatus::Ongoing,
+            novel_crawler::NovelStatus::Completed => NovelStatus::Completed,
         }
     }
 }
