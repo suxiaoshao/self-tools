@@ -1,9 +1,10 @@
 import { useEffect } from 'react';
 import { useNavigate, useLocation, createSearchParams } from 'react-router-dom';
-import { selectAuth, useAppSelector } from './authSlice';
+import { useAuthStore } from './authSlice';
+import { useShallow } from 'zustand/react/shallow';
 
 export default function useLogin() {
-  const auth = useAppSelector(selectAuth);
+  const auth = useAuthStore(useShallow((state) => state.value));
   const navigate = useNavigate();
   const { pathname, search, hash } = useLocation();
 

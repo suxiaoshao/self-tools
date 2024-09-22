@@ -19,10 +19,11 @@ import {
 } from '@mui/material';
 import { useState } from 'react';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
-import { ColorSetting, updateColor, useAppDispatch, useAppSelector } from '../themeSlice';
+import { ColorSetting, useThemeStore } from '../themeSlice';
 import { string, object, InferInput, pipe, regex, enum_ } from 'valibot';
 import { valibotResolver } from '@hookform/resolvers/valibot';
 import { useI18n } from 'i18n';
+import { useShallow } from 'zustand/react/shallow';
 
 export default function ThemeDrawerItem() {
   // 控制 dialog
@@ -30,7 +31,7 @@ export default function ThemeDrawerItem() {
   const handleClose = () => {
     setOpen(false);
   };
-  const theme = useAppSelector((state) => state.theme);
+  const { updateColor, ...theme } = useThemeStore(useShallow((state) => state));
   const t = useI18n();
   const createColorSchema = object({
     color: pipe(string(), regex(/^#[0-9a-fA-F]{6}$/, t('color_format_error'))),
@@ -46,9 +47,8 @@ export default function ThemeDrawerItem() {
     defaultValues: theme,
     resolver: valibotResolver(createColorSchema),
   });
-  const dispatch = useAppDispatch();
   const onSubmit: SubmitHandler<FormData> = ({ color, colorSetting }) => {
-    dispatch(updateColor({ colorSetting, color }));
+    updateColor(color, colorSetting);
     handleClose();
   };
 

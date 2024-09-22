@@ -9,9 +9,10 @@
 import i18n, { Resource } from 'i18next';
 import { useEffect } from 'react';
 import { initReactI18next } from 'react-i18next';
-import { selectLang, useAppSelector } from './i18nSlice';
+import { getLang, useI18nStore } from './i18nSlice';
 import en from './locales/en.json';
 import zh from './locales/zh.json';
+import { useShallow } from 'zustand/react/shallow';
 
 const resources = {
   en: {
@@ -35,15 +36,13 @@ export interface I18nextProps {
 }
 
 export default function I18next({ children }: I18nextProps) {
-  const lang = useAppSelector(selectLang);
+  const lang = useI18nStore(useShallow((state) => getLang(state.value)));
   useEffect(() => {
     i18n.changeLanguage(lang);
   }, [lang]);
 
   return children;
 }
-
-export { default as i18nReducer } from './i18nSlice';
 
 export { type I18nKey, useI18n } from './useI18n';
 
