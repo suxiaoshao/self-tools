@@ -1,11 +1,9 @@
 import { AnyAction, configureStore, ThunkAction } from '@reduxjs/toolkit';
 import { authReducer } from '@portal/features/Auth';
-import { themeReducer } from '@portal/features/Theme';
 
 const store = configureStore({
   reducer: {
     auth: authReducer,
-    theme: themeReducer,
   },
 });
 export default store;
