@@ -8,7 +8,7 @@ import { useI18n } from 'i18n';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { match } from 'ts-pattern';
-import { InferInput, number, object } from 'valibot';
+import { type InferInput, number, object } from 'valibot';
 
 export interface AddCollectionProps {
   novelId: number;

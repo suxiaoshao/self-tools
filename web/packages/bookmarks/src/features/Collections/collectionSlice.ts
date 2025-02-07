@@ -5,9 +5,9 @@
  * @LastEditTime: 2024-09-08 14:07:12
  * @FilePath: /self-tools/web/packages/bookmarks/src/features/Collections/collectionSlice.ts
  */
-import { AllCollectionsQuery, useAllCollectionsLazyQuery } from '@bookmarks/graphql';
+import { type AllCollectionsQuery, useAllCollectionsLazyQuery } from '@bookmarks/graphql';
 import { useCallback, useEffect } from 'react';
-import { Enum } from 'types';
+import type { Enum } from 'types';
 import { create } from 'zustand';
 import { useShallow } from 'zustand/react/shallow';
 

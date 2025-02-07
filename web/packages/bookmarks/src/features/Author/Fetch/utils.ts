@@ -5,7 +5,7 @@
  * @LastEditTime: 2024-03-28 09:47:56
  * @FilePath: /self-tools/web/packages/bookmarks/src/features/Author/Fetch/utils.ts
  */
-import { FetchAuthorQuery, SaveChapterInfo, SaveDraftAuthor, SaveTagInfo } from '@bookmarks/graphql';
+import type { FetchAuthorQuery, SaveChapterInfo, SaveDraftAuthor, SaveTagInfo } from '@bookmarks/graphql';
 
 export function convertFetchToDraftAuthor(fetchAuthor: FetchAuthorQuery['fetchAuthor']): SaveDraftAuthor {
   const site = fetchAuthor?.site;

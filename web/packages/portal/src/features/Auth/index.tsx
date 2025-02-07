@@ -6,11 +6,11 @@
  * @FilePath: /self-tools/web/packages/portal/src/features/Auth/index.tsx
  */
 import { Avatar, Box, Button, Container, TextField, Typography } from '@mui/material';
-import { SubmitHandler, useForm } from 'react-hook-form';
+import { type SubmitHandler, useForm } from 'react-hook-form';
 import { LockOutlined } from '@mui/icons-material';
 import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { LoginForm, useAuthStore } from './authSlice';
+import { type LoginForm, useAuthStore } from './authSlice';
 import { useI18n } from 'i18n';
 import { useShallow } from 'zustand/react/shallow';
 

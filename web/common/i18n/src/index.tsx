@@ -6,7 +6,7 @@
  * @FilePath: /self-tools/web/common/i18n/src/index.tsx
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
-import i18n, { Resource } from 'i18next';
+import i18n, { type Resource, changeLanguage } from 'i18next';
 import { useEffect } from 'react';
 import { initReactI18next } from 'react-i18next';
 import { getLang, useI18nStore } from './i18nSlice';
@@ -23,6 +23,7 @@ const resources = {
   },
 } satisfies Resource;
 
+// eslint-disable-next-line no-named-as-default-member
 i18n.use(initReactI18next).init({
   resources,
   lng: 'en',
@@ -38,7 +39,7 @@ export interface I18nextProps {
 export default function I18next({ children }: I18nextProps) {
   const lang = useI18nStore(useShallow((state) => getLang(state.value)));
   useEffect(() => {
-    i18n.changeLanguage(lang);
+    changeLanguage(lang);
   }, [lang]);
 
   return children;

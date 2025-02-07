@@ -16,7 +16,7 @@ export default function Collections() {
 
   const allRefetch = useCallback(async () => {
     await Promise.all([refetch(), fetchData()]);
-  }, [refetch]);
+  }, [refetch, fetchData]);
 
   const tableInstance = useCollectionTable(allRefetch, data?.getCollections ?? []);
 

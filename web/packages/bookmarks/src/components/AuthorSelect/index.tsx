@@ -7,7 +7,7 @@
  */
 import {
   Autocomplete,
-  AutocompleteProps,
+  type AutocompleteProps,
   Avatar,
   ListItemAvatar,
   ListItemText,
@@ -15,9 +15,9 @@ import {
   TextField,
 } from '@mui/material';
 import { useI18n } from 'i18n';
-import { FocusEventHandler, useEffect, useMemo, useState } from 'react';
+import { type FocusEventHandler, useEffect, useMemo, useState } from 'react';
 import { debounceTime, Subject } from 'rxjs';
-import { SearchAuthorQuery, useSearchAuthorQuery } from '../../graphql';
+import { type SearchAuthorQuery, useSearchAuthorQuery } from '../../graphql';
 import { getImageUrl } from '@bookmarks/utils/image';
 
 export interface TagsSelectProps

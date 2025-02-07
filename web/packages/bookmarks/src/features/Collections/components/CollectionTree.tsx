@@ -1,5 +1,5 @@
 import { List, ListItem, ListItemText } from '@mui/material';
-import { CollectionTreeItem } from '../collectionSlice';
+import type { CollectionTreeItem } from '../collectionSlice';
 
 export interface CollectionTreeProps {
   value: CollectionTreeItem[];

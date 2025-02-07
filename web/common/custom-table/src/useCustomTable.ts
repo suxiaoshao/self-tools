@@ -1,16 +1,16 @@
-import { TableCellProps } from '@mui/material';
+import type { TableCellProps } from '@mui/material';
 import {
-  AccessorFn,
-  ColumnDef,
+  type AccessorFn,
+  type ColumnDef,
   createColumnHelper,
-  DeepKeys,
-  DeepValue,
-  DisplayColumnDef,
-  GroupColumnDef,
-  IdentifiedColumnDef,
-  RowData,
-  Table,
-  TableOptions,
+  type DeepKeys,
+  type DeepValue,
+  type DisplayColumnDef,
+  type GroupColumnDef,
+  type IdentifiedColumnDef,
+  type RowData,
+  type Table,
+  type TableOptions,
   useReactTable,
 } from '@tanstack/react-table';
 

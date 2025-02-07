@@ -8,9 +8,17 @@
 import { ExpandLess, ExpandMore } from '@mui/icons-material';
 import RouterItem from '../../components/AppDrawer/RouterItem';
 import { useState } from 'react';
-import { Avatar, Collapse, List, ListItemButton, ListItemButtonProps, ListItemIcon, ListItemText } from '@mui/material';
-import { I18nKey, useI18n } from 'i18n';
-import { Menu } from 'types';
+import {
+  Avatar,
+  Collapse,
+  List,
+  ListItemButton,
+  type ListItemButtonProps,
+  ListItemIcon,
+  ListItemText,
+} from '@mui/material';
+import { type I18nKey, useI18n } from 'i18n';
+import type { Menu } from 'types';
 import { match } from 'ts-pattern';
 
 export interface MenuItemProps extends ListItemButtonProps {

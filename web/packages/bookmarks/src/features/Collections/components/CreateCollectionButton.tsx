@@ -1,8 +1,8 @@
 import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField } from '@mui/material';
 import { useI18n } from 'i18n';
 import { useState } from 'react';
-import { SubmitHandler, useForm } from 'react-hook-form';
-import { CreateCollectionMutationVariables, useCreateCollectionMutation } from '../../../graphql';
+import { type SubmitHandler, useForm } from 'react-hook-form';
+import { type CreateCollectionMutationVariables, useCreateCollectionMutation } from '../../../graphql';
 import { useAllCollection } from '../collectionSlice';
 import useParentId from './useParentId';
 
@@ -11,7 +11,7 @@ export interface CreateCollectButtonProps {
   refetch: () => void;
 }
 
-export default function CreateCollectionButton({ refetch }: CreateCollectButtonProps): JSX.Element {
+export default function CreateCollectionButton({ refetch }: CreateCollectButtonProps) {
   const parentId = useParentId();
   const { fetchData } = useAllCollection();
 

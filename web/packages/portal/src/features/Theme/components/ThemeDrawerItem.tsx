@@ -18,9 +18,9 @@ import {
   RadioGroup,
 } from '@mui/material';
 import { useState } from 'react';
-import { Controller, SubmitHandler, useForm } from 'react-hook-form';
+import { Controller, type SubmitHandler, useForm } from 'react-hook-form';
 import { ColorSetting, useThemeStore } from '../themeSlice';
-import { string, object, InferInput, pipe, regex, enum_ } from 'valibot';
+import { string, object, type InferInput, pipe, regex, enum_ } from 'valibot';
 import { valibotResolver } from '@hookform/resolvers/valibot';
 import { useI18n } from 'i18n';
 import { useShallow } from 'zustand/react/shallow';

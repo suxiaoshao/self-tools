@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import en from './locales/en.json';
+import type en from './locales/en.json';
 export type I18nKey = keyof typeof en;
 
 export function useI18n(): (key: I18nKey) => string {

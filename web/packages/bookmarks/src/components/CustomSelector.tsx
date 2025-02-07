@@ -1,11 +1,11 @@
 import { Menu, MenuItem } from '@mui/material';
 import React, {
-  FocusEvent,
-  FocusEventHandler,
-  ForwardedRef,
-  Key,
-  MouseEvent,
-  ReactNode,
+  type FocusEvent,
+  type FocusEventHandler,
+  type ForwardedRef,
+  type Key,
+  type MouseEvent,
+  type ReactNode,
   useImperativeHandle,
   useState,
 } from 'react';
@@ -21,7 +21,7 @@ export interface CustomSelectorProps<T> {
 function CustomSelector<T>(
   { children, onBlur, onChange, render, value }: CustomSelectorProps<T>,
   ref: ForwardedRef<HTMLDivElement | null>,
-): JSX.Element {
+) {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
   const handleClick = (event: MouseEvent<HTMLButtonElement>) => {

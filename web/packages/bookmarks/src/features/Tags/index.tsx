@@ -1,11 +1,11 @@
 import { Box, IconButton, Link } from '@mui/material';
-import { GetTagsQuery, useDeleteTagMutation, useGetTagsLazyQuery } from '../../graphql';
+import { type GetTagsQuery, useDeleteTagMutation, useGetTagsLazyQuery } from '../../graphql';
 import { Search } from '@mui/icons-material';
 import { useCallback, useEffect, useMemo } from 'react';
 import {
-  CustomColumnDefArray,
+  type CustomColumnDefArray,
   CustomTable,
-  CustomTableOptions,
+  type CustomTableOptions,
   getCoreRowModel,
   TableActions,
   useCustomTable,

@@ -237,6 +237,7 @@ fn parse_status(html: &Html) -> NovelResult<NovelStatus> {
     match status {
         "连载" => Ok(NovelStatus::Ongoing),
         "完本" => Ok(NovelStatus::Completed),
+        "暂停" => Ok(NovelStatus::Paused),
         _ => Err(NovelError::ParseError),
     }
 }

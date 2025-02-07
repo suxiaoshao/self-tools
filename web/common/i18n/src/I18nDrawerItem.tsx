@@ -17,9 +17,9 @@ import {
   RadioGroup,
 } from '@mui/material';
 import { useState } from 'react';
-import { Controller, SubmitHandler, useForm } from 'react-hook-form';
+import { Controller, type SubmitHandler, useForm } from 'react-hook-form';
 import { useI18nStore, LangMode, CustomLang } from './i18nSlice';
-import { object, enum_, InferInput } from 'valibot';
+import { object, enum_, type InferInput } from 'valibot';
 import { valibotResolver } from '@hookform/resolvers/valibot';
 import { useI18n } from './useI18n';
 import { useShallow } from 'zustand/react/shallow';

@@ -1,11 +1,11 @@
-import { GetNovelQuery } from '@bookmarks/graphql';
+import type { GetNovelQuery } from '@bookmarks/graphql';
 import { useMemo } from 'react';
 import { useI18n } from 'i18n';
 import {
-  CustomColumnDefArray,
+  type CustomColumnDefArray,
   CustomTable,
-  CustomTableOptions,
-  CustomTableProps,
+  type CustomTableOptions,
+  type CustomTableProps,
   createCustomColumnHelper,
   getCoreRowModel,
   useCustomTable,

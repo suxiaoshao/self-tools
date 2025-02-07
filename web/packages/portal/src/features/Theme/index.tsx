@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import { type ReactNode, useEffect, useMemo } from 'react';
 import { createTheme, CssBaseline, ThemeProvider } from '@mui/material';
 import '@fontsource/roboto/300.css';
 import '@fontsource/roboto/400.css';
@@ -11,10 +11,10 @@ import { match } from 'ts-pattern';
 import { useShallow } from 'zustand/react/shallow';
 
 export interface CustomThemeProps {
-  children?: React.ReactNode;
+  children?: ReactNode;
 }
 
-export function CustomTheme({ children }: CustomThemeProps): JSX.Element {
+export function CustomTheme({ children }: CustomThemeProps) {
   const { setSystemColorScheme, ...state } = useThemeStore(
     useShallow(({ setSystemColorScheme, color, colorSetting, systemColorScheme }) => ({
       color,

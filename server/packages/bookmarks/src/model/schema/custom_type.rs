@@ -32,6 +32,7 @@ impl From<&novel_crawler::NovelStatus> for NovelStatus {
         match value {
             novel_crawler::NovelStatus::Ongoing => NovelStatus::Ongoing,
             novel_crawler::NovelStatus::Completed => NovelStatus::Completed,
+            novel_crawler::NovelStatus::Paused => todo!(),
         }
     }
 }
@@ -81,6 +82,7 @@ impl From<novel_crawler::NovelStatus> for NovelStatus {
         match value {
             novel_crawler::NovelStatus::Ongoing => NovelStatus::Ongoing,
             novel_crawler::NovelStatus::Completed => NovelStatus::Completed,
+            novel_crawler::NovelStatus::Paused => todo!(),
         }
     }
 }

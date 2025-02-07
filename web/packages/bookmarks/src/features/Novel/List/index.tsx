@@ -1,9 +1,9 @@
 import { Refresh } from '@mui/icons-material';
 import { Avatar, Box, FormControl, FormLabel, IconButton, Link, Paper, Switch } from '@mui/material';
 import {
-  CustomColumnDefArray,
+  type CustomColumnDefArray,
   CustomTable,
-  CustomTableOptions,
+  type CustomTableOptions,
   getCoreRowModel,
   TableActions,
   useCustomTable,
@@ -13,7 +13,12 @@ import { useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Link as RouterLink } from 'react-router-dom';
 import { format } from 'time';
-import { GetNovelsQuery, GetNovelsQueryVariables, useDeleteNovelMutation, useGetNovelsQuery } from '../../../graphql';
+import {
+  type GetNovelsQuery,
+  type GetNovelsQueryVariables,
+  useDeleteNovelMutation,
+  useGetNovelsQuery,
+} from '../../../graphql';
 import CreateNovelButton from './Components/CreateNovelButton';
 import { convertFormToVariables } from './utils';
 import { getImageUrl } from '@bookmarks/utils/image';

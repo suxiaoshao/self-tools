@@ -1,8 +1,8 @@
-import React, { Key } from 'react';
+import type { Key, ReactNode } from 'react';
 
 export interface DetailsItem {
   key?: Key;
   label: string;
-  value: React.ReactNode;
+  value: ReactNode;
   span?: 1 | 2 | 3;
 }

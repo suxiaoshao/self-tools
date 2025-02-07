@@ -2,14 +2,14 @@ import { Avatar, Box, Button, IconButton, Link, Typography } from '@mui/material
 import { Refresh } from '@mui/icons-material';
 import {
   createCustomColumnHelper,
-  CustomColumnDefArray,
+  type CustomColumnDefArray,
   CustomTable,
-  CustomTableOptions,
+  type CustomTableOptions,
   getCoreRowModel,
   TableActions,
   useCustomTable,
 } from 'custom-table';
-import { GetAuthorsQuery, useDeleteAuthorMutation, useGetAuthorsQuery } from '../../../graphql';
+import { type GetAuthorsQuery, useDeleteAuthorMutation, useGetAuthorsQuery } from '../../../graphql';
 import CreateAuthorButton from './components/CreateAuthorButton';
 import { useMemo } from 'react';
 import { format } from 'time';

@@ -16,11 +16,11 @@ import {
 } from '@mui/material';
 import { useI18n } from 'i18n';
 import { useEffect, useState } from 'react';
-import { Controller, SubmitHandler, useForm } from 'react-hook-form';
+import { Controller, type SubmitHandler, useForm } from 'react-hook-form';
 import { match } from 'ts-pattern';
 import CustomEdit from '../../../components/CustomEdit';
 import Markdown from '../../../components/Markdown';
-import { CreateItemMutationVariables } from '../../../graphql';
+import type { CreateItemMutationVariables } from '../../../graphql';
 export type ItemFormData = Omit<CreateItemMutationVariables, 'collectionId'>;
 
 export interface ItemFormProps {
@@ -39,7 +39,7 @@ export default function ItemForm({
   mode,
   initialValues,
   loading = false,
-}: ItemFormProps): JSX.Element {
+}: ItemFormProps) {
   // 表单控制
   const { handleSubmit, register, control, setValue } = useForm<ItemFormData>({ defaultValues: initialValues });
   useEffect(() => {
