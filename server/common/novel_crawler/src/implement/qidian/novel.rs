@@ -17,8 +17,7 @@ use crate::{
 use nom::{
     bytes::{complete::tag, streaming::take_until},
     combinator::{all_consuming, eof},
-    sequence::tuple,
-    IResult,
+    IResult, Parser,
 };
 
 use super::{chapter::QDChapter, tag::QDTag};
@@ -218,12 +217,13 @@ fn parse_author(element_ref: ElementRef) -> NovelResult<String> {
 }
 
 fn parse_author_id(input: &str) -> IResult<&str, String> {
-    let (input, (_, data, _, _)) = all_consuming(tuple((
+    let (input, (_, data, _, _)) = all_consuming((
         tag("//m.qidian.com/author/"),
         take_until("/"),
         tag("/"),
         eof,
-    )))(input)?;
+    ))
+    .parse(input)?;
     Ok((input, data.to_string()))
 }
 fn parse_status(html: &Html) -> NovelResult<NovelStatus> {

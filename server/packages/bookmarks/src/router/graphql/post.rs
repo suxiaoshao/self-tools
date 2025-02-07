@@ -7,7 +7,7 @@
  */
 use async_graphql_axum::{GraphQLRequest, GraphQLResponse};
 use axum::{
-    extract::State,
+    extract::{rejection::ExtensionRejection, State},
     http::{
         header::{AsHeaderName, AUTHORIZATION},
         HeaderMap,
@@ -23,7 +23,7 @@ pub(crate) struct Auth(pub(crate) String);
 pub(crate) async fn graphql_handler(
     State(schema): State<RootSchema>,
     header: HeaderMap,
-    trace_id: Option<Extension<TraceIdExt>>,
+    trace_id: Result<Extension<TraceIdExt>, ExtensionRejection>,
     req: GraphQLRequest,
 ) -> GraphQLResponse {
     let auth = get_header_value(&header, AUTHORIZATION).map(Auth);
@@ -32,7 +32,7 @@ pub(crate) async fn graphql_handler(
     if let Some(auth) = auth {
         req = req.data(auth);
     }
-    if let Some(trace_id) = trace_id {
+    if let Ok(trace_id) = trace_id {
         req = req.data(trace_id);
     }
     schema.execute(req).await.into()

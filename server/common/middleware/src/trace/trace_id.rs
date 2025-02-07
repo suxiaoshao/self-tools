@@ -2,7 +2,7 @@ use futures::Future;
 use futures_util::ready;
 use http::{header::HeaderName, HeaderValue, Request, Response};
 use pin_project_lite::pin_project;
-use rand::{distributions::Alphanumeric, Rng};
+use rand::{distr::Alphanumeric, Rng};
 use std::pin::Pin;
 use std::task::{Context, Poll};
 use tower::{Layer, Service};
@@ -84,7 +84,7 @@ where
 }
 
 pub fn rand_length(len: usize) -> String {
-    rand::thread_rng()
+    rand::rng()
         .sample_iter(&Alphanumeric)
         .map(char::from)
         .take(len)

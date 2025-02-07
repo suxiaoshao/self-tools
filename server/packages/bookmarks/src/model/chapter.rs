@@ -181,12 +181,12 @@ impl UpdateChapterModel<'_> {
             }
         }
 
-        impl<'a> QueryId for VecUpdateChapterModel<'a> {
+        impl QueryId for VecUpdateChapterModel<'_> {
             type QueryId = ();
             const HAS_STATIC_QUERY_ID: bool = false;
         }
 
-        impl<'a> QueryFragment<Pg> for VecUpdateChapterModel<'a> {
+        impl QueryFragment<Pg> for VecUpdateChapterModel<'_> {
             fn walk_ast<'b>(
                 &'b self,
                 mut out: diesel::query_builder::AstPass<'_, 'b, Pg>,
@@ -232,7 +232,7 @@ impl UpdateChapterModel<'_> {
             }
         }
 
-        impl<'a> RunQueryDsl<PgConnection> for VecUpdateChapterModel<'a> {}
+        impl RunQueryDsl<PgConnection> for VecUpdateChapterModel<'_> {}
         let data = VecUpdateChapterModel::new(data);
         data.execute(conn)?;
         Ok(())

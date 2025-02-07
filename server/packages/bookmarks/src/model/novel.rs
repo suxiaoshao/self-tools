@@ -281,11 +281,11 @@ impl UpdateNovelModel<'_> {
             }
         }
 
-        impl<'a> QueryId for VecUpdateNovelModel<'a> {
+        impl QueryId for VecUpdateNovelModel<'_> {
             type QueryId = ();
             const HAS_STATIC_QUERY_ID: bool = false;
         }
-        impl<'a> QueryFragment<Pg> for VecUpdateNovelModel<'a> {
+        impl QueryFragment<Pg> for VecUpdateNovelModel<'_> {
             fn walk_ast<'b>(
                 &'b self,
                 mut pass: diesel::query_builder::AstPass<'_, 'b, Pg>,
@@ -336,7 +336,7 @@ impl UpdateNovelModel<'_> {
                 Ok(())
             }
         }
-        impl<'a> RunQueryDsl<PgConnection> for VecUpdateNovelModel<'a> {}
+        impl RunQueryDsl<PgConnection> for VecUpdateNovelModel<'_> {}
         let data = VecUpdateNovelModel::new(data);
         data.execute(conn)?;
         Ok(())

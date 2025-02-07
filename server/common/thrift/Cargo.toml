@@ -7,15 +7,15 @@ edition = "2021"
 
 [dependencies]
 # volo
-volo = "0.10.3"
-volo-thrift = "0.10.4"
-pilota = "0.11.3"
-serde = { version = "1.0.210", features = ["derive"] }
+volo = "0.10.4"
+volo-thrift = "0.10.5"
+pilota = "0.11.8"
+serde = { version = "1.0.217", features = ["derive"] }
 # ip
 dns-lookup = "2.0.4"
 
 # error
-thiserror = "1.0.63"
+thiserror = "2.0.11"
 
 [build-dependencies]
-volo-build = "0.10.15"
+volo-build = "0.10.18"

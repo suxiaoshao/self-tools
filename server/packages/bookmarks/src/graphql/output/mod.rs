@@ -244,7 +244,7 @@ pub(crate) enum DraftTagInfo<'a> {
 }
 
 #[Object]
-impl<'a> DraftTagInfo<'a> {
+impl DraftTagInfo<'_> {
     async fn url(&self) -> String {
         match self {
             DraftTagInfo::Qidian(inner) => inner.url(),

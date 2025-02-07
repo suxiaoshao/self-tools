@@ -4,8 +4,7 @@ use futures::future::try_join_all;
 use nom::{
     bytes::complete::{tag, take_until},
     combinator::{all_consuming, eof},
-    sequence::tuple,
-    IResult,
+    IResult, Parser,
 };
 use scraper::{ElementRef, Html, Selector};
 
@@ -99,12 +98,9 @@ fn map_url(element_ref: ElementRef) -> NovelResult<String> {
 }
 
 fn novel_id(input: &str) -> IResult<&str, String> {
-    let (input, (_, data, _, _)) = all_consuming(tuple((
-        tag("//m.qidian.com/book/"),
-        take_until("/"),
-        tag("/"),
-        eof,
-    )))(input)?;
+    let (input, (_, data, _, _)) =
+        all_consuming((tag("//m.qidian.com/book/"), take_until("/"), tag("/"), eof))
+            .parse(input)?;
     Ok((input, data.to_string()))
 }
 

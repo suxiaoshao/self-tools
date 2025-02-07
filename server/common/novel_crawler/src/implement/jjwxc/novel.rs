@@ -6,8 +6,7 @@ use nom::{
         streaming::take_until,
     },
     combinator::{all_consuming, eof},
-    sequence::tuple,
-    IResult,
+    IResult, Parser,
 };
 use scraper::{ElementRef, Html, Selector};
 use time::{
@@ -130,12 +129,13 @@ impl NovelFn for JJNovel {
 }
 
 fn parse_chapter_id(url: &str) -> IResult<&str, String> {
-    let (input, (_, _, data, _)) = all_consuming(tuple((
+    let (input, (_, _, data, _)) = all_consuming((
         take_until("chapterid="),
         tag("chapterid="),
         take_while(|_| true),
         eof,
-    )))(url)?;
+    ))
+    .parse(url)?;
     Ok((input, data.to_string()))
 }
 
@@ -207,11 +207,12 @@ fn parse_author(element_ref: ElementRef) -> NovelResult<String> {
 }
 
 fn parse_author_id(input: &str) -> IResult<&str, String> {
-    let (input, (_, data, _)) = all_consuming(tuple((
+    let (input, (_, data, _)) = all_consuming((
         tag("http://www.jjwxc.net/oneauthor.php?authorid="),
         take_while(|_| true),
         eof,
-    )))(input)?;
+    ))
+    .parse(input)?;
     Ok((input, data.to_string()))
 }
 
@@ -249,11 +250,8 @@ fn map_tag(element_ref: ElementRef) -> NovelResult<JJTag> {
 }
 
 fn tag_id(input: &str) -> IResult<&str, String> {
-    let (input, (_, data, _)) = all_consuming(tuple((
-        tag("//www.jjwxc.net/bookbase.php?bq="),
-        is_not("&"),
-        eof,
-    )))(input)?;
+    let (input, (_, data, _)) =
+        all_consuming((tag("//www.jjwxc.net/bookbase.php?bq="), is_not("&"), eof)).parse(input)?;
     Ok((input, data.to_string()))
 }
 
