@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import './init';
 import { editor } from 'monaco-editor';
-import { Box, BoxProps, useTheme } from '@mui/material';
+import { Box, type BoxProps, useTheme } from '@mui/material';
 import { match } from 'ts-pattern';
 
 /**
@@ -30,7 +30,7 @@ export interface EditProps extends Omit<BoxProps, 'onChange'> {
  * @since 0.2.2
  * @description 编辑器组件
  * */
-export default function Edit({ onChangeCode, code, language, wordWrap, ...props }: EditProps): JSX.Element {
+export default function Edit({ onChangeCode, code, language, wordWrap, ...props }: EditProps) {
   /**
    * 编辑器绑定的 dom 的引用
    * */
@@ -70,9 +70,8 @@ export default function Edit({ onChangeCode, code, language, wordWrap, ...props 
         wordWrap,
       });
       return newEditor;
-    } else {
-      return null;
     }
+    return null;
   }, [code, edit, editRef, editTheme, language, wordWrap]);
   /**
    * 编辑器要绑定的 dom 生成时,再这个 dom 上新建一个编辑器,并赋值给 edit

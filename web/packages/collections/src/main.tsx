@@ -5,9 +5,9 @@
  * @LastEditTime: 2024-01-14 02:44:02
  * @FilePath: /self-tools/web/packages/collections/src/main.tsx
  */
-import { Menu, MicroConfig } from 'types';
+import type { Menu, MicroConfig } from 'types';
 import Collection from './features/Collection';
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import App from './App';
 
 export default class CollectionConfig implements MicroConfig {

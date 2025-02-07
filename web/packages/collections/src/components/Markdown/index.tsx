@@ -1,10 +1,10 @@
-import React, { useEffect } from 'react';
-import MarkdownSource, { MarkdownToJSX } from 'markdown-to-jsx';
+import { type JSX, useEffect } from 'react';
+import MarkdownSource, { type MarkdownToJSX } from 'markdown-to-jsx';
 import Prism from 'prismjs';
 import './init';
 import {
   Divider,
-  TypographyProps,
+  type TypographyProps,
   Typography,
   TableContainer,
   Paper,
@@ -15,9 +15,9 @@ import {
   TableCell,
   Link,
   Box,
-  BoxProps,
-  SxProps,
-  Theme,
+  type BoxProps,
+  type SxProps,
+  type Theme,
 } from '@mui/material';
 import { match, P } from 'ts-pattern';
 
@@ -64,35 +64,34 @@ function CustomHead(props: TypographyProps) {
 function MyCode(props: { children: string; className?: string }) {
   if (props.className) {
     return <code className={props.className}>{props.children}</code>;
-  } else {
-    return (
-      <Box
-        component="span"
-        sx={({
-          palette: {
-            secondary: { main, contrastText },
-          },
-        }) => ({
-          borderRadius: 2,
-          p: 0.3,
-          pl: 0.5,
-          pr: 0.5,
-          m: 0.3,
-          mr: 0.5,
-          ml: 0.5,
-          minWidth: 20,
-          fontSize: 17,
-          background: main,
-          color: contrastText,
-          display: 'inline-flex',
-          justifyContent: 'center',
-        })}
-        className="code-inline"
-      >
-        {props.children}
-      </Box>
-    );
   }
+  return (
+    <Box
+      component="span"
+      sx={({
+        palette: {
+          secondary: { main, contrastText },
+        },
+      }) => ({
+        borderRadius: 2,
+        p: 0.3,
+        pl: 0.5,
+        pr: 0.5,
+        m: 0.3,
+        mr: 0.5,
+        ml: 0.5,
+        minWidth: 20,
+        fontSize: 17,
+        background: main,
+        color: contrastText,
+        display: 'inline-flex',
+        justifyContent: 'center',
+      })}
+      className="code-inline"
+    >
+      {props.children}
+    </Box>
+  );
 }
 
 function MyPre(props: { children: string }) {
@@ -209,7 +208,7 @@ const option: MarkdownToJSX.Options = {
     blockquote: MyBlockquote,
   },
 };
-export default function MyMarkdown({ value, ...props }: MarkdownProps): JSX.Element {
+export default function MyMarkdown({ value, ...props }: MarkdownProps) {
   useEffect(() => {
     Prism.highlightAll();
   }, []);

@@ -20,7 +20,7 @@ import { getImageUrl } from '@bookmarks/utils/image';
 import Chapters from './components/Chapters';
 import { useCallback, useMemo } from 'react';
 import { enqueueSnackbar } from 'notify';
-import { Details, DetailsItem } from 'details';
+import { Details, type DetailsItem } from 'details';
 import { P, match } from 'ts-pattern';
 import { format } from 'time';
 import AddCollection from './components/AddCollection';
@@ -137,7 +137,7 @@ export default function NovelDetails() {
             ] satisfies DetailsItem[],
         )
         .otherwise(() => []),
-    [data, t, deleteCollectionForNovel, navigate],
+    [data, t, deleteCollectionForNovel, navigate, refetch],
   );
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', p: 2, gap: 2 }}>

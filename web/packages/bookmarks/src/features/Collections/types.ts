@@ -1,3 +1,3 @@
-import { GetCollectionsQuery } from '@bookmarks/graphql';
+import type { GetCollectionsQuery } from '@bookmarks/graphql';
 
 export type CollectionTableData = GetCollectionsQuery['getCollections'][0];

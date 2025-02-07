@@ -6,14 +6,14 @@
  * @FilePath: /self-tools/web/packages/bookmarks/src/components/CollectionSelect/index.tsx
  */
 import {
-  AllCollectionItem,
+  type AllCollectionItem,
   CollectionLoadingState,
   useAllCollection,
 } from '@bookmarks/features/Collections/collectionSlice';
 import { Add } from '@mui/icons-material';
 import {
   Box,
-  BoxProps,
+  type BoxProps,
   Button,
   Chip,
   CircularProgress,
@@ -23,11 +23,11 @@ import {
   IconButton,
 } from '@mui/material';
 import { useI18n } from 'i18n';
-import React, { FocusEventHandler, ForwardedRef, useImperativeHandle, useMemo, useState } from 'react';
+import React, { type FocusEventHandler, type ForwardedRef, useImperativeHandle, useMemo, useState } from 'react';
 import { match } from 'ts-pattern';
 import CollectionSelect from '../CollectionSelect';
 import { Controller, useForm } from 'react-hook-form';
-import { number, object, InferInput } from 'valibot';
+import { number, object, type InferInput } from 'valibot';
 import { valibotResolver } from '@hookform/resolvers/valibot';
 
 const selectCollectionSchema = object({
@@ -40,13 +40,12 @@ export interface CollectionMultiSelectProps extends Omit<BoxProps, 'name' | 'onC
   onChange: (newValue: number[] | null | undefined) => void;
   onBlur: FocusEventHandler<HTMLInputElement> | undefined;
   value: number[] | null | undefined;
+  ref: ForwardedRef<HTMLDivElement | null>;
 }
 
-function CollectionMultiSelect(
-  { onChange, value, sx, ...props }: CollectionMultiSelectProps,
-  ref: ForwardedRef<HTMLDivElement | null>,
-) {
+function CollectionMultiSelect({ onChange, value, sx, ref, ...props }: CollectionMultiSelectProps) {
   const { value: allCollection, fetchData } = useAllCollection();
+  const t = useI18n();
   const content = useMemo(
     () =>
       match(allCollection)
@@ -61,9 +60,8 @@ function CollectionMultiSelect(
           <InnerCollectionSelect onChange={onChange} value={value} allCollections={allCollections} />
         ))
         .otherwise(() => null),
-    [allCollection, value, fetchData, onChange],
+    [allCollection, value, fetchData, onChange, t],
   );
-  const t = useI18n();
   const [sourceRef, setSourceRef] = React.useState<HTMLDivElement | null>(null);
   useImperativeHandle<HTMLDivElement | null, HTMLDivElement | null>(ref, () => sourceRef, [sourceRef]);
   return (
@@ -73,7 +71,7 @@ function CollectionMultiSelect(
   );
 }
 
-export default React.forwardRef(CollectionMultiSelect);
+export default CollectionMultiSelect;
 
 interface InnerCollectionSelectProps {
   allCollections: Map<number, AllCollectionItem>;

@@ -6,7 +6,7 @@
  * @FilePath: /tauri/common/details/src/Item.tsx
  */
 import { Box, Typography } from '@mui/material';
-import { DetailsItem } from './types';
+import type { DetailsItem } from './types';
 import { match, P } from 'ts-pattern';
 
 export default function Item({ label, value, span }: Omit<DetailsItem, 'key'>) {

@@ -4,8 +4,14 @@ import { useI18n } from 'i18n';
 import { useMemo } from 'react';
 import { Link as RouterLink, createSearchParams } from 'react-router-dom';
 import { format } from 'time';
-import { CustomColumnDefArray, CustomTableOptions, getCoreRowModel, TableActions, useCustomTable } from 'custom-table';
-import { CollectionTableData } from './types';
+import {
+  type CustomColumnDefArray,
+  type CustomTableOptions,
+  getCoreRowModel,
+  TableActions,
+  useCustomTable,
+} from 'custom-table';
+import type { CollectionTableData } from './types';
 
 export function useCollectionTable(refetch: () => Promise<unknown>, data: CollectionTableData[]) {
   const [deleteCollection] = useDeleteCollectionMutation();

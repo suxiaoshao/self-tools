@@ -7,7 +7,7 @@
  */
 import {
   useFetchAuthorLazyQuery,
-  FetchAuthorQueryVariables,
+  type FetchAuthorQueryVariables,
   NovelSite,
   useSaveDraftAuthorMutation,
 } from '@bookmarks/graphql';

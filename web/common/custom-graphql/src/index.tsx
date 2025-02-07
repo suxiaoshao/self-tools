@@ -5,7 +5,7 @@
  * @LastEditTime: 2024-09-19 03:09:40
  * @FilePath: /self-tools/web/common/custom-graphql/src/index.tsx
  */
-import { ApolloClient, createHttpLink, DefaultOptions, from, InMemoryCache } from '@apollo/client';
+import { ApolloClient, createHttpLink, type DefaultOptions, from, InMemoryCache } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
 import { onError } from '@apollo/client/link/error';
 import { enqueueSnackbar } from 'notify';

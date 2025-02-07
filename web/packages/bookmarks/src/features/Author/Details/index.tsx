@@ -26,7 +26,7 @@ import { useI18n } from 'i18n';
 import { useCallback } from 'react';
 import { enqueueSnackbar } from 'notify';
 import { P, match } from 'ts-pattern';
-import { Details, DetailsItem } from 'details';
+import { Details, type DetailsItem } from 'details';
 import { format } from 'time';
 
 export default function AuthorDetails() {

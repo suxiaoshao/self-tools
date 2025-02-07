@@ -6,14 +6,14 @@ import {
   TableRow,
   TableCell,
   TableBody,
-  TableContainerProps,
+  type TableContainerProps,
   TablePagination,
   TableFooter,
 } from '@mui/material';
 import TablePaginationActions from '@mui/material/TablePagination/TablePaginationActions';
-import { Table as TableType, flexRender } from '@tanstack/react-table';
-import { CustomColumnDef } from './useCustomTable';
-import { PageWithTotal } from './usePage';
+import { type Table as TableType, flexRender } from '@tanstack/react-table';
+import type { CustomColumnDef } from './useCustomTable';
+import type { PageWithTotal } from './usePage';
 import { match } from 'ts-pattern';
 
 export interface CustomTableProps<D extends object> extends Omit<TableContainerProps, 'ref'> {
@@ -28,7 +28,7 @@ export function CustomTable<D extends object>({
   containerProps,
   sx,
   ...tableProps
-}: CustomTableProps<D>): JSX.Element {
+}: CustomTableProps<D>) {
   const { getHeaderGroups, getRowModel } = tableInstance;
   return (
     <TableContainer
@@ -124,9 +124,17 @@ export function CustomTable<D extends object>({
   );
 }
 
-export * from './usePage';
+export { usePage, usePageWithTotal } from './usePage';
 
-export * from './TableActions';
-export * from './useCustomTable';
+export { TableActions } from './TableActions';
+export {
+  createCustomColumnHelper,
+  useCustomTable,
+  type CustomColumnDef,
+  type CustomColumnDefArray,
+  type CustomColumnHelper,
+  type CustomExtendsType,
+  type CustomTableOptions,
+} from './useCustomTable';
 
 export { getCoreRowModel } from '@tanstack/react-table';

@@ -1,6 +1,6 @@
-import React from 'react';
-import { ListItemButton, ListItemButtonProps, ListItemIcon, ListItemText } from '@mui/material';
-import { To, useLocation, useNavigate } from 'react-router-dom';
+import type React from 'react';
+import { ListItemButton, type ListItemButtonProps, ListItemIcon, ListItemText } from '@mui/material';
+import { type To, useLocation, useNavigate } from 'react-router-dom';
 
 export interface RouterItem extends ListItemButtonProps {
   matchPaths: (string | RegExp)[];

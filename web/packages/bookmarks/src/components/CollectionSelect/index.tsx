@@ -7,7 +7,7 @@
  */
 import { Collapse, FormHelperText, IconButton, List, ListItem, ListItemButton, ListItemText } from '@mui/material';
 import { useMemo, useState } from 'react';
-import { AllCollectionItem, CollectionTreeItem } from '@bookmarks/features/Collections/collectionSlice';
+import type { AllCollectionItem, CollectionTreeItem } from '@bookmarks/features/Collections/collectionSlice';
 import { getCollectionTreeFromCollectionList } from '@bookmarks/features/Collections/utils';
 import { ExpandLess, ExpandMore } from '@mui/icons-material';
 import { match } from 'ts-pattern';

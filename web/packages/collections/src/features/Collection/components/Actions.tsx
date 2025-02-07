@@ -2,7 +2,7 @@ import { MenuItem } from '@mui/material';
 import { TableActions } from 'custom-table';
 import { useI18n } from 'i18n';
 import { match } from 'ts-pattern';
-import { CollectionAndItem } from '../types';
+import type { CollectionAndItem } from '../types';
 import {
   useDeleteCollectionMutation,
   useDeleteItemMutation,
@@ -11,8 +11,8 @@ import {
   useUpdateItemMutation,
 } from '../../../graphql';
 import useDialog from '../../../hooks/useDialog';
-import ItemForm, { ItemFormData } from '../../Item/Components/ItemForm';
-import CollectionForm, { CollectionFormData } from './CollectionForm';
+import ItemForm, { type ItemFormData } from '../../Item/Components/ItemForm';
+import CollectionForm, { type CollectionFormData } from './CollectionForm';
 
 export type TableActionsProps = CollectionAndItem & {
   refetch: () => void;

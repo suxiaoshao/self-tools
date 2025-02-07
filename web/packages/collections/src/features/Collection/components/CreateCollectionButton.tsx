@@ -3,14 +3,14 @@ import { useI18n } from 'i18n';
 import { useCreateCollectionMutation } from '../../../graphql';
 import useDialog from '../../../hooks/useDialog';
 import useParentId from '../hooks/useParentId';
-import CollectionForm, { CollectionFormData } from './CollectionForm';
+import CollectionForm, { type CollectionFormData } from './CollectionForm';
 
 export interface CreateCollectButtonProps {
   /** 表格重新刷新 */
   refetch: () => void;
 }
 
-export default function CreateCollectionButton({ refetch }: CreateCollectButtonProps): JSX.Element {
+export default function CreateCollectionButton({ refetch }: CreateCollectButtonProps) {
   const parentId = useParentId();
 
   const [createCollection] = useCreateCollectionMutation();

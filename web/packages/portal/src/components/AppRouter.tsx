@@ -10,7 +10,7 @@ import AppDrawer from './AppDrawer';
 import Home from '../features/Home';
 import Login, { useLogin } from '../features/Auth';
 import { microConfigs } from '@portal/micro';
-import { Menu } from 'types';
+import type { Menu } from 'types';
 import { match } from 'ts-pattern';
 
 function MenuRouter({ path }: Menu) {

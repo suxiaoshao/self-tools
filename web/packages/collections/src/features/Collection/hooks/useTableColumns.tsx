@@ -1,14 +1,14 @@
 import { Chip } from '@mui/material';
-import { CollectionAndItemsQuery } from '../../../graphql';
+import type { CollectionAndItemsQuery } from '../../../graphql';
 import { useMemo } from 'react';
-import { CustomColumnDefArray } from 'custom-table';
+import type { CustomColumnDefArray } from 'custom-table';
 import { format } from 'time';
 import Name from '../components/Name';
 import Actions from '../components/Actions';
 import { Article, Folder } from '@mui/icons-material';
 import { useI18n } from 'i18n';
 import { match, P } from 'ts-pattern';
-import { CollectionAndItem } from '../types';
+import type { CollectionAndItem } from '../types';
 
 const Typename = ({ __typename }: { __typename: CollectionAndItem['__typename'] }) => {
   const t = useI18n();

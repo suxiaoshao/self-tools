@@ -10,6 +10,7 @@ use crate::{chapter::ChapterFn, errors::NovelResult, tag::TagFn, AuthorFn};
 pub enum NovelStatus {
     Ongoing,
     Completed,
+    Paused,
 }
 pub trait NovelFn: Sized + Send + Sync + Sized {
     type Chapter: ChapterFn;

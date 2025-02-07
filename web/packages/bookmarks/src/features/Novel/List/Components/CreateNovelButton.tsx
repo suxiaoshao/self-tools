@@ -8,10 +8,10 @@
 import { Button, Dialog, Box, DialogTitle, DialogContent, TextField, DialogActions } from '@mui/material';
 import { useI18n } from 'i18n';
 import { useState } from 'react';
-import { useForm, SubmitHandler, Controller } from 'react-hook-form';
+import { useForm, type SubmitHandler, Controller } from 'react-hook-form';
 import AuthorSelect from '../../../../components/AuthorSelect';
 import TagsSelect from '../../../../components/TagsSelect';
-import { CreateNovelMutationVariables, useCreateNovelMutation } from '../../../../graphql';
+import { type CreateNovelMutationVariables, useCreateNovelMutation } from '../../../../graphql';
 
 export interface CreateNovelButtonProps {
   /** 表格重新刷新 */

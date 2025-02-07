@@ -1,7 +1,7 @@
 import { Dialog, Box, DialogTitle, DialogContent, TextField, DialogActions, Button } from '@mui/material';
 import { useI18n } from 'i18n';
-import { useForm, SubmitHandler } from 'react-hook-form';
-import { CreateCollectionMutationVariables } from '../../../graphql';
+import { useForm, type SubmitHandler } from 'react-hook-form';
+import type { CreateCollectionMutationVariables } from '../../../graphql';
 import { match } from 'ts-pattern';
 export type CollectionFormData = Omit<CreateCollectionMutationVariables, 'parentId'>;
 export interface CollectFormProps {

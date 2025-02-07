@@ -1,14 +1,14 @@
 import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, TextField } from '@mui/material';
 import { useState } from 'react';
-import { CreateTagMutationVariables, NovelSite, useCreateTagMutation } from '../../../graphql';
-import { Controller, SubmitHandler, useForm } from 'react-hook-form';
+import { type CreateTagMutationVariables, NovelSite, useCreateTagMutation } from '../../../graphql';
+import { Controller, type SubmitHandler, useForm } from 'react-hook-form';
 import { useI18n } from 'i18n';
 
 export interface CreateTagButtonProps {
   refetch: () => void;
 }
 
-export default function CreateTagButton({ refetch }: CreateTagButtonProps): JSX.Element {
+export default function CreateTagButton({ refetch }: CreateTagButtonProps) {
   const [createTag] = useCreateTagMutation();
 
   // 表单控制

@@ -4,8 +4,7 @@ use futures::future::try_join_all;
 use nom::{
     bytes::complete::{tag, take_while},
     combinator::{all_consuming, eof},
-    sequence::tuple,
-    IResult,
+    IResult, Parser,
 };
 
 use scraper::{ElementRef, Html, Selector};
@@ -98,11 +97,8 @@ fn map_url(element_ref: ElementRef) -> NovelResult<String> {
 }
 
 fn novel_id(input: &str) -> IResult<&str, String> {
-    let (input, (_, data, _)) = all_consuming(tuple((
-        tag("onebook.php?novelid="),
-        take_while(|_| true),
-        eof,
-    )))(input)?;
+    let (input, (_, data, _)) =
+        all_consuming((tag("onebook.php?novelid="), take_while(|_| true), eof)).parse(input)?;
     Ok((input, data.to_string()))
 }
 

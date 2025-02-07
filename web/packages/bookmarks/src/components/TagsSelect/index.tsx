@@ -1,6 +1,15 @@
-import { Box, Chip, FormControl, FormControlProps, InputLabel, MenuItem, OutlinedInput, Select } from '@mui/material';
+import {
+  Box,
+  Chip,
+  FormControl,
+  type FormControlProps,
+  InputLabel,
+  MenuItem,
+  OutlinedInput,
+  Select,
+} from '@mui/material';
 import { useI18n } from 'i18n';
-import { FocusEventHandler, useMemo } from 'react';
+import { type FocusEventHandler, useMemo } from 'react';
 import { match, P } from 'ts-pattern';
 import { useAllowTagsQuery } from '../../graphql';
 

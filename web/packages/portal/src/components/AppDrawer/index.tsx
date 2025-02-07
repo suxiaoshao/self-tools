@@ -15,7 +15,7 @@ import DrawerMenu from '../../features/Menu';
 import { AuthDrawerItem } from '../../features/Auth';
 import { ThemeDrawerItem } from '../../features/Theme';
 
-export default function AppDrawer(): JSX.Element {
+export default function AppDrawer() {
   const t = useI18n();
   const width = 250;
   return (

@@ -6,8 +6,8 @@
  * @FilePath: /self-tools/web/packages/bookmarks/src/main.tsx
  */
 import App from './App';
-import { Menu, MicroConfig } from 'types';
-import { ReactNode } from 'react';
+import type { Menu, MicroConfig } from 'types';
+import type { ReactNode } from 'react';
 import NovelList from './features/Novel/List';
 import Tags from './features/Tags';
 import AuthorList from './features/Author/List';

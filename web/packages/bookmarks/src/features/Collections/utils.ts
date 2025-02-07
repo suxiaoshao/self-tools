@@ -1,9 +1,9 @@
-import { AllCollectionItem, CollectionTreeItem } from './collectionSlice';
+import type { AllCollectionItem, CollectionTreeItem } from './collectionSlice';
 
 export function getCollectionTreeFromCollectionList(data: Iterable<AllCollectionItem>): CollectionTreeItem[] {
   const list = [...data];
   const result: CollectionTreeItem[] = [];
-  const lookup: Map<number, AllCollectionItem[]> = new Map();
+  const lookup = new Map<number, AllCollectionItem[]>();
   for (const collection of list) {
     if (collection.parentId !== null && collection.parentId !== undefined) {
       const list = lookup.get(collection.parentId);

@@ -1,6 +1,6 @@
 import { Button } from '@mui/material';
 import { useCreateItemMutation } from '../../../graphql';
-import ItemForm, { ItemFormData } from '../../Item/Components/ItemForm';
+import ItemForm, { type ItemFormData } from '../../Item/Components/ItemForm';
 import useDialog from '../../../hooks/useDialog';
 import { useI18n } from 'i18n';
 
@@ -10,7 +10,7 @@ export interface CreateItemButtonProps {
   collectionId: number;
 }
 
-export default function CreateItemButton({ refetch, collectionId }: CreateItemButtonProps): JSX.Element {
+export default function CreateItemButton({ refetch, collectionId }: CreateItemButtonProps) {
   const [createItem] = useCreateItemMutation();
 
   const afterSubmit = async ({ name, content }: ItemFormData) => {

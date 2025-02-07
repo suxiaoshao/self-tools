@@ -1,4 +1,4 @@
-import { CollectionAndItem } from '../types';
+import type { CollectionAndItem } from '../types';
 import { Link } from '@mui/material';
 import { Link as RouterLink, createSearchParams } from 'react-router-dom';
 
