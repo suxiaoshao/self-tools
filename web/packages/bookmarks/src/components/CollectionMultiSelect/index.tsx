@@ -40,12 +40,10 @@ export interface CollectionMultiSelectProps extends Omit<BoxProps, 'name' | 'onC
   onChange: (newValue: number[] | null | undefined) => void;
   onBlur: FocusEventHandler<HTMLInputElement> | undefined;
   value: number[] | null | undefined;
+  ref: ForwardedRef<HTMLDivElement | null>;
 }
 
-function CollectionMultiSelect(
-  { onChange, value, sx, ...props }: CollectionMultiSelectProps,
-  ref: ForwardedRef<HTMLDivElement | null>,
-) {
+function CollectionMultiSelect({ onChange, value, sx, ref, ...props }: CollectionMultiSelectProps) {
   const { value: allCollection, fetchData } = useAllCollection();
   const t = useI18n();
   const content = useMemo(
@@ -73,7 +71,7 @@ function CollectionMultiSelect(
   );
 }
 
-export default React.forwardRef(CollectionMultiSelect);
+export default CollectionMultiSelect;
 
 interface InnerCollectionSelectProps {
   allCollections: Map<number, AllCollectionItem>;
