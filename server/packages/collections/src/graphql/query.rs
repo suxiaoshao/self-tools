@@ -1,93 +1,53 @@
+/*
+ * @Author: suxiaoshao suxiaoshao@gmail.com
+ * @Date: 2024-01-06 01:30:13
+ * @LastEditors: suxiaoshao suxiaoshao@gmail.com
+ * @LastEditTime: 2024-02-20 16:24:41
+ * @FilePath: /self-tools/server/packages/collections/src/graphql/query.rs
+ */
 use async_graphql::Object;
-use tracing::{event, Level};
 
 use super::{
     guard::AuthGuard,
-    types::{ItemAndCollection, List, Pagination},
+    types::{CollectionItemQuery, ItemAndCollection, List},
 };
 use crate::{
-    errors::{GraphqlError, GraphqlResult},
-    service::{collection::Collection, item::Item},
+    common::{QueryStack, Queryable},
+    errors::GraphqlResult,
+    service::{
+        collection::{Collection, CollectionQueryRunner},
+        item::{Item, ItemQueryRunner},
+    },
 };
 
-pub struct QueryRoot;
+pub(crate) struct QueryRoot;
 
 #[Object]
 impl QueryRoot {
     /// 获取目录详情
-    #[graphql(guard = "AuthGuard::default()")]
+    #[graphql(guard = "AuthGuard")]
     async fn get_collection(&self, id: i64) -> GraphqlResult<Collection> {
         let collection = Collection::get(id)?;
         Ok(collection)
     }
     /// 获取记录详情
-    #[graphql(guard = "AuthGuard::default()")]
+    #[graphql(guard = "AuthGuard")]
     async fn get_item(&self, id: i64) -> GraphqlResult<Item> {
         let item = Item::get(id)?;
         Ok(item)
     }
     /// 获取集合下的集合和记录
-    #[graphql(guard = "AuthGuard::default()")]
+    #[graphql(guard = "AuthGuard")]
     async fn collection_and_item(
         &self,
-        id: Option<i64>,
-        pagination: Pagination,
+        query: CollectionItemQuery,
     ) -> GraphqlResult<List<ItemAndCollection>> {
-        let offset = pagination.offset();
-        let offset_plus_imit = pagination.offset_plus_limit();
-        let collection_count = Collection::count_parent_id(id)?;
-        let item_count = match id {
-            Some(id) => Item::count(id)?,
-            None => 0,
-        };
-        let total = collection_count + item_count;
-        // 全目录
-        if offset_plus_imit <= collection_count {
-            let data = Collection::get_list_parent_id(id, offset, pagination.page_size)?
-                .into_iter()
-                .map(ItemAndCollection::Collection)
-                .collect();
-            return Ok(List::new(data, total));
-        }
-        // 目录 & 记录
-        if offset <= collection_count && collection_count < offset_plus_imit {
-            let mut data = vec![];
-            Collection::get_list_parent_id(id, offset, collection_count - offset)?
-                .into_iter()
-                .for_each(|x| data.push(ItemAndCollection::Collection(x)));
-            if let Some(id) = id {
-                Item::query(id, 0, offset_plus_imit - collection_count)?
-                    .into_iter()
-                    .for_each(|x| data.push(ItemAndCollection::Item(x)));
-            }
-            return Ok(List::new(data, total));
-        }
-        // 全记录
-        let id = match id {
-            Some(id) => id,
-            None => {
-                event!(
-                    Level::ERROR,
-                    "全记录查询时页码太大 pagination: {:?} collection_count + item_count: {}",
-                    pagination,
-                    collection_count + item_count
-                );
-                return Err(GraphqlError::PageSizeTooMore);
-            }
-        };
-        if collection_count + item_count < offset {
-            event!(
-                Level::ERROR,
-                "全记录查询时页码太大 pagination: {:?} collection_count + item_count: {}",
-                pagination,
-                collection_count + item_count
-            );
-            return Err(GraphqlError::PageSizeTooMore);
-        }
-        let data = Item::query(id, offset - collection_count, pagination.page_size)?
-            .into_iter()
-            .map(ItemAndCollection::Item)
-            .collect();
+        let (collection_runner, item_runner) = tokio::try_join!(
+            CollectionQueryRunner::new(query),
+            ItemQueryRunner::new(query),
+        )?;
+        let runner = QueryStack::new(collection_runner).add_query(item_runner);
+        let (data, total) = tokio::try_join!(runner.query(query.pagination), runner.len())?;
         Ok(List::new(data, total))
     }
 }

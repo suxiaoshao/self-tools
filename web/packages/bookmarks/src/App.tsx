@@ -1,28 +1,19 @@
-import { BrowserRouter } from 'react-router-dom';
-import { CustomTheme } from 'theme';
-import AppRouter from './components/AppRouter';
-import { SnackbarProvider } from 'notify';
+/*
+ * @Author: suxiaoshao suxiaoshao@gmail.com
+ * @Date: 2024-01-06 01:30:13
+ * @LastEditors: suxiaoshao suxiaoshao@gmail.com
+ * @LastEditTime: 2024-01-14 02:53:47
+ * @FilePath: /self-tools/web/packages/bookmarks/src/App.tsx
+ */
+import { Outlet } from 'react-router-dom';
 import { ApolloProvider } from '@apollo/client';
-import { getClient } from 'custom-graphql';
-import { Provider } from 'react-redux';
-import store from './app/store';
-import I18next from 'i18n';
+import { apolloClient } from './utils/apolloClient';
 
 function App() {
   return (
-    <Provider store={store}>
-      <I18next>
-        <CustomTheme>
-          <SnackbarProvider>
-            <ApolloProvider client={getClient('https://bookmarks.sushao.top/graphql')}>
-              <BrowserRouter>
-                <AppRouter />
-              </BrowserRouter>
-            </ApolloProvider>
-          </SnackbarProvider>
-        </CustomTheme>
-      </I18next>
-    </Provider>
+    <ApolloProvider client={apolloClient}>
+      <Outlet />
+    </ApolloProvider>
   );
 }
 

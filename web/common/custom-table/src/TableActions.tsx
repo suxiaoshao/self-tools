@@ -1,6 +1,6 @@
 import { MoreHoriz } from '@mui/icons-material';
 import { IconButton, Menu, MenuItem } from '@mui/material';
-import { ReactNode, useState } from 'react';
+import { type ReactNode, useState, type JSX } from 'react';
 
 export interface TableActionsProps {
   children: (handleClose: () => void) => Actions[];
@@ -13,7 +13,7 @@ export type Actions =
     }
   | JSX.Element;
 
-export function TableActions({ children }: TableActionsProps): JSX.Element {
+export function TableActions({ children }: TableActionsProps) {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {

@@ -1,7 +1,15 @@
+/*
+ * @Author: suxiaoshao suxiaoshao@gmail.com
+ * @Date: 2024-01-06 01:30:13
+ * @LastEditors: suxiaoshao suxiaoshao@gmail.com
+ * @LastEditTime: 2024-01-23 01:30:22
+ * @FilePath: /self-tools/server/packages/login/src/main.rs
+ */
 use crate::router::get_router;
 use ::middleware::{get_cors, trace_layer};
 use anyhow::Result;
 use std::net::SocketAddr;
+use tokio::net::TcpListener;
 use tracing::{event, metadata::LevelFilter, Level};
 use tracing_subscriber::{
     fmt, prelude::__tracing_subscriber_SubscriberExt, util::SubscriberInitExt, Layer,
@@ -24,9 +32,9 @@ async fn main() -> Result<()> {
     // run our app with hyper
     // `axum::Server` is a re-export of `hyper::Server`
     let addr = SocketAddr::from(([0, 0, 0, 0], 8000));
+    let listener = TcpListener::bind(addr).await?;
+
     event!(Level::INFO, "server start on {}", addr);
-    axum::Server::bind(&addr)
-        .serve(app.into_make_service())
-        .await?;
+    axum::serve(listener, app).await?;
     Ok(())
 }

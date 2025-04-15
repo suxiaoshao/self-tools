@@ -1,27 +1,57 @@
-import { Box, IconButton } from '@mui/material';
-import { Controller, useForm } from 'react-hook-form';
-import CollectionSelect from '../../components/CollectionSelect';
-import { CreateTagMutationVariables, GetTagsQuery, useDeleteTagMutation, useGetTagsQuery } from '../../graphql';
-import { Refresh } from '@mui/icons-material';
-import { useMemo } from 'react';
-import { CustomColumnArray, CustomTable, getCoreRowModel, TableActions, useCustomTable } from 'custom-table';
+import { Box, IconButton, Link } from '@mui/material';
+import { type GetTagsQuery, useDeleteTagMutation, useGetTagsLazyQuery } from '../../graphql';
+import { Search } from '@mui/icons-material';
+import { useCallback, useEffect, useMemo } from 'react';
+import {
+  type CustomColumnDefArray,
+  CustomTable,
+  type CustomTableOptions,
+  getCoreRowModel,
+  TableActions,
+  useCustomTable,
+} from 'custom-table';
 import { format } from 'time';
 import CreateTagButton from './components/CreateTagButton';
 import { useI18n } from 'i18n';
+import { getLabelKeyBySite } from '@bookmarks/utils/novelSite';
+
+const rowModel = getCoreRowModel();
+
+type Data = GetTagsQuery['queryTags'][0];
 
 export default function Tags() {
-  type FormData = CreateTagMutationVariables;
-  const { control, watch } = useForm<FormData>();
-  const collectionId = watch('collectionId');
-  const { data: { queryTags } = {}, refetch } = useGetTagsQuery({ variables: { collectionId } });
+  const [getTags, { data, refetch }] = useGetTagsLazyQuery();
   const [deleteTag] = useDeleteTagMutation();
+  const onSearch = useCallback(() => {
+    getTags();
+  }, [getTags]);
+  useEffect(() => {
+    onSearch();
+  }, [onSearch]);
   const t = useI18n();
-  const columns = useMemo<CustomColumnArray<GetTagsQuery['queryTags'][0]>>(
+  const columns = useMemo<CustomColumnDefArray<Data>>(
     () => [
       {
         header: t('name'),
         id: 'name',
-        accessorKey: 'name',
+        accessorFn: ({ url, name }) => (
+          <Link
+            underline="hover"
+            onClick={() => {
+              window.open(url, '_blank');
+            }}
+            sx={{ cursor: 'pointer' }}
+          >
+            {name}
+          </Link>
+        ),
+        cell: (context) => context.getValue(),
+      },
+      {
+        header: t('novel_site'),
+        id: 'site',
+        accessorFn: ({ site }) => t(getLabelKeyBySite(site)),
+        cell: (context) => context.getValue(),
       },
       {
         header: t('create_time'),
@@ -58,10 +88,14 @@ export default function Tags() {
     ],
     [deleteTag, refetch, t],
   );
-  const tableInstance = useCustomTable({ columns, data: queryTags ?? [], getCoreRowModel: getCoreRowModel() });
+  const tableOptions = useMemo<CustomTableOptions<Data>>(
+    () => ({ columns, data: data?.queryTags ?? [], getCoreRowModel: rowModel }),
+    [columns, data?.queryTags],
+  );
+  const tableInstance = useCustomTable(tableOptions);
 
-  return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', p: 2 }}>
+  const input = useMemo(() => {
+    return (
       <Box
         sx={{
           flex: '0 0 auto',
@@ -69,12 +103,17 @@ export default function Tags() {
           display: 'flex',
         }}
       >
-        <Controller control={control} name="collectionId" render={({ field }) => <CollectionSelect {...field} />} />
-        <CreateTagButton refetch={refetch} collectionId={collectionId} />
-        <IconButton sx={{ marginLeft: 'auto' }} onClick={() => refetch()}>
-          <Refresh />
+        <CreateTagButton refetch={refetch} />
+        <IconButton sx={{ marginLeft: 'auto' }} onClick={onSearch}>
+          <Search />
         </IconButton>
       </Box>
+    );
+  }, [onSearch, refetch]);
+
+  return (
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', p: 2 }}>
+      {input}
       <CustomTable tableInstance={tableInstance} />
     </Box>
   );

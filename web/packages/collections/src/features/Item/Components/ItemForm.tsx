@@ -1,25 +1,26 @@
 import { Close, Edit as EditIcon, Preview } from '@mui/icons-material';
 import {
-  Dialog,
-  Box,
   AppBar,
-  Toolbar,
-  IconButton,
-  Typography,
-  Button,
-  TextField,
-  FormLabel,
-  ToggleButtonGroup,
-  ToggleButton,
   Backdrop,
+  Box,
+  Button,
   CircularProgress,
+  Dialog,
+  FormLabel,
+  IconButton,
+  TextField,
+  ToggleButton,
+  ToggleButtonGroup,
+  Toolbar,
+  Typography,
 } from '@mui/material';
-import Markdown from '../../../components/Markdown';
-import { useEffect, useState } from 'react';
-import { Controller, SubmitHandler, useForm } from 'react-hook-form';
-import CustomEdit from '../../../components/CustomEdit';
-import { CreateItemMutationVariables } from '../../../graphql';
 import { useI18n } from 'i18n';
+import { useEffect, useState } from 'react';
+import { Controller, type SubmitHandler, useForm } from 'react-hook-form';
+import { match } from 'ts-pattern';
+import CustomEdit from '../../../components/CustomEdit';
+import Markdown from '../../../components/Markdown';
+import type { CreateItemMutationVariables } from '../../../graphql';
 export type ItemFormData = Omit<CreateItemMutationVariables, 'collectionId'>;
 
 export interface ItemFormProps {
@@ -38,7 +39,7 @@ export default function ItemForm({
   mode,
   initialValues,
   loading = false,
-}: ItemFormProps): JSX.Element {
+}: ItemFormProps) {
   // 表单控制
   const { handleSubmit, register, control, setValue } = useForm<ItemFormData>({ defaultValues: initialValues });
   useEffect(() => {
@@ -65,9 +66,11 @@ export default function ItemForm({
               <Close />
             </IconButton>
             <Typography sx={{ ml: 2, flex: 1 }} variant="h6" component="div">
-              {mode === 'create' ? t('create_item') : t('modify_item')}
+              {match(mode)
+                .with('create', () => t('create_item'))
+                .otherwise(() => t('modify_item'))}
             </Typography>
-            <Button autoFocus type="submit" color="inherit">
+            <Button type="submit" color="inherit">
               {t('submit')}
             </Button>
           </Toolbar>
@@ -114,16 +117,18 @@ export default function ItemForm({
                     </ToggleButton>
                   </ToggleButtonGroup>
                 </Box>
-                {alignment === 'edit' ? (
-                  <CustomEdit
-                    wordWrap="on"
-                    sx={{ width: '100%', flex: '1 1 0', borderRadius: 2, overflow: 'hidden', mt: 1 }}
-                    language="markdown"
-                    {...field}
-                  />
-                ) : (
-                  <Markdown sx={{ overflowY: 'auto', mt: 1 }} value={field.value ?? ''} />
-                )}
+                {match(alignment)
+                  .with('edit', () => (
+                    <CustomEdit
+                      wordWrap="on"
+                      sx={{ width: '100%', flex: '1 1 0', borderRadius: 2, overflow: 'hidden', mt: 1 }}
+                      language="markdown"
+                      {...field}
+                    />
+                  ))
+                  .otherwise(() => (
+                    <Markdown sx={{ overflowY: 'auto', mt: 1 }} value={field.value ?? ''} />
+                  ))}
               </>
             )}
           />

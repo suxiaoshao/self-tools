@@ -1,4 +1,4 @@
-# This file was generated based on ".graphqlconfig". Do not edit manually.
+# This file was generated. Do not edit manually.
 
 schema {
   query: QueryRoot
@@ -50,7 +50,7 @@ type MutationRoot {
 
 type QueryRoot {
   "获取集合下的集合和记录"
-  collectionAndItem(id: Int, pagination: Pagination!): List!
+  collectionAndItem(query: CollectionItemQuery!): List!
   "获取目录详情"
   getCollection(id: Int!): Collection!
   "获取记录详情"
@@ -67,7 +67,19 @@ format, but it is always normalized to the UTC (Z) offset, e.g.
 """
 scalar DateTime
 
+input CollectionItemQuery {
+  createTime: TimeRange
+  id: Int
+  pagination: Pagination!
+  updateTime: TimeRange
+}
+
 input Pagination {
   page: Int!
   pageSize: Int!
+}
+
+input TimeRange {
+  end: DateTime!
+  start: DateTime!
 }

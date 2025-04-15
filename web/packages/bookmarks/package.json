@@ -1,20 +1,19 @@
 {
   "name": "bookmarks",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "main": "src/main.tsx",
+  "types": "src/main.tsx",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
     "generate": "graphql-codegen"
   },
   "dependencies": {
-    "auth": "workspace:^1.0.0",
-    "custom-graphql": "workspace:^1.0.0",
-    "custom-table": "workspace:^1.0.0",
-    "notify": "workspace:^1.0.0",
-    "theme": "workspace:^1.0.0",
-    "time": "workspace:^1.0.0",
-    "i18n": "workspace:^1.0.0"
+    "custom-graphql": "workspace:^",
+    "custom-table": "workspace:^",
+    "i18n": "workspace:^",
+    "time": "workspace:^",
+    "types": "workspace:^",
+    "notify": "workspace:^",
+    "details": "workspace:^"
   }
 }

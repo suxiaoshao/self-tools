@@ -1,0 +1,35 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "useDefineForClassFields": true,
+    "lib": ["DOM", "DOM.Iterable", "ESNext", "WebWorker"],
+    "allowJs": false,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "types": ["node"],
+    "paths": {
+      "@portal/*": ["./web/packages/portal/src/*"],
+      "@bookmarks/*": ["./web/packages/bookmarks/src/*"],
+      "@collections/*": ["./web/packages/collections/src/*"]
+    },
+    "baseUrl": "."
+  },
+  "include": [
+    "./web/packages/*/src",
+    "./web/common/*/src",
+    "./web/config",
+    "./jest.config.ts",
+    "./web/packages/*/rsbuild.config.ts",
+    "./web/packages/*/codegen.ts"
+  ],
+  "exclude": ["./**/node_modules"]
+}

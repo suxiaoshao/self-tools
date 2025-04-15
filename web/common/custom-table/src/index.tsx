@@ -6,14 +6,15 @@ import {
   TableRow,
   TableCell,
   TableBody,
-  TableContainerProps,
+  type TableContainerProps,
   TablePagination,
   TableFooter,
 } from '@mui/material';
 import TablePaginationActions from '@mui/material/TablePagination/TablePaginationActions';
-import { Table as TableType, flexRender } from '@tanstack/react-table';
-import { CustomColumn } from './useCustomTable';
-import { PageWithTotal } from './usePage';
+import { type Table as TableType, flexRender } from '@tanstack/react-table';
+import type { CustomColumnDef } from './useCustomTable';
+import type { PageWithTotal } from './usePage';
+import { match } from 'ts-pattern';
 
 export interface CustomTableProps<D extends object> extends Omit<TableContainerProps, 'ref'> {
   tableInstance: TableType<D>;
@@ -25,17 +26,19 @@ export function CustomTable<D extends object>({
   tableInstance,
   page,
   containerProps,
+  sx,
   ...tableProps
-}: CustomTableProps<D>): JSX.Element {
+}: CustomTableProps<D>) {
   const { getHeaderGroups, getRowModel } = tableInstance;
   return (
     <TableContainer
       sx={{
-        overflow: 'hidden',
         flex: '1 1 0',
         display: 'flex',
         flexDirection: 'column',
         maxHeight: '100%',
+        overflowY: 'auto',
+        ...sx,
       }}
       component={Paper}
       {...containerProps}
@@ -50,13 +53,16 @@ export function CustomTable<D extends object>({
                 {
                   // Loop over the headers in each row
                   headerGroup.headers.map((header) => {
-                    const headerColumn = header as CustomColumn<D>;
+                    const headerColumn = header.column.columnDef as CustomColumnDef<D>;
                     const headerProps = headerColumn.headerCellProps ?? headerColumn.cellProps ?? {};
 
                     return (
                       // Apply the header cell props
-                      <TableCell colSpan={header.colSpan} {...headerProps} key={header.id}>
-                        {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                      <TableCell colSpan={header.colSpan} key={header.id} {...headerProps}>
+                        {match(header.isPlaceholder)
+                          .with(true, () => null)
+                          .with(false, () => flexRender(header.column.columnDef.header, header.getContext()))
+                          .exhaustive()}
                       </TableCell>
                     );
                   })
@@ -78,11 +84,11 @@ export function CustomTable<D extends object>({
                   {
                     // Loop over the rows cells
                     row.getVisibleCells().map((cell) => {
-                      const column = cell.column as CustomColumn<D>;
+                      const column = cell.column.columnDef as CustomColumnDef<D>;
 
                       // Apply the cell props
                       return (
-                        <TableCell {...column.cellProps} key={cell.id}>
+                        <TableCell key={cell.id} {...column.cellProps}>
                           {flexRender(cell.column.columnDef.cell, cell.getContext())}
                         </TableCell>
                       );
@@ -99,14 +105,14 @@ export function CustomTable<D extends object>({
               <TablePagination
                 count={page.total}
                 rowsPerPage={page.pageSize}
-                page={page.pageIndex}
+                page={page.pageIndex - 1}
                 onPageChange={(_, p) => {
-                  page.setPage(p);
+                  page.setPage(p + 1);
                 }}
                 ActionsComponent={TablePaginationActions}
                 rowsPerPageOptions={page.pageSizeOptions}
                 onRowsPerPageChange={(event) => {
-                  page.setPageSize(parseInt(event.target.value, 10));
+                  page.setPageSize(Number.parseInt(event.target.value, 10));
                   page.setPage(1);
                 }}
               />
@@ -118,9 +124,17 @@ export function CustomTable<D extends object>({
   );
 }
 
-export * from './usePage';
+export { usePage, usePageWithTotal } from './usePage';
 
-export * from './TableActions';
-export * from './useCustomTable';
+export { TableActions } from './TableActions';
+export {
+  createCustomColumnHelper,
+  useCustomTable,
+  type CustomColumnDef,
+  type CustomColumnDefArray,
+  type CustomColumnHelper,
+  type CustomExtendsType,
+  type CustomTableOptions,
+} from './useCustomTable';
 
 export { getCoreRowModel } from '@tanstack/react-table';

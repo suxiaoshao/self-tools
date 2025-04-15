@@ -1,8 +1,9 @@
-import { Button, Dialog, Box, DialogTitle, DialogContent, DialogActions, TextField } from '@mui/material';
+import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField } from '@mui/material';
 import { useI18n } from 'i18n';
 import { useState } from 'react';
-import { useForm, SubmitHandler } from 'react-hook-form';
-import { CreateCollectionMutationVariables, useCreateCollectionMutation } from '../../../graphql';
+import { type SubmitHandler, useForm } from 'react-hook-form';
+import { type CreateCollectionMutationVariables, useCreateCollectionMutation } from '../../../graphql';
+import { useAllCollection } from '../collectionSlice';
 import useParentId from './useParentId';
 
 export interface CreateCollectButtonProps {
@@ -10,8 +11,10 @@ export interface CreateCollectButtonProps {
   refetch: () => void;
 }
 
-export default function CreateCollectionButton({ refetch }: CreateCollectButtonProps): JSX.Element {
+export default function CreateCollectionButton({ refetch }: CreateCollectButtonProps) {
   const parentId = useParentId();
+  const { fetchData } = useAllCollection();
+
   type FormData = Omit<CreateCollectionMutationVariables, 'parentId'>;
   // 表单控制
   const { handleSubmit, register } = useForm<FormData>();
@@ -22,6 +25,7 @@ export default function CreateCollectionButton({ refetch }: CreateCollectButtonP
     await createCollection({ variables: { name, parentId, description } });
     refetch();
     handleClose();
+    await fetchData();
   };
   // 控制 dialog
   const [open, setOpen] = useState(false);

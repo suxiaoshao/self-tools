@@ -1,24 +1,31 @@
+/*
+ * @Author: suxiaoshao suxiaoshao@gmail.com
+ * @Date: 2024-01-06 01:30:13
+ * @LastEditors: suxiaoshao suxiaoshao@gmail.com
+ * @LastEditTime: 2024-05-01 00:31:56
+ * @FilePath: /self-tools/web/packages/bookmarks/src/components/AuthorSelect/index.tsx
+ */
 import {
   Autocomplete,
-  AutocompleteProps,
+  type AutocompleteProps,
   Avatar,
   ListItemAvatar,
   ListItemText,
   MenuItem,
-  SelectChangeEvent,
   TextField,
 } from '@mui/material';
 import { useI18n } from 'i18n';
-import { FocusEventHandler, useEffect, useMemo, useState } from 'react';
+import { type FocusEventHandler, useEffect, useMemo, useState } from 'react';
 import { debounceTime, Subject } from 'rxjs';
-import { SearchAuthorQuery, useSearchAuthorQuery } from '../../graphql';
+import { type SearchAuthorQuery, useSearchAuthorQuery } from '../../graphql';
+import { getImageUrl } from '@bookmarks/utils/image';
 
 export interface TagsSelectProps
   extends Omit<
     AutocompleteProps<SearchAuthorQuery['queryAuthors'][0], false, false, false>,
     'name' | 'onChange' | 'onBlur' | 'value' | 'renderInput' | 'options'
   > {
-  onChange: (event: SelectChangeEvent<number>, value: number | null | undefined) => void;
+  onChange: (value: number) => void;
   onBlur: FocusEventHandler<HTMLInputElement> | undefined;
   value: number | null | undefined;
 }
@@ -41,8 +48,9 @@ export default function AuthorSelect({ onBlur, onChange, sx, value, ...props }: 
       onBlur={onBlur}
       value={queryAuthors?.find((author) => author.id === value)}
       onChange={(event: React.SyntheticEvent, newValue) => {
-        event.target = { value: newValue?.id, ...event.target } as unknown as EventTarget;
-        onChange(event as SelectChangeEvent<number>, newValue?.id);
+        if (newValue?.id) {
+          onChange(newValue?.id);
+        }
       }}
       isOptionEqualToValue={(option, value) => option.id === value.id}
       options={queryAuthors ?? []}
@@ -54,7 +62,7 @@ export default function AuthorSelect({ onBlur, onChange, sx, value, ...props }: 
       renderOption={(props, { name, avatar }) => (
         <MenuItem {...props}>
           <ListItemAvatar>
-            <Avatar src={avatar} />
+            <Avatar src={getImageUrl(avatar)} />
           </ListItemAvatar>
           <ListItemText>{name}</ListItemText>
         </MenuItem>

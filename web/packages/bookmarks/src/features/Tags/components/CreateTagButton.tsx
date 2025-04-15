@@ -1,22 +1,21 @@
-import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField } from '@mui/material';
+import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, TextField } from '@mui/material';
 import { useState } from 'react';
-import { CreateTagMutationVariables, useCreateTagMutation } from '../../../graphql';
-import { SubmitHandler, useForm } from 'react-hook-form';
+import { type CreateTagMutationVariables, NovelSite, useCreateTagMutation } from '../../../graphql';
+import { Controller, type SubmitHandler, useForm } from 'react-hook-form';
 import { useI18n } from 'i18n';
 
 export interface CreateTagButtonProps {
   refetch: () => void;
-  collectionId: number | undefined | null;
 }
 
-export default function CreateTagButton({ refetch, collectionId }: CreateTagButtonProps): JSX.Element {
+export default function CreateTagButton({ refetch }: CreateTagButtonProps) {
   const [createTag] = useCreateTagMutation();
 
   // 表单控制
   type FormData = Omit<CreateTagMutationVariables, 'collectionId'>;
-  const { handleSubmit, register } = useForm<FormData>();
-  const onSubmit: SubmitHandler<FormData> = async ({ name }) => {
-    await createTag({ variables: { name, collectionId } });
+  const { handleSubmit, register, control } = useForm<FormData>();
+  const onSubmit: SubmitHandler<FormData> = async ({ name, site, siteId }) => {
+    await createTag({ variables: { name, site, siteId } });
     refetch();
     handleClose();
   };
@@ -42,6 +41,32 @@ export default function CreateTagButton({ refetch, collectionId }: CreateTagButt
               fullWidth
               label={t('tag_name')}
               {...register('name', { required: true })}
+            />
+            <Controller
+              control={control}
+              name="site"
+              rules={{ required: true }}
+              render={({ field, fieldState }) => (
+                <TextField
+                  error={!!fieldState?.error?.message}
+                  helperText={fieldState?.error?.message}
+                  select
+                  label={t('novel_site')}
+                  required
+                  fullWidth
+                  {...field}
+                >
+                  <MenuItem value={NovelSite.Jjwxc}>{t('jjwxc')}</MenuItem>
+                  <MenuItem value={NovelSite.Qidian}>{t('qidian')}</MenuItem>
+                </TextField>
+              )}
+            />
+            <TextField
+              variant="standard"
+              required
+              fullWidth
+              label={t('tag_site_id')}
+              {...register('siteId', { required: true })}
             />
           </DialogContent>
 

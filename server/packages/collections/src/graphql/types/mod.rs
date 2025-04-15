@@ -1,5 +1,5 @@
 mod input;
 mod output;
 
-pub use input::Pagination;
-pub use output::{ItemAndCollection, List};
+pub(crate) use input::*;
+pub(crate) use output::*;

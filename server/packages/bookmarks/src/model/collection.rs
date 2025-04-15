@@ -1,43 +1,46 @@
-use crate::errors::GraphqlResult;
+use std::collections::{HashMap, HashSet};
+
+use crate::errors::{GraphqlError, GraphqlResult};
 
 use super::schema::collection::{self};
-use super::CONNECTION;
-use chrono::NaiveDateTime;
 use diesel::prelude::*;
+use time::OffsetDateTime;
+use tracing::{event, Level};
 
 #[derive(Queryable)]
 #[cfg_attr(test, derive(Debug))]
-pub struct CollectionModel {
-    pub id: i64,
-    pub name: String,
-    pub path: String,
-    pub parent_id: Option<i64>,
-    pub description: Option<String>,
-    pub create_time: NaiveDateTime,
-    pub update_time: NaiveDateTime,
+pub(crate) struct CollectionModel {
+    pub(crate) id: i64,
+    pub(crate) name: String,
+    pub(crate) path: String,
+    pub(crate) parent_id: Option<i64>,
+    pub(crate) description: Option<String>,
+    pub(crate) create_time: OffsetDateTime,
+    pub(crate) update_time: OffsetDateTime,
 }
 
 #[derive(Insertable)]
 #[diesel(table_name = collection)]
 struct NewCollection<'a> {
-    pub name: &'a str,
-    pub path: &'a str,
-    pub parent_id: Option<i64>,
-    pub description: Option<String>,
-    pub create_time: NaiveDateTime,
-    pub update_time: NaiveDateTime,
+    pub(crate) name: &'a str,
+    pub(crate) path: &'a str,
+    pub(crate) parent_id: Option<i64>,
+    pub(crate) description: Option<String>,
+    pub(crate) create_time: OffsetDateTime,
+    pub(crate) update_time: OffsetDateTime,
 }
 
-/// path 相关
+/// id 相关
 impl CollectionModel {
     /// 创建目录
-    pub fn create(
+    pub(crate) fn create(
         name: &str,
         path: &str,
         parent_id: Option<i64>,
         description: Option<String>,
+        conn: &mut PgConnection,
     ) -> GraphqlResult<Self> {
-        let now = chrono::Local::now().naive_local();
+        let now = time::OffsetDateTime::now_utc();
         let new_collection = NewCollection {
             name,
             path,
@@ -46,7 +49,6 @@ impl CollectionModel {
             create_time: now,
             update_time: now,
         };
-        let conn = &mut CONNECTION.get()?;
 
         let new_collection = diesel::insert_into(collection::table)
             .values(&new_collection)
@@ -54,8 +56,7 @@ impl CollectionModel {
         Ok(new_collection)
     }
     /// 判断目录是否存在
-    pub fn exists(id: i64) -> GraphqlResult<bool> {
-        let conn = &mut CONNECTION.get()?;
+    pub(crate) fn exists(id: i64, conn: &mut PgConnection) -> GraphqlResult<bool> {
         let exists = diesel::select(diesel::dsl::exists(
             collection::table.filter(collection::id.eq(id)),
         ))
@@ -63,27 +64,43 @@ impl CollectionModel {
         Ok(exists)
     }
     /// 查找目录
-    pub fn find_one(id: i64) -> GraphqlResult<Self> {
-        let conn = &mut CONNECTION.get()?;
+    pub(crate) fn find_one(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
         let collection = collection::table
             .filter(collection::id.eq(id))
             .first(conn)?;
         Ok(collection)
     }
-    /// 删除目录
-    pub fn delete(id: i64) -> GraphqlResult<Self> {
-        let conn = &mut CONNECTION.get()?;
-        let collection =
-            diesel::delete(collection::table.filter(collection::id.eq(id))).get_result(conn)?;
-        Ok(collection)
+    /// 根据列表删除目录
+    pub(crate) fn delete_list(ids: &HashSet<i64>, conn: &mut PgConnection) -> GraphqlResult<usize> {
+        let count =
+            diesel::delete(collection::table.filter(collection::id.eq_any(ids))).execute(conn)?;
+        Ok(count)
+    }
+    /// 判断集合是否全部存在
+    pub(crate) fn exists_all(tag_ids: &HashSet<i64>, conn: &mut PgConnection) -> GraphqlResult<()> {
+        let database_tags = CollectionModel::get_list(conn)?;
+        let database_tags: HashSet<i64> = database_tags.into_iter().map(|tag| tag.id).collect();
+        for id in tag_ids {
+            if !database_tags.contains(id) {
+                event!(Level::ERROR, "集合不存在: {}", id);
+                return Err(GraphqlError::NotFound("集合", *id));
+            }
+        }
+        Ok(())
+    }
+    /// 根据 ids 获取数据
+    pub(crate) fn many_by_ids(ids: &[i64], conn: &mut PgConnection) -> GraphqlResult<Vec<Self>> {
+        let data = collection::table
+            .filter(collection::id.eq_any(ids))
+            .load(conn)?;
+        Ok(data)
     }
 }
 
 /// path 相关
 impl CollectionModel {
     /// 是否存在该路径
-    pub fn exists_by_path(path: &str) -> GraphqlResult<bool> {
-        let conn = &mut CONNECTION.get()?;
+    pub(crate) fn exists_by_path(path: &str, conn: &mut PgConnection) -> GraphqlResult<bool> {
         let exists = diesel::select(diesel::dsl::exists(
             collection::table.filter(collection::path.eq(path)),
         ))
@@ -95,8 +112,10 @@ impl CollectionModel {
 /// parent_id 相关
 impl CollectionModel {
     /// 获取父目录下的所有目录
-    pub fn get_list_by_parent(parent_id: Option<i64>) -> GraphqlResult<Vec<Self>> {
-        let conn = &mut CONNECTION.get()?;
+    pub(crate) fn get_list_by_parent(
+        parent_id: Option<i64>,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<Vec<Self>> {
         match parent_id {
             Some(parent_id) => {
                 let collections = collection::table
@@ -117,10 +136,24 @@ impl CollectionModel {
 /// all
 impl CollectionModel {
     /// 获取所有目录
-    pub fn get_list() -> GraphqlResult<Vec<Self>> {
-        let conn = &mut CONNECTION.get()?;
+    pub(crate) fn get_list(conn: &mut PgConnection) -> GraphqlResult<Vec<Self>> {
         let collections = collection::table.load(conn)?;
         Ok(collections)
+    }
+    /// 获取所有目录映射
+    pub(crate) fn get_map(conn: &mut PgConnection) -> GraphqlResult<HashMap<i64, Vec<i64>>> {
+        let all_collections = collection::table
+            .select((collection::id, collection::parent_id))
+            .get_results::<(i64, Option<i64>)>(conn)?;
+        // 构建一个 `id` 到其子节点列表的映射
+        let mut lookup: HashMap<i64, Vec<i64>> = HashMap::new();
+        for (id, parent_id) in all_collections {
+            if let Some(parent_id) = parent_id {
+                lookup.entry(parent_id).or_default().push(id);
+            }
+        }
+
+        Ok(lookup)
     }
 }
 

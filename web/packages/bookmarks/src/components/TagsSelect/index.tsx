@@ -2,15 +2,15 @@ import {
   Box,
   Chip,
   FormControl,
-  FormControlProps,
+  type FormControlProps,
   InputLabel,
   MenuItem,
   OutlinedInput,
   Select,
-  SelectChangeEvent,
 } from '@mui/material';
 import { useI18n } from 'i18n';
-import { FocusEventHandler, useMemo } from 'react';
+import { type FocusEventHandler, useMemo } from 'react';
+import { match, P } from 'ts-pattern';
 import { useAllowTagsQuery } from '../../graphql';
 
 const ITEM_HEIGHT = 48;
@@ -25,22 +25,21 @@ const MenuProps = {
 };
 
 export interface TagsSelectProps extends Omit<FormControlProps, 'name' | 'onChange' | 'onBlur' | 'value'> {
-  collectionId: number | null | undefined;
-  onChange: (event: SelectChangeEvent<number[]>, child: React.ReactNode) => void;
+  onChange: (event: number[]) => void;
   onBlur: FocusEventHandler<HTMLInputElement> | undefined;
   value: number[] | number | null | undefined;
 }
 
-export default function TagsSelect({ collectionId, value, onChange, onBlur, sx, ...props }: TagsSelectProps) {
-  const { data: { queryTags } = {}, loading } = useAllowTagsQuery({ variables: { collectionId } });
+export default function TagsSelect({ value, onChange, onBlur, sx, ...props }: TagsSelectProps) {
+  const { data: { queryTags } = {}, loading } = useAllowTagsQuery();
   const formValue = useMemo(() => {
-    if (value === null || value === undefined) {
-      return undefined;
-    } else if (typeof value === 'number') {
-      return [value];
-    } else {
-      return value;
-    }
+    return (
+      match(value)
+        // eslint-disable-next-line no-useless-undefined
+        .with(null, undefined, () => undefined)
+        .with(P.number, (v) => [v])
+        .otherwise((v) => v)
+    );
   }, [value]);
   const t = useI18n();
 
@@ -50,30 +49,30 @@ export default function TagsSelect({ collectionId, value, onChange, onBlur, sx, 
       <Select
         multiple
         value={formValue}
-        onChange={onChange}
+        onChange={(e) => {
+          match(e.target.value).with(P.array(P.number), (value) => onChange(value));
+        }}
         onBlur={onBlur}
         input={<OutlinedInput label={t('tags')} />}
         renderValue={(selected) => (
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-            {selected?.map((value) => (
-              <Chip key={value} label={queryTags?.find(({ id }) => id === value)?.name} />
-            ))}
+            {selected?.map((value) => <Chip key={value} label={queryTags?.find(({ id }) => id === value)?.name} />)}
           </Box>
         )}
         MenuProps={MenuProps}
       >
-        {loading ? (
-          <MenuItem disabled>Loading...</MenuItem>
-        ) : (
-          <>
-            {queryTags?.map(({ name, id }) => (
+        {match([loading, queryTags?.length])
+          .with([true, P._], () => <MenuItem disabled>Loading...</MenuItem>)
+          .with([P._, P.number.gt(0)], () =>
+            queryTags?.map(({ name, id }) => (
               <MenuItem key={id} value={id}>
                 {name}
               </MenuItem>
-            ))}
-            {(queryTags?.length ?? 0) === 0 && <MenuItem disabled>No options</MenuItem>}
-          </>
-        )}
+            )),
+          )
+          .otherwise(() => (
+            <MenuItem disabled>No options</MenuItem>
+          ))}
       </Select>
     </FormControl>
   );

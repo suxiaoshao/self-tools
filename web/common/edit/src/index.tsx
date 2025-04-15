@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import './init';
 import { editor } from 'monaco-editor';
-import { Box, BoxProps, useTheme } from '@mui/material';
-import { MonacoMarkdownExtension } from 'monaco-markdown';
+import { Box, type BoxProps, useTheme } from '@mui/material';
+import { match } from 'ts-pattern';
 
 /**
  * @author sushao
@@ -30,56 +30,58 @@ export interface EditProps extends Omit<BoxProps, 'onChange'> {
  * @since 0.2.2
  * @description 编辑器组件
  * */
-export default function Edit({ onChangeCode, code, language, wordWrap, ...props }: EditProps): JSX.Element {
+export default function Edit({ onChangeCode, code, language, wordWrap, ...props }: EditProps) {
   /**
    * 编辑器绑定的 dom 的引用
    * */
-  const editRef = useRef<HTMLDivElement>(null);
-  const createTimes = useRef(0);
+  const [editRef, setEditRef] = useState<HTMLDivElement | undefined>();
   /**
    * 编辑器实体
    * */
-  const [edit, setEdit] = useState<editor.IStandaloneCodeEditor | null>(null);
+  const [edit, setEdit] = useState<editor.IStandaloneCodeEditor | undefined>();
 
   const theme = useTheme();
-  const createEditor = useCallback(
-    (html: HTMLElement) => {
-      if (createTimes.current === 0) {
-        const newEditor = editor.create(html, {
-          theme: theme.palette.mode === 'dark' ? 'monankai' : undefined,
-          automaticLayout: true,
-          fontSize: 16,
-          minimap: {
-            enabled: true,
-          },
-          language,
-          value: code,
-          fontLigatures: true,
-          wordWrap,
-        });
-        if (language === 'markdown') {
-          const extension = new MonacoMarkdownExtension();
-          extension.activate(newEditor as Parameters<typeof extension.activate>[0]);
-        }
-        createTimes.current++;
-        return newEditor;
-      } else {
-        return null;
-      }
-    },
-    [code, language, theme.palette.mode, wordWrap],
+  const editTheme = useMemo(
+    () =>
+      match(theme.palette.mode)
+        .with('dark', () => 'monankai')
+        // eslint-disable-next-line no-useless-undefined
+        .otherwise(() => undefined),
+    [theme.palette.mode],
   );
+  const createEditor = useCallback(() => {
+    if (editRef === undefined) {
+      return null;
+    }
+    if (
+      (edit === undefined && editRef.firstChild === null) ||
+      (edit !== undefined && edit?.getModel()?.getLanguageId() && edit?.getModel()?.getLanguageId() !== language)
+    ) {
+      const newEditor = editor.create(editRef, {
+        theme: editTheme,
+        automaticLayout: true,
+        fontSize: 16,
+        minimap: {
+          enabled: true,
+        },
+        language,
+        value: code,
+        fontLigatures: true,
+        wordWrap,
+      });
+      return newEditor;
+    }
+    return null;
+  }, [code, edit, editRef, editTheme, language, wordWrap]);
   /**
    * 编辑器要绑定的 dom 生成时,再这个 dom 上新建一个编辑器,并赋值给 edit
    * */
   useEffect(() => {
-    if (editRef.current !== null && edit === null) {
-      const newEdit = createEditor(editRef.current);
-      if (newEdit !== null) {
-        setEdit(newEdit);
-      }
+    const newEdit = createEditor();
+    if (newEdit !== null) {
+      setEdit(newEdit);
     }
-  }, [createEditor, edit]);
+  }, [createEditor, edit, editRef]);
   /**
    * props.readonly 改变时修改编辑器的只读属性
    * */
@@ -111,5 +113,5 @@ export default function Edit({ onChangeCode, code, language, wordWrap, ...props 
       edit?.dispose();
     };
   }, [edit]);
-  return <Box ref={editRef} {...props} />;
+  return <Box ref={setEditRef} {...props} />;
 }

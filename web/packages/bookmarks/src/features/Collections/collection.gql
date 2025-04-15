@@ -9,9 +9,7 @@ query getCollections($parentId: Int) {
   }
 }
 mutation deleteCollection($id: Int!) {
-  deleteCollection(id: $id) {
-    path
-  }
+  deleteCollection(id: $id)
 }
 mutation createCollection($parentId: Int, $name: String!, $description: String) {
   createCollection(parentId: $parentId, name: $name, description: $description) {
@@ -27,5 +25,17 @@ query getCollectionAncestors($id: Int!) {
     }
     id
     name
+  }
+}
+
+query allCollections {
+  allCollections {
+    name
+    id
+    path
+    createTime
+    updateTime
+    description
+    parentId
   }
 }

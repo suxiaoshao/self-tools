@@ -17,25 +17,31 @@ import {
   RadioGroup,
 } from '@mui/material';
 import { useState } from 'react';
-import { Controller, SubmitHandler, useForm } from 'react-hook-form';
-import { useAppDispatch, useAppSelector, setLangSetting, I18nSliceType } from './i18nSlice';
-import { string, object } from 'yup';
-import { yupResolver } from '@hookform/resolvers/yup';
-import { useI18n } from '.';
+import { Controller, type SubmitHandler, useForm } from 'react-hook-form';
+import { useI18nStore, LangMode, CustomLang } from './i18nSlice';
+import { object, enum_, type InferInput } from 'valibot';
+import { valibotResolver } from '@hookform/resolvers/valibot';
+import { useI18n } from './useI18n';
+import { useShallow } from 'zustand/react/shallow';
 
 export default function I18nDrawerItem() {
   const t = useI18n();
   const createColorSchema = object({
-    langMode: string().required(t('cannot_empty')).equals(['custom', 'system']),
-    customLang: string().required(t('cannot_empty')).equals(['en', 'zh']),
+    langMode: enum_(LangMode),
+    customLang: enum_(CustomLang),
   });
+  type FormData = InferInput<typeof createColorSchema>;
   // 控制 dialog
   const [open, setOpen] = useState(false);
   const handleClose = () => {
     setOpen(false);
   };
-  type FormData = Pick<I18nSliceType, 'customLang' | 'langMode'>;
-  const i18n = useAppSelector((state) => state.i18n);
+  const { i18n, setLangSetting } = useI18nStore(
+    useShallow((state) => ({
+      i18n: state.value,
+      setLangSetting: state.setLangSetting,
+    })),
+  );
   const {
     handleSubmit,
     control,
@@ -46,11 +52,10 @@ export default function I18nDrawerItem() {
       langMode: i18n.langMode,
       customLang: i18n.customLang,
     },
-    resolver: yupResolver(createColorSchema),
+    resolver: valibotResolver(createColorSchema),
   });
-  const dispatch = useAppDispatch();
-  const onSubmit: SubmitHandler<FormData> = async (data) => {
-    await dispatch(setLangSetting(data));
+  const onSubmit: SubmitHandler<FormData> = (data) => {
+    setLangSetting(data);
     handleClose();
   };
   const watchTag = watch('langMode');
@@ -79,11 +84,11 @@ export default function I18nDrawerItem() {
                     aria-labelledby="color-setting"
                     {...field}
                     onChange={(event, newValue) => {
-                      field.onChange(newValue);
+                      field.onChange(newValue as 'custom' | 'system');
                     }}
                   >
-                    <FormControlLabel value="custom" control={<Radio />} label={t('custom')} />
-                    <FormControlLabel value="system" control={<Radio />} label={t('system')} />
+                    <FormControlLabel value={LangMode.custom} control={<Radio />} label={t('custom')} />
+                    <FormControlLabel value={LangMode.system} control={<Radio />} label={t('system')} />
                   </RadioGroup>
                 )}
               />
@@ -103,11 +108,11 @@ export default function I18nDrawerItem() {
                       aria-labelledby="color-setting"
                       {...field}
                       onChange={(event, newValue) => {
-                        field.onChange(newValue);
+                        field.onChange(newValue as 'en' | 'zh');
                       }}
                     >
-                      <FormControlLabel value="zh" control={<Radio />} label={t('chinese')} />
-                      <FormControlLabel value="en" control={<Radio />} label={t('english')} />
+                      <FormControlLabel value={CustomLang.zh} control={<Radio />} label={t('chinese')} />
+                      <FormControlLabel value={CustomLang.en} control={<Radio />} label={t('english')} />
                     </RadioGroup>
                   )}
                 />

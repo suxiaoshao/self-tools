@@ -1,27 +1,26 @@
 import { Chip } from '@mui/material';
-import { CollectionAndItemsQuery } from '../../../graphql';
+import type { CollectionAndItemsQuery } from '../../../graphql';
 import { useMemo } from 'react';
-import { CustomColumnArray } from 'custom-table';
+import type { CustomColumnDefArray } from 'custom-table';
 import { format } from 'time';
 import Name from '../components/Name';
 import Actions from '../components/Actions';
 import { Article, Folder } from '@mui/icons-material';
 import { useI18n } from 'i18n';
+import { match, P } from 'ts-pattern';
+import type { CollectionAndItem } from '../types';
 
 const Typename = ({ __typename }: { __typename: CollectionAndItem['__typename'] }) => {
   const t = useI18n();
-  return __typename === 'Collection' ? (
-    <Chip icon={<Folder />} variant="outlined" label={t('collection')} color="primary" />
-  ) : (
-    <Chip icon={<Article />} variant="outlined" label={t('item')} color="secondary" />
-  );
+  return match(__typename)
+    .with('Collection', () => <Chip icon={<Folder />} variant="outlined" label={t('collection')} color="primary" />)
+    .with('Item', () => <Chip icon={<Article />} variant="outlined" label={t('item')} color="secondary" />)
+    .exhaustive();
 };
-
-export type CollectionAndItem = CollectionAndItemsQuery['collectionAndItem']['data'][0];
 
 export default function useTableColumns(refetch: () => void) {
   const t = useI18n();
-  const columns = useMemo<CustomColumnArray<CollectionAndItemsQuery['collectionAndItem']['data'][0]>>(
+  const columns = useMemo<CustomColumnDefArray<CollectionAndItemsQuery['collectionAndItem']['data'][0]>>(
     () => [
       {
         header: t('type'),
@@ -38,13 +37,20 @@ export default function useTableColumns(refetch: () => void) {
       {
         header: t('name'),
         id: 'path',
-        accessorFn: (data) => (data.__typename === 'Collection' ? data.path : '-'),
+        accessorFn: (data) =>
+          match(data)
+            .with({ __typename: 'Collection' }, (data) => data.path)
+            .with({ __typename: 'Item' }, () => '-')
+            .exhaustive(),
         cell: (context) => context.getValue(),
       },
       {
         header: t('description'),
         id: 'description',
-        accessorFn: (data) => (data.__typename === 'Collection' ? data.description ?? '-' : '-'),
+        accessorFn: (data) =>
+          match(data)
+            .with({ __typename: 'Collection', description: P.nonNullable }, ({ description }) => description ?? '-')
+            .otherwise(() => '-'),
         cellProps: {
           align: 'center',
         },

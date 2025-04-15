@@ -1,0 +1,20 @@
+{
+  "name": "portal",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "rsbuild dev",
+    "build": "rsbuild build",
+    "preview": "rsbuild preview"
+  },
+  "dependencies": {
+    "@material/material-color-utilities": "0.3.0",
+    "bookmarks": "workspace:^",
+    "collections": "workspace:^",
+    "i18n": "workspace:^",
+    "notify": "workspace:^",
+    "types": "workspace:^"
+  },
+  "main": "src/main.tsx"
+}

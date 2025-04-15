@@ -1,28 +1,24 @@
 {
   "name": "collections",
   "private": true,
-  "version": "0.0.0",
-  "type": "module",
+  "version": "1.0.0",
+  "main": "src/main.tsx",
+  "types": "src/main.tsx",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
     "generate": "graphql-codegen"
   },
   "dependencies": {
-    "auth": "workspace:^1.0.0",
-    "custom-graphql": "workspace:^1.0.0",
-    "custom-table": "workspace:^1.0.0",
-    "edit": "workspace:^1.0.0",
-    "i18n": "workspace:^1.0.0",
-    "markdown-to-jsx": "^7.2.0",
-    "notify": "workspace:^1.0.0",
+    "custom-graphql": "workspace:^",
+    "custom-table": "workspace:^",
+    "edit": "workspace:^",
+    "i18n": "workspace:^",
+    "markdown-to-jsx": "^7.7.3",
     "prism-themes": "^1.9.0",
     "prismjs": "^1.29.0",
-    "theme": "workspace:^1.0.0",
-    "time": "workspace:^1.0.0"
+    "time": "workspace:^",
+    "types": "workspace:^"
   },
   "devDependencies": {
-    "@types/prismjs": "^1.26.0"
+    "@types/prismjs": "^1.26.5"
   }
 }

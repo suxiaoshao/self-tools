@@ -1,12 +1,12 @@
+use std::{collections::HashSet, sync::LazyLock};
+
 use futures::future::try_join_all;
 use nom::{
     bytes::complete::{tag, take_while},
     combinator::{all_consuming, eof},
-    sequence::tuple,
-    IResult,
+    IResult, Parser,
 };
 
-use once_cell::sync::Lazy;
 use scraper::{ElementRef, Html, Selector};
 
 use crate::{
@@ -18,31 +18,27 @@ use crate::{
 
 use super::novel::JJNovel;
 
-static SELECTOR_AUTHOR_NAME: Lazy<Selector> = Lazy::new(|| {
-    Selector::parse("body > table:nth-child(23) > tbody > tr > td:nth-child(1) > table > tbody > tr:nth-child(2) > td > table > tbody > tr:nth-child(1) > td:nth-child(2) > table > tbody > tr > td:nth-child(1) > font > b > span").unwrap()
-});
-static SELECTOR_AUTHOR_DESCRIPTION: Lazy<Selector> = Lazy::new(|| {
-    Selector::parse("body > table:nth-child(23) > tbody > tr > td:nth-child(1) > table > tbody > tr:nth-child(2) > td > table > tbody > tr:nth-child(1) > td:nth-child(2) > span").unwrap()
-});
-static SELECTOR_AUTHOR_IMAGE: Lazy<Selector> = Lazy::new(|| {
-    Selector::parse("body > table:nth-child(23) > tbody > tr > td:nth-child(1) > table > tbody > tr:nth-child(2) > td > table > tbody > tr:nth-child(1) > td:nth-child(1) > div:nth-child(1) > img").unwrap()
-});
-static SELECTOR_NOVEL_URLS: Lazy<Selector> = Lazy::new(|| {
-    Selector::parse("body > table:nth-child(2N+27) > tbody > tr > td a:not([target])").unwrap()
-});
+static SELECTOR_AUTHOR_NAME: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("[itemprop=name]").unwrap());
+static SELECTOR_AUTHOR_DESCRIPTION: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("[itemprop=description]").unwrap());
+static SELECTOR_AUTHOR_IMAGE: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse(".authordefaultimage").unwrap());
+static SELECTOR_NOVEL_URLS: LazyLock<Selector> =
+    LazyLock::new(|| Selector::parse("a[href^=\"onebook.php?novelid=\"]:not(.tooltip)").unwrap());
 
-#[derive(Debug)]
-struct JJAuthor {
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct JJAuthor {
     id: String,
     name: String,
     description: String,
     image: String,
-    novel_ids: Vec<String>,
+    novel_ids: HashSet<String>,
 }
 
-#[async_trait::async_trait]
 impl AuthorFn for JJAuthor {
     type Novel = JJNovel;
+    const SITE: crate::NovelSite = crate::NovelSite::Jjwxc;
     async fn get_author_data(author_id: &str) -> NovelResult<Self> {
         let url = format!("https://www.jjwxc.net/oneauthor.php?authorid={author_id}");
         let image_doc = text_from_url(&url, "gb18030").await?;
@@ -56,8 +52,7 @@ impl AuthorFn for JJAuthor {
         let urls = image_doc
             .select(&SELECTOR_NOVEL_URLS)
             .map(map_url)
-            .collect::<NovelResult<Vec<_>>>()?;
-
+            .collect::<NovelResult<HashSet<_>>>()?;
         Ok(Self {
             id: author_id.to_string(),
             name,
@@ -68,8 +63,7 @@ impl AuthorFn for JJAuthor {
     }
 
     fn url(&self) -> String {
-        let data = format!("https://www.jjwxc.net/oneauthor.php?authorid={}", self.id);
-        data
+        Self::get_url_from_id(&self.id)
     }
     fn name(&self) -> &str {
         self.name.as_str()
@@ -83,6 +77,12 @@ impl AuthorFn for JJAuthor {
     async fn novels(&self) -> NovelResult<Vec<Self::Novel>> {
         let data = try_join_all(self.novel_ids.iter().map(|x| JJNovel::get_novel_data(x))).await?;
         Ok(data)
+    }
+    fn get_url_from_id(id: &str) -> String {
+        format!("https://www.jjwxc.net/oneauthor.php?authorid={}", id)
+    }
+    fn id(&self) -> &str {
+        self.id.as_str()
     }
 }
 
@@ -98,19 +98,20 @@ fn map_url(element_ref: ElementRef) -> NovelResult<String> {
 
 fn novel_id(input: &str) -> IResult<&str, String> {
     let (input, (_, data, _)) =
-        all_consuming(tuple((tag("/book2/"), take_while(|_| true), eof)))(input)?;
+        all_consuming((tag("onebook.php?novelid="), take_while(|_| true), eof)).parse(input)?;
     Ok((input, data.to_string()))
 }
 
 #[cfg(test)]
 mod test {
+
     use super::*;
 
     #[test]
     fn novel_id_test() -> anyhow::Result<()> {
-        let input = "/book2/369639";
+        let input = "onebook.php?novelid=1789677";
         let (input, id) = novel_id(input)?;
-        assert_eq!(id, "369639");
+        assert_eq!(id, "1789677");
         assert_eq!(input, "");
         Ok(())
     }
@@ -118,6 +119,8 @@ mod test {
     #[tokio::test]
     async fn jj_author_test() -> anyhow::Result<()> {
         let author = JJAuthor::get_author_data("1000001").await?;
+        println!("{author:#?}");
+        let author = JJAuthor::get_author_data("809836").await?;
         println!("{author:#?}");
         Ok(())
     }

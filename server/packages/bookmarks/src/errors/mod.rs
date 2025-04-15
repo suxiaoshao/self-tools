@@ -1,16 +1,11 @@
 use async_graphql::ErrorExtensionValues;
-use axum::{response::IntoResponse, Json};
+use axum::{extract::rejection::QueryRejection, response::IntoResponse, Json};
 use diesel::r2d2;
-use middleware::Unauthenticated;
-use std::sync::Arc;
-use tonic::{transport, Code, Status};
+use std::{env::VarError, sync::Arc};
+use thrift::auth::ItemServiceCheckException;
 
 #[derive(Debug)]
-pub enum GraphqlError {
-    /// grpc 错误
-    Status(Status),
-    /// grpc 链接错误
-    Transport,
+pub(crate) enum GraphqlError {
     /// 数据库连接池
     R2d2(String),
     /// 数据库操作错误
@@ -21,13 +16,28 @@ pub enum GraphqlError {
     NotFound(&'static str, i64),
     /// 已存在
     AlreadyExists(String),
-    /// scope 错误
-    Scope {
-        sub_tag: &'static str,
-        super_tag: &'static str,
-        sub_value: i64,
-        super_value: Option<i64>,
-    },
+    Jwt,
+    PasswordError,
+    AuthTimeout,
+    TokenError,
+    PasswordNotSet,
+    SecretKeyNotSet,
+    UsernameNotSet,
+    /// thrift 错误
+    Thrift(String),
+    ClientError(&'static thrift::ClientError),
+    /// novel 获取错误
+    NovelNetworkError(String),
+    NovelParseError,
+    NovelTimeParseError(time::error::Parse),
+    // query rejection
+    QueryRejection(String),
+    // reqwest error
+    ReqwestError(String),
+    VarError(VarError),
+    NotGraphqlContextData(&'static str),
+    // 保存草稿错误
+    SavaDraftError(&'static str),
 }
 
 impl IntoResponse for GraphqlError {
@@ -47,60 +57,57 @@ impl IntoResponse for GraphqlError {
 }
 
 impl GraphqlError {
-    pub fn message(&self) -> String {
+    pub(crate) fn message(&self) -> String {
         match self {
-            GraphqlError::Status(status) => status.message().to_string(),
-            GraphqlError::Transport => "内部连接错误".to_string(),
             GraphqlError::R2d2(_) => "数据库连接错误".to_string(),
             GraphqlError::Diesel(data) => format!("数据库错误:{data}"),
             GraphqlError::Unauthenticated => "没有发送 token".to_string(),
             GraphqlError::NotFound(tag, id) => format!(r#"{tag}"{id}"不存在"#),
             GraphqlError::AlreadyExists(name) => format!("{name}已存在"),
-            GraphqlError::Scope {
-                super_tag,
-                sub_tag,
-                sub_value,
-                super_value,
-            } => format!(
-                r#"{}"{}"不属于{}"{}""#,
-                sub_tag,
-                sub_value,
-                super_tag,
-                match super_value {
-                    Some(super_value) => super_value.to_string(),
-                    None => "无".to_string(),
-                }
-            ),
+            GraphqlError::Jwt => "jwt 解析错误".to_string(),
+            GraphqlError::PasswordError => "密码错误".to_string(),
+            GraphqlError::AuthTimeout => "登陆过期".to_string(),
+            GraphqlError::TokenError => "token 错误".to_string(),
+            GraphqlError::PasswordNotSet => "密码未设置".to_string(),
+            GraphqlError::SecretKeyNotSet => "select key未设置".to_string(),
+            GraphqlError::UsernameNotSet => "username未设置".to_string(),
+            GraphqlError::Thrift(data) => format!("thrift 错误:{data}"),
+            GraphqlError::ClientError(data) => format!("thrift client错误:{data}"),
+            GraphqlError::NovelNetworkError(err) => format!("小说网络错误:{err}"),
+            GraphqlError::NovelParseError => "小说解析错误".to_string(),
+            GraphqlError::QueryRejection(value) => format!("query rejection:{value}"),
+            GraphqlError::ReqwestError(err) => format!("reqwest error:{err}"),
+            GraphqlError::VarError(err) => format!("env error:{err}"),
+            GraphqlError::NotGraphqlContextData(tag) => {
+                format!("graphql context data:{}不存在", tag)
+            }
+            GraphqlError::SavaDraftError(tag) => format!("保存草稿错误:{tag}"),
+            GraphqlError::NovelTimeParseError(tag) => format!("小说时间解析错误:{tag}"),
         }
     }
-    pub fn code(&self) -> &str {
+    pub(crate) fn code(&self) -> &str {
         match self {
-            GraphqlError::Status(status) => match status.code() {
-                Code::Ok => "Ok",
-                Code::Cancelled => "Cancelled",
-                Code::Unknown => "Unknown",
-                Code::InvalidArgument => "InvalidArgument",
-                Code::DeadlineExceeded => "DeadlineExceeded",
-                Code::NotFound => "NotFound",
-                Code::AlreadyExists => "AlreadyExists",
-                Code::PermissionDenied => "PermissionDenied",
-                Code::ResourceExhausted => "ResourceExhausted",
-                Code::FailedPrecondition => "FailedPrecondition",
-                Code::Aborted => "Aborted",
-                Code::OutOfRange => "OutOfRange",
-                Code::Unimplemented => "Unimplemented",
-                Code::Internal => "Internal",
-                Code::Unavailable => "Unavailable",
-                Code::DataLoss => "DataLoss",
-                Code::Unauthenticated => "Unauthenticated",
-            },
-            GraphqlError::Transport => "Transport",
             GraphqlError::R2d2(_) => "FailedPrecondition",
             GraphqlError::Diesel(_) => "Internal",
             GraphqlError::Unauthenticated => "Unauthenticated",
-            GraphqlError::NotFound(..)
-            | GraphqlError::AlreadyExists(_)
-            | GraphqlError::Scope { .. } => "InvalidArgument",
+            GraphqlError::NotFound(..) | GraphqlError::AlreadyExists(_) => "InvalidArgument",
+            GraphqlError::Jwt => "Jwt",
+            GraphqlError::PasswordError => "PasswordError",
+            GraphqlError::AuthTimeout => "AuthTimeout",
+            GraphqlError::TokenError => "TokenError",
+            GraphqlError::PasswordNotSet => "PasswordNotSet",
+            GraphqlError::SecretKeyNotSet => "SecretKeyNotSet",
+            GraphqlError::UsernameNotSet => "UsernameNotSet",
+            GraphqlError::Thrift(_) => "Thrift",
+            GraphqlError::ClientError(_) => "ThriftClient",
+            GraphqlError::NovelNetworkError(_) => "NovelNetworkError",
+            GraphqlError::NovelParseError => "NovelParseError",
+            GraphqlError::QueryRejection(_) => "QueryRejection",
+            GraphqlError::ReqwestError(_) => "ReqwestError",
+            GraphqlError::VarError(_) => "VarError",
+            GraphqlError::NotGraphqlContextData(_) => "NotGraphqlContextData",
+            GraphqlError::SavaDraftError(_) => "SavaDraftError",
+            GraphqlError::NovelTimeParseError(_) => "NovelTimeParseError",
         }
     }
 }
@@ -108,39 +115,29 @@ impl GraphqlError {
 impl Clone for GraphqlError {
     fn clone(&self) -> Self {
         match self {
-            GraphqlError::Status(status) => {
-                Self::Status(Status::new(status.code(), status.message()))
-            }
-            GraphqlError::Transport => Self::Transport,
             GraphqlError::R2d2(data) => Self::R2d2(data.clone()),
             GraphqlError::Diesel(data) => Self::Diesel(data.clone()),
             GraphqlError::Unauthenticated => Self::Unauthenticated,
             GraphqlError::NotFound(tag, id) => Self::NotFound(tag, *id),
             GraphqlError::AlreadyExists(name) => Self::AlreadyExists(name.clone()),
-            GraphqlError::Scope {
-                sub_tag,
-                super_tag,
-                sub_value,
-                super_value,
-            } => Self::Scope {
-                sub_tag,
-                super_tag,
-                sub_value: *sub_value,
-                super_value: *super_value,
-            },
+            GraphqlError::Jwt => Self::Jwt,
+            GraphqlError::PasswordError => Self::PasswordError,
+            GraphqlError::AuthTimeout => Self::AuthTimeout,
+            GraphqlError::TokenError => Self::TokenError,
+            GraphqlError::PasswordNotSet => Self::PasswordNotSet,
+            GraphqlError::SecretKeyNotSet => Self::SecretKeyNotSet,
+            GraphqlError::UsernameNotSet => Self::UsernameNotSet,
+            GraphqlError::Thrift(data) => Self::Thrift(data.clone()),
+            GraphqlError::ClientError(data) => Self::ClientError(data),
+            GraphqlError::NovelNetworkError(data) => Self::NovelNetworkError(data.clone()),
+            GraphqlError::NovelParseError => Self::NovelParseError,
+            GraphqlError::QueryRejection(data) => Self::QueryRejection(data.clone()),
+            GraphqlError::ReqwestError(data) => Self::ReqwestError(data.clone()),
+            GraphqlError::VarError(data) => Self::VarError(data.clone()),
+            GraphqlError::NotGraphqlContextData(data) => Self::NotGraphqlContextData(data),
+            GraphqlError::SavaDraftError(data) => Self::SavaDraftError(data),
+            GraphqlError::NovelTimeParseError(data) => Self::NovelTimeParseError(*data),
         }
-    }
-}
-
-impl From<transport::Error> for GraphqlError {
-    fn from(_: transport::Error) -> Self {
-        Self::Transport
-    }
-}
-
-impl From<Status> for GraphqlError {
-    fn from(error: Status) -> Self {
-        Self::Status(error)
     }
 }
 
@@ -155,12 +152,59 @@ impl From<diesel::result::Error> for GraphqlError {
         Self::Diesel(error.to_string())
     }
 }
-impl From<Unauthenticated> for GraphqlError {
-    fn from(_: Unauthenticated) -> Self {
-        Self::Unauthenticated
+impl From<volo_thrift::error::ClientError> for GraphqlError {
+    fn from(value: volo_thrift::error::ClientError) -> Self {
+        match value {
+            volo_thrift::ClientError::Application(x) => Self::Thrift(x.to_string()),
+            volo_thrift::ClientError::Transport(x) => Self::Thrift(x.to_string()),
+            volo_thrift::ClientError::Protocol(x) => Self::Thrift(x.to_string()),
+            volo_thrift::ClientError::Biz(x) => Self::Thrift(x.to_string()),
+        }
     }
 }
-pub type GraphqlResult<T> = Result<T, GraphqlError>;
+
+impl From<ItemServiceCheckException> for GraphqlError {
+    fn from(value: ItemServiceCheckException) -> Self {
+        match value {
+            ItemServiceCheckException::Err(thrift::auth::AuthError { code }) => match code {
+                thrift::auth::AuthErrorCode::JWT => Self::Jwt,
+                thrift::auth::AuthErrorCode::PASSWORD_ERROR => Self::PasswordError,
+                thrift::auth::AuthErrorCode::AUTH_TIMEOUT => Self::AuthTimeout,
+                thrift::auth::AuthErrorCode::TOKEN_ERROR => Self::TokenError,
+                thrift::auth::AuthErrorCode::PASSWORD_NOT_SET => Self::PasswordNotSet,
+                thrift::auth::AuthErrorCode::SECRET_KEY_NOT_SET => Self::SecretKeyNotSet,
+                thrift::auth::AuthErrorCode::USERNAME_NOT_SET => Self::UsernameNotSet,
+                _ => Self::Thrift("未知错误".to_string()),
+            },
+        }
+    }
+}
+
+impl From<&'static thrift::ClientError> for GraphqlError {
+    fn from(value: &'static thrift::ClientError) -> Self {
+        Self::ClientError(value)
+    }
+}
+
+impl From<novel_crawler::NovelError> for GraphqlError {
+    fn from(value: novel_crawler::NovelError) -> Self {
+        match value {
+            novel_crawler::NovelError::NetworkError(err) => {
+                Self::NovelNetworkError(err.to_string())
+            }
+            novel_crawler::NovelError::ParseError => Self::NovelParseError,
+            novel_crawler::NovelError::TimeParseError(data) => Self::NovelTimeParseError(data),
+        }
+    }
+}
+
+impl From<VarError> for GraphqlError {
+    fn from(value: VarError) -> Self {
+        Self::VarError(value)
+    }
+}
+
+pub(crate) type GraphqlResult<T> = Result<T, GraphqlError>;
 
 impl From<GraphqlError> for async_graphql::Error {
     fn from(value: GraphqlError) -> async_graphql::Error {
@@ -174,5 +218,17 @@ impl From<GraphqlError> for async_graphql::Error {
             source: Some(Arc::new(value)),
             extensions: Some(extensions),
         }
+    }
+}
+
+impl From<QueryRejection> for GraphqlError {
+    fn from(value: QueryRejection) -> Self {
+        Self::QueryRejection(value.to_string())
+    }
+}
+
+impl From<reqwest::Error> for GraphqlError {
+    fn from(value: reqwest::Error) -> Self {
+        Self::ReqwestError(value.to_string())
     }
 }

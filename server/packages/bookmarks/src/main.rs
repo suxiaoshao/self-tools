@@ -1,71 +1,44 @@
+/*
+ * @Author: suxiaoshao suxiaoshao@gmail.com
+ * @Date: 2024-01-06 01:30:13
+ * @LastEditors: suxiaoshao suxiaoshao@gmail.com
+ * @LastEditTime: 2024-03-23 21:22:23
+ * @FilePath: /self-tools/server/packages/bookmarks/src/main.rs
+ */
 mod errors;
 mod graphql;
 mod model;
+mod router;
 mod service;
 
-use async_graphql::http::{playground_source, GraphQLPlaygroundConfig};
-use async_graphql_axum::{GraphQLRequest, GraphQLResponse};
-use axum::{
-    extract::State,
-    http::{header::AUTHORIZATION, HeaderMap},
-    response::{self, IntoResponse},
-    routing::post,
-    Router, Server,
-};
-use errors::GraphqlError;
-use graphql::{get_schema, RootSchema};
-use middleware::auth;
-use middleware::get_cors;
-use model::CONNECTION;
+use std::net::SocketAddr;
+
+use middleware::{get_cors, trace_layer};
+use tokio::net::TcpListener;
 use tracing::{event, metadata::LevelFilter, Level};
 use tracing_subscriber::{
     fmt, prelude::__tracing_subscriber_SubscriberExt, util::SubscriberInitExt, Layer,
 };
 
-async fn graphql_handler(
-    State(schema): State<RootSchema>,
-    header: HeaderMap,
-    req: GraphQLRequest,
-) -> GraphQLResponse {
-    match header
-        .get(AUTHORIZATION)
-        .and_then(|x| x.to_str().ok())
-        .map(|x| x.to_string())
-    {
-        None => schema.execute(req.into_inner()).await.into(),
-        Some(auth) => schema.execute(req.into_inner().data(auth)).await.into(),
-    }
-}
-
-async fn graphql_playground() -> impl IntoResponse {
-    response::Html(playground_source(
-        GraphQLPlaygroundConfig::new("/graphql").subscription_endpoint("/ws"),
-    ))
-}
+use crate::router::get_router;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     tracing_subscriber::registry()
         .with(fmt::layer().with_filter(LevelFilter::INFO))
         .init();
-    let _ = &CONNECTION.get()?;
     // 设置跨域
     let cors = get_cors();
-    let schema = get_schema();
-
-    let app = Router::new()
-        .route(
-            "/graphql",
-            post(graphql_handler)
-                .layer(axum::middleware::from_fn(auth::<_, GraphqlError>))
-                .get(graphql_playground),
-        )
-        .with_state(schema)
+    let app = get_router()
+        .map_err(|_x| anyhow::anyhow!("VarError"))?
         .layer(cors)
-        .layer(middleware::trace_layer());
+        .layer(trace_layer());
+
     let addr = "0.0.0.0:8080";
     event!(Level::INFO, addr, "server start");
-    let addr = addr.parse()?;
-    Server::bind(&addr).serve(app.into_make_service()).await?;
+    let addr: SocketAddr = addr.parse()?;
+    let listener = TcpListener::bind(addr).await?;
+
+    axum::serve(listener, app).await?;
     Ok(())
 }

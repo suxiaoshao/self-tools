@@ -1,0 +1,96 @@
+query getAuthors {
+  queryAuthors {
+    ...AuthorAll
+  }
+}
+
+query getAuthor($id: Int!) {
+  getAuthor(id: $id) {
+    novels {
+      id
+      name
+      avatar
+      createTime
+      updateTime
+      description
+      novelStatus
+      url
+      lastChapter {
+        time
+      }
+      firstChapter {
+        time
+      }
+      wordCount
+    }
+    ...AuthorAll
+  }
+}
+
+query fetchAuthor($id: String!, $novelSite: NovelSite!) {
+  fetchAuthor(id: $id, novelSite: $novelSite) {
+    __typename
+    name
+    description
+    image
+    url
+    id
+    site
+    novels {
+      id
+      name
+      description
+      image
+      url
+      status
+      site
+      chapters {
+        id
+        novelId
+        title
+        url
+        time
+        wordCount
+        site
+      }
+      tags {
+        id
+        name
+        url
+      }
+    }
+  }
+}
+
+mutation deleteAuthor($id: Int!) {
+  deleteAuthor(id: $id) {
+    id
+  }
+}
+mutation createAuthor($avatar: String!, $description: String!, $name: String!, $site: NovelSite!, $siteId: String!) {
+  createAuthor(avatar: $avatar, description: $description, name: $name, site: $site, siteId: $siteId) {
+    ...AuthorAll
+  }
+}
+
+fragment AuthorAll on Author {
+  id
+  site
+  name
+  createTime
+  updateTime
+  avatar
+  description
+  url
+}
+
+mutation saveDraftAuthor($author: SaveDraftAuthor!) {
+  saveDraftAuthor(author: $author) {
+    ...AuthorAll
+  }
+}
+mutation updateAuthorByCrawler($authorId: Int!) {
+  updateAuthorByCrawler(authorId: $authorId) {
+    id
+  }
+}

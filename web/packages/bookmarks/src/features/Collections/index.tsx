@@ -1,83 +1,24 @@
-import { Box, IconButton, Link } from '@mui/material';
-import { GetCollectionsQuery, useDeleteCollectionMutation, useGetCollectionsQuery } from '../../graphql';
-import { useMemo } from 'react';
-import { CustomColumnArray, TableActions, CustomTable, useCustomTable, getCoreRowModel } from 'custom-table';
-import { format } from 'time';
 import { Refresh } from '@mui/icons-material';
-import CreateCollectionButton from './components/CreateCollectionButton';
-import { Link as RouterLink, createSearchParams } from 'react-router-dom';
+import { Box, IconButton } from '@mui/material';
+import { CustomTable } from 'custom-table';
+import { useCallback } from 'react';
+import { useGetCollectionsQuery } from '../../graphql';
+import { useAllCollection } from './collectionSlice';
 import AncestorsPath from './components/AncestorsPath';
+import CreateCollectionButton from './components/CreateCollectionButton';
 import useParentId from './components/useParentId';
-import { useI18n } from 'i18n';
+import { useCollectionTable } from './hooks';
 
-export default function Home() {
+export default function Collections() {
   const parentId = useParentId();
-  const { data: { getCollections } = {}, refetch } = useGetCollectionsQuery({ variables: { parentId } });
-  const [deleteCollection] = useDeleteCollectionMutation();
-  const t = useI18n();
+  const { data, refetch } = useGetCollectionsQuery({ variables: { parentId } });
+  const { fetchData } = useAllCollection();
 
-  const columns = useMemo<CustomColumnArray<GetCollectionsQuery['getCollections'][0]>>(
-    () => [
-      {
-        header: t('name'),
-        id: 'name',
-        accessorFn: ({ name, id }) => (
-          <Link component={RouterLink} to={{ search: createSearchParams({ parentId: id.toString() }).toString() }}>
-            {name}
-          </Link>
-        ),
-        cell: (context) => context.getValue(),
-      },
-      {
-        header: t('path'),
-        id: 'path',
-        accessorKey: 'path',
-      },
-      {
-        header: t('description'),
-        id: 'description',
-        accessorFn: ({ description }) => description ?? '-',
-        cellProps: {
-          align: 'center',
-        },
-        cell: (context) => context.getValue(),
-      },
-      {
-        header: t('create_time'),
-        id: 'createTime',
-        accessorFn: ({ createTime }) => format(createTime),
-        cell: (context) => context.getValue(),
-      },
-      {
-        header: t('update_time'),
-        id: 'updateTime',
-        accessorFn: ({ updateTime }) => format(updateTime),
-        cell: (context) => context.getValue(),
-      },
-      {
-        header: t('actions'),
-        id: 'action',
-        accessorFn: ({ id }) => (
-          <TableActions>
-            {(onClose) => [
-              {
-                text: t('delete'),
-                onClick: async () => {
-                  await deleteCollection({ variables: { id } });
-                  onClose();
-                  await refetch();
-                },
-              },
-            ]}
-          </TableActions>
-        ),
-        cellProps: { padding: 'none' },
-        cell: (context) => context.getValue(),
-      },
-    ],
-    [deleteCollection, refetch, t],
-  );
-  const tableInstance = useCustomTable({ columns, data: getCollections ?? [], getCoreRowModel: getCoreRowModel() });
+  const allRefetch = useCallback(async () => {
+    await Promise.all([refetch(), fetchData()]);
+  }, [refetch, fetchData]);
+
+  const tableInstance = useCollectionTable(allRefetch, data?.getCollections ?? []);
 
   return (
     <Box sx={{ width: '100%', height: '100%', p: 2, display: 'flex', flexDirection: 'column' }}>

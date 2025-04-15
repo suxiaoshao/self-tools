@@ -1,19 +1,11 @@
-import 'monaco-editor/esm/vs/editor/editor.main';
-import JsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker';
-import EditorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
-import TsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker';
-import CssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker';
-import HtmlWorker from 'monaco-editor/esm/vs/language/html/html.worker?worker';
+/*
+ * @Author: suxiaoshao suxiaoshao@gmail.com
+ * @Date: 2023-07-10 16:34:52
+ * @LastEditors: suxiaoshao suxiaoshao@gmail.com
+ * @LastEditTime: 2024-03-28 07:27:12
+ * @FilePath: /tauri/Users/weijie.su/Documents/code/self/self-tools/web/common/edit/src/init.ts
+ */
 import { editor } from 'monaco-editor';
 import monankai from 'monaco-themes/themes/Dracula.json';
 
-self.MonacoEnvironment = {
-  getWorker(_: string, label: string) {
-    if (label === 'typescript' || label === 'javascript') return new TsWorker();
-    if (label === 'json') return new JsonWorker();
-    if (label === 'css') return new CssWorker();
-    if (label === 'html') return new HtmlWorker();
-    return new EditorWorker();
-  },
-};
 editor.defineTheme('monankai', monankai as editor.IStandaloneThemeData);

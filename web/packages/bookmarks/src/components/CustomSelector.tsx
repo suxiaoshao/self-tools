@@ -1,6 +1,14 @@
 import { Menu, MenuItem } from '@mui/material';
-import React from 'react';
-import { useState, MouseEvent, ReactNode, Key, FocusEventHandler, FocusEvent, ForwardedRef } from 'react';
+import React, {
+  type FocusEvent,
+  type FocusEventHandler,
+  type ForwardedRef,
+  type Key,
+  type MouseEvent,
+  type ReactNode,
+  useImperativeHandle,
+  useState,
+} from 'react';
 
 export interface CustomSelectorProps<T> {
   children?: { value: T; label: ReactNode; key: Key }[];
@@ -8,12 +16,10 @@ export interface CustomSelectorProps<T> {
   onBlur?: FocusEventHandler<HTMLInputElement>;
   value: T;
   render?: (onClick: (event: MouseEvent<HTMLButtonElement>) => void) => ReactNode;
+  ref: ForwardedRef<HTMLDivElement | null>;
 }
 
-function CustomSelector<T>(
-  { children, onBlur, onChange, render, value }: CustomSelectorProps<T>,
-  ref: ForwardedRef<HTMLDivElement>,
-): JSX.Element {
+function CustomSelector<T>({ children, onBlur, onChange, render, value, ref }: CustomSelectorProps<T>) {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
   const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
@@ -23,11 +29,13 @@ function CustomSelector<T>(
     setAnchorEl(null);
     onBlur?.(undefined as unknown as FocusEvent<HTMLInputElement>);
   };
+  const [sourceRef, setSourceRef] = useState<HTMLDivElement | null>(null);
+  useImperativeHandle<HTMLDivElement | null, HTMLDivElement | null>(ref, () => sourceRef, [sourceRef]);
 
   return (
     <>
       {render?.(handleClick)}
-      <Menu anchorEl={anchorEl} open={open} onClose={handleClose} ref={ref}>
+      <Menu anchorEl={anchorEl} open={open} onClose={handleClose} ref={setSourceRef}>
         {children?.map(({ value: itemValue, label, key }) => (
           <MenuItem
             onClick={() => {
@@ -46,4 +54,4 @@ function CustomSelector<T>(
   );
 }
 
-export default React.forwardRef(CustomSelector) as typeof CustomSelector;
+export default CustomSelector;

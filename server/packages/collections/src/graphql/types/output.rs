@@ -3,13 +3,13 @@ use async_graphql::{OutputType, SimpleObject, Union};
 use crate::service::{collection::Collection, item::Item};
 
 #[derive(Union)]
-pub enum ItemAndCollection {
+pub(crate) enum ItemAndCollection {
     Item(Item),
     Collection(Collection),
 }
 
 #[derive(SimpleObject)]
-pub struct List<DATA>
+pub(crate) struct List<DATA>
 where
     DATA: OutputType,
 {
@@ -21,7 +21,7 @@ impl<DATA> List<DATA>
 where
     DATA: OutputType,
 {
-    pub fn new(data: Vec<DATA>, total: i64) -> Self {
+    pub(crate) fn new(data: Vec<DATA>, total: i64) -> Self {
         Self { data, total }
     }
 }

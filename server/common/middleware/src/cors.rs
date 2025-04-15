@@ -6,8 +6,7 @@ use nom::{
     branch::alt,
     bytes::complete::{tag, take_till},
     combinator::{all_consuming, complete, map, opt, verify},
-    sequence::tuple,
-    IResult,
+    IResult, Parser,
 };
 use tower_http::cors::{AllowOrigin, CorsLayer};
 
@@ -30,13 +29,14 @@ fn arrow_origin(origin: &HeaderValue) -> bool {
 }
 
 fn inner_origin(origin: &str) -> IResult<&str, ()> {
-    let (input, _) = complete(tuple((
+    let (input, _) = complete((
         tag("http"),
         opt(tag("s")),
         tag("://"),
         inner_host,
         inner_port,
-    )))(origin)?;
+    ))
+    .parse(origin)?;
     Ok((input, ()))
 }
 
@@ -47,17 +47,19 @@ fn inner_host(host: &str) -> IResult<&str, ()> {
             verify(take_till(|x| x == ':'), |s: &str| s.ends_with("sushao.top")),
             |_| (),
         ),
-    )))(host)?;
+    )))
+    .parse(host)?;
     Ok((input, ()))
 }
 
 fn inner_port(port: &str) -> IResult<&str, ()> {
-    let (input, _) = all_consuming(opt(tuple((
+    let (input, _) = all_consuming(opt((
         tag(":"),
         verify(nom::character::complete::i32, |port| {
             (&1..=&65535).contains(&port)
         }),
-    ))))(port)?;
+    )))
+    .parse(port)?;
     Ok((input, ()))
 }
 

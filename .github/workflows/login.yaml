@@ -6,9 +6,9 @@ on:
     paths:
       - docker/server/login.Dockerfile
       - server/packages/login/**
-      - server/common/proto/**
+      - server/common/thrift/**
       - server/common/middleware/**
-      - server/.cargo/**
+      - .cargo/**
       - .github/workflows/login.yaml
 
 jobs:

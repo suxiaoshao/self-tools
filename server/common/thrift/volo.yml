@@ -1,0 +1,8 @@
+entries:
+  default:
+    protocol: thrift
+    filename: volo_gen.rs
+    services:
+      - idl:
+          source: local
+          path: ./idl/auth.thrift

@@ -1,24 +1,32 @@
+/*
+ * @Author: suxiaoshao suxiaoshao@gmail.com
+ * @Date: 2024-01-06 01:30:13
+ * @LastEditors: suxiaoshao suxiaoshao@gmail.com
+ * @LastEditTime: 2024-03-23 22:00:42
+ * @FilePath: /self-tools/server/packages/bookmarks/src/model/mod.rs
+ */
 use std::env;
-pub mod schema;
+pub(crate) mod schema;
 use diesel::{
     r2d2::{ConnectionManager, Pool},
     PgConnection,
 };
-use once_cell::sync::Lazy;
 
-pub mod author;
-pub mod chapter;
-pub mod collection;
-pub mod novel;
-pub mod tag;
+use crate::errors::GraphqlResult;
 
-type PgPool = Pool<ConnectionManager<PgConnection>>;
-pub static CONNECTION: Lazy<PgPool> = Lazy::new(|| {
-    let database_url = env::var("BOOKMARKS_PG").expect("DATABASE_URL must be set");
+pub(crate) mod author;
+pub(crate) mod chapter;
+pub(crate) mod collection;
+pub(crate) mod collection_novel;
+pub(crate) mod novel;
+pub(crate) mod tag;
+
+pub(crate) type PgPool = Pool<ConnectionManager<PgConnection>>;
+
+pub(crate) fn get_pool() -> GraphqlResult<PgPool> {
+    let database_url = env::var("BOOKMARKS_PG")?;
     let manager = ConnectionManager::<PgConnection>::new(database_url);
 
-    Pool::builder()
-        .test_on_check_out(true)
-        .build(manager)
-        .expect("Failed to create pool.")
-});
+    let pool = Pool::builder().test_on_check_out(true).build(manager)?;
+    Ok(pool)
+}

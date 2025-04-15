@@ -2,6 +2,6 @@ import { useSearchParams } from 'react-router-dom';
 
 export default function useParentId() {
   const [urlSearch] = useSearchParams();
-  const parentId = parseInt(urlSearch.get('parentId') ?? '') || null;
+  const parentId = Number.parseInt(urlSearch.get('parentId') ?? '', 10) || null;
   return parentId;
 }

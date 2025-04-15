@@ -7,8 +7,8 @@ on:
       - docker/server/collections.Dockerfile
       - server/packages/collections/**
       - server/common/middleware/**
-      - server/common/proto/**
-      - server/.cargo/**
+      - server/common/thrift/**
+      - .cargo/**
       - .github/workflows/collections.yaml
 
 jobs:

@@ -1,12 +1,23 @@
+/*
+ * @Author: suxiaoshao suxiaoshao@gmail.com
+ * @Date: 2024-01-06 01:30:13
+ * @LastEditors: suxiaoshao suxiaoshao@gmail.com
+ * @LastEditTime: 2024-01-26 06:08:36
+ * @FilePath: /self-tools/server/packages/collections/src/main.rs
+ * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
+ */
+mod common;
 mod errors;
 mod graphql;
 mod model;
 mod router;
 mod service;
 
-use axum::Server;
+use std::net::SocketAddr;
+
 use middleware::{get_cors, trace_layer};
 use router::get_router;
+use tokio::net::TcpListener;
 use tracing::{event, metadata::LevelFilter, Level};
 use tracing_subscriber::{
     fmt, prelude::__tracing_subscriber_SubscriberExt, util::SubscriberInitExt, Layer,
@@ -23,7 +34,8 @@ async fn main() -> anyhow::Result<()> {
 
     let addr = "0.0.0.0:8080";
     event!(Level::INFO, addr, "server start");
-    let addr = addr.parse()?;
-    Server::bind(&addr).serve(app.into_make_service()).await?;
+    let addr: SocketAddr = addr.parse()?;
+    let listener = TcpListener::bind(addr).await?;
+    axum::serve(listener, app).await?;
     Ok(())
 }

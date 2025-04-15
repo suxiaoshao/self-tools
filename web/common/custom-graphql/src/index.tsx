@@ -1,7 +1,14 @@
-import { ApolloClient, createHttpLink, DefaultOptions, from, InMemoryCache } from '@apollo/client';
+/*
+ * @Author: suxiaoshao suxiaoshao@gmail.com
+ * @Date: 2024-01-06 01:30:13
+ * @LastEditors: suxiaoshao suxiaoshao@gmail.com
+ * @LastEditTime: 2024-09-19 03:09:40
+ * @FilePath: /self-tools/web/common/custom-graphql/src/index.tsx
+ */
+import { ApolloClient, createHttpLink, type DefaultOptions, from, InMemoryCache } from '@apollo/client';
+import { setContext } from '@apollo/client/link/context';
 import { onError } from '@apollo/client/link/error';
 import { enqueueSnackbar } from 'notify';
-import { setContext } from '@apollo/client/link/context';
 
 const getHttpLink = (url: string) =>
   createHttpLink({
@@ -14,12 +21,14 @@ const errorLink = onError(({ graphQLErrors, networkError }) => {
   if (graphQLErrors) {
     graphQLErrors.forEach(({ message, locations, path, extensions }) => {
       enqueueSnackbar(message);
+      // eslint-disable-next-line no-console
       console.log(`[GraphQL error]: Message: ${message}, Location: ${locations}, Path: ${path}
-source: ${extensions['source']}`);
+source: ${extensions?.['source']}`);
     });
   }
   if (networkError) {
     enqueueSnackbar(`网络错误:${networkError.message}`);
+    // eslint-disable-next-line no-console
     console.log(`[Network error]: ${networkError}`);
   }
 });
@@ -51,4 +60,5 @@ export const getClient = (url: string) =>
     link: from([errorLink, authLink, getHttpLink(url)]),
     cache: new InMemoryCache(),
     defaultOptions,
+    connectToDevTools: process.env.NODE_ENV === 'development',
   });

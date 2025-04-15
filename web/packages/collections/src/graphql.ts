@@ -5,14 +5,16 @@ export type InputMaybe<T> = Maybe<T>;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
 export type MakeOptional<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]?: Maybe<T[SubKey]> };
 export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]: Maybe<T[SubKey]> };
+export type MakeEmpty<T extends { [key: string]: unknown }, K extends keyof T> = { [_ in K]?: never };
+export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
 const defaultOptions = {} as const;
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
-  ID: string;
-  String: string;
-  Boolean: boolean;
-  Int: number;
-  Float: number;
+  ID: { input: string; output: string };
+  String: { input: string; output: string };
+  Boolean: { input: boolean; output: boolean };
+  Int: { input: number; output: number };
+  Float: { input: number; output: number };
   /**
    * A datetime with timezone offset.
    *
@@ -21,30 +23,37 @@ export type Scalars = {
    * format, but it is always normalized to the UTC (Z) offset, e.g.
    * "2022-01-12T04:00:19.12345Z".
    */
-  DateTime: string;
+  DateTime: { input: string; output: string };
 };
 
 export type Collection = {
   __typename?: 'Collection';
   /** 获取祖先列表 */
   ancestors: Array<Collection>;
-  createTime: Scalars['DateTime'];
-  description?: Maybe<Scalars['String']>;
-  id: Scalars['Int'];
-  name: Scalars['String'];
-  parentId?: Maybe<Scalars['Int']>;
-  path: Scalars['String'];
-  updateTime: Scalars['DateTime'];
+  createTime: Scalars['DateTime']['output'];
+  description?: Maybe<Scalars['String']['output']>;
+  id: Scalars['Int']['output'];
+  name: Scalars['String']['output'];
+  parentId?: Maybe<Scalars['Int']['output']>;
+  path: Scalars['String']['output'];
+  updateTime: Scalars['DateTime']['output'];
+};
+
+export type CollectionItemQuery = {
+  createTime?: InputMaybe<TimeRange>;
+  id?: InputMaybe<Scalars['Int']['input']>;
+  pagination: Pagination;
+  updateTime?: InputMaybe<TimeRange>;
 };
 
 export type Item = {
   __typename?: 'Item';
   collection?: Maybe<Collection>;
-  content: Scalars['String'];
-  createTime: Scalars['DateTime'];
-  id: Scalars['Int'];
-  name: Scalars['String'];
-  updateTime: Scalars['DateTime'];
+  content: Scalars['String']['output'];
+  createTime: Scalars['DateTime']['output'];
+  id: Scalars['Int']['output'];
+  name: Scalars['String']['output'];
+  updateTime: Scalars['DateTime']['output'];
 };
 
 export type ItemAndCollection = Collection | Item;
@@ -52,7 +61,7 @@ export type ItemAndCollection = Collection | Item;
 export type List = {
   __typename?: 'List';
   data: Array<ItemAndCollection>;
-  total: Scalars['Int'];
+  total: Scalars['Int']['output'];
 };
 
 export type MutationRoot = {
@@ -72,40 +81,40 @@ export type MutationRoot = {
 };
 
 export type MutationRootCreateCollectionArgs = {
-  description?: InputMaybe<Scalars['String']>;
-  name: Scalars['String'];
-  parentId?: InputMaybe<Scalars['Int']>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  name: Scalars['String']['input'];
+  parentId?: InputMaybe<Scalars['Int']['input']>;
 };
 
 export type MutationRootCreateItemArgs = {
-  collectionId: Scalars['Int'];
-  content: Scalars['String'];
-  name: Scalars['String'];
+  collectionId: Scalars['Int']['input'];
+  content: Scalars['String']['input'];
+  name: Scalars['String']['input'];
 };
 
 export type MutationRootDeleteCollectionArgs = {
-  id: Scalars['Int'];
+  id: Scalars['Int']['input'];
 };
 
 export type MutationRootDeleteItemArgs = {
-  id: Scalars['Int'];
+  id: Scalars['Int']['input'];
 };
 
 export type MutationRootUpdateCollectionArgs = {
-  description?: InputMaybe<Scalars['String']>;
-  id: Scalars['Int'];
-  name: Scalars['String'];
+  description?: InputMaybe<Scalars['String']['input']>;
+  id: Scalars['Int']['input'];
+  name: Scalars['String']['input'];
 };
 
 export type MutationRootUpdateItemArgs = {
-  content: Scalars['String'];
-  id: Scalars['Int'];
-  name: Scalars['String'];
+  content: Scalars['String']['input'];
+  id: Scalars['Int']['input'];
+  name: Scalars['String']['input'];
 };
 
 export type Pagination = {
-  page: Scalars['Int'];
-  pageSize: Scalars['Int'];
+  page: Scalars['Int']['input'];
+  pageSize: Scalars['Int']['input'];
 };
 
 export type QueryRoot = {
@@ -119,21 +128,24 @@ export type QueryRoot = {
 };
 
 export type QueryRootCollectionAndItemArgs = {
-  id?: InputMaybe<Scalars['Int']>;
-  pagination: Pagination;
+  query: CollectionItemQuery;
 };
 
 export type QueryRootGetCollectionArgs = {
-  id: Scalars['Int'];
+  id: Scalars['Int']['input'];
 };
 
 export type QueryRootGetItemArgs = {
-  id: Scalars['Int'];
+  id: Scalars['Int']['input'];
+};
+
+export type TimeRange = {
+  end: Scalars['DateTime']['input'];
+  start: Scalars['DateTime']['input'];
 };
 
 export type CollectionAndItemsQueryVariables = Exact<{
-  id?: InputMaybe<Scalars['Int']>;
-  pagination: Pagination;
+  query: CollectionItemQuery;
 }>;
 
 export type CollectionAndItemsQuery = {
@@ -157,7 +169,7 @@ export type CollectionAndItemsQuery = {
 };
 
 export type DeleteCollectionMutationVariables = Exact<{
-  id: Scalars['Int'];
+  id: Scalars['Int']['input'];
 }>;
 
 export type DeleteCollectionMutation = {
@@ -166,9 +178,9 @@ export type DeleteCollectionMutation = {
 };
 
 export type CreateCollectionMutationVariables = Exact<{
-  parentId?: InputMaybe<Scalars['Int']>;
-  name: Scalars['String'];
-  description?: InputMaybe<Scalars['String']>;
+  parentId?: InputMaybe<Scalars['Int']['input']>;
+  name: Scalars['String']['input'];
+  description?: InputMaybe<Scalars['String']['input']>;
 }>;
 
 export type CreateCollectionMutation = {
@@ -177,7 +189,7 @@ export type CreateCollectionMutation = {
 };
 
 export type GetCollectionAncestorsQueryVariables = Exact<{
-  id: Scalars['Int'];
+  id: Scalars['Int']['input'];
 }>;
 
 export type GetCollectionAncestorsQuery = {
@@ -191,9 +203,9 @@ export type GetCollectionAncestorsQuery = {
 };
 
 export type UpdateCollectionMutationVariables = Exact<{
-  id: Scalars['Int'];
-  name: Scalars['String'];
-  description?: InputMaybe<Scalars['String']>;
+  id: Scalars['Int']['input'];
+  name: Scalars['String']['input'];
+  description?: InputMaybe<Scalars['String']['input']>;
 }>;
 
 export type UpdateCollectionMutation = {
@@ -202,29 +214,29 @@ export type UpdateCollectionMutation = {
 };
 
 export type DeleteItemMutationVariables = Exact<{
-  id: Scalars['Int'];
+  id: Scalars['Int']['input'];
 }>;
 
 export type DeleteItemMutation = { __typename?: 'MutationRoot'; deleteItem: { __typename?: 'Item'; name: string } };
 
 export type CreateItemMutationVariables = Exact<{
-  collectionId: Scalars['Int'];
-  name: Scalars['String'];
-  content: Scalars['String'];
+  collectionId: Scalars['Int']['input'];
+  name: Scalars['String']['input'];
+  content: Scalars['String']['input'];
 }>;
 
 export type CreateItemMutation = { __typename?: 'MutationRoot'; createItem: { __typename?: 'Item'; name: string } };
 
 export type UpdateItemMutationVariables = Exact<{
-  id: Scalars['Int'];
-  name: Scalars['String'];
-  content: Scalars['String'];
+  id: Scalars['Int']['input'];
+  name: Scalars['String']['input'];
+  content: Scalars['String']['input'];
 }>;
 
 export type UpdateItemMutation = { __typename?: 'MutationRoot'; updateItem: { __typename?: 'Item'; name: string } };
 
 export type GetEditItemQueryVariables = Exact<{
-  id: Scalars['Int'];
+  id: Scalars['Int']['input'];
 }>;
 
 export type GetEditItemQuery = {
@@ -233,8 +245,8 @@ export type GetEditItemQuery = {
 };
 
 export const CollectionAndItemsDocument = gql`
-  query collectionAndItems($id: Int, $pagination: Pagination!) {
-    collectionAndItem(id: $id, pagination: $pagination) {
+  query collectionAndItems($query: CollectionItemQuery!) {
+    collectionAndItem(query: $query) {
       data {
         ... on Collection {
           name
@@ -270,8 +282,7 @@ export const CollectionAndItemsDocument = gql`
  * @example
  * const { data, loading, error } = useCollectionAndItemsQuery({
  *   variables: {
- *      id: // value for 'id'
- *      pagination: // value for 'pagination'
+ *      query: // value for 'query'
  *   },
  * });
  */
@@ -293,8 +304,18 @@ export function useCollectionAndItemsLazyQuery(
     options,
   );
 }
+export function useCollectionAndItemsSuspenseQuery(
+  baseOptions?: Apollo.SuspenseQueryHookOptions<CollectionAndItemsQuery, CollectionAndItemsQueryVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useSuspenseQuery<CollectionAndItemsQuery, CollectionAndItemsQueryVariables>(
+    CollectionAndItemsDocument,
+    options,
+  );
+}
 export type CollectionAndItemsQueryHookResult = ReturnType<typeof useCollectionAndItemsQuery>;
 export type CollectionAndItemsLazyQueryHookResult = ReturnType<typeof useCollectionAndItemsLazyQuery>;
+export type CollectionAndItemsSuspenseQueryHookResult = ReturnType<typeof useCollectionAndItemsSuspenseQuery>;
 export type CollectionAndItemsQueryResult = Apollo.QueryResult<
   CollectionAndItemsQuery,
   CollectionAndItemsQueryVariables
@@ -436,8 +457,18 @@ export function useGetCollectionAncestorsLazyQuery(
     options,
   );
 }
+export function useGetCollectionAncestorsSuspenseQuery(
+  baseOptions?: Apollo.SuspenseQueryHookOptions<GetCollectionAncestorsQuery, GetCollectionAncestorsQueryVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useSuspenseQuery<GetCollectionAncestorsQuery, GetCollectionAncestorsQueryVariables>(
+    GetCollectionAncestorsDocument,
+    options,
+  );
+}
 export type GetCollectionAncestorsQueryHookResult = ReturnType<typeof useGetCollectionAncestorsQuery>;
 export type GetCollectionAncestorsLazyQueryHookResult = ReturnType<typeof useGetCollectionAncestorsLazyQuery>;
+export type GetCollectionAncestorsSuspenseQueryHookResult = ReturnType<typeof useGetCollectionAncestorsSuspenseQuery>;
 export type GetCollectionAncestorsQueryResult = Apollo.QueryResult<
   GetCollectionAncestorsQuery,
   GetCollectionAncestorsQueryVariables
@@ -632,6 +663,13 @@ export function useGetEditItemLazyQuery(
   const options = { ...defaultOptions, ...baseOptions };
   return Apollo.useLazyQuery<GetEditItemQuery, GetEditItemQueryVariables>(GetEditItemDocument, options);
 }
+export function useGetEditItemSuspenseQuery(
+  baseOptions?: Apollo.SuspenseQueryHookOptions<GetEditItemQuery, GetEditItemQueryVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useSuspenseQuery<GetEditItemQuery, GetEditItemQueryVariables>(GetEditItemDocument, options);
+}
 export type GetEditItemQueryHookResult = ReturnType<typeof useGetEditItemQuery>;
 export type GetEditItemLazyQueryHookResult = ReturnType<typeof useGetEditItemLazyQuery>;
+export type GetEditItemSuspenseQueryHookResult = ReturnType<typeof useGetEditItemSuspenseQuery>;
 export type GetEditItemQueryResult = Apollo.QueryResult<GetEditItemQuery, GetEditItemQueryVariables>;

@@ -8,5 +8,5 @@ RUN pnpm install \
 
 FROM nginx:stable as prod
 COPY ./docker/web/nginx.conf /etc/nginx/nginx.conf
-COPY --from=builder ./app/web/packages/bookmarks/dist /app/bookmarks
+COPY --from=builder ./app/web/packages/portal/dist /app/portal
 EXPOSE 80

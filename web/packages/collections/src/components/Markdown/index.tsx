@@ -1,10 +1,10 @@
-import React, { useEffect } from 'react';
-import MarkdownSource, { MarkdownToJSX } from 'markdown-to-jsx';
+import { type JSX, useEffect } from 'react';
+import MarkdownSource, { type MarkdownToJSX } from 'markdown-to-jsx';
 import Prism from 'prismjs';
 import './init';
 import {
   Divider,
-  TypographyProps,
+  type TypographyProps,
   Typography,
   TableContainer,
   Paper,
@@ -15,19 +15,18 @@ import {
   TableCell,
   Link,
   Box,
-  BoxProps,
-  SxProps,
-  Theme,
+  type BoxProps,
+  type SxProps,
+  type Theme,
 } from '@mui/material';
-import { hexFromArgb, selectActiveYouTheme } from 'theme';
-import { useAppSelector } from '../../app/hooks';
+import { match, P } from 'ts-pattern';
 
 export interface MarkdownProps extends BoxProps {
   value: string;
 }
 
 function CustomImage(props: React.ImgHTMLAttributes<HTMLImageElement>) {
-  return <Box component={'img'} {...props} />;
+  return <Box component="img" {...props} />;
 }
 
 function CustomLink(props: { title: string; href: string; children: string }) {
@@ -39,11 +38,14 @@ function CustomLink(props: { title: string; href: string; children: string }) {
 }
 
 function CustomHead(props: TypographyProps) {
+  const marginTop = match(props.variant)
+    .with('h2', () => 30)
+    .otherwise(() => 10);
   return (
     <>
       <Typography
         sx={{
-          margin: `${props.variant !== 'h2' ? '30px' : '10px'} 0 0 10px`,
+          margin: `${marginTop}px 0 0 10px`,
         }}
         id={String(props.children)}
         variant={props.variant}
@@ -60,37 +62,36 @@ function CustomHead(props: TypographyProps) {
 }
 
 function MyCode(props: { children: string; className?: string }) {
-  if (props.className !== undefined) {
+  if (props.className) {
     return <code className={props.className}>{props.children}</code>;
-  } else {
-    return (
-      <Box
-        component={'span'}
-        sx={({
-          palette: {
-            secondary: { main, contrastText },
-          },
-        }) => ({
-          borderRadius: 2,
-          p: 0.3,
-          pl: 0.5,
-          pr: 0.5,
-          m: 0.3,
-          mr: 0.5,
-          ml: 0.5,
-          minWidth: 20,
-          fontSize: 17,
-          background: main,
-          color: contrastText,
-          display: 'inline-flex',
-          justifyContent: 'center',
-        })}
-        className="code-inline"
-      >
-        {props.children}
-      </Box>
-    );
   }
+  return (
+    <Box
+      component="span"
+      sx={({
+        palette: {
+          secondary: { main, contrastText },
+        },
+      }) => ({
+        borderRadius: 2,
+        p: 0.3,
+        pl: 0.5,
+        pr: 0.5,
+        m: 0.3,
+        mr: 0.5,
+        ml: 0.5,
+        minWidth: 20,
+        fontSize: 17,
+        background: main,
+        color: contrastText,
+        display: 'inline-flex',
+        justifyContent: 'center',
+      })}
+      className="code-inline"
+    >
+      {props.children}
+    </Box>
+  );
 }
 
 function MyPre(props: { children: string }) {
@@ -104,23 +105,23 @@ function MyPre(props: { children: string }) {
 function MyListItem(props: { children: JSX.Element[] }) {
   return (
     <li>
-      {props.children.map((value) => {
-        return typeof value === 'string' ? (
-          <Typography
-            variant="body1"
-            component="span"
-            sx={{
-              margin: '6px 0 6px 0',
-              display: 'inline-block',
-            }}
-            key={value}
-          >
-            {value}
-          </Typography>
-        ) : (
-          value
-        );
-      })}
+      {props.children.map((value) =>
+        match(value)
+          .with(P.string, (value) => (
+            <Typography
+              variant="body1"
+              component="span"
+              sx={{
+                margin: '6px 0 6px 0',
+                display: 'inline-block',
+              }}
+              key={value.toString()}
+            >
+              {value}
+            </Typography>
+          ))
+          .otherwise((value) => value),
+      )}
     </li>
   );
 }
@@ -140,7 +141,6 @@ function MyTable(props: { children: JSX.Element }) {
 }
 
 function MyBlockquote(props: { children: JSX.Element }) {
-  const youTheme = useAppSelector(selectActiveYouTheme);
   return (
     <Box
       sx={{
@@ -148,8 +148,8 @@ function MyBlockquote(props: { children: JSX.Element }) {
         mb: 2,
         p: 1,
         borderRadius: 2,
-        background: hexFromArgb(youTheme.onTertiary),
-        color: hexFromArgb(youTheme.tertiary),
+        background: 'var(--you-on-tertiary)',
+        color: 'var(--you-tertiary)',
       }}
     >
       {props.children}
@@ -208,7 +208,7 @@ const option: MarkdownToJSX.Options = {
     blockquote: MyBlockquote,
   },
 };
-export default function MyMarkdown({ value, ...props }: MarkdownProps): JSX.Element {
+export default function MyMarkdown({ value, ...props }: MarkdownProps) {
   useEffect(() => {
     Prism.highlightAll();
   }, []);
