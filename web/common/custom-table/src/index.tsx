@@ -9,8 +9,8 @@ import {
   type TableContainerProps,
   TablePagination,
   TableFooter,
+  TablePaginationActions,
 } from '@mui/material';
-import TablePaginationActions from '@mui/material/TablePagination/TablePaginationActions';
 import { type Table as TableType, flexRender } from '@tanstack/react-table';
 import type { CustomColumnDef } from './useCustomTable';
 import type { PageWithTotal } from './usePage';

@@ -146,8 +146,8 @@ export { default as AuthDrawerItem } from './AuthDrawerItem';
 
 function stringToUint8Array(str: string) {
   const arr = [];
-  for (let i = 0, j = str.length; i < j; ++i) {
-    arr.push(str.charCodeAt(i));
+  for (let i = 0, j = str.length; i < j; i += 1) {
+    arr.push(str.codePointAt(i) ?? 0);
   }
 
   const tmpUint8Array = new Uint8Array(arr);
