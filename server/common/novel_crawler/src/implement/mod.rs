@@ -43,12 +43,12 @@ fn parse_attr(html: &Html, selector: &Selector, attr: &str) -> NovelResult<Strin
 
 fn parse_text(html: &Html, selector: &Selector) -> NovelResult<String> {
     let element_ref = html.select(selector).next().ok_or(NovelError::ParseError)?;
-    let text = element_ref.text().fold(String::new(), |mut acc, x| {
-        acc.push('\n');
-        acc.push_str(x.trim());
-        acc
-    });
-    Ok(text)
+    let text = element_ref
+        .text()
+        .map(|x| x.trim())
+        .collect::<Vec<_>>()
+        .join("\n");
+    Ok(text.trim().to_string())
 }
 
 fn parse_inner_html(html: &Html, selector: &Selector) -> NovelResult<String> {
