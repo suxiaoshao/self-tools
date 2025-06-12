@@ -7,35 +7,35 @@ edition = "2021"
 
 [dependencies]
 # runtime
-tokio = { version = "1.43.0", features = ["macros", "rt-multi-thread"] }
+tokio = { version = "1.45.1", features = ["macros", "rt-multi-thread"] }
 
 # graphql
-async-graphql = { version = "7.0.15", features = ["time", "bigdecimal"] }
-axum = { version = "0.8.1", features = ["query"] }
-async-graphql-axum = "7.0.15"
-serde_json = "1.0.138"
+async-graphql = { version = "7.0.17", features = ["time", "bigdecimal"] }
+axum = { version = "0.8.4", features = ["query"] }
+async-graphql-axum = "7.0.17"
+serde_json = "1.0.140"
 
 # fetch content
-serde = { version = "1.0.217", features = ["derive"] }
-reqwest = { version = "0.12.12", features = [
+serde = { version = "1.0.219", features = ["derive"] }
+reqwest = { version = "0.12.20", features = [
     "gzip",
     "rustls-tls",
     "stream",
 ], default-features = false }
 
 # database
-diesel = { version = "2.2.7", features = [
+diesel = { version = "2.2.10", features = [
     "postgres",
     "time",
     "r2d2",
     "numeric",
 ] }
-time = { version = "0.3.37" }
-bigdecimal = "0.4.7"
+time = { version = "0.3.41" }
+bigdecimal = "0.4.8"
 
 # error
-anyhow = "1.0.95"
-thiserror = "2.0.11"
+anyhow = "1.0.98"
+thiserror = "2.0.12"
 
 # cors
 middleware = { path = "../../common/middleware", features = [
@@ -50,7 +50,7 @@ tracing-subscriber = "0.3.19"
 
 # thrift
 thrift = { path = "../../common/thrift" }
-volo-thrift = "0.10.5"
+volo-thrift = "0.10.8"
 
 # novel
 novel_crawler = { path = "../../common/novel_crawler" }
