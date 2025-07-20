@@ -25,14 +25,14 @@ export async function login(data: LoginForm): Promise<HttpResponse<string>> {
         return { value: auth.message, tag: 'error' };
       }
       return { value: auth.data, tag: 'response' };
-    } catch (err) {
-      if (err instanceof Error) {
+    } catch (error) {
+      if (error instanceof Error) {
         return { tag: 'json' };
       }
       return { tag: 'unknown' };
     }
-  } catch (err) {
-    if (err instanceof Error) {
+  } catch (error) {
+    if (error instanceof Error) {
       return { tag: 'network' };
     }
     return { tag: 'unknown' };

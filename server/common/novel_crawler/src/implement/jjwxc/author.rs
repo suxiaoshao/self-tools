@@ -79,7 +79,7 @@ impl AuthorFn for JJAuthor {
         Ok(data)
     }
     fn get_url_from_id(id: &str) -> String {
-        format!("https://www.jjwxc.net/oneauthor.php?authorid={}", id)
+        format!("https://www.jjwxc.net/oneauthor.php?authorid={id}")
     }
     fn id(&self) -> &str {
         self.id.as_str()
@@ -118,8 +118,6 @@ mod test {
 
     #[tokio::test]
     async fn jj_author_test() -> anyhow::Result<()> {
-        let author = JJAuthor::get_author_data("1000001").await?;
-        println!("{author:#?}");
         let author = JJAuthor::get_author_data("809836").await?;
         println!("{author:#?}");
         Ok(())

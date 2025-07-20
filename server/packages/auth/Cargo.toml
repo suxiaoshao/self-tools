@@ -9,9 +9,9 @@ edition = "2021"
 
 # Thrift
 thrift = { path = "../../common/thrift" }
-volo = "0.10.7"
-volo-thrift = "0.10.8"
-tokio = { version = "1.45.1", features = ["full"] }
+volo = "0.11.0"
+volo-thrift = "0.11.1"
+tokio = { version = "1.46.1", features = ["full"] }
 
 # jwt
 jsonwebtoken = "9.3.1"

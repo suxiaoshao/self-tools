@@ -114,7 +114,7 @@ impl NovelFn for JJNovel {
         self.author_id.as_str()
     }
     fn get_url_from_id(id: &str) -> String {
-        format!("https://www.jjwxc.net/onebook.php?novelid={}", id)
+        format!("https://www.jjwxc.net/onebook.php?novelid={id}")
     }
     fn status(&self) -> NovelStatus {
         self.status

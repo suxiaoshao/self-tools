@@ -22,6 +22,6 @@ impl TagFn for JJTag {
     }
 
     fn get_url_from_id(id: &str) -> String {
-        format!("https://www.jjwxc.net/bookbase.php?bq={}", id)
+        format!("https://www.jjwxc.net/bookbase.php?bq={id}")
     }
 }

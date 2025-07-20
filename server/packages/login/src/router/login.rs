@@ -20,8 +20,8 @@ use tracing::{event, Level};
 use crate::errors::{response::OpenResponse, OpenResult};
 #[derive(Deserialize, Debug)]
 pub struct LoginInput {
-    username: String,
-    password: String,
+    pub(super) username: String,
+    pub(super) password: String,
 }
 pub(crate) async fn login(
     trace_id: Result<Extension<TraceIdExt>, ExtensionRejection>,

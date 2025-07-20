@@ -19,6 +19,7 @@ use std::convert::From;
 use thiserror::Error;
 use thrift::auth::{AuthError, ItemServiceLoginException};
 use tracing::{event, Level};
+use webauthn_rs::prelude::WebauthnError;
 
 use self::response::OpenErrorResponse;
 
@@ -47,6 +48,12 @@ pub enum OpenError {
     UsernameNotSet,
     #[error("thrift client 错误:{}",.0)]
     ClientError(#[from] &'static thrift::ClientError),
+    #[error("webauthn 错误:{}",.0)]
+    WebauthnError(String),
+    #[error("url parse:{}",.0)]
+    UrlParseError(&'static str),
+    #[error("Session 错误:{}",.0)]
+    SessionError(String),
 }
 
 impl From<InvalidHeaderValue> for OpenError {
@@ -85,6 +92,18 @@ impl From<ItemServiceLoginException> for OpenError {
             thrift::auth::AuthErrorCode::USERNAME_NOT_SET => Self::UsernameNotSet,
             _ => Self::UnknownError,
         }
+    }
+}
+
+impl From<WebauthnError> for OpenError {
+    fn from(value: WebauthnError) -> Self {
+        Self::WebauthnError(value.to_string())
+    }
+}
+
+impl From<tower_sessions::session::Error> for OpenError {
+    fn from(value: tower_sessions::session::Error) -> Self {
+        Self::SessionError(value.to_string())
     }
 }
 

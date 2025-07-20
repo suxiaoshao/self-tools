@@ -59,9 +59,6 @@ impl ChapterFn for JJChapter {
         self.word_count
     }
     fn get_url_from_id(chapter_id: &str, novel_id: &str) -> String {
-        format!(
-            "https://www.jjwxc.net/onebook.php?novelid={}&chapterid={}",
-            novel_id, chapter_id
-        )
+        format!("https://www.jjwxc.net/onebook.php?novelid={novel_id}&chapterid={chapter_id}")
     }
 }
