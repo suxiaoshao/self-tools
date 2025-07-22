@@ -92,9 +92,11 @@ impl WebauthnContainer {
 pub(super) fn get_webauthn() -> OpenResult<Webauthn> {
     let webauthn = WebauthnBuilder::new(
         "sushao.top",
-        &Url::parse("https://auth.sushao.top")
+        &Url::parse("https://sushao.top")
             .map_err(|_e| OpenError::UrlParseError("https://auth.sushao.top"))?,
     )?
+    .allow_any_port(true)
+    .allow_subdomains(true)
     .build()?;
     Ok(webauthn)
 }

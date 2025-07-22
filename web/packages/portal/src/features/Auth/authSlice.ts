@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import { enqueueSnackbar } from 'notify';
+import { login } from './service';
+import { match } from 'ts-pattern';
 
 export interface AuthSliceType {
   value: string | null;
@@ -26,21 +28,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     window.localStorage.removeItem('auth');
   },
   login: async (data: LoginForm) => {
-    const headers = new Headers({ 'Content-Type': 'application/json' });
-    const request = new Request('https://auth.sushao.top/api/login', {
-      mode: 'cors',
-      credentials: 'include',
-      method: 'POST',
-      body: JSON.stringify(data),
-      headers,
-    });
-    const response = await fetch(request);
-    const auth = await response.json();
-    if (auth.message) {
-      enqueueSnackbar(auth.message, { variant: 'error' });
-      return;
-    }
-    get().setAuth(auth.data);
+    const auth = await login(data);
+    match(auth)
+      .with({ tag: 'response' }, ({ value }) => {
+        get().setAuth(value);
+      })
+      .with({ tag: 'json' }, () => enqueueSnackbar('json error', { variant: 'error' }))
+      .with({ tag: 'error' }, ({ value }) => enqueueSnackbar(value, { variant: 'error' }))
+      .with({ tag: 'network' }, () => enqueueSnackbar('network error', { variant: 'error' }))
+      .with({ tag: 'unknown' }, () => enqueueSnackbar('unknown error', { variant: 'error' }));
   },
 }));
 

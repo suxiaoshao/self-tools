@@ -1,5 +1,6 @@
 import type { Enum } from 'types';
 import type { LoginForm } from './authSlice';
+import { match } from 'ts-pattern';
 
 export type HttpResponse<T> =
   | Enum<'network'>
@@ -8,13 +9,13 @@ export type HttpResponse<T> =
   | Enum<'json'>
   | Enum<'error', string>;
 
-export async function login(data: LoginForm): Promise<HttpResponse<string>> {
+async function fetchBase<Bod, Res>(url: string, body: Bod): Promise<HttpResponse<Res>> {
   const headers = new Headers({ 'Content-Type': 'application/json' });
-  const request = new Request('https://auth.sushao.top/api/login', {
+  const request = new Request(url, {
     mode: 'cors',
     credentials: 'include',
     method: 'POST',
-    body: JSON.stringify(data),
+    body: JSON.stringify(body),
     headers,
   });
   try {
@@ -24,7 +25,7 @@ export async function login(data: LoginForm): Promise<HttpResponse<string>> {
       if (auth.message) {
         return { value: auth.message, tag: 'error' };
       }
-      return { value: auth.data, tag: 'response' };
+      return { value: auth.data as Res, tag: 'response' } as HttpResponse<Res>;
     } catch (error) {
       if (error instanceof Error) {
         return { tag: 'json' };
@@ -37,4 +38,65 @@ export async function login(data: LoginForm): Promise<HttpResponse<string>> {
     }
     return { tag: 'unknown' };
   }
+}
+
+export async function login(data: LoginForm): Promise<HttpResponse<string>> {
+  return await fetchBase('https://auth.sushao.top/api/login', data);
+}
+
+export interface RegistrationRequest {
+  publicKey: Omit<PublicKeyCredentialCreationOptions, 'user' | 'challenge'> & {
+    challenge: string;
+    user: Omit<PublicKeyCredentialUserEntity, 'id'> & {
+      id: string;
+    };
+  };
+}
+export function base64UrlToUint8Array(base64Url: string): Uint8Array {
+  // 1. 补齐“=”到 4 的倍数
+  const padLength = (4 - (base64Url.length % 4)) % 4;
+  const padded = base64Url + '='.repeat(padLength);
+
+  // 2. 恢复成标准 Base64
+  const b64 = padded.replaceAll('-', '+').replaceAll('_', '/');
+
+  // 3. 解码成 binary string
+  const binary = atob(b64);
+
+  // 4. 转成 Uint8Array
+  const len = binary.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i += 1) {
+    bytes[i] = binary.codePointAt(i) ?? 0;
+  }
+  return bytes;
+}
+
+export async function startRegister(data: LoginForm): Promise<HttpResponse<CredentialCreationOptions>> {
+  const response = await fetchBase<LoginForm, RegistrationRequest>('https://auth.sushao.top/api/start-register', data);
+  return match(response)
+    .with(
+      { tag: 'response' },
+      ({ value }) =>
+        ({
+          tag: 'response',
+          value: {
+            publicKey: {
+              ...value.publicKey,
+              user: {
+                id: base64UrlToUint8Array(value.publicKey.user.id),
+                name: value.publicKey.user.name,
+                displayName: value.publicKey.user.displayName,
+              },
+              challenge: base64UrlToUint8Array(value.publicKey.challenge),
+            },
+          } satisfies CredentialCreationOptions,
+        }) satisfies HttpResponse<CredentialCreationOptions>,
+    )
+    .otherwise((value) => value);
+}
+
+export async function finishRegister(data: Credential): Promise<HttpResponse<unknown>> {
+  const response = await fetchBase<Credential, unknown>('https://auth.sushao.top/api/finish-register', data);
+  return response;
 }

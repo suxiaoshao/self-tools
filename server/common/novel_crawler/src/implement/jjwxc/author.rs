@@ -118,6 +118,8 @@ mod test {
 
     #[tokio::test]
     async fn jj_author_test() -> anyhow::Result<()> {
+        let author = JJAuthor::get_author_data("1000001").await?;
+        println!("{author:#?}");
         let author = JJAuthor::get_author_data("809836").await?;
         println!("{author:#?}");
         Ok(())
