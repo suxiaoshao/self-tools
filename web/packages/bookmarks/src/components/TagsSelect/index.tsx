@@ -56,7 +56,9 @@ export default function TagsSelect({ value, onChange, onBlur, sx, ...props }: Ta
         input={<OutlinedInput label={t('tags')} />}
         renderValue={(selected) => (
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-            {selected?.map((value) => <Chip key={value} label={queryTags?.find(({ id }) => id === value)?.name} />)}
+            {selected?.map((value) => (
+              <Chip key={value} label={queryTags?.find(({ id }) => id === value)?.name} />
+            ))}
           </Box>
         )}
         MenuProps={MenuProps}

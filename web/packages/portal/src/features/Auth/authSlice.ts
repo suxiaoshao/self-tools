@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { enqueueSnackbar } from 'notify';
+import { login, responseThen } from './service';
 
 export interface AuthSliceType {
   value: string | null;
@@ -26,21 +26,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     window.localStorage.removeItem('auth');
   },
   login: async (data: LoginForm) => {
-    const headers = new Headers({ 'Content-Type': 'application/json' });
-    const request = new Request('https://auth.sushao.top/api/login', {
-      mode: 'cors',
-      credentials: 'include',
-      method: 'POST',
-      body: JSON.stringify(data),
-      headers,
+    const auth = await login(data);
+    responseThen(auth, (value) => {
+      get().setAuth(value);
     });
-    const response = await fetch(request);
-    const auth = await response.json();
-    if (auth.message) {
-      enqueueSnackbar(auth.message, { variant: 'error' });
-      return;
-    }
-    get().setAuth(auth.data);
   },
 }));
 

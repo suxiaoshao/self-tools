@@ -9,7 +9,7 @@
 import { Home } from '@mui/icons-material';
 import { Box, Divider, List, Paper } from '@mui/material';
 import { Outlet } from 'react-router-dom';
-import RouterItem from './RouterItem';
+import RouterItems from './RouterItem';
 import { I18nDrawerItem, useI18n } from 'i18n';
 import DrawerMenu from '../../features/Menu';
 import { AuthDrawerItem } from '../../features/Auth';
@@ -29,7 +29,7 @@ export default function AppDrawer() {
         square
       >
         <List sx={{ width }}>
-          <RouterItem text={t('home')} icon={<Home />} matchPaths={['/']} toPath="/" />
+          <RouterItems text={t('home')} icon={<Home />} matchPaths={['/']} toPath="/" />
           <DrawerMenu />
         </List>
         <Divider />

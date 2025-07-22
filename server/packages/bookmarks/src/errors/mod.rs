@@ -79,7 +79,7 @@ impl GraphqlError {
             GraphqlError::ReqwestError(err) => format!("reqwest error:{err}"),
             GraphqlError::VarError(err) => format!("env error:{err}"),
             GraphqlError::NotGraphqlContextData(tag) => {
-                format!("graphql context data:{}不存在", tag)
+                format!("graphql context data:{tag}不存在")
             }
             GraphqlError::SavaDraftError(tag) => format!("保存草稿错误:{tag}"),
             GraphqlError::NovelTimeParseError(tag) => format!("小说时间解析错误:{tag}"),

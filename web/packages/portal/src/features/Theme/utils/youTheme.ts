@@ -1,7 +1,10 @@
 import { hexFromArgb, type Scheme } from '@material/material-color-utilities';
 import type { ThemeOptions } from '@mui/material';
 
-export function youThemeToMuiTheme(theme: ReturnType<Scheme['toJSON']>, mode: 'dark' | 'light' = 'light') {
+export function youThemeToMuiTheme(
+  theme: ReturnType<Scheme['toJSON']>,
+  mode: 'dark' | 'light' = 'light',
+): ThemeOptions {
   return {
     palette: {
       mode,
@@ -33,6 +36,15 @@ export function youThemeToMuiTheme(theme: ReturnType<Scheme['toJSON']>, mode: 'd
         primary: hexFromArgb(theme.onBackground),
         secondary: hexFromArgb(theme.onSurface),
         disabled: hexFromArgb(theme.onSurfaceVariant),
+      },
+    },
+    components: {
+      MuiButton: {
+        styleOverrides: {
+          root: {
+            textTransform: 'none',
+          },
+        },
       },
     },
   } satisfies ThemeOptions;

@@ -8,20 +8,23 @@
 import { Avatar, Box, Button, Container, TextField, Typography } from '@mui/material';
 import { type SubmitHandler, useForm } from 'react-hook-form';
 import { LockOutlined } from '@mui/icons-material';
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { type LoginForm, useAuthStore } from './authSlice';
 import { useI18n } from 'i18n';
 import { useShallow } from 'zustand/react/shallow';
+import { finishAuthentication, finishRegister, responseThen, startAuthentication, startRegister } from './service';
+import { enqueueSnackbar } from 'notify';
 
 export { default as useLogin } from './useLogin';
 
 export default function Login() {
-  const { register, handleSubmit } = useForm<LoginForm>();
-  const { login, auth } = useAuthStore(
-    useShallow(({ login, value }) => ({
+  const { register, handleSubmit, getValues } = useForm<LoginForm>();
+  const { login, auth, setAuth } = useAuthStore(
+    useShallow(({ login, value, setAuth }) => ({
       login,
       auth: value,
+      setAuth,
     })),
   );
   /** 跳转 */
@@ -41,6 +44,32 @@ export default function Login() {
     login(data);
   };
   const t = useI18n();
+  const onClickWebauthn = useCallback(async (data: LoginForm) => {
+    const callenge = await startRegister(data);
+    responseThen(callenge, async (value) => {
+      const res = await navigator.credentials.create(value);
+      if (res) {
+        const auth = await finishRegister(res);
+        responseThen(auth, setAuth);
+        await navigator.credentials.store(res);
+      } else {
+        enqueueSnackbar('webauthn error', { variant: 'error' });
+      }
+    });
+  }, []);
+  const onClickWebauthn2 = useCallback(async () => {
+    const username = getValues('username');
+    const options = await startAuthentication({ username });
+    responseThen(options, async (value) => {
+      const data = await navigator.credentials.get(value);
+      if (data) {
+        const auth = await finishAuthentication(data);
+        responseThen(auth, setAuth);
+      } else {
+        enqueueSnackbar('webauthn error', { variant: 'error' });
+      }
+    });
+  }, [getValues, setAuth]);
   return (
     <Box
       sx={{
@@ -86,8 +115,14 @@ export default function Login() {
               autoComplete="current-password"
               {...register('password', { required: true })}
             />
-            <Button type="submit" fullWidth variant="contained" sx={{ mt: 3, mb: 2 }}>
+            <Button type="submit" fullWidth variant="contained" sx={{ mt: 3 }} color="secondary">
               {t('login')}
+            </Button>
+            <Button fullWidth variant="contained" sx={{ mt: 3 }} onClick={handleSubmit(onClickWebauthn)}>
+              {t('login_and_register_webauthn')}
+            </Button>
+            <Button fullWidth variant="contained" sx={{ mt: 3 }} onClick={onClickWebauthn2}>
+              {t('login_with_webauthn')}
             </Button>
           </Box>
         </Box>

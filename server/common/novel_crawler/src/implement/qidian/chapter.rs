@@ -40,7 +40,7 @@ impl ChapterFn for QDChapter {
         self.word_count
     }
     fn get_url_from_id(chapter_id: &str, novel_id: &str) -> String {
-        format!("https://m.qidian.com/book/{}/{}.html", novel_id, chapter_id)
+        format!("https://m.qidian.com/book/{novel_id}/{chapter_id}.html")
     }
 }
 

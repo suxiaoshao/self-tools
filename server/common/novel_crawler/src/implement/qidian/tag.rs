@@ -21,6 +21,6 @@ impl TagFn for QDTag {
     }
 
     fn get_url_from_id(id: &str) -> String {
-        format!("https://www.qidian.com/all/tag{}/", id)
+        format!("https://www.qidian.com/all/tag{id}/")
     }
 }

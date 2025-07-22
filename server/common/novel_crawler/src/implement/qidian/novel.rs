@@ -9,7 +9,7 @@ use time::{
 
 use crate::{
     errors::NovelResult,
-    implement::{parse_image_src, parse_text, text_from_url},
+    implement::{parse_attr, text_from_url},
     novel::{NovelFn, NovelStatus},
     NovelError, QDAuthor,
 };
@@ -23,11 +23,11 @@ use nom::{
 use super::{chapter::QDChapter, tag::QDTag};
 
 static SELECTOR_NOVEL_NAME: LazyLock<Selector> =
-    LazyLock::new(|| Selector::parse("h1.header-back-title").unwrap());
+    LazyLock::new(|| Selector::parse("head > meta[property=\"og:novel:book_name\"]").unwrap());
 static SELECTOR_NOVEL_DESCRIPTION: LazyLock<Selector> =
-    LazyLock::new(|| Selector::parse("content.detail__summary__content").unwrap());
+    LazyLock::new(|| Selector::parse("head > meta[property=\"og:description\"]").unwrap());
 static SELECTOR_NOVEL_IMAGE: LazyLock<Selector> =
-    LazyLock::new(|| Selector::parse("img.detail__header-bg").unwrap());
+    LazyLock::new(|| Selector::parse("head > meta[property=\"og:image\"]").unwrap());
 static SELECTOR_NOVEL_CHAPTERS: LazyLock<Selector> =
     LazyLock::new(|| Selector::parse("#vite-plugin-ssr_pageContext").unwrap());
 static SELECTOR_AUTHOR: LazyLock<Selector> =
@@ -56,9 +56,9 @@ impl NovelFn for QDNovel {
     async fn get_novel_data(novel_id: &str) -> NovelResult<Self> {
         let (html, chapter_html) = Self::get_doc(novel_id).await?;
         let html = Html::parse_document(&html);
-        let name = parse_text(&html, &SELECTOR_NOVEL_NAME)?;
-        let description = parse_text(&html, &SELECTOR_NOVEL_DESCRIPTION)?;
-        let image = parse_image_src(&html, &SELECTOR_NOVEL_IMAGE)?;
+        let name = parse_attr(&html, &SELECTOR_NOVEL_NAME, "content")?;
+        let description = parse_attr(&html, &SELECTOR_NOVEL_DESCRIPTION, "content")?;
+        let image = parse_attr(&html, &SELECTOR_NOVEL_IMAGE, "content")?;
         let image = format!("https:{image}");
         let chapters: Vec<QDChapter> = parse_chapters(&chapter_html, novel_id)?;
         let status = parse_status(&html)?;
@@ -103,7 +103,7 @@ impl NovelFn for QDNovel {
         Ok(self.chapters.clone())
     }
     fn get_url_from_id(id: &str) -> String {
-        format!("https://m.qidian.com/book/{}.html", id)
+        format!("https://m.qidian.com/book/{id}.html")
     }
     fn status(&self) -> NovelStatus {
         self.status

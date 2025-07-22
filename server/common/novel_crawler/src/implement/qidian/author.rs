@@ -80,7 +80,7 @@ impl AuthorFn for QDAuthor {
         Ok(data)
     }
     fn get_url_from_id(id: &str) -> String {
-        format!("https://m.qidian.com/author/{}/", id)
+        format!("https://m.qidian.com/author/{id}/")
     }
     fn id(&self) -> &str {
         self.id.as_str()

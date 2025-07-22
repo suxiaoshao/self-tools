@@ -58,6 +58,8 @@
   "add_tag": "Add Tag",
   "create_tag": "Create Tag",
   "tag_name": "Tag Name",
+  "login_with_webauthn": "Login with WebAuthn",
+  "login_and_register_webauthn": "Login and Register with WebAuthn",
   "home": "Home",
   "bookmarks": "Bookmarks",
   "collections": "Collections",
