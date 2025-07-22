@@ -1,6 +1,7 @@
 import type { Enum } from 'types';
 import type { LoginForm } from './authSlice';
 import { match } from 'ts-pattern';
+import { enqueueSnackbar } from 'notify';
 
 export type HttpResponse<T> =
   | Enum<'network'>
@@ -8,6 +9,15 @@ export type HttpResponse<T> =
   | Enum<'unknown'>
   | Enum<'json'>
   | Enum<'error', string>;
+
+export function responseThen<T>(response: HttpResponse<T>, doThen: (data: T) => void): void {
+  match(response as HttpResponse<unknown>)
+    .with({ tag: 'response' }, ({ value }) => doThen(value as T))
+    .with({ tag: 'json' }, () => enqueueSnackbar('json error', { variant: 'error' }))
+    .with({ tag: 'error' }, ({ value }) => enqueueSnackbar(value, { variant: 'error' }))
+    .with({ tag: 'network' }, () => enqueueSnackbar('network error', { variant: 'error' }))
+    .with({ tag: 'unknown' }, () => enqueueSnackbar('unknown error', { variant: 'error' }));
+}
 
 async function fetchBase<Bod, Res>(url: string, body: Bod): Promise<HttpResponse<Res>> {
   const headers = new Headers({ 'Content-Type': 'application/json' });
@@ -96,7 +106,53 @@ export async function startRegister(data: LoginForm): Promise<HttpResponse<Crede
     .otherwise((value) => value);
 }
 
-export async function finishRegister(data: Credential): Promise<HttpResponse<unknown>> {
-  const response = await fetchBase<Credential, unknown>('https://auth.sushao.top/api/finish-register', data);
+export async function finishRegister(data: Credential): Promise<HttpResponse<string>> {
+  const response = await fetchBase<Credential, string>('https://auth.sushao.top/api/finish-register', data);
+  return response;
+}
+
+export interface StartAuthenticationRequest {
+  username: string;
+}
+
+interface StartAuthenticationResponse {
+  publicKey: Omit<PublicKeyCredentialRequestOptions, 'challenge' | 'allowCredentials'> & {
+    challenge: string;
+    allowCredentials: (Omit<PublicKeyCredentialDescriptor, 'id'> & {
+      id: string;
+    })[];
+  };
+}
+
+export async function startAuthentication(
+  data: StartAuthenticationRequest,
+): Promise<HttpResponse<CredentialRequestOptions>> {
+  const response = await fetchBase<StartAuthenticationRequest, StartAuthenticationResponse>(
+    'https://auth.sushao.top/api/start-authentication',
+    data,
+  );
+  return match(response)
+    .with(
+      { tag: 'response' },
+      ({ value }) =>
+        ({
+          tag: 'response',
+          value: {
+            publicKey: {
+              ...value.publicKey,
+              challenge: base64UrlToUint8Array(value.publicKey.challenge),
+              allowCredentials: value.publicKey.allowCredentials.map((credential) => ({
+                ...credential,
+                id: base64UrlToUint8Array(credential.id),
+              })),
+            },
+          } satisfies CredentialRequestOptions,
+        }) satisfies HttpResponse<CredentialRequestOptions>,
+    )
+    .otherwise((value) => value);
+}
+
+export async function finishAuthentication(data: Credential): Promise<HttpResponse<string>> {
+  const response = await fetchBase<Credential, string>('https://auth.sushao.top/api/finish-authentication', data);
   return response;
 }

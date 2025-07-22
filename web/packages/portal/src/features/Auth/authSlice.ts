@@ -1,7 +1,5 @@
 import { create } from 'zustand';
-import { enqueueSnackbar } from 'notify';
-import { login } from './service';
-import { match } from 'ts-pattern';
+import { login, responseThen } from './service';
 
 export interface AuthSliceType {
   value: string | null;
@@ -29,14 +27,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
   login: async (data: LoginForm) => {
     const auth = await login(data);
-    match(auth)
-      .with({ tag: 'response' }, ({ value }) => {
-        get().setAuth(value);
-      })
-      .with({ tag: 'json' }, () => enqueueSnackbar('json error', { variant: 'error' }))
-      .with({ tag: 'error' }, ({ value }) => enqueueSnackbar(value, { variant: 'error' }))
-      .with({ tag: 'network' }, () => enqueueSnackbar('network error', { variant: 'error' }))
-      .with({ tag: 'unknown' }, () => enqueueSnackbar('unknown error', { variant: 'error' }));
+    responseThen(auth, (value) => {
+      get().setAuth(value);
+    });
   },
 }));
 

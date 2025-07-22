@@ -9,6 +9,14 @@ pub(crate) fn get_router() -> OpenResult<Router> {
         .route("/api/login", post(login::login))
         .route("/api/start-register", post(webauthn::start_register))
         .route("/api/finish-register", post(webauthn::finish_register))
+        .route(
+            "/api/start-authentication",
+            post(webauthn::start_authentication),
+        )
+        .route(
+            "/api/finish-authentication",
+            post(webauthn::finish_authentication),
+        )
         .with_state(WebauthnContainer::new()?);
     Ok(router)
 }

@@ -13,18 +13,18 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { type LoginForm, useAuthStore } from './authSlice';
 import { useI18n } from 'i18n';
 import { useShallow } from 'zustand/react/shallow';
-import { finishRegister, startRegister } from './service';
-import { match } from 'ts-pattern';
+import { finishAuthentication, finishRegister, responseThen, startAuthentication, startRegister } from './service';
 import { enqueueSnackbar } from 'notify';
 
 export { default as useLogin } from './useLogin';
 
 export default function Login() {
-  const { register, handleSubmit, trigger } = useForm<LoginForm>();
-  const { login, auth } = useAuthStore(
-    useShallow(({ login, value }) => ({
+  const { register, handleSubmit, getValues } = useForm<LoginForm>();
+  const { login, auth, setAuth } = useAuthStore(
+    useShallow(({ login, value, setAuth }) => ({
       login,
       auth: value,
+      setAuth,
     })),
   );
   /** 跳转 */
@@ -46,36 +46,30 @@ export default function Login() {
   const t = useI18n();
   const onClickWebauthn = useCallback(async (data: LoginForm) => {
     const callenge = await startRegister(data);
-    match(callenge)
-      .with({ tag: 'response' }, async ({ value }) => {
-        const res = await navigator.credentials.create(value);
-        if (res) {
-          await finishRegister(res);
-          await navigator.credentials.store(res);
-        }
-      })
-      .with({ tag: 'json' }, () => enqueueSnackbar('json error', { variant: 'error' }))
-      .with({ tag: 'error' }, ({ value }) => enqueueSnackbar(value, { variant: 'error' }))
-      .with({ tag: 'network' }, () => enqueueSnackbar('network error', { variant: 'error' }))
-      .with({ tag: 'unknown' }, () => enqueueSnackbar('unknown error', { variant: 'error' }));
+    responseThen(callenge, async (value) => {
+      const res = await navigator.credentials.create(value);
+      if (res) {
+        const auth = await finishRegister(res);
+        responseThen(auth, setAuth);
+        await navigator.credentials.store(res);
+      } else {
+        enqueueSnackbar('webauthn error', { variant: 'error' });
+      }
+    });
   }, []);
   const onClickWebauthn2 = useCallback(async () => {
-    console.log(222);
-    const data = await navigator.credentials.get({
-      publicKey: {
-        challenge: stringToUint8Array('123'),
-        rpId: 'sushao.top',
-        allowCredentials: [
-          {
-            type: 'public-key',
-            id: stringToUint8Array('admin'),
-          },
-        ],
-        timeout: 60000,
-      },
+    const username = getValues('username');
+    const options = await startAuthentication({ username });
+    responseThen(options, async (value) => {
+      const data = await navigator.credentials.get(value);
+      if (data) {
+        const auth = await finishAuthentication(data);
+        responseThen(auth, setAuth);
+      } else {
+        enqueueSnackbar('webauthn error', { variant: 'error' });
+      }
     });
-    console.log(data);
-  }, []);
+  }, [getValues, setAuth]);
   return (
     <Box
       sx={{
@@ -125,7 +119,7 @@ export default function Login() {
               {t('login')}
             </Button>
             <Button fullWidth variant="contained" sx={{ mt: 3 }} onClick={handleSubmit(onClickWebauthn)}>
-              {t('login_with_webauthn')}
+              {t('login_and_register_webauthn')}
             </Button>
             <Button fullWidth variant="contained" sx={{ mt: 3 }} onClick={onClickWebauthn2}>
               {t('login_with_webauthn')}
@@ -138,13 +132,3 @@ export default function Login() {
 }
 
 export { default as AuthDrawerItem } from './AuthDrawerItem';
-
-function stringToUint8Array(str: string) {
-  const arr = [];
-  for (let i = 0, j = str.length; i < j; i += 1) {
-    arr.push(str.codePointAt(i) ?? 0);
-  }
-
-  const tmpUint8Array = new Uint8Array(arr);
-  return tmpUint8Array;
-}

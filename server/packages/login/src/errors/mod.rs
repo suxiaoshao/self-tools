@@ -54,6 +54,12 @@ pub enum OpenError {
     UrlParseError(&'static str),
     #[error("Session 错误:{}",.0)]
     SessionError(String),
+    #[error("webauthn 用户不存在")]
+    WebauthnUserNotExist,
+    #[error("用户没有凭证")]
+    UserHasNoCredentials,
+    #[error("webauthn auth 没设置")]
+    WebauthnAuthNotSet,
 }
 
 impl From<InvalidHeaderValue> for OpenError {
