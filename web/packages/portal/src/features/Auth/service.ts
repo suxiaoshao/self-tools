@@ -62,7 +62,7 @@ export interface RegistrationRequest {
     };
   };
 }
-export function base64UrlToUint8Array(base64Url: string): Uint8Array {
+export function base64UrlToUint8Array(base64Url: string): Uint8Array<ArrayBuffer> {
   // 1. 补齐“=”到 4 的倍数
   const padLength = (4 - (base64Url.length % 4)) % 4;
   const padded = base64Url + '='.repeat(padLength);

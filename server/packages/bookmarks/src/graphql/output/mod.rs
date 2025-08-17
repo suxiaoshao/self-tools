@@ -162,7 +162,7 @@ impl DraftNovelInfo {
             DraftNovelInfo::Jjwxc(_) => NovelSite::Jjwxc,
         }
     }
-    async fn tags(&self) -> Vec<DraftTagInfo> {
+    async fn tags(&'_ self) -> Vec<DraftTagInfo<'_>> {
         match self {
             DraftNovelInfo::Qidian(inner) => {
                 inner.tags().iter().map(DraftTagInfo::Qidian).collect()

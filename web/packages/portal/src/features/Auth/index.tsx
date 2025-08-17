@@ -44,19 +44,22 @@ export default function Login() {
     login(data);
   };
   const t = useI18n();
-  const onClickWebauthn = useCallback(async (data: LoginForm) => {
-    const callenge = await startRegister(data);
-    responseThen(callenge, async (value) => {
-      const res = await navigator.credentials.create(value);
-      if (res) {
-        const auth = await finishRegister(res);
-        responseThen(auth, setAuth);
-        await navigator.credentials.store(res);
-      } else {
-        enqueueSnackbar('webauthn error', { variant: 'error' });
-      }
-    });
-  }, []);
+  const onClickWebauthn = useCallback(
+    async (data: LoginForm) => {
+      const callenge = await startRegister(data);
+      responseThen(callenge, async (value) => {
+        const res = await navigator.credentials.create(value);
+        if (res) {
+          const auth = await finishRegister(res);
+          responseThen(auth, setAuth);
+          await navigator.credentials.store(res);
+        } else {
+          enqueueSnackbar('webauthn error', { variant: 'error' });
+        }
+      });
+    },
+    [setAuth],
+  );
   const onClickWebauthn2 = useCallback(async () => {
     const username = getValues('username');
     const options = await startAuthentication({ username });

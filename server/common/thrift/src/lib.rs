@@ -39,8 +39,7 @@ pub fn get_client() -> Result<&'static self::auth::ItemServiceClient, &'static C
 
 fn get_ip() -> Result<SocketAddr, ClientError> {
     let hostname = "auth";
-    let ips: Vec<std::net::IpAddr> =
-        lookup_host(hostname).map_err(|e| ClientError::LookupError(e.to_string()))?;
-    let ip = ips.first().ok_or(ClientError::NotFindIp)?;
-    Ok(SocketAddr::new(*ip, 80))
+    let mut ips = lookup_host(hostname).map_err(|e| ClientError::LookupError(e.to_string()))?;
+    let ip = ips.next().ok_or(ClientError::NotFindIp)?;
+    Ok(SocketAddr::new(ip, 80))
 }
