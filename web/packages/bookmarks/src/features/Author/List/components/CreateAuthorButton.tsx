@@ -36,7 +36,7 @@ export default function CreateAuthorButton({ refetch }: CreateAuthorButtonProps)
       <Button sx={{ ml: 1 }} color="primary" size="large" variant="contained" onClick={() => setOpen(true)}>
         {t('add_author')}
       </Button>
-      <Dialog PaperProps={{ sx: { maxWidth: 700 } }} open={open} onClose={handleClose}>
+      <Dialog slotProps={{ paper: { sx: { maxWidth: 700 } } }} open={open} onClose={handleClose}>
         <Box sx={{ width: 500 }} onSubmit={handleSubmit(onSubmit)} component="form">
           <DialogTitle>{t('create_author')}</DialogTitle>
           <DialogContent>
