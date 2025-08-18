@@ -6,7 +6,7 @@
  * @FilePath: /self-tools/web/packages/portal/src/features/Menu/MenuItem.tsx
  */
 import { ExpandLess, ExpandMore } from '@mui/icons-material';
-import RouterItem from '../../components/AppDrawer/RouterItem';
+import RouterListItem from '../../components/AppDrawer/RouterItem';
 import { useState } from 'react';
 import {
   Avatar,
@@ -56,7 +56,7 @@ export default function MenuItem({ menu, ...props }: MenuItemProps) {
     .with({ path: { tag: 'path' } }, ({ path: { value } }) => {
       const path = value.path;
       return (
-        <RouterItem
+        <RouterListItem
           key={path}
           {...props}
           icon={

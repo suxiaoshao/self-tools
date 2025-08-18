@@ -3,6 +3,7 @@ import { type GetTagsQuery, useDeleteTagMutation, useGetTagsLazyQuery } from '..
 import { Search } from '@mui/icons-material';
 import { useCallback, useEffect, useMemo } from 'react';
 import {
+  createCustomColumnHelper,
   type CustomColumnDefArray,
   CustomTable,
   type CustomTableOptions,
@@ -19,6 +20,8 @@ const rowModel = getCoreRowModel();
 
 type Data = GetTagsQuery['queryTags'][0];
 
+const columnHelper = createCustomColumnHelper<Data>();
+
 export default function Tags() {
   const [getTags, { data, refetch }] = useGetTagsLazyQuery();
   const [deleteTag] = useDeleteTagMutation();
@@ -30,62 +33,63 @@ export default function Tags() {
   }, [onSearch]);
   const t = useI18n();
   const columns = useMemo<CustomColumnDefArray<Data>>(
-    () => [
-      {
-        header: t('name'),
-        id: 'name',
-        accessorFn: ({ url, name }) => (
-          <Link
-            underline="hover"
-            onClick={() => {
-              window.open(url, '_blank');
-            }}
-            sx={{ cursor: 'pointer' }}
-          >
-            {name}
-          </Link>
+    () =>
+      [
+        columnHelper.accessor(
+          ({ url, name }) => (
+            <Link
+              underline="hover"
+              onClick={() => {
+                window.open(url, '_blank');
+              }}
+              sx={{ cursor: 'pointer' }}
+            >
+              {name}
+            </Link>
+          ),
+          {
+            header: t('name'),
+            id: 'name',
+            cell: (context) => context.getValue(),
+          },
         ),
-        cell: (context) => context.getValue(),
-      },
-      {
-        header: t('novel_site'),
-        id: 'site',
-        accessorFn: ({ site }) => t(getLabelKeyBySite(site)),
-        cell: (context) => context.getValue(),
-      },
-      {
-        header: t('create_time'),
-        id: 'createTime',
-        accessorFn: ({ createTime }) => format(createTime),
-        cell: (context) => context.getValue(),
-      },
-      {
-        header: t('update_time'),
-        id: 'updateTime',
-        accessorFn: ({ updateTime }) => format(updateTime),
-        cell: (context) => context.getValue(),
-      },
-      {
-        header: t('actions'),
-        id: 'action',
-        accessorFn: ({ id }) => (
-          <TableActions>
-            {(onClose) => [
-              {
-                text: t('delete'),
-                onClick: async () => {
-                  await deleteTag({ variables: { id } });
-                  onClose();
-                  await refetch();
+        columnHelper.accessor(({ site }) => t(getLabelKeyBySite(site)), {
+          header: t('novel_site'),
+          id: 'site',
+          cell: (context) => context.getValue(),
+        }),
+        columnHelper.accessor(({ createTime }) => format(createTime), {
+          header: t('create_time'),
+          id: 'createTime',
+          cell: (context) => context.getValue(),
+        }),
+        columnHelper.accessor(({ updateTime }) => format(updateTime), {
+          header: t('update_time'),
+          id: 'updateTime',
+          cell: (context) => context.getValue(),
+        }),
+        columnHelper.accessor(
+          ({ id }) => (
+            <TableActions>
+              {(onClose) => [
+                {
+                  text: t('delete'),
+                  onClick: async () => {
+                    await deleteTag({ variables: { id } });
+                    onClose();
+                    await refetch();
+                  },
                 },
-              },
-            ]}
-          </TableActions>
+              ]}
+            </TableActions>
+          ),
+          {
+            header: t('actions'),
+            id: 'action',
+            cell: (context) => context.getValue(),
+          },
         ),
-        cellProps: { padding: 'none' },
-        cell: (context) => context.getValue(),
-      },
-    ],
+      ] as CustomColumnDefArray<Data>,
     [deleteTag, refetch, t],
   );
   const tableOptions = useMemo<CustomTableOptions<Data>>(

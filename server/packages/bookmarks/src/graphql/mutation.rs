@@ -98,7 +98,7 @@ impl MutationRoot {
     async fn create_tag(
         &self,
         context: &Context<'_>,
-        name: String,
+        #[graphql(validator(min_length = 2, max_length = 20))] name: String,
         site: NovelSite,
         site_id: String,
     ) -> GraphqlResult<Tag> {

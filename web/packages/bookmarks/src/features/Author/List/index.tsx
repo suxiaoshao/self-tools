@@ -42,48 +42,55 @@ export default function AuthorList() {
             meta: {},
           },
         ),
-        {
+        columnHelper.accessor(({ site }) => t(getLabelKeyBySite(site)), {
           header: t('novel_site'),
           id: 'site',
-          accessorFn: ({ site }) => t(getLabelKeyBySite(site)),
           cell: (context) => context.getValue(),
-        },
+        }),
         columnHelper.accessor(({ avatar }) => <Avatar src={getImageUrl(avatar)} />, {
           header: t('avatar'),
           id: 'avatar',
           cell: (context) => context.getValue(),
         }),
-        {
-          header: t('description'),
-          id: 'description',
-          accessorFn: ({ description }) => (
+        columnHelper.accessor(
+          ({ description }) => (
             <Typography variant="body2" noWrap>
               {description}
             </Typography>
           ),
+          {
+            header: t('description'),
+            id: 'description',
+            cellProps: {
+              sx: {
+                maxWidth: 200,
+              },
+            },
+            cell: (context) => context.getValue(),
+          },
+        ),
+        columnHelper.accessor(({ createTime }) => format(createTime), {
+          header: t('create_time'),
+          id: 'createTime',
           cellProps: {
             sx: {
-              maxWidth: 200,
+              maxWidth: 150,
             },
           },
           cell: (context) => context.getValue(),
-        },
-        {
-          header: t('create_time'),
-          id: 'createTime',
-          accessorFn: ({ createTime }) => format(createTime),
-          cell: (context) => context.getValue(),
-        },
-        {
+        }),
+        columnHelper.accessor(({ updateTime }) => format(updateTime), {
           header: t('update_time'),
           id: 'updateTime',
-          accessorFn: ({ updateTime }) => format(updateTime),
+          cellProps: {
+            sx: {
+              maxWidth: 150,
+            },
+          },
           cell: (context) => context.getValue(),
-        },
-        {
-          header: t('actions'),
-          id: 'action',
-          accessorFn: ({ id }) => (
+        }),
+        columnHelper.accessor(
+          ({ id }) => (
             <TableActions>
               {(onClose) => [
                 {
@@ -97,9 +104,13 @@ export default function AuthorList() {
               ]}
             </TableActions>
           ),
-          cellProps: { padding: 'none' },
-          cell: (context) => context.getValue(),
-        },
+          {
+            header: t('actions'),
+            id: 'action',
+            cellProps: { padding: 'none' },
+            cell: (context) => context.getValue(),
+          },
+        ),
       ] as CustomColumnDefArray<TableItem>,
     [deleteAuthor, refetch, t],
   );

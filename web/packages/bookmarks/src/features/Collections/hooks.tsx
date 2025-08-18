@@ -5,6 +5,7 @@ import { useMemo } from 'react';
 import { Link as RouterLink, createSearchParams } from 'react-router-dom';
 import { format } from 'time';
 import {
+  createCustomColumnHelper,
   type CustomColumnDefArray,
   type CustomTableOptions,
   getCoreRowModel,
@@ -13,69 +14,72 @@ import {
 } from 'custom-table';
 import type { CollectionTableData } from './types';
 
+const columnHelper = createCustomColumnHelper<CollectionTableData>();
+
 export function useCollectionTable(refetch: () => Promise<unknown>, data: CollectionTableData[]) {
   const [deleteCollection] = useDeleteCollectionMutation();
 
   const t = useI18n();
   const columns = useMemo<CustomColumnDefArray<CollectionTableData>>(
-    () => [
-      {
-        header: t('name'),
-        id: 'name',
-        accessorFn: ({ name, id }) => (
-          <Link component={RouterLink} to={{ search: createSearchParams({ parentId: id.toString() }).toString() }}>
-            {name}
-          </Link>
+    () =>
+      [
+        columnHelper.accessor(
+          ({ name, id }) => (
+            <Link component={RouterLink} to={{ search: createSearchParams({ parentId: id.toString() }).toString() }}>
+              {name}
+            </Link>
+          ),
+          {
+            header: t('name'),
+            id: 'name',
+            cell: (context) => context.getValue(),
+          },
         ),
-        cell: (context) => context.getValue(),
-      },
-      {
-        header: t('path'),
-        id: 'path',
-        accessorKey: 'path',
-      },
-      {
-        header: t('description'),
-        id: 'description',
-        accessorFn: ({ description }) => description ?? '-',
-        cellProps: {
-          align: 'center',
-        },
-        cell: (context) => context.getValue(),
-      },
-      {
-        header: t('create_time'),
-        id: 'createTime',
-        accessorFn: ({ createTime }) => format(createTime),
-        cell: (context) => context.getValue(),
-      },
-      {
-        header: t('update_time'),
-        id: 'updateTime',
-        accessorFn: ({ updateTime }) => format(updateTime),
-        cell: (context) => context.getValue(),
-      },
-      {
-        header: t('actions'),
-        id: 'action',
-        accessorFn: ({ id }) => (
-          <TableActions>
-            {(onClose) => [
-              {
-                text: t('delete'),
-                onClick: async () => {
-                  await deleteCollection({ variables: { id } });
-                  onClose();
-                  await refetch();
+        columnHelper.accessor('path', {
+          header: t('path'),
+          id: 'path',
+        }),
+        columnHelper.accessor(({ description }) => description ?? '-', {
+          header: t('description'),
+          id: 'description',
+          cellProps: {
+            align: 'center',
+          },
+          cell: (context) => context.getValue(),
+        }),
+        columnHelper.accessor(({ createTime }) => format(createTime), {
+          header: t('create_time'),
+          id: 'createTime',
+          cell: (context) => context.getValue(),
+        }),
+        columnHelper.accessor(({ updateTime }) => format(updateTime), {
+          header: t('update_time'),
+          id: 'updateTime',
+          cell: (context) => context.getValue(),
+        }),
+        columnHelper.accessor(
+          ({ id }) => (
+            <TableActions>
+              {(onClose) => [
+                {
+                  text: t('delete'),
+                  onClick: async () => {
+                    await deleteCollection({ variables: { id } });
+                    onClose();
+                    await refetch();
+                  },
                 },
-              },
-            ]}
-          </TableActions>
+              ]}
+            </TableActions>
+          ),
+          {
+            header: t('actions'),
+            id: 'action',
+            cellProps: { padding: 'none' },
+            cell: (context) => context.getValue(),
+          },
         ),
-        cellProps: { padding: 'none' },
-        cell: (context) => context.getValue(),
-      },
-    ],
+      ] as CustomColumnDefArray<CollectionTableData>,
     [deleteCollection, refetch, t],
   );
   const tableOptions = useMemo<CustomTableOptions<CollectionTableData>>(
