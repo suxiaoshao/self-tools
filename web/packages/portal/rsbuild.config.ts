@@ -37,6 +37,8 @@ export default defineConfig({
     entry: {
       index: './src/main.tsx',
     },
+  },
+  resolve: {
     alias: {
       '@portal': './src',
       '@bookmarks': '../bookmarks/src',
