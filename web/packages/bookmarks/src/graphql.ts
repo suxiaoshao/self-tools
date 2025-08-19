@@ -16,14 +16,6 @@ export type Scalars = {
   Int: { input: number; output: number };
   Float: { input: number; output: number };
   BigDecimal: { input: any; output: any };
-  /**
-   * A datetime with timezone offset.
-   *
-   * The input is a string in RFC3339 format, e.g. "2022-01-12T04:00:19.12345Z"
-   * or "2022-01-12T04:00:19+03:00". The output is also a string in RFC3339
-   * format, but it is always normalized to the UTC (Z) offset, e.g.
-   * "2022-01-12T04:00:19.12345Z".
-   */
   DateTime: { input: any; output: any };
 };
 
@@ -61,9 +53,7 @@ export type Chapter = {
 
 export type Collection = {
   __typename?: 'Collection';
-  /** 获取祖先列表 */
   ancestors: Array<Collection>;
-  /** 获取子列表 */
   children: Array<Collection>;
   createTime: Scalars['DateTime']['output'];
   description?: Maybe<Scalars['String']['output']>;
@@ -130,31 +120,18 @@ export type DraftTagInfo = {
 
 export type MutationRoot = {
   __typename?: 'MutationRoot';
-  /** 给小说添加集合 */
   addCollectionForNovel: Novel;
-  /** 创建作者 */
   createAuthor: Author;
-  /** 创建目录 */
   createCollection: Collection;
-  /** 创建小说 */
   createNovel: Novel;
-  /** 创建标签 */
   createTag: Tag;
-  /** 删除作者 */
   deleteAuthor: Author;
-  /** 删除目录 */
   deleteCollection: Scalars['Int']['output'];
-  /** 给小说删除集合 */
   deleteCollectionForNovel: Novel;
-  /** 删除小说 */
   deleteNovel: Novel;
-  /** 删除标签 */
   deleteTag: Tag;
-  /** 保存 draft author */
   saveDraftAuthor: Author;
-  /** 通过 fetch 更新作者 */
   updateAuthorByCrawler: Author;
-  /** 通过 fetch 更新小说 */
   updateNovelByCrawler: Novel;
 };
 
@@ -224,16 +201,12 @@ export type Novel = {
   __typename?: 'Novel';
   author: Author;
   avatar: Scalars['String']['output'];
-  /** 获取小说章节 */
   chapters: Array<Chapter>;
-  /** 集合列表 */
   collections: Array<Collection>;
   createTime: Scalars['DateTime']['output'];
   description: Scalars['String']['output'];
-  /** 最老章节 */
   firstChapter?: Maybe<Chapter>;
   id: Scalars['Int']['output'];
-  /** 最新章节 */
   lastChapter?: Maybe<Chapter>;
   name: Scalars['String']['output'];
   novelStatus: NovelStatus;
@@ -253,29 +226,20 @@ export enum NovelSite {
 export enum NovelStatus {
   Completed = 'COMPLETED',
   Ongoing = 'ONGOING',
+  Paused = 'PAUSED',
 }
 
 export type QueryRoot = {
   __typename?: 'QueryRoot';
-  /** 获取所有集合 */
   allCollections: Array<Collection>;
-  /** 后端 fetch 作者详情 */
   fetchAuthor: DraftAuthorInfo;
-  /** 后端 fetch 小说详情 */
   fetchNovel: DraftNovelInfo;
-  /** 获取作者详情 */
   getAuthor: Author;
-  /** 获取目录详情 */
   getCollection: Collection;
-  /** 获取目录列表 */
   getCollections: Array<Collection>;
-  /** 获取小说详情 */
   getNovel: Novel;
-  /** 获取作者列表 */
   queryAuthors: Array<Author>;
-  /** 获取小说列表 */
   queryNovels: Array<Novel>;
-  /** 获取标签列表 */
   queryTags: Array<Tag>;
 };
 

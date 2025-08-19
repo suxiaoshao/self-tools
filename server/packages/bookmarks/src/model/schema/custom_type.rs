@@ -25,6 +25,7 @@ use diesel::{
 pub(crate) enum NovelStatus {
     Ongoing,
     Completed,
+    Paused,
 }
 
 impl From<&novel_crawler::NovelStatus> for NovelStatus {
@@ -32,7 +33,7 @@ impl From<&novel_crawler::NovelStatus> for NovelStatus {
         match value {
             novel_crawler::NovelStatus::Ongoing => NovelStatus::Ongoing,
             novel_crawler::NovelStatus::Completed => NovelStatus::Completed,
-            novel_crawler::NovelStatus::Paused => todo!(),
+            novel_crawler::NovelStatus::Paused => NovelStatus::Paused,
         }
     }
 }
@@ -55,6 +56,7 @@ impl ToSql<super::sql_types::NovelStatus, Pg> for NovelStatus {
         match *self {
             NovelStatus::Ongoing => out.write_all(b"ongoing")?,
             NovelStatus::Completed => out.write_all(b"completed")?,
+            NovelStatus::Paused => out.write_all(b"paused")?,
         }
         Ok(IsNull::No)
     }
@@ -65,6 +67,7 @@ impl FromSql<super::sql_types::NovelStatus, Pg> for NovelStatus {
         match bytes.as_bytes() {
             b"ongoing" => Ok(NovelStatus::Ongoing),
             b"completed" => Ok(NovelStatus::Completed),
+            b"paused" => Ok(NovelStatus::Paused),
             _ => {
                 event!(
                     Level::ERROR,
@@ -82,7 +85,7 @@ impl From<novel_crawler::NovelStatus> for NovelStatus {
         match value {
             novel_crawler::NovelStatus::Ongoing => NovelStatus::Ongoing,
             novel_crawler::NovelStatus::Completed => NovelStatus::Completed,
-            novel_crawler::NovelStatus::Paused => todo!(),
+            novel_crawler::NovelStatus::Paused => NovelStatus::Paused,
         }
     }
 }

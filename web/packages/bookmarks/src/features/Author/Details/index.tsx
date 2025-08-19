@@ -28,6 +28,7 @@ import { enqueueSnackbar } from 'notify';
 import { P, match } from 'ts-pattern';
 import { Details, type DetailsItem } from 'details';
 import { format } from 'time';
+import { getLabelKeyByNovelStatus } from '@bookmarks/utils/novelStatus';
 
 export default function AuthorDetails() {
   const t = useI18n();
@@ -115,6 +116,9 @@ export default function AuthorDetails() {
                       .with(NovelStatus.Completed, () => (
                         <Chip variant="outlined" size="small" color="secondary" label={t('completed')} />
                       ))
+                      .with(NovelStatus.Paused, () => (
+                        <Chip variant="outlined" size="small" color="info" label={t('paused')} />
+                      ))
                       .exhaustive()}
                     action={
                       <Tooltip title={t('go_to_source_site')}>
@@ -134,10 +138,7 @@ export default function AuthorDetails() {
                         [
                           {
                             label: t('novel_status'),
-                            value: match(novelStatus)
-                              .with(NovelStatus.Ongoing, () => t('ongoing'))
-                              .with(NovelStatus.Completed, () => t('completed'))
-                              .exhaustive(),
+                            value: getLabelKeyByNovelStatus(novelStatus),
                           },
                           {
                             label: t('word_count'),

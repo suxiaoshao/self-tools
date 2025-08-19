@@ -26,6 +26,7 @@ import { getImageUrl } from '@bookmarks/utils/image';
 import { getLabelKeyBySite } from '@bookmarks/utils/novelSite';
 import CollectionMultiSelect from '@bookmarks/components/CollectionMultiSelect';
 import TagsSelect from '@bookmarks/components/TagsSelect';
+import { getLabelKeyByNovelStatus } from '@bookmarks/utils/novelStatus';
 
 type Data = GetNovelsQuery['queryNovels'][0];
 
@@ -61,6 +62,11 @@ export default function NovelList() {
         columnHelper.accessor(({ avatar }) => <Avatar src={getImageUrl(avatar)} />, {
           header: t('avatar'),
           id: 'avatar',
+          cell: (context) => context.getValue(),
+        }),
+        columnHelper.accessor(({ novelStatus }) => t(getLabelKeyByNovelStatus(novelStatus)), {
+          header: t('novel_status'),
+          id: 'status',
           cell: (context) => context.getValue(),
         }),
         columnHelper.accessor(({ description }) => description ?? '-', {
