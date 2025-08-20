@@ -59,6 +59,27 @@ impl MutationRoot {
         let count = Collection::delete(id, conn)?;
         Ok(count)
     }
+    /// 更新目录
+    #[graphql(guard = "AuthGuard")]
+    async fn update_collection(
+        &self,
+        context: &Context<'_>,
+        id: i64,
+        #[graphql(validator(custom = "DirNameValidator"))] name: String,
+        parent_id: Option<i64>,
+        description: Option<String>,
+    ) -> GraphqlResult<Collection> {
+        let conn = &mut context
+            .data::<PgPool>()
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
+            .get()?;
+        let updated_collection =
+            Collection::update(id, &name, parent_id, description.as_deref(), conn)?;
+        Ok(updated_collection)
+    }
     /// 创建作者
     #[graphql(guard = "AuthGuard")]
     async fn create_author(

@@ -119,6 +119,9 @@ type MutationRoot {
   # 删除目录
   deleteCollection(id: Int!): Int!
 
+  # 更新目录
+  updateCollection(id: Int!, name: String!, parentId: Int, description: String): Collection!
+
   # 创建作者
   createAuthor(name: String!, avatar: String!, description: String!, site: NovelSite!, siteId: String!): Author!
 

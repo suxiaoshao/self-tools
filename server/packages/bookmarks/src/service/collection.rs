@@ -187,4 +187,27 @@ impl Collection {
         let collection = CollectionModel::find_one(id, conn)?;
         Ok(collection.into())
     }
+    /// 更新目录
+    pub(crate) fn update(
+        id: i64,
+        name: &str,
+        parent_id: Option<i64>,
+        description: Option<&str>,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<Self> {
+        //  判断目录是否存在
+        if !CollectionModel::exists(id, conn)? {
+            event!(Level::WARN, "目录不存在: {}", id);
+            return Err(GraphqlError::NotFound("目录", id));
+        }
+        //  判断父目录是否存在
+        if let Some(id) = parent_id {
+            if !CollectionModel::exists(id, conn)? {
+                event!(Level::WARN, "父目录不存在: {}", id);
+                return Err(GraphqlError::NotFound("目录", id));
+            }
+        }
+        let collection = CollectionModel::update(id, name, parent_id, description, conn)?;
+        Ok(collection.into())
+    }
 }

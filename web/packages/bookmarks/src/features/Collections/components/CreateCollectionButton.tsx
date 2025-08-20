@@ -1,10 +1,10 @@
-import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField } from '@mui/material';
+import { Button } from '@mui/material';
 import { useI18n } from 'i18n';
 import { useState } from 'react';
-import { type SubmitHandler, useForm } from 'react-hook-form';
-import { type CreateCollectionMutationVariables, useCreateCollectionMutation } from '../../../graphql';
+import { useCreateCollectionMutation } from '../../../graphql';
 import { useAllCollection } from '../collectionSlice';
 import useParentId from './useParentId';
+import CollectionForm, { type CollectionFormData } from './CollectionForm';
 
 export interface CreateCollectButtonProps {
   /** 表格重新刷新 */
@@ -15,13 +15,9 @@ export default function CreateCollectionButton({ refetch }: CreateCollectButtonP
   const parentId = useParentId();
   const { fetchData } = useAllCollection();
 
-  type FormData = Omit<CreateCollectionMutationVariables, 'parentId'>;
-  // 表单控制
-  const { handleSubmit, register } = useForm<FormData>();
-
   const [createCollection] = useCreateCollectionMutation();
 
-  const onSubmit: SubmitHandler<FormData> = async ({ name, description }) => {
+  const onSubmit = async ({ name, description }: CollectionFormData) => {
     await createCollection({ variables: { name, parentId, description } });
     refetch();
     handleClose();
@@ -38,32 +34,7 @@ export default function CreateCollectionButton({ refetch }: CreateCollectButtonP
       <Button color="primary" size="large" variant="contained" onClick={() => setOpen(true)}>
         {t('add_collection')}
       </Button>
-      <Dialog PaperProps={{ sx: { maxWidth: 700 } }} open={open} onClose={handleClose}>
-        <Box sx={{ width: 500 }} onSubmit={handleSubmit(onSubmit)} component="form">
-          <DialogTitle>{t('create_collection')}</DialogTitle>
-          <DialogContent>
-            <TextField
-              variant="standard"
-              required
-              fullWidth
-              label={t('collection_name')}
-              {...register('name', { required: true })}
-            />
-            <TextField
-              sx={{ mt: 1 }}
-              variant="standard"
-              fullWidth
-              label={t('description')}
-              {...register('description')}
-            />
-          </DialogContent>
-
-          <DialogActions>
-            <Button onClick={handleClose}>{t('cancel')}</Button>
-            <Button type="submit">{t('submit')}</Button>
-          </DialogActions>
-        </Box>
-      </Dialog>
+      <CollectionForm afterSubmit={onSubmit} handleClose={handleClose} open={open} />
     </>
   );
 }

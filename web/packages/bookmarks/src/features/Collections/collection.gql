@@ -39,3 +39,9 @@ query allCollections {
     parentId
   }
 }
+
+mutation updateCollection($id: Int!, $name: String!, $parentId: Int, $description: String) {
+  updateCollection(id: $id, name: $name, parentId: $parentId, description: $description) {
+    __typename
+  }
+}

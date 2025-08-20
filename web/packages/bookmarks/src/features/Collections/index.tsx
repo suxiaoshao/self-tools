@@ -6,11 +6,10 @@ import {
   CustomTable,
   type CustomTableOptions,
   getCoreRowModel,
-  TableActions,
   useCustomTable,
 } from 'custom-table';
 import { useCallback, useMemo } from 'react';
-import { useDeleteCollectionMutation, useGetCollectionsQuery } from '../../graphql';
+import { useGetCollectionsQuery } from '../../graphql';
 import { useAllCollection } from './collectionSlice';
 import AncestorsPath from './components/AncestorsPath';
 import CreateCollectionButton from './components/CreateCollectionButton';
@@ -19,6 +18,7 @@ import type { CollectionTableData } from './types';
 import { useI18n } from 'i18n';
 import { Link as RouterLink, createSearchParams } from 'react-router-dom';
 import { format } from 'time';
+import CollectionActions from './components/CollectionActions';
 
 const columnHelper = createCustomColumnHelper<CollectionTableData>();
 
@@ -30,7 +30,6 @@ export default function Collections() {
   const allRefetch = useCallback(async () => {
     await Promise.all([refetch(), fetchData()]);
   }, [refetch, fetchData]);
-  const [deleteCollection] = useDeleteCollectionMutation();
 
   const t = useI18n();
   const columns = useMemo<CustomColumnDefArray<CollectionTableData>>(
@@ -52,7 +51,7 @@ export default function Collections() {
           header: t('path'),
           id: 'path',
         }),
-        columnHelper.accessor(({ description }) => description ?? '-', {
+        columnHelper.accessor(({ description }) => description || '-', {
           header: t('description'),
           id: 'description',
           cellProps: {
@@ -67,30 +66,14 @@ export default function Collections() {
           header: t('update_time'),
           id: 'updateTime',
         }),
-        columnHelper.accessor(
-          ({ id }) => (
-            <TableActions>
-              {(onClose) => [
-                {
-                  text: t('delete'),
-                  onClick: async () => {
-                    await deleteCollection({ variables: { id } });
-                    onClose();
-                    await allRefetch();
-                  },
-                },
-              ]}
-            </TableActions>
-          ),
-          {
-            header: t('actions'),
-            id: 'action',
-            cellProps: { padding: 'none' },
-            cell: (context) => context.getValue(),
-          },
-        ),
+        columnHelper.accessor((data) => <CollectionActions {...data} refetch={allRefetch} />, {
+          header: t('actions'),
+          id: 'action',
+          cellProps: { padding: 'none' },
+          cell: (context) => context.getValue(),
+        }),
       ] as CustomColumnDefArray<CollectionTableData>,
-    [deleteCollection, allRefetch, t],
+    [allRefetch, t],
   );
   const tableOptions = useMemo<CustomTableOptions<CollectionTableData>>(
     () => ({ columns, data: data?.getCollections ?? [], getCoreRowModel: getCoreRowModel() }),

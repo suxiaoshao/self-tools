@@ -95,6 +95,23 @@ impl CollectionModel {
             .load(conn)?;
         Ok(data)
     }
+    /// 更新
+    pub(crate) fn update(
+        id: i64,
+        name: &str,
+        parent_id: Option<i64>,
+        description: Option<&str>,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<Self> {
+        let new_collection = diesel::update(collection::table.filter(collection::id.eq(id)))
+            .set((
+                collection::name.eq(name),
+                collection::parent_id.eq(parent_id),
+                collection::description.eq(description),
+            ))
+            .get_result(conn)?;
+        Ok(new_collection)
+    }
 }
 
 /// path 相关

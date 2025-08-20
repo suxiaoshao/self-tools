@@ -132,6 +132,7 @@ export type MutationRoot = {
   deleteTag: Tag;
   saveDraftAuthor: Author;
   updateAuthorByCrawler: Author;
+  updateCollection: Collection;
   updateNovelByCrawler: Novel;
 };
 
@@ -191,6 +192,13 @@ export type MutationRootSaveDraftAuthorArgs = {
 
 export type MutationRootUpdateAuthorByCrawlerArgs = {
   authorId: Scalars['Int']['input'];
+};
+
+export type MutationRootUpdateCollectionArgs = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  id: Scalars['Int']['input'];
+  name: Scalars['String']['input'];
+  parentId?: InputMaybe<Scalars['Int']['input']>;
 };
 
 export type MutationRootUpdateNovelByCrawlerArgs = {
@@ -564,6 +572,15 @@ export type AllCollectionsQuery = {
     parentId?: number | null;
   }>;
 };
+
+export type UpdateCollectionMutationVariables = Exact<{
+  id: Scalars['Int']['input'];
+  name: Scalars['String']['input'];
+  parentId?: InputMaybe<Scalars['Int']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+export type UpdateCollectionMutation = { __typename?: 'MutationRoot'; updateCollection: { __typename: 'Collection' } };
 
 export type GetNovelQueryVariables = Exact<{
   id: Scalars['Int']['input'];
@@ -1445,6 +1462,53 @@ export type AllCollectionsQueryHookResult = ReturnType<typeof useAllCollectionsQ
 export type AllCollectionsLazyQueryHookResult = ReturnType<typeof useAllCollectionsLazyQuery>;
 export type AllCollectionsSuspenseQueryHookResult = ReturnType<typeof useAllCollectionsSuspenseQuery>;
 export type AllCollectionsQueryResult = Apollo.QueryResult<AllCollectionsQuery, AllCollectionsQueryVariables>;
+export const UpdateCollectionDocument = gql`
+  mutation updateCollection($id: Int!, $name: String!, $parentId: Int, $description: String) {
+    updateCollection(id: $id, name: $name, parentId: $parentId, description: $description) {
+      __typename
+    }
+  }
+`;
+export type UpdateCollectionMutationFn = Apollo.MutationFunction<
+  UpdateCollectionMutation,
+  UpdateCollectionMutationVariables
+>;
+
+/**
+ * __useUpdateCollectionMutation__
+ *
+ * To run a mutation, you first call `useUpdateCollectionMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateCollectionMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateCollectionMutation, { data, loading, error }] = useUpdateCollectionMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      name: // value for 'name'
+ *      parentId: // value for 'parentId'
+ *      description: // value for 'description'
+ *   },
+ * });
+ */
+export function useUpdateCollectionMutation(
+  baseOptions?: Apollo.MutationHookOptions<UpdateCollectionMutation, UpdateCollectionMutationVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useMutation<UpdateCollectionMutation, UpdateCollectionMutationVariables>(
+    UpdateCollectionDocument,
+    options,
+  );
+}
+export type UpdateCollectionMutationHookResult = ReturnType<typeof useUpdateCollectionMutation>;
+export type UpdateCollectionMutationResult = Apollo.MutationResult<UpdateCollectionMutation>;
+export type UpdateCollectionMutationOptions = Apollo.BaseMutationOptions<
+  UpdateCollectionMutation,
+  UpdateCollectionMutationVariables
+>;
 export const GetNovelDocument = gql`
   query getNovel($id: Int!) {
     getNovel(id: $id) {
