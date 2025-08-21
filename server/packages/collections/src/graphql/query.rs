@@ -5,20 +5,19 @@
  * @LastEditTime: 2024-02-20 16:24:41
  * @FilePath: /self-tools/server/packages/collections/src/graphql/query.rs
  */
-use async_graphql::Object;
-
 use super::{
     guard::AuthGuard,
-    types::{CollectionItemQuery, ItemAndCollection, List},
+    types::{CollectionItemQuery, ItemAndCollection},
 };
 use crate::{
-    common::{QueryStack, Queryable},
     errors::GraphqlResult,
     service::{
         collection::{Collection, CollectionQueryRunner},
         item::{Item, ItemQueryRunner},
     },
 };
+use async_graphql::Object;
+use graphql_common::{List, QueryStack, Queryable};
 
 pub(crate) struct QueryRoot;
 

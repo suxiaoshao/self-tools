@@ -7,6 +7,8 @@ import {
   type CustomTableOptions,
   getCoreRowModel,
   useCustomTable,
+  usePage,
+  usePageWithTotal,
 } from 'custom-table';
 import { useCallback, useMemo } from 'react';
 import { useGetCollectionsQuery } from '../../graphql';
@@ -24,7 +26,11 @@ const columnHelper = createCustomColumnHelper<CollectionTableData>();
 
 export default function Collections() {
   const parentId = useParentId();
-  const { data, refetch } = useGetCollectionsQuery({ variables: { parentId } });
+  const pageState = usePage();
+  const { data: { getCollections: { data, total } = {} } = {}, refetch } = useGetCollectionsQuery({
+    variables: { parentId, pagination: { page: pageState.pageIndex, pageSize: pageState.pageSize } },
+  });
+  const page = usePageWithTotal(pageState, total);
   const { fetchData } = useAllCollection();
 
   const allRefetch = useCallback(async () => {
@@ -76,8 +82,8 @@ export default function Collections() {
     [allRefetch, t],
   );
   const tableOptions = useMemo<CustomTableOptions<CollectionTableData>>(
-    () => ({ columns, data: data?.getCollections ?? [], getCoreRowModel: getCoreRowModel() }),
-    [columns, data?.getCollections],
+    () => ({ columns, data: data ?? [], getCoreRowModel: getCoreRowModel() }),
+    [columns, data],
   );
   const tableInstance = useCustomTable(tableOptions);
 
@@ -96,7 +102,7 @@ export default function Collections() {
           <Refresh />
         </IconButton>
       </Box>
-      <CustomTable tableInstance={tableInstance} />
+      <CustomTable tableInstance={tableInstance} page={page} />
     </Box>
   );
 }

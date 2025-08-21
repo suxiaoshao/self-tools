@@ -112,6 +112,11 @@ type DraftTagInfo {
   name: String!
 }
 
+type List {
+  data: [Collection!]!
+  total: Int!
+}
+
 type MutationRoot {
   # 创建目录
   createCollection(name: String!, parentId: Int, description: String): Collection!
@@ -195,12 +200,17 @@ enum NovelStatus {
   PAUSED
 }
 
+input Pagination {
+  page: Int! = 1
+  pageSize: Int! = 10
+}
+
 type QueryRoot {
   # 获取所有集合
   allCollections: [Collection!]!
 
   # 获取目录列表
-  getCollections(parentId: Int): [Collection!]!
+  getCollections(parentId: Int, pagination: Pagination!): List!
 
   # 获取目录详情
   getCollection(id: Int!): Collection!

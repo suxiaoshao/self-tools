@@ -38,6 +38,7 @@ pub(crate) enum GraphqlError {
     NotGraphqlContextData(&'static str),
     // 保存草稿错误
     SavaDraftError(&'static str),
+    PageSizeTooMore,
 }
 
 impl IntoResponse for GraphqlError {
@@ -83,6 +84,7 @@ impl GraphqlError {
             }
             GraphqlError::SavaDraftError(tag) => format!("保存草稿错误:{tag}"),
             GraphqlError::NovelTimeParseError(tag) => format!("小说时间解析错误:{tag}"),
+            GraphqlError::PageSizeTooMore => "分页大小过大".to_string(),
         }
     }
     pub(crate) fn code(&self) -> &str {
@@ -108,6 +110,7 @@ impl GraphqlError {
             GraphqlError::NotGraphqlContextData(_) => "NotGraphqlContextData",
             GraphqlError::SavaDraftError(_) => "SavaDraftError",
             GraphqlError::NovelTimeParseError(_) => "NovelTimeParseError",
+            GraphqlError::PageSizeTooMore => "PageSizeTooMore",
         }
     }
 }
@@ -137,6 +140,7 @@ impl Clone for GraphqlError {
             GraphqlError::NotGraphqlContextData(data) => Self::NotGraphqlContextData(data),
             GraphqlError::SavaDraftError(data) => Self::SavaDraftError(data),
             GraphqlError::NovelTimeParseError(data) => Self::NovelTimeParseError(*data),
+            GraphqlError::PageSizeTooMore => Self::PageSizeTooMore,
         }
     }
 }

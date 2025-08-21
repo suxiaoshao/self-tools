@@ -1,13 +1,8 @@
-/*
- * @Author: suxiaoshao suxiaoshao@gmail.com
- * @Date: 2024-01-26 06:08:25
- * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-01-27 10:28:25
- * @FilePath: /self-tools/server/packages/collections/src/common/mod.rs
- */
 use std::{cmp::Ordering, fmt::Debug};
 
-pub(crate) trait Paginate: Debug {
+use async_graphql::InputObject;
+
+pub trait Paginate: Debug {
     fn offset(&self) -> i64;
     fn offset_plus_limit(&self) -> i64;
     fn limit(&self) -> i64 {
@@ -40,14 +35,19 @@ impl Offset {
     }
 }
 
-pub(crate) trait Queryable {
+#[allow(async_fn_in_trait)]
+pub trait Queryable {
     type Item;
     type Error;
+
     async fn len(&self) -> Result<i64, Self::Error>;
+    async fn is_empty(&self) -> Result<bool, Self::Error> {
+        self.len().await.map(|len| len == 0)
+    }
     async fn query<P: Paginate>(&self, pagination: P) -> Result<Vec<Self::Item>, Self::Error>;
 }
 
-pub(crate) struct QueryStack<T, P> {
+pub struct QueryStack<T, P> {
     left: T,
     right: P,
 }
@@ -56,10 +56,10 @@ impl<I, E, T> QueryStack<T, ()>
 where
     T: Queryable<Item = I, Error = E>,
 {
-    pub(crate) fn new(left: T) -> Self {
+    pub fn new(left: T) -> Self {
         Self { left, right: () }
     }
-    pub(crate) fn add_query<P: Queryable<Item = I, Error = E>>(self, right: P) -> QueryStack<T, P> {
+    pub fn add_query<P: Queryable<Item = I, Error = E>>(self, right: P) -> QueryStack<T, P> {
         QueryStack {
             left: self.left,
             right,
@@ -72,8 +72,7 @@ where
     T: Queryable<Item = I, Error = E>,
     P: Queryable<Item = I, Error = E>,
 {
-    #[allow(dead_code)]
-    pub(crate) fn add_query<X: Queryable<Item = I, Error = E>>(
+    pub fn add_query<X: Queryable<Item = I, Error = E>>(
         self,
         right: X,
     ) -> QueryStack<T, QueryStack<P, X>> {
@@ -144,5 +143,25 @@ where
                 Ok(left)
             }
         }
+    }
+}
+
+#[derive(InputObject, Debug, Clone, Copy)]
+pub struct Pagination {
+    #[graphql(validator(minimum = 1), default = 1)]
+    pub page: i64,
+    #[graphql(validator(minimum = 5, maximum = 100), default = 10)]
+    pub page_size: i64,
+}
+
+impl Paginate for Pagination {
+    fn offset(&self) -> i64 {
+        (self.page - 1) * self.page_size
+    }
+    fn offset_plus_limit(&self) -> i64 {
+        self.offset() + self.page_size
+    }
+    fn limit(&self) -> i64 {
+        self.page_size
     }
 }

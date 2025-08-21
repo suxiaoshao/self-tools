@@ -32,6 +32,7 @@ diesel = { version = "2.2.12", features = [
 ] }
 time = { version = "0.3.41" }
 bigdecimal = "0.4.8"
+graphql-common = { path = "../../common/graphql-common" }
 
 # error
 anyhow = "1.0.99"

@@ -2,6 +2,7 @@ use std::collections::HashSet;
 
 use async_graphql::*;
 use diesel::PgConnection;
+use graphql_common::Queryable;
 use time::OffsetDateTime;
 use tracing::{event, Level};
 
@@ -209,5 +210,63 @@ impl Collection {
         }
         let collection = CollectionModel::update(id, name, parent_id, description, conn)?;
         Ok(collection.into())
+    }
+}
+
+pub(crate) struct CollectionRunner {
+    conn: PgPool,
+    count: i64,
+    parent_id: Option<i64>,
+}
+
+impl CollectionRunner {
+    pub(crate) fn new(conn: PgPool, parent_id: Option<i64>) -> GraphqlResult<Self> {
+        let conn_temp = &mut conn.get()?;
+        let count = CollectionModel::get_count(parent_id, conn_temp)?;
+        Ok(Self {
+            conn,
+            count,
+            parent_id,
+        })
+    }
+}
+
+impl Queryable for CollectionRunner {
+    type Item = Collection;
+
+    type Error = GraphqlError;
+
+    async fn len(&self) -> Result<i64, Self::Error> {
+        Ok(self.count)
+    }
+
+    async fn query<P: graphql_common::Paginate>(
+        &self,
+        pagination: P,
+    ) -> Result<Vec<Self::Item>, Self::Error> {
+        let offset = pagination.offset();
+        let len = self.len().await?;
+        if len < offset {
+            event!(
+                Level::ERROR,
+                "偏移量超出范围 pagination: {:?} len: {} offset: {}",
+                pagination,
+                len,
+                offset
+            );
+            return Err(GraphqlError::PageSizeTooMore);
+        }
+        let limit = pagination.limit();
+        let conn = &mut self.conn.get()?;
+        //  判断父目录是否存在
+        if let Some(id) = self.parent_id {
+            if !CollectionModel::exists(id, conn)? {
+                event!(Level::WARN, "父目录不存在: {}", id);
+                return Err(GraphqlError::NotFound("目录", id));
+            }
+        }
+        let collections =
+            CollectionModel::list_by_parent_with_page(self.parent_id, offset, limit, conn)?;
+        Ok(collections.into_iter().map(Into::into).collect())
     }
 }

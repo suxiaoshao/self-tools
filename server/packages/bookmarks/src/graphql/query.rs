@@ -5,24 +5,28 @@
  * @LastEditTime: 2024-03-25 13:55:34
  * @FilePath: /self-tools/server/packages/bookmarks/src/graphql/query.rs
  */
-use async_graphql::{Context, Object};
-use tracing::{event, Level};
-
-use crate::{
-    errors::{GraphqlError, GraphqlResult},
-    model::{
-        schema::custom_type::{NovelSite, NovelStatus},
-        PgPool,
-    },
-    service::{author::Author, collection::Collection, novel::Novel, tag::Tag},
-};
-
 use super::{
     guard::AuthGuard,
     input::TagMatch,
     output::{DraftAuthorInfo, DraftNovelInfo},
     validator::TagMatchValidator,
 };
+use crate::{
+    errors::{GraphqlError, GraphqlResult},
+    model::{
+        schema::custom_type::{NovelSite, NovelStatus},
+        PgPool,
+    },
+    service::{
+        author::Author,
+        collection::{Collection, CollectionRunner},
+        novel::Novel,
+        tag::Tag,
+    },
+};
+use async_graphql::{Context, Object};
+use graphql_common::{List, Pagination, Queryable};
+use tracing::{event, Level};
 
 pub(crate) struct QueryRoot;
 
@@ -47,16 +51,18 @@ impl QueryRoot {
         &self,
         context: &Context<'_>,
         parent_id: Option<i64>,
-    ) -> GraphqlResult<Vec<Collection>> {
-        let conn = &mut context
+        pagination: Pagination,
+    ) -> GraphqlResult<List<Collection>> {
+        let conn = context
             .data::<PgPool>()
             .map_err(|_| {
                 event!(Level::WARN, "graphql context data PgPool 不存在");
                 GraphqlError::NotGraphqlContextData("PgPool")
             })?
-            .get()?;
-        let directory = Collection::get_list_parent_id(parent_id, conn)?;
-        Ok(directory)
+            .clone();
+        let runner = CollectionRunner::new(conn, parent_id)?;
+        let (data, total) = tokio::try_join!(runner.query(pagination), runner.len())?;
+        Ok(List::new(data, total))
     }
     /// 获取目录详情
     #[graphql(guard = "AuthGuard")]

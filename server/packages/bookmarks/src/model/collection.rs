@@ -148,6 +148,51 @@ impl CollectionModel {
             }
         }
     }
+    /// 获取父目录下的所有目录数量
+    pub(crate) fn get_count(parent_id: Option<i64>, conn: &mut PgConnection) -> GraphqlResult<i64> {
+        match parent_id {
+            Some(id) => {
+                let count = collection::table
+                    .filter(collection::parent_id.eq(id))
+                    .count()
+                    .get_result(conn)?;
+                Ok(count)
+            }
+            None => {
+                let count = collection::table
+                    .filter(collection::parent_id.is_null())
+                    .count()
+                    .get_result(conn)?;
+                Ok(count)
+            }
+        }
+    }
+    /// 根据 offset limit 获取父目录下限定目录
+    pub(crate) fn list_by_parent_with_page(
+        parent_id: Option<i64>,
+        offset: i64,
+        limit: i64,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<Vec<Self>> {
+        match parent_id {
+            Some(id) => {
+                let collections = collection::table
+                    .filter(collection::parent_id.eq(id))
+                    .offset(offset)
+                    .limit(limit)
+                    .load(conn)?;
+                Ok(collections)
+            }
+            None => {
+                let collections = collection::table
+                    .filter(collection::parent_id.is_null())
+                    .offset(offset)
+                    .limit(limit)
+                    .load(conn)?;
+                Ok(collections)
+            }
+        }
+    }
 }
 
 /// all

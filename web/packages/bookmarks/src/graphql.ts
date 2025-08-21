@@ -118,6 +118,12 @@ export type DraftTagInfo = {
   url: Scalars['String']['output'];
 };
 
+export type List = {
+  __typename?: 'List';
+  data: Array<Collection>;
+  total: Scalars['Int']['output'];
+};
+
 export type MutationRoot = {
   __typename?: 'MutationRoot';
   addCollectionForNovel: Novel;
@@ -237,6 +243,11 @@ export enum NovelStatus {
   Paused = 'PAUSED',
 }
 
+export type Pagination = {
+  page?: Scalars['Int']['input'];
+  pageSize?: Scalars['Int']['input'];
+};
+
 export type QueryRoot = {
   __typename?: 'QueryRoot';
   allCollections: Array<Collection>;
@@ -244,7 +255,7 @@ export type QueryRoot = {
   fetchNovel: DraftNovelInfo;
   getAuthor: Author;
   getCollection: Collection;
-  getCollections: Array<Collection>;
+  getCollections: List;
   getNovel: Novel;
   queryAuthors: Array<Author>;
   queryNovels: Array<Novel>;
@@ -270,6 +281,7 @@ export type QueryRootGetCollectionArgs = {
 };
 
 export type QueryRootGetCollectionsArgs = {
+  pagination: Pagination;
   parentId?: InputMaybe<Scalars['Int']['input']>;
 };
 
@@ -511,19 +523,24 @@ export type UpdateAuthorByCrawlerMutation = {
 
 export type GetCollectionsQueryVariables = Exact<{
   parentId?: InputMaybe<Scalars['Int']['input']>;
+  pagination: Pagination;
 }>;
 
 export type GetCollectionsQuery = {
   __typename?: 'QueryRoot';
-  getCollections: Array<{
-    __typename?: 'Collection';
-    name: string;
-    id: number;
-    path: string;
-    createTime: any;
-    updateTime: any;
-    description?: string | null;
-  }>;
+  getCollections: {
+    __typename?: 'List';
+    total: number;
+    data: Array<{
+      __typename?: 'Collection';
+      name: string;
+      id: number;
+      path: string;
+      createTime: any;
+      updateTime: any;
+      description?: string | null;
+    }>;
+  };
 };
 
 export type DeleteCollectionMutationVariables = Exact<{
@@ -1207,14 +1224,17 @@ export type UpdateAuthorByCrawlerMutationOptions = Apollo.BaseMutationOptions<
   UpdateAuthorByCrawlerMutationVariables
 >;
 export const GetCollectionsDocument = gql`
-  query getCollections($parentId: Int) {
-    getCollections(parentId: $parentId) {
-      name
-      id
-      path
-      createTime
-      updateTime
-      description
+  query getCollections($parentId: Int, $pagination: Pagination!) {
+    getCollections(parentId: $parentId, pagination: $pagination) {
+      data {
+        name
+        id
+        path
+        createTime
+        updateTime
+        description
+      }
+      total
     }
   }
 `;
@@ -1232,11 +1252,13 @@ export const GetCollectionsDocument = gql`
  * const { data, loading, error } = useGetCollectionsQuery({
  *   variables: {
  *      parentId: // value for 'parentId'
+ *      pagination: // value for 'pagination'
  *   },
  * });
  */
 export function useGetCollectionsQuery(
-  baseOptions?: Apollo.QueryHookOptions<GetCollectionsQuery, GetCollectionsQueryVariables>,
+  baseOptions: Apollo.QueryHookOptions<GetCollectionsQuery, GetCollectionsQueryVariables> &
+    ({ variables: GetCollectionsQueryVariables; skip?: boolean } | { skip: boolean }),
 ) {
   const options = { ...defaultOptions, ...baseOptions };
   return Apollo.useQuery<GetCollectionsQuery, GetCollectionsQueryVariables>(GetCollectionsDocument, options);
