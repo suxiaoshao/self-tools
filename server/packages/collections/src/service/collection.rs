@@ -196,6 +196,8 @@ pub(crate) struct CollectionQueryRunner {
     count: i64,
 }
 
+graphql_common::list!(ItemAndCollection);
+
 impl CollectionQueryRunner {
     pub(crate) async fn new(query: CollectionItemQuery) -> GraphqlResult<Self> {
         let CollectionItemQuery {

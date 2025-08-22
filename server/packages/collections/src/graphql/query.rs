@@ -5,19 +5,16 @@
  * @LastEditTime: 2024-02-20 16:24:41
  * @FilePath: /self-tools/server/packages/collections/src/graphql/query.rs
  */
-use super::{
-    guard::AuthGuard,
-    types::{CollectionItemQuery, ItemAndCollection},
-};
+use super::{guard::AuthGuard, types::CollectionItemQuery};
 use crate::{
     errors::GraphqlResult,
     service::{
-        collection::{Collection, CollectionQueryRunner},
+        collection::{Collection, CollectionQueryRunner, ItemAndCollectionList},
         item::{Item, ItemQueryRunner},
     },
 };
 use async_graphql::Object;
-use graphql_common::{List, QueryStack, Queryable};
+use graphql_common::{QueryStack, Queryable};
 
 pub(crate) struct QueryRoot;
 
@@ -40,13 +37,13 @@ impl QueryRoot {
     async fn collection_and_item(
         &self,
         query: CollectionItemQuery,
-    ) -> GraphqlResult<List<ItemAndCollection>> {
+    ) -> GraphqlResult<ItemAndCollectionList> {
         let (collection_runner, item_runner) = tokio::try_join!(
             CollectionQueryRunner::new(query),
             ItemQueryRunner::new(query),
         )?;
         let runner = QueryStack::new(collection_runner).add_query(item_runner);
         let (data, total) = tokio::try_join!(runner.query(query.pagination), runner.len())?;
-        Ok(List::new(data, total))
+        Ok(ItemAndCollectionList::new(data, total))
     }
 }

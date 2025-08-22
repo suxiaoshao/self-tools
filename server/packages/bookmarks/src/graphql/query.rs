@@ -18,14 +18,14 @@ use crate::{
         PgPool,
     },
     service::{
-        author::Author,
-        collection::{Collection, CollectionRunner},
+        author::{Author, AuthorList, AuthorRunner},
+        collection::{Collection, CollectionList, CollectionRunner},
         novel::Novel,
         tag::Tag,
     },
 };
 use async_graphql::{Context, Object};
-use graphql_common::{List, Pagination, Queryable};
+use graphql_common::{Pagination, Queryable};
 use tracing::{event, Level};
 
 pub(crate) struct QueryRoot;
@@ -52,7 +52,7 @@ impl QueryRoot {
         context: &Context<'_>,
         parent_id: Option<i64>,
         pagination: Pagination,
-    ) -> GraphqlResult<List<Collection>> {
+    ) -> GraphqlResult<CollectionList> {
         let conn = context
             .data::<PgPool>()
             .map_err(|_| {
@@ -62,7 +62,7 @@ impl QueryRoot {
             .clone();
         let runner = CollectionRunner::new(conn, parent_id)?;
         let (data, total) = tokio::try_join!(runner.query(pagination), runner.len())?;
-        Ok(List::new(data, total))
+        Ok(CollectionList::new(data, total))
     }
     /// 获取目录详情
     #[graphql(guard = "AuthGuard")]
@@ -84,21 +84,23 @@ impl QueryRoot {
         context: &Context<'_>,
         // 搜索作者名
         search_name: Option<String>,
-    ) -> GraphqlResult<Vec<Author>> {
-        let conn = &mut context
+        pagination: Pagination,
+    ) -> GraphqlResult<AuthorList> {
+        let conn = context
             .data::<PgPool>()
             .map_err(|_| {
                 event!(Level::WARN, "graphql context data PgPool 不存在");
                 GraphqlError::NotGraphqlContextData("PgPool")
             })?
-            .get()?;
+            .clone();
         // 空字符串视为无效
         let search_name = match search_name {
             Some(x) if x.is_empty() => None,
             _ => search_name,
         };
-        let author = Author::query(search_name, conn)?;
-        Ok(author)
+        let runner = AuthorRunner::new(conn, search_name)?;
+        let (data, total) = tokio::try_join!(runner.query(pagination), runner.len())?;
+        Ok(AuthorList::new(data, total))
     }
     /// 获取作者详情
     #[graphql(guard = "AuthGuard")]

@@ -1,85 +1,92 @@
-# This file was generated. Do not edit manually.
-
 schema {
   query: QueryRoot
   mutation: MutationRoot
 }
 
-union ItemAndCollection = Collection | Item
+# Indicates that an Input Object is a OneOf Input Object (and thus requires exactly one of its field be provided)
+directive @oneOf on INPUT_OBJECT
 
 type Collection {
-  "获取祖先列表"
-  ancestors: [Collection!]!
-  createTime: DateTime!
-  description: String
   id: Int!
   name: String!
-  parentId: Int
   path: String!
+  parentId: Int
+  description: String
+  createTime: DateTime!
   updateTime: DateTime!
+
+  # 获取祖先列表
+  ancestors: [Collection!]!
 }
+
+input CollectionItemQuery {
+  id: Int
+  createTime: TimeRange
+  updateTime: TimeRange
+  pagination: Pagination!
+}
+
+# A datetime with timezone offset.
+#
+# The input is a string in RFC3339 format, e.g. "2022-01-12T04:00:19.12345Z"
+# or "2022-01-12T04:00:19+03:00". The output is also a string in RFC3339
+# format, but it is always normalized to the UTC (Z) offset, e.g.
+# "2022-01-12T04:00:19.12345Z".
+scalar DateTime
 
 type Item {
-  collection: Collection
-  content: String!
-  createTime: DateTime!
   id: Int!
   name: String!
+  content: String!
+  createTime: DateTime!
   updateTime: DateTime!
+  collection: Collection
 }
 
-type List {
+union ItemAndCollection = Item | Collection
+
+type ItemAndCollectionList {
   data: [ItemAndCollection!]!
   total: Int!
 }
 
 type MutationRoot {
-  "创建目录"
-  createCollection(description: String, name: String!, parentId: Int): Collection!
-  "创建记录"
-  createItem(collectionId: Int!, content: String!, name: String!): Item!
-  "删除目录"
+  # 创建目录
+  createCollection(name: String!, parentId: Int, description: String): Collection!
+
+  # 删除目录
   deleteCollection(id: Int!): Collection!
-  "删除记录"
+
+  # 修改目录
+  updateCollection(id: Int!, name: String!, description: String): Collection!
+
+  # 创建记录
+  createItem(name: String!, content: String!, collectionId: Int!): Item!
+
+  # 删除记录
   deleteItem(id: Int!): Item!
-  "修改目录"
-  updateCollection(description: String, id: Int!, name: String!): Collection!
-  "修改记录"
-  updateItem(content: String!, id: Int!, name: String!): Item!
-}
 
-type QueryRoot {
-  "获取集合下的集合和记录"
-  collectionAndItem(query: CollectionItemQuery!): List!
-  "获取目录详情"
-  getCollection(id: Int!): Collection!
-  "获取记录详情"
-  getItem(id: Int!): Item!
-}
-
-"""
-A datetime with timezone offset.
-
-The input is a string in RFC3339 format, e.g. "2022-01-12T04:00:19.12345Z"
-or "2022-01-12T04:00:19+03:00". The output is also a string in RFC3339
-format, but it is always normalized to the UTC (Z) offset, e.g.
-"2022-01-12T04:00:19.12345Z".
-"""
-scalar DateTime
-
-input CollectionItemQuery {
-  createTime: TimeRange
-  id: Int
-  pagination: Pagination!
-  updateTime: TimeRange
+  # 修改记录
+  updateItem(id: Int!, name: String!, content: String!): Item!
 }
 
 input Pagination {
-  page: Int!
-  pageSize: Int!
+  page: Int! = 1
+  pageSize: Int! = 10
+}
+
+type QueryRoot {
+  # 获取目录详情
+  getCollection(id: Int!): Collection!
+
+  # 获取记录详情
+  getItem(id: Int!): Item!
+
+  # 获取集合下的集合和记录
+  collectionAndItem(query: CollectionItemQuery!): ItemAndCollectionList!
 }
 
 input TimeRange {
-  end: DateTime!
   start: DateTime!
+  end: DateTime!
 }

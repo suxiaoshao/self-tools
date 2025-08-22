@@ -19,6 +19,11 @@ type Author {
   url: String!
 }
 
+type AuthorList {
+  data: [Author!]!
+  total: Int!
+}
+
 scalar BigDecimal
 
 type Chapter {
@@ -52,6 +57,11 @@ type Collection {
 
   # 获取子列表
   children: [Collection!]!
+}
+
+type CollectionList {
+  data: [Collection!]!
+  total: Int!
 }
 
 input CreateNovelInput {
@@ -110,11 +120,6 @@ type DraftTagInfo {
   url: String!
   id: String!
   name: String!
-}
-
-type List {
-  data: [Collection!]!
-  total: Int!
 }
 
 type MutationRoot {
@@ -210,13 +215,13 @@ type QueryRoot {
   allCollections: [Collection!]!
 
   # 获取目录列表
-  getCollections(parentId: Int, pagination: Pagination!): List!
+  getCollections(parentId: Int, pagination: Pagination!): CollectionList!
 
   # 获取目录详情
   getCollection(id: Int!): Collection!
 
   # 获取作者列表
-  queryAuthors(searchName: String): [Author!]!
+  queryAuthors(searchName: String, pagination: Pagination!): AuthorList!
 
   # 获取作者详情
   getAuthor(id: Int!): Author!

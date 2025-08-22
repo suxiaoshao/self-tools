@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use async_graphql::*;
 use diesel::PgConnection;
-use graphql_common::Queryable;
+use graphql_common::{list, Queryable};
 use time::OffsetDateTime;
 use tracing::{event, Level};
 
@@ -218,6 +218,8 @@ pub(crate) struct CollectionRunner {
     count: i64,
     parent_id: Option<i64>,
 }
+
+list!(Collection);
 
 impl CollectionRunner {
     pub(crate) fn new(conn: PgPool, parent_id: Option<i64>) -> GraphqlResult<Self> {

@@ -33,6 +33,12 @@ export type Author = {
   url: Scalars['String']['output'];
 };
 
+export type AuthorList = {
+  __typename?: 'AuthorList';
+  data: Array<Author>;
+  total: Scalars['Int']['output'];
+};
+
 export type Chapter = {
   __typename?: 'Chapter';
   author: Author;
@@ -62,6 +68,12 @@ export type Collection = {
   parentId?: Maybe<Scalars['Int']['output']>;
   path: Scalars['String']['output'];
   updateTime: Scalars['DateTime']['output'];
+};
+
+export type CollectionList = {
+  __typename?: 'CollectionList';
+  data: Array<Collection>;
+  total: Scalars['Int']['output'];
 };
 
 export type CreateNovelInput = {
@@ -116,12 +128,6 @@ export type DraftTagInfo = {
   id: Scalars['String']['output'];
   name: Scalars['String']['output'];
   url: Scalars['String']['output'];
-};
-
-export type List = {
-  __typename?: 'List';
-  data: Array<Collection>;
-  total: Scalars['Int']['output'];
 };
 
 export type MutationRoot = {
@@ -255,9 +261,9 @@ export type QueryRoot = {
   fetchNovel: DraftNovelInfo;
   getAuthor: Author;
   getCollection: Collection;
-  getCollections: List;
+  getCollections: CollectionList;
   getNovel: Novel;
-  queryAuthors: Array<Author>;
+  queryAuthors: AuthorList;
   queryNovels: Array<Novel>;
   queryTags: Array<Tag>;
 };
@@ -290,6 +296,7 @@ export type QueryRootGetNovelArgs = {
 };
 
 export type QueryRootQueryAuthorsArgs = {
+  pagination: Pagination;
   searchName?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -353,7 +360,10 @@ export type SearchAuthorQueryVariables = Exact<{
 
 export type SearchAuthorQuery = {
   __typename?: 'QueryRoot';
-  queryAuthors: Array<{ __typename?: 'Author'; id: number; name: string; description: string; avatar: string }>;
+  queryAuthors: {
+    __typename?: 'AuthorList';
+    data: Array<{ __typename?: 'Author'; id: number; name: string; description: string; avatar: string }>;
+  };
 };
 
 export type AllowTagsQueryVariables = Exact<{ [key: string]: never }>;
@@ -363,21 +373,27 @@ export type AllowTagsQuery = {
   queryTags: Array<{ __typename?: 'Tag'; id: number; name: string }>;
 };
 
-export type GetAuthorsQueryVariables = Exact<{ [key: string]: never }>;
+export type GetAuthorsQueryVariables = Exact<{
+  pagination: Pagination;
+}>;
 
 export type GetAuthorsQuery = {
   __typename?: 'QueryRoot';
-  queryAuthors: Array<{
-    __typename?: 'Author';
-    id: number;
-    site: NovelSite;
-    name: string;
-    createTime: any;
-    updateTime: any;
-    avatar: string;
-    description: string;
-    url: string;
-  }>;
+  queryAuthors: {
+    __typename?: 'AuthorList';
+    total: number;
+    data: Array<{
+      __typename?: 'Author';
+      id: number;
+      site: NovelSite;
+      name: string;
+      createTime: any;
+      updateTime: any;
+      avatar: string;
+      description: string;
+      url: string;
+    }>;
+  };
 };
 
 export type GetAuthorQueryVariables = Exact<{
@@ -529,7 +545,7 @@ export type GetCollectionsQueryVariables = Exact<{
 export type GetCollectionsQuery = {
   __typename?: 'QueryRoot';
   getCollections: {
-    __typename?: 'List';
+    __typename?: 'CollectionList';
     total: number;
     data: Array<{
       __typename?: 'Collection';
@@ -776,11 +792,13 @@ export const AuthorAllFragmentDoc = gql`
 `;
 export const SearchAuthorDocument = gql`
   query searchAuthor($searchName: String) {
-    queryAuthors(searchName: $searchName) {
-      id
-      name
-      description
-      avatar
+    queryAuthors(searchName: $searchName, pagination: { page: 1, pageSize: 20 }) {
+      data {
+        id
+        name
+        description
+        avatar
+      }
     }
   }
 `;
@@ -868,9 +886,12 @@ export type AllowTagsLazyQueryHookResult = ReturnType<typeof useAllowTagsLazyQue
 export type AllowTagsSuspenseQueryHookResult = ReturnType<typeof useAllowTagsSuspenseQuery>;
 export type AllowTagsQueryResult = Apollo.QueryResult<AllowTagsQuery, AllowTagsQueryVariables>;
 export const GetAuthorsDocument = gql`
-  query getAuthors {
-    queryAuthors {
-      ...AuthorAll
+  query getAuthors($pagination: Pagination!) {
+    queryAuthors(pagination: $pagination) {
+      data {
+        ...AuthorAll
+      }
+      total
     }
   }
   ${AuthorAllFragmentDoc}
@@ -888,10 +909,14 @@ export const GetAuthorsDocument = gql`
  * @example
  * const { data, loading, error } = useGetAuthorsQuery({
  *   variables: {
+ *      pagination: // value for 'pagination'
  *   },
  * });
  */
-export function useGetAuthorsQuery(baseOptions?: Apollo.QueryHookOptions<GetAuthorsQuery, GetAuthorsQueryVariables>) {
+export function useGetAuthorsQuery(
+  baseOptions: Apollo.QueryHookOptions<GetAuthorsQuery, GetAuthorsQueryVariables> &
+    ({ variables: GetAuthorsQueryVariables; skip?: boolean } | { skip: boolean }),
+) {
   const options = { ...defaultOptions, ...baseOptions };
   return Apollo.useQuery<GetAuthorsQuery, GetAuthorsQueryVariables>(GetAuthorsDocument, options);
 }
