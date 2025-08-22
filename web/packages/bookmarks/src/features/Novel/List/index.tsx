@@ -8,6 +8,8 @@ import {
   getCoreRowModel,
   TableActions,
   useCustomTable,
+  usePage,
+  usePageWithTotal,
 } from 'custom-table';
 import { useI18n } from 'i18n';
 import { useMemo } from 'react';
@@ -28,15 +30,24 @@ import CollectionMultiSelect from '@bookmarks/components/CollectionMultiSelect';
 import TagsSelect from '@bookmarks/components/TagsSelect';
 import { getLabelKeyByNovelStatus } from '@bookmarks/utils/novelStatus';
 
-type Data = GetNovelsQuery['queryNovels'][0];
+type Data = GetNovelsQuery['queryNovels']['data'][0];
 
 const columnHelper = createCustomColumnHelper<Data>();
 
 export default function NovelList() {
-  type FormData = GetNovelsQueryVariables;
-  const { control, watch, register } = useForm<FormData>({ defaultValues: { tagMatch: { matchSet: [] } } });
+  type FormData = Omit<GetNovelsQueryVariables, 'pagination'>;
+  const pageState = usePage();
+  const { control, watch, register } = useForm<FormData>({
+    defaultValues: {
+      tagMatch: { matchSet: [] },
+    },
+  });
   const form = watch();
-  const { data, refetch } = useGetNovelsQuery({ variables: convertFormToVariables(form) });
+  const { data: { queryNovels: { data, total } = {} } = {}, refetch } = useGetNovelsQuery({
+    variables: convertFormToVariables(form, pageState),
+  });
+  const page = usePageWithTotal(pageState, total);
+
   const [deleteNovel] = useDeleteNovelMutation();
   const t = useI18n();
   const columns = useMemo<CustomColumnDefArray<Data>>(
@@ -115,8 +126,8 @@ export default function NovelList() {
     [deleteNovel, refetch, t],
   );
   const tableOptions = useMemo<CustomTableOptions<Data>>(
-    () => ({ columns, data: data?.queryNovels ?? [], getCoreRowModel: getCoreRowModel() }),
-    [columns, data?.queryNovels],
+    () => ({ columns, data: data ?? [], getCoreRowModel: getCoreRowModel() }),
+    [columns, data],
   );
   const tableInstance = useCustomTable(tableOptions);
   return (
@@ -168,6 +179,7 @@ export default function NovelList() {
             maxHeight: undefined,
           }}
           tableInstance={tableInstance}
+          page={page}
         />
       </Box>
     </Box>

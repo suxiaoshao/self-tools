@@ -1,14 +1,22 @@
-query getNovels($collectionMatch: TagMatch, $novelStatus: NovelStatus, $tagMatch: TagMatch) {
-  queryNovels(collectionMatch: $collectionMatch, novelStatus: $novelStatus, tagMatch: $tagMatch) {
-    id
-    name
-    description
-    createTime
-    updateTime
-    description
-    novelStatus
-    avatar
-    site
+query getNovels($collectionMatch: TagMatch, $novelStatus: NovelStatus, $tagMatch: TagMatch, $pagination: Pagination!) {
+  queryNovels(
+    collectionMatch: $collectionMatch
+    novelStatus: $novelStatus
+    tagMatch: $tagMatch
+    pagination: $pagination
+  ) {
+    data {
+      id
+      name
+      description
+      createTime
+      updateTime
+      description
+      novelStatus
+      avatar
+      site
+    }
+    total
   }
 }
 

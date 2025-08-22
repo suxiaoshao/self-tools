@@ -194,6 +194,11 @@ type Novel {
   collections: [Collection!]!
 }
 
+type NovelList {
+  data: [Novel!]!
+  total: Int!
+}
+
 enum NovelSite {
   QIDIAN
   JJWXC
@@ -227,10 +232,15 @@ type QueryRoot {
   getAuthor(id: Int!): Author!
 
   # 获取标签列表
-  queryTags: [Tag!]!
+  queryTags(pagination: Pagination!): TagList!
 
   # 获取小说列表
-  queryNovels(collectionMatch: TagMatch, tagMatch: TagMatch, novelStatus: NovelStatus): [Novel!]!
+  queryNovels(
+    collectionMatch: TagMatch
+    tagMatch: TagMatch
+    novelStatus: NovelStatus
+    pagination: Pagination!
+  ): NovelList!
 
   # 获取小说详情
   getNovel(id: Int!): Novel!
@@ -282,6 +292,11 @@ type Tag {
   createTime: DateTime!
   updateTime: DateTime!
   url: String!
+}
+
+type TagList {
+  data: [Tag!]!
+  total: Int!
 }
 
 input TagMatch {

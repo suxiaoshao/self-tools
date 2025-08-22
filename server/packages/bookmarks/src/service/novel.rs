@@ -15,6 +15,7 @@ use crate::{
 use crate::{graphql::input::TagMatch, model::author::AuthorModel};
 use async_graphql::{ComplexObject, Context, InputObject, SimpleObject};
 use diesel::PgConnection;
+use graphql_common::Queryable;
 use novel_crawler::{JJNovel, NovelFn, QDNovel};
 use time::OffsetDateTime;
 use tracing::{event, Level};
@@ -24,7 +25,7 @@ use super::collection::Collection;
 use super::utils::{find_all_children, find_all_novel_by_collection};
 use super::{author::Author, tag::Tag};
 
-#[derive(SimpleObject)]
+#[derive(SimpleObject, Clone)]
 #[graphql(complex)]
 pub(crate) struct Novel {
     pub(crate) id: i64,
@@ -413,5 +414,60 @@ impl CreateNovelInput {
             create_time: now,
             update_time: now,
         }
+    }
+}
+
+pub(crate) struct NovelRunner {
+    data: Vec<Novel>,
+}
+
+graphql_common::list!(Novel);
+
+impl NovelRunner {
+    pub(crate) fn new(
+        collection_match: Option<TagMatch>,
+        tag_match: Option<TagMatch>,
+        novel_status: Option<NovelStatus>,
+        conn: PgPool,
+    ) -> GraphqlResult<Self> {
+        let conn = &mut conn.get()?;
+        let data = Novel::query(collection_match, tag_match, novel_status, conn)?;
+        Ok(Self { data })
+    }
+}
+
+impl Queryable for NovelRunner {
+    type Item = Novel;
+
+    type Error = GraphqlError;
+
+    async fn len(&self) -> Result<i64, Self::Error> {
+        Ok(self.data.len() as i64)
+    }
+
+    async fn query<P: graphql_common::Paginate>(
+        &self,
+        pagination: P,
+    ) -> Result<Vec<Self::Item>, Self::Error> {
+        let offset = pagination.offset();
+        let len = self.len().await?;
+        if len < offset {
+            event!(
+                Level::ERROR,
+                "偏移量超出范围 pagination: {:?} len: {} offset: {}",
+                pagination,
+                len,
+                offset
+            );
+            return Err(GraphqlError::PageSizeTooMore);
+        }
+        let limit = pagination.limit();
+        Ok(self
+            .data
+            .iter()
+            .skip(offset as usize)
+            .take(limit as usize)
+            .cloned()
+            .collect())
     }
 }

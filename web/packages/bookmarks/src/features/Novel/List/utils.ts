@@ -7,12 +7,12 @@
  */
 import type { GetNovelsQueryVariables } from '@bookmarks/graphql';
 import { match, P } from 'ts-pattern';
+import type { PageState } from 'custom-table';
 
-export function convertFormToVariables({
-  collectionMatch,
-  novelStatus,
-  tagMatch,
-}: GetNovelsQueryVariables): GetNovelsQueryVariables {
+export function convertFormToVariables(
+  { collectionMatch, novelStatus, tagMatch }: Omit<GetNovelsQueryVariables, 'pagination'>,
+  pageState: PageState,
+): GetNovelsQueryVariables {
   return {
     collectionMatch: match(collectionMatch)
       .with(
@@ -35,5 +35,9 @@ export function convertFormToVariables({
       )
       // eslint-disable-next-line no-useless-undefined
       .otherwise(() => undefined),
+    pagination: {
+      page: pageState.pageIndex,
+      pageSize: pageState.pageSize,
+    },
   };
 }

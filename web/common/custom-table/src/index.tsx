@@ -125,7 +125,7 @@ export function CustomTable<D extends object>({
   );
 }
 
-export { usePage, usePageWithTotal } from './usePage';
+export { usePage, usePageWithTotal, type PageState } from './usePage';
 
 export { TableActions } from './TableActions';
 export {

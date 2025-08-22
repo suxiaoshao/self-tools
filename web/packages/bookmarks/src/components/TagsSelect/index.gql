@@ -1,6 +1,9 @@
 query allowTags {
-  queryTags {
-    id
-    name
+  # todo all
+  queryTags(pagination: { page: 1, pageSize: 20 }) {
+    data {
+      id
+      name
+    }
   }
 }

@@ -87,7 +87,20 @@ impl TagModel {
     /// 获取所有标签
     pub(crate) fn get_list(conn: &mut PgConnection) -> GraphqlResult<Vec<Self>> {
         let tags = tag::table.load(conn)?;
-
+        Ok(tags)
+    }
+    /// 获取标签数量
+    pub(crate) fn count(conn: &mut PgConnection) -> GraphqlResult<i64> {
+        let count = tag::table.count().get_result(conn)?;
+        Ok(count)
+    }
+    /// 获取标签分页列表
+    pub(crate) fn get_list_by_pagination(
+        offset: i64,
+        limit: i64,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<Vec<Self>> {
+        let tags = tag::table.offset(offset).limit(limit).load(conn)?;
         Ok(tags)
     }
 }

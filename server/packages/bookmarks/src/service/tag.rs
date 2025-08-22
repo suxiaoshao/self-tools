@@ -12,7 +12,7 @@ use tracing::{event, Level};
 
 use crate::{
     errors::{GraphqlError, GraphqlResult},
-    model::{schema::custom_type::NovelSite, tag::TagModel},
+    model::{schema::custom_type::NovelSite, tag::TagModel, PgPool},
 };
 
 #[derive(SimpleObject, Eq, PartialEq)]
@@ -78,12 +78,49 @@ impl Tag {
     }
 }
 
-/// collection_id 相关
-impl Tag {
-    /// 获取标签列表
-    pub(crate) fn query(conn: &mut PgConnection) -> GraphqlResult<Vec<Self>> {
-        // 获取标签列表
-        let tags = TagModel::get_list(conn)?;
+pub(crate) struct TagRunner {
+    conn: PgPool,
+    count: i64,
+}
+
+graphql_common::list!(Tag);
+
+impl TagRunner {
+    pub(crate) fn new(conn: PgPool) -> GraphqlResult<Self> {
+        let conn_temp = &mut conn.get()?;
+        let count = TagModel::count(conn_temp)?;
+        Ok(Self { conn, count })
+    }
+}
+
+impl graphql_common::Queryable for TagRunner {
+    type Item = Tag;
+
+    type Error = GraphqlError;
+
+    async fn len(&self) -> Result<i64, Self::Error> {
+        Ok(self.count)
+    }
+
+    async fn query<P: graphql_common::Paginate>(
+        &self,
+        pagination: P,
+    ) -> Result<Vec<Self::Item>, Self::Error> {
+        let offset = pagination.offset();
+        let len = self.len().await?;
+        if len < offset {
+            event!(
+                Level::ERROR,
+                "偏移量超出范围 pagination: {:?} len: {} offset: {}",
+                pagination,
+                len,
+                offset
+            );
+            return Err(GraphqlError::PageSizeTooMore);
+        }
+        let limit = pagination.limit();
+        let conn = &mut self.conn.get()?;
+        let tags = TagModel::get_list_by_pagination(offset, limit, conn)?;
         Ok(tags.into_iter().map(|tag| tag.into()).collect())
     }
 }

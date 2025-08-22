@@ -31,7 +31,7 @@ export interface TagsSelectProps extends Omit<FormControlProps, 'name' | 'onChan
 }
 
 export default function TagsSelect({ value, onChange, onBlur, sx, ...props }: TagsSelectProps) {
-  const { data: { queryTags } = {}, loading } = useAllowTagsQuery();
+  const { data: { queryTags: { data } = {} } = {}, loading } = useAllowTagsQuery();
   const formValue = useMemo(() => {
     return (
       match(value)
@@ -57,16 +57,16 @@ export default function TagsSelect({ value, onChange, onBlur, sx, ...props }: Ta
         renderValue={(selected) => (
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
             {selected?.map((value) => (
-              <Chip key={value} label={queryTags?.find(({ id }) => id === value)?.name} />
+              <Chip key={value} label={data?.find(({ id }) => id === value)?.name} />
             ))}
           </Box>
         )}
         MenuProps={MenuProps}
       >
-        {match([loading, queryTags?.length])
+        {match([loading, data?.length])
           .with([true, P._], () => <MenuItem disabled>Loading...</MenuItem>)
           .with([P._, P.number.gt(0)], () =>
-            queryTags?.map(({ name, id }) => (
+            data?.map(({ name, id }) => (
               <MenuItem key={id} value={id}>
                 {name}
               </MenuItem>
