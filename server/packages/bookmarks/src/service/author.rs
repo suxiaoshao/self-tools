@@ -188,6 +188,19 @@ impl Author {
             Ok(author.into())
         })
     }
+    /// 获取全部作者
+    pub(crate) fn all(conn: &mut PgConnection) -> GraphqlResult<Vec<Author>> {
+        let authors = AuthorModel::all(conn)?;
+        Ok(authors.into_iter().map(Into::into).collect())
+    }
+    /// 更具搜索获取全部作者
+    pub(crate) fn search(
+        search_name: String,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<Vec<Author>> {
+        let authors = AuthorModel::search_all(search_name, conn)?;
+        Ok(authors.into_iter().map(Into::into).collect())
+    }
 }
 
 pub(crate) struct AuthorRunner {

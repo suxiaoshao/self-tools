@@ -262,7 +262,9 @@ export type Pagination = {
 
 export type QueryRoot = {
   __typename?: 'QueryRoot';
+  allAuthors: Array<Author>;
   allCollections: Array<Collection>;
+  allTags: Array<Tag>;
   fetchAuthor: DraftAuthorInfo;
   fetchNovel: DraftNovelInfo;
   getAuthor: Author;
@@ -272,6 +274,10 @@ export type QueryRoot = {
   queryAuthors: AuthorList;
   queryNovels: NovelList;
   queryTags: TagList;
+};
+
+export type QueryRootAllAuthorsArgs = {
+  searchName?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type QueryRootFetchAuthorArgs = {
@@ -377,17 +383,14 @@ export type SearchAuthorQueryVariables = Exact<{
 
 export type SearchAuthorQuery = {
   __typename?: 'QueryRoot';
-  queryAuthors: {
-    __typename?: 'AuthorList';
-    data: Array<{ __typename?: 'Author'; id: number; name: string; description: string; avatar: string }>;
-  };
+  allAuthors: Array<{ __typename?: 'Author'; id: number; name: string; description: string; avatar: string }>;
 };
 
 export type AllowTagsQueryVariables = Exact<{ [key: string]: never }>;
 
 export type AllowTagsQuery = {
   __typename?: 'QueryRoot';
-  queryTags: { __typename?: 'TagList'; data: Array<{ __typename?: 'Tag'; id: number; name: string }> };
+  allTags: Array<{ __typename?: 'Tag'; id: number; name: string }>;
 };
 
 export type GetAuthorsQueryVariables = Exact<{
@@ -820,13 +823,11 @@ export const AuthorAllFragmentDoc = gql`
 `;
 export const SearchAuthorDocument = gql`
   query searchAuthor($searchName: String) {
-    queryAuthors(searchName: $searchName, pagination: { page: 1, pageSize: 20 }) {
-      data {
-        id
-        name
-        description
-        avatar
-      }
+    allAuthors(searchName: $searchName) {
+      id
+      name
+      description
+      avatar
     }
   }
 `;
@@ -871,11 +872,9 @@ export type SearchAuthorSuspenseQueryHookResult = ReturnType<typeof useSearchAut
 export type SearchAuthorQueryResult = Apollo.QueryResult<SearchAuthorQuery, SearchAuthorQueryVariables>;
 export const AllowTagsDocument = gql`
   query allowTags {
-    queryTags(pagination: { page: 1, pageSize: 20 }) {
-      data {
-        id
-        name
-      }
+    allTags {
+      id
+      name
     }
   }
 `;

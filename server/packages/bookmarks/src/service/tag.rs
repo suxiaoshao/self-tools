@@ -78,6 +78,15 @@ impl Tag {
     }
 }
 
+/// all
+impl Tag {
+    /// 获取所有标签
+    pub(crate) fn all(conn: &mut PgConnection) -> GraphqlResult<Vec<Self>> {
+        let tags = TagModel::get_list(conn)?;
+        Ok(tags.into_iter().map(|x| x.into()).collect())
+    }
+}
+
 pub(crate) struct TagRunner {
     conn: PgPool,
     count: i64,

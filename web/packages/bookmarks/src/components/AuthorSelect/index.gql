@@ -1,11 +1,9 @@
 query searchAuthor($searchName: String) {
   # todo 取消分页或者选择器支持分页
-  queryAuthors(searchName: $searchName, pagination: { page: 1, pageSize: 20 }) {
-    data {
-      id
-      name
-      description
-      avatar
-    }
+  allAuthors(searchName: $searchName) {
+    id
+    name
+    description
+    avatar
   }
 }

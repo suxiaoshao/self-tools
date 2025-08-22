@@ -22,7 +22,7 @@ import { getImageUrl } from '@bookmarks/utils/image';
 
 export interface TagsSelectProps
   extends Omit<
-    AutocompleteProps<SearchAuthorQuery['queryAuthors']['data'][0], false, false, false>,
+    AutocompleteProps<SearchAuthorQuery['allAuthors'][0], false, false, false>,
     'name' | 'onChange' | 'onBlur' | 'value' | 'renderInput' | 'options'
   > {
   onChange: (value: number) => void;
@@ -33,7 +33,7 @@ export interface TagsSelectProps
 export default function AuthorSelect({ onBlur, onChange, sx, value, ...props }: TagsSelectProps) {
   const [searchName, setSearchName] = useState('');
 
-  const { loading, data: { queryAuthors: { data } = {} } = {} } = useSearchAuthorQuery({
+  const { loading, data: { allAuthors } = {} } = useSearchAuthorQuery({
     variables: { searchName },
   });
   const event = useMemo(() => new Subject<string>(), []);
@@ -45,17 +45,17 @@ export default function AuthorSelect({ onBlur, onChange, sx, value, ...props }: 
   }, [event]);
   const t = useI18n();
   return (
-    <Autocomplete<SearchAuthorQuery['queryAuthors']['data'][0], false, false, false>
+    <Autocomplete<SearchAuthorQuery['allAuthors'][0], false, false, false>
       sx={sx}
       onBlur={onBlur}
-      value={data?.find((author) => author.id === value)}
+      value={allAuthors?.find((author) => author.id === value)}
       onChange={(event: React.SyntheticEvent, newValue) => {
         if (newValue?.id) {
           onChange(newValue?.id);
         }
       }}
       isOptionEqualToValue={(option, value) => option.id === value.id}
-      options={data ?? []}
+      options={allAuthors ?? []}
       getOptionLabel={({ name }) => name}
       loading={loading}
       renderInput={(params) => (

@@ -231,8 +231,14 @@ type QueryRoot {
   # 获取作者详情
   getAuthor(id: Int!): Author!
 
+  # 获取所有作者
+  allAuthors(searchName: String): [Author!]!
+
   # 获取标签列表
   queryTags(pagination: Pagination!): TagList!
+
+  # 获取所有 tag
+  allTags: [Tag!]!
 
   # 获取小说列表
   queryNovels(

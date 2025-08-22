@@ -72,13 +72,28 @@ impl AuthorModel {
 }
 
 impl AuthorModel {
-    /// 获取所有作者
+    /// 获取作者
     pub(crate) fn list_with_page(
         offset: i64,
         limit: i64,
         conn: &mut PgConnection,
     ) -> GraphqlResult<Vec<Self>> {
         let authors = author::table.offset(offset).limit(limit).load(conn)?;
+        Ok(authors)
+    }
+    /// 获取所有作者
+    pub(crate) fn all(conn: &mut PgConnection) -> GraphqlResult<Vec<Self>> {
+        let authors = author::table.load(conn)?;
+        Ok(authors)
+    }
+    /// 获取搜索全部作者
+    pub(crate) fn search_all(
+        search_name: String,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<Vec<Self>> {
+        let authors = author::table
+            .filter(author::name.like(format!("%{search_name}%")))
+            .load(conn)?;
         Ok(authors)
     }
     /// 获取作者搜索列表

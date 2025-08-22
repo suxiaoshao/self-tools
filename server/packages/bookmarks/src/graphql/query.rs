@@ -21,7 +21,7 @@ use crate::{
         author::{Author, AuthorList, AuthorRunner},
         collection::{Collection, CollectionList, CollectionRunner},
         novel::{Novel, NovelList, NovelRunner},
-        tag::{TagList, TagRunner},
+        tag::{Tag, TagList, TagRunner},
     },
 };
 use async_graphql::{Context, Object};
@@ -115,6 +115,36 @@ impl QueryRoot {
         let author = Author::get(id, conn)?;
         Ok(author)
     }
+    /// 获取所有作者
+    #[graphql(guard = "AuthGuard")]
+    async fn all_authors(
+        &self,
+        context: &Context<'_>,
+        search_name: Option<String>,
+    ) -> GraphqlResult<Vec<Author>> {
+        let conn = &mut context
+            .data::<PgPool>()
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
+            .get()?;
+        // 空字符串视为无效
+        let search_name = match search_name {
+            Some(x) if x.is_empty() => None,
+            _ => search_name,
+        };
+        match search_name {
+            Some(name) => {
+                let data = Author::search(name, conn)?;
+                Ok(data)
+            }
+            None => {
+                let data = Author::all(conn)?;
+                Ok(data)
+            }
+        }
+    }
     /// 获取标签列表
     #[graphql(guard = "AuthGuard")]
     async fn query_tags(
@@ -132,6 +162,19 @@ impl QueryRoot {
         let tag = TagRunner::new(conn)?;
         let (data, total) = tokio::try_join!(tag.query(pagination), tag.len())?;
         Ok(TagList::new(data, total))
+    }
+    /// 获取所有 tag
+    #[graphql(guard = "AuthGuard")]
+    async fn all_tags(&self, context: &Context<'_>) -> GraphqlResult<Vec<Tag>> {
+        let conn = &mut context
+            .data::<PgPool>()
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
+            .get()?;
+        let tags = Tag::all(conn)?;
+        Ok(tags)
     }
     /// 获取小说列表
     #[graphql(guard = "AuthGuard")]
