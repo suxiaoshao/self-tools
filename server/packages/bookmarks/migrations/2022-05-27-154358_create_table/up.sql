@@ -1,7 +1,7 @@
 -- Your SQL goes here
 
 create type read_status as enum ('unread','read','reading');
-create type novel_status as enum ('ongoing','completed');
+create type novel_status as enum ('ongoing','completed','paused');
 create type novel_site as enum ('qidian','jjwxc');
 create table novel
 (

@@ -4,14 +4,17 @@ mutation createTag($name: String!, $site: NovelSite!, $siteId: String!) {
     id
   }
 }
-query getTags {
-  queryTags {
-    name
-    id
-    site
-    url
-    createTime
-    updateTime
+query getTags($pagination: Pagination!) {
+  queryTags(pagination: $pagination) {
+    data {
+      name
+      id
+      site
+      url
+      createTime
+      updateTime
+    }
+    total
   }
 }
 

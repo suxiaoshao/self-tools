@@ -6,7 +6,6 @@
  * @FilePath: /self-tools/web/packages/bookmarks/src/features/Novel/Details/index.tsx
  */
 import {
-  NovelStatus,
   useDeleteCollectionForNovelMutation,
   useGetNovelQuery,
   useUpdateNovelByCrawlerMutation,
@@ -24,6 +23,7 @@ import { Details, type DetailsItem } from 'details';
 import { P, match } from 'ts-pattern';
 import { format } from 'time';
 import AddCollection from './components/AddCollection';
+import { getLabelKeyByNovelStatus } from '@bookmarks/utils/novelStatus';
 
 export default function NovelDetails() {
   const { novelId } = useParams();
@@ -62,10 +62,7 @@ export default function NovelDetails() {
               },
               {
                 label: t('novel_status'),
-                value: match(data.novelStatus)
-                  .with(NovelStatus.Ongoing, () => t('ongoing'))
-                  .with(NovelStatus.Completed, () => t('completed'))
-                  .exhaustive(),
+                value: getLabelKeyByNovelStatus(data.novelStatus),
               },
               {
                 label: t('word_count'),

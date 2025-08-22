@@ -72,13 +72,22 @@ impl AuthorModel {
 }
 
 impl AuthorModel {
+    /// 获取作者
+    pub(crate) fn list_with_page(
+        offset: i64,
+        limit: i64,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<Vec<Self>> {
+        let authors = author::table.offset(offset).limit(limit).load(conn)?;
+        Ok(authors)
+    }
     /// 获取所有作者
-    pub(crate) fn get_list(conn: &mut PgConnection) -> GraphqlResult<Vec<Self>> {
+    pub(crate) fn all(conn: &mut PgConnection) -> GraphqlResult<Vec<Self>> {
         let authors = author::table.load(conn)?;
         Ok(authors)
     }
-    /// 获取作者搜索列表
-    pub(crate) fn get_search_list(
+    /// 获取搜索全部作者
+    pub(crate) fn search_all(
         search_name: String,
         conn: &mut PgConnection,
     ) -> GraphqlResult<Vec<Self>> {
@@ -86,6 +95,36 @@ impl AuthorModel {
             .filter(author::name.like(format!("%{search_name}%")))
             .load(conn)?;
         Ok(authors)
+    }
+    /// 获取作者搜索列表
+    pub(crate) fn search_list_with_page(
+        search_name: &str,
+        offset: i64,
+        limit: i64,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<Vec<Self>> {
+        let authors = author::table
+            .filter(author::name.like(format!("%{search_name}%")))
+            .offset(offset)
+            .limit(limit)
+            .load(conn)?;
+        Ok(authors)
+    }
+    /// 获取所有作者数量
+    pub(crate) fn get_count(conn: &mut PgConnection) -> GraphqlResult<i64> {
+        let count = author::table.count().get_result(conn)?;
+        Ok(count)
+    }
+    /// 获取作者搜索数量
+    pub(crate) fn get_search_count(
+        search_name: &str,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<i64> {
+        let count = author::table
+            .filter(author::name.like(format!("%{search_name}%")))
+            .count()
+            .get_result(conn)?;
+        Ok(count)
     }
 }
 

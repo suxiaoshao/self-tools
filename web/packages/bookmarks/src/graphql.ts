@@ -16,14 +16,6 @@ export type Scalars = {
   Int: { input: number; output: number };
   Float: { input: number; output: number };
   BigDecimal: { input: any; output: any };
-  /**
-   * A datetime with timezone offset.
-   *
-   * The input is a string in RFC3339 format, e.g. "2022-01-12T04:00:19.12345Z"
-   * or "2022-01-12T04:00:19+03:00". The output is also a string in RFC3339
-   * format, but it is always normalized to the UTC (Z) offset, e.g.
-   * "2022-01-12T04:00:19.12345Z".
-   */
   DateTime: { input: any; output: any };
 };
 
@@ -39,6 +31,12 @@ export type Author = {
   siteId: Scalars['String']['output'];
   updateTime: Scalars['DateTime']['output'];
   url: Scalars['String']['output'];
+};
+
+export type AuthorList = {
+  __typename?: 'AuthorList';
+  data: Array<Author>;
+  total: Scalars['Int']['output'];
 };
 
 export type Chapter = {
@@ -61,9 +59,7 @@ export type Chapter = {
 
 export type Collection = {
   __typename?: 'Collection';
-  /** 获取祖先列表 */
   ancestors: Array<Collection>;
-  /** 获取子列表 */
   children: Array<Collection>;
   createTime: Scalars['DateTime']['output'];
   description?: Maybe<Scalars['String']['output']>;
@@ -72,6 +68,12 @@ export type Collection = {
   parentId?: Maybe<Scalars['Int']['output']>;
   path: Scalars['String']['output'];
   updateTime: Scalars['DateTime']['output'];
+};
+
+export type CollectionList = {
+  __typename?: 'CollectionList';
+  data: Array<Collection>;
+  total: Scalars['Int']['output'];
 };
 
 export type CreateNovelInput = {
@@ -130,31 +132,19 @@ export type DraftTagInfo = {
 
 export type MutationRoot = {
   __typename?: 'MutationRoot';
-  /** 给小说添加集合 */
   addCollectionForNovel: Novel;
-  /** 创建作者 */
   createAuthor: Author;
-  /** 创建目录 */
   createCollection: Collection;
-  /** 创建小说 */
   createNovel: Novel;
-  /** 创建标签 */
   createTag: Tag;
-  /** 删除作者 */
   deleteAuthor: Author;
-  /** 删除目录 */
   deleteCollection: Scalars['Int']['output'];
-  /** 给小说删除集合 */
   deleteCollectionForNovel: Novel;
-  /** 删除小说 */
   deleteNovel: Novel;
-  /** 删除标签 */
   deleteTag: Tag;
-  /** 保存 draft author */
   saveDraftAuthor: Author;
-  /** 通过 fetch 更新作者 */
   updateAuthorByCrawler: Author;
-  /** 通过 fetch 更新小说 */
+  updateCollection: Collection;
   updateNovelByCrawler: Novel;
 };
 
@@ -216,6 +206,13 @@ export type MutationRootUpdateAuthorByCrawlerArgs = {
   authorId: Scalars['Int']['input'];
 };
 
+export type MutationRootUpdateCollectionArgs = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  id: Scalars['Int']['input'];
+  name: Scalars['String']['input'];
+  parentId?: InputMaybe<Scalars['Int']['input']>;
+};
+
 export type MutationRootUpdateNovelByCrawlerArgs = {
   novelId: Scalars['Int']['input'];
 };
@@ -224,16 +221,12 @@ export type Novel = {
   __typename?: 'Novel';
   author: Author;
   avatar: Scalars['String']['output'];
-  /** 获取小说章节 */
   chapters: Array<Chapter>;
-  /** 集合列表 */
   collections: Array<Collection>;
   createTime: Scalars['DateTime']['output'];
   description: Scalars['String']['output'];
-  /** 最老章节 */
   firstChapter?: Maybe<Chapter>;
   id: Scalars['Int']['output'];
-  /** 最新章节 */
   lastChapter?: Maybe<Chapter>;
   name: Scalars['String']['output'];
   novelStatus: NovelStatus;
@@ -245,6 +238,12 @@ export type Novel = {
   wordCount: Scalars['BigDecimal']['output'];
 };
 
+export type NovelList = {
+  __typename?: 'NovelList';
+  data: Array<Novel>;
+  total: Scalars['Int']['output'];
+};
+
 export enum NovelSite {
   Jjwxc = 'JJWXC',
   Qidian = 'QIDIAN',
@@ -253,30 +252,32 @@ export enum NovelSite {
 export enum NovelStatus {
   Completed = 'COMPLETED',
   Ongoing = 'ONGOING',
+  Paused = 'PAUSED',
 }
+
+export type Pagination = {
+  page?: Scalars['Int']['input'];
+  pageSize?: Scalars['Int']['input'];
+};
 
 export type QueryRoot = {
   __typename?: 'QueryRoot';
-  /** 获取所有集合 */
+  allAuthors: Array<Author>;
   allCollections: Array<Collection>;
-  /** 后端 fetch 作者详情 */
+  allTags: Array<Tag>;
   fetchAuthor: DraftAuthorInfo;
-  /** 后端 fetch 小说详情 */
   fetchNovel: DraftNovelInfo;
-  /** 获取作者详情 */
   getAuthor: Author;
-  /** 获取目录详情 */
   getCollection: Collection;
-  /** 获取目录列表 */
-  getCollections: Array<Collection>;
-  /** 获取小说详情 */
+  getCollections: CollectionList;
   getNovel: Novel;
-  /** 获取作者列表 */
-  queryAuthors: Array<Author>;
-  /** 获取小说列表 */
-  queryNovels: Array<Novel>;
-  /** 获取标签列表 */
-  queryTags: Array<Tag>;
+  queryAuthors: AuthorList;
+  queryNovels: NovelList;
+  queryTags: TagList;
+};
+
+export type QueryRootAllAuthorsArgs = {
+  searchName?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type QueryRootFetchAuthorArgs = {
@@ -298,6 +299,7 @@ export type QueryRootGetCollectionArgs = {
 };
 
 export type QueryRootGetCollectionsArgs = {
+  pagination: Pagination;
   parentId?: InputMaybe<Scalars['Int']['input']>;
 };
 
@@ -306,13 +308,19 @@ export type QueryRootGetNovelArgs = {
 };
 
 export type QueryRootQueryAuthorsArgs = {
+  pagination: Pagination;
   searchName?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type QueryRootQueryNovelsArgs = {
   collectionMatch?: InputMaybe<TagMatch>;
   novelStatus?: InputMaybe<NovelStatus>;
+  pagination: Pagination;
   tagMatch?: InputMaybe<TagMatch>;
+};
+
+export type QueryRootQueryTagsArgs = {
+  pagination: Pagination;
 };
 
 export type SaveChapterInfo = {
@@ -358,6 +366,12 @@ export type Tag = {
   url: Scalars['String']['output'];
 };
 
+export type TagList = {
+  __typename?: 'TagList';
+  data: Array<Tag>;
+  total: Scalars['Int']['output'];
+};
+
 export type TagMatch = {
   fullMatch: Scalars['Boolean']['input'];
   matchSet: Array<Scalars['Int']['input']>;
@@ -369,31 +383,37 @@ export type SearchAuthorQueryVariables = Exact<{
 
 export type SearchAuthorQuery = {
   __typename?: 'QueryRoot';
-  queryAuthors: Array<{ __typename?: 'Author'; id: number; name: string; description: string; avatar: string }>;
+  allAuthors: Array<{ __typename?: 'Author'; id: number; name: string; description: string; avatar: string }>;
 };
 
 export type AllowTagsQueryVariables = Exact<{ [key: string]: never }>;
 
 export type AllowTagsQuery = {
   __typename?: 'QueryRoot';
-  queryTags: Array<{ __typename?: 'Tag'; id: number; name: string }>;
+  allTags: Array<{ __typename?: 'Tag'; id: number; name: string }>;
 };
 
-export type GetAuthorsQueryVariables = Exact<{ [key: string]: never }>;
+export type GetAuthorsQueryVariables = Exact<{
+  pagination: Pagination;
+}>;
 
 export type GetAuthorsQuery = {
   __typename?: 'QueryRoot';
-  queryAuthors: Array<{
-    __typename?: 'Author';
-    id: number;
-    site: NovelSite;
-    name: string;
-    createTime: any;
-    updateTime: any;
-    avatar: string;
-    description: string;
-    url: string;
-  }>;
+  queryAuthors: {
+    __typename?: 'AuthorList';
+    total: number;
+    data: Array<{
+      __typename?: 'Author';
+      id: number;
+      site: NovelSite;
+      name: string;
+      createTime: any;
+      updateTime: any;
+      avatar: string;
+      description: string;
+      url: string;
+    }>;
+  };
 };
 
 export type GetAuthorQueryVariables = Exact<{
@@ -539,19 +559,24 @@ export type UpdateAuthorByCrawlerMutation = {
 
 export type GetCollectionsQueryVariables = Exact<{
   parentId?: InputMaybe<Scalars['Int']['input']>;
+  pagination: Pagination;
 }>;
 
 export type GetCollectionsQuery = {
   __typename?: 'QueryRoot';
-  getCollections: Array<{
-    __typename?: 'Collection';
-    name: string;
-    id: number;
-    path: string;
-    createTime: any;
-    updateTime: any;
-    description?: string | null;
-  }>;
+  getCollections: {
+    __typename?: 'CollectionList';
+    total: number;
+    data: Array<{
+      __typename?: 'Collection';
+      name: string;
+      id: number;
+      path: string;
+      createTime: any;
+      updateTime: any;
+      description?: string | null;
+    }>;
+  };
 };
 
 export type DeleteCollectionMutationVariables = Exact<{
@@ -600,6 +625,15 @@ export type AllCollectionsQuery = {
     parentId?: number | null;
   }>;
 };
+
+export type UpdateCollectionMutationVariables = Exact<{
+  id: Scalars['Int']['input'];
+  name: Scalars['String']['input'];
+  parentId?: InputMaybe<Scalars['Int']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+export type UpdateCollectionMutation = { __typename?: 'MutationRoot'; updateCollection: { __typename: 'Collection' } };
 
 export type GetNovelQueryVariables = Exact<{
   id: Scalars['Int']['input'];
@@ -703,21 +737,26 @@ export type GetNovelsQueryVariables = Exact<{
   collectionMatch?: InputMaybe<TagMatch>;
   novelStatus?: InputMaybe<NovelStatus>;
   tagMatch?: InputMaybe<TagMatch>;
+  pagination: Pagination;
 }>;
 
 export type GetNovelsQuery = {
   __typename?: 'QueryRoot';
-  queryNovels: Array<{
-    __typename?: 'Novel';
-    id: number;
-    name: string;
-    description: string;
-    createTime: any;
-    updateTime: any;
-    novelStatus: NovelStatus;
-    avatar: string;
-    site: NovelSite;
-  }>;
+  queryNovels: {
+    __typename?: 'NovelList';
+    total: number;
+    data: Array<{
+      __typename?: 'Novel';
+      id: number;
+      name: string;
+      description: string;
+      createTime: any;
+      updateTime: any;
+      novelStatus: NovelStatus;
+      avatar: string;
+      site: NovelSite;
+    }>;
+  };
 };
 
 export type CreateNovelMutationVariables = Exact<{
@@ -743,19 +782,25 @@ export type CreateTagMutation = {
   createTag: { __typename?: 'Tag'; name: string; id: number };
 };
 
-export type GetTagsQueryVariables = Exact<{ [key: string]: never }>;
+export type GetTagsQueryVariables = Exact<{
+  pagination: Pagination;
+}>;
 
 export type GetTagsQuery = {
   __typename?: 'QueryRoot';
-  queryTags: Array<{
-    __typename?: 'Tag';
-    name: string;
-    id: number;
-    site: NovelSite;
-    url: string;
-    createTime: any;
-    updateTime: any;
-  }>;
+  queryTags: {
+    __typename?: 'TagList';
+    total: number;
+    data: Array<{
+      __typename?: 'Tag';
+      name: string;
+      id: number;
+      site: NovelSite;
+      url: string;
+      createTime: any;
+      updateTime: any;
+    }>;
+  };
 };
 
 export type DeleteTagMutationVariables = Exact<{
@@ -778,7 +823,7 @@ export const AuthorAllFragmentDoc = gql`
 `;
 export const SearchAuthorDocument = gql`
   query searchAuthor($searchName: String) {
-    queryAuthors(searchName: $searchName) {
+    allAuthors(searchName: $searchName) {
       id
       name
       description
@@ -827,7 +872,7 @@ export type SearchAuthorSuspenseQueryHookResult = ReturnType<typeof useSearchAut
 export type SearchAuthorQueryResult = Apollo.QueryResult<SearchAuthorQuery, SearchAuthorQueryVariables>;
 export const AllowTagsDocument = gql`
   query allowTags {
-    queryTags {
+    allTags {
       id
       name
     }
@@ -870,9 +915,12 @@ export type AllowTagsLazyQueryHookResult = ReturnType<typeof useAllowTagsLazyQue
 export type AllowTagsSuspenseQueryHookResult = ReturnType<typeof useAllowTagsSuspenseQuery>;
 export type AllowTagsQueryResult = Apollo.QueryResult<AllowTagsQuery, AllowTagsQueryVariables>;
 export const GetAuthorsDocument = gql`
-  query getAuthors {
-    queryAuthors {
-      ...AuthorAll
+  query getAuthors($pagination: Pagination!) {
+    queryAuthors(pagination: $pagination) {
+      data {
+        ...AuthorAll
+      }
+      total
     }
   }
   ${AuthorAllFragmentDoc}
@@ -890,10 +938,14 @@ export const GetAuthorsDocument = gql`
  * @example
  * const { data, loading, error } = useGetAuthorsQuery({
  *   variables: {
+ *      pagination: // value for 'pagination'
  *   },
  * });
  */
-export function useGetAuthorsQuery(baseOptions?: Apollo.QueryHookOptions<GetAuthorsQuery, GetAuthorsQueryVariables>) {
+export function useGetAuthorsQuery(
+  baseOptions: Apollo.QueryHookOptions<GetAuthorsQuery, GetAuthorsQueryVariables> &
+    ({ variables: GetAuthorsQueryVariables; skip?: boolean } | { skip: boolean }),
+) {
   const options = { ...defaultOptions, ...baseOptions };
   return Apollo.useQuery<GetAuthorsQuery, GetAuthorsQueryVariables>(GetAuthorsDocument, options);
 }
@@ -1226,14 +1278,17 @@ export type UpdateAuthorByCrawlerMutationOptions = Apollo.BaseMutationOptions<
   UpdateAuthorByCrawlerMutationVariables
 >;
 export const GetCollectionsDocument = gql`
-  query getCollections($parentId: Int) {
-    getCollections(parentId: $parentId) {
-      name
-      id
-      path
-      createTime
-      updateTime
-      description
+  query getCollections($parentId: Int, $pagination: Pagination!) {
+    getCollections(parentId: $parentId, pagination: $pagination) {
+      data {
+        name
+        id
+        path
+        createTime
+        updateTime
+        description
+      }
+      total
     }
   }
 `;
@@ -1251,11 +1306,13 @@ export const GetCollectionsDocument = gql`
  * const { data, loading, error } = useGetCollectionsQuery({
  *   variables: {
  *      parentId: // value for 'parentId'
+ *      pagination: // value for 'pagination'
  *   },
  * });
  */
 export function useGetCollectionsQuery(
-  baseOptions?: Apollo.QueryHookOptions<GetCollectionsQuery, GetCollectionsQueryVariables>,
+  baseOptions: Apollo.QueryHookOptions<GetCollectionsQuery, GetCollectionsQueryVariables> &
+    ({ variables: GetCollectionsQueryVariables; skip?: boolean } | { skip: boolean }),
 ) {
   const options = { ...defaultOptions, ...baseOptions };
   return Apollo.useQuery<GetCollectionsQuery, GetCollectionsQueryVariables>(GetCollectionsDocument, options);
@@ -1481,6 +1538,53 @@ export type AllCollectionsQueryHookResult = ReturnType<typeof useAllCollectionsQ
 export type AllCollectionsLazyQueryHookResult = ReturnType<typeof useAllCollectionsLazyQuery>;
 export type AllCollectionsSuspenseQueryHookResult = ReturnType<typeof useAllCollectionsSuspenseQuery>;
 export type AllCollectionsQueryResult = Apollo.QueryResult<AllCollectionsQuery, AllCollectionsQueryVariables>;
+export const UpdateCollectionDocument = gql`
+  mutation updateCollection($id: Int!, $name: String!, $parentId: Int, $description: String) {
+    updateCollection(id: $id, name: $name, parentId: $parentId, description: $description) {
+      __typename
+    }
+  }
+`;
+export type UpdateCollectionMutationFn = Apollo.MutationFunction<
+  UpdateCollectionMutation,
+  UpdateCollectionMutationVariables
+>;
+
+/**
+ * __useUpdateCollectionMutation__
+ *
+ * To run a mutation, you first call `useUpdateCollectionMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateCollectionMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateCollectionMutation, { data, loading, error }] = useUpdateCollectionMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      name: // value for 'name'
+ *      parentId: // value for 'parentId'
+ *      description: // value for 'description'
+ *   },
+ * });
+ */
+export function useUpdateCollectionMutation(
+  baseOptions?: Apollo.MutationHookOptions<UpdateCollectionMutation, UpdateCollectionMutationVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useMutation<UpdateCollectionMutation, UpdateCollectionMutationVariables>(
+    UpdateCollectionDocument,
+    options,
+  );
+}
+export type UpdateCollectionMutationHookResult = ReturnType<typeof useUpdateCollectionMutation>;
+export type UpdateCollectionMutationResult = Apollo.MutationResult<UpdateCollectionMutation>;
+export type UpdateCollectionMutationOptions = Apollo.BaseMutationOptions<
+  UpdateCollectionMutation,
+  UpdateCollectionMutationVariables
+>;
 export const GetNovelDocument = gql`
   query getNovel($id: Int!) {
     getNovel(id: $id) {
@@ -1770,17 +1874,30 @@ export type DeleteCollectionForNovelMutationOptions = Apollo.BaseMutationOptions
   DeleteCollectionForNovelMutationVariables
 >;
 export const GetNovelsDocument = gql`
-  query getNovels($collectionMatch: TagMatch, $novelStatus: NovelStatus, $tagMatch: TagMatch) {
-    queryNovels(collectionMatch: $collectionMatch, novelStatus: $novelStatus, tagMatch: $tagMatch) {
-      id
-      name
-      description
-      createTime
-      updateTime
-      description
-      novelStatus
-      avatar
-      site
+  query getNovels(
+    $collectionMatch: TagMatch
+    $novelStatus: NovelStatus
+    $tagMatch: TagMatch
+    $pagination: Pagination!
+  ) {
+    queryNovels(
+      collectionMatch: $collectionMatch
+      novelStatus: $novelStatus
+      tagMatch: $tagMatch
+      pagination: $pagination
+    ) {
+      data {
+        id
+        name
+        description
+        createTime
+        updateTime
+        description
+        novelStatus
+        avatar
+        site
+      }
+      total
     }
   }
 `;
@@ -1800,10 +1917,14 @@ export const GetNovelsDocument = gql`
  *      collectionMatch: // value for 'collectionMatch'
  *      novelStatus: // value for 'novelStatus'
  *      tagMatch: // value for 'tagMatch'
+ *      pagination: // value for 'pagination'
  *   },
  * });
  */
-export function useGetNovelsQuery(baseOptions?: Apollo.QueryHookOptions<GetNovelsQuery, GetNovelsQueryVariables>) {
+export function useGetNovelsQuery(
+  baseOptions: Apollo.QueryHookOptions<GetNovelsQuery, GetNovelsQueryVariables> &
+    ({ variables: GetNovelsQueryVariables; skip?: boolean } | { skip: boolean }),
+) {
   const options = { ...defaultOptions, ...baseOptions };
   return Apollo.useQuery<GetNovelsQuery, GetNovelsQueryVariables>(GetNovelsDocument, options);
 }
@@ -1932,14 +2053,17 @@ export type CreateTagMutationHookResult = ReturnType<typeof useCreateTagMutation
 export type CreateTagMutationResult = Apollo.MutationResult<CreateTagMutation>;
 export type CreateTagMutationOptions = Apollo.BaseMutationOptions<CreateTagMutation, CreateTagMutationVariables>;
 export const GetTagsDocument = gql`
-  query getTags {
-    queryTags {
-      name
-      id
-      site
-      url
-      createTime
-      updateTime
+  query getTags($pagination: Pagination!) {
+    queryTags(pagination: $pagination) {
+      data {
+        name
+        id
+        site
+        url
+        createTime
+        updateTime
+      }
+      total
     }
   }
 `;
@@ -1956,10 +2080,14 @@ export const GetTagsDocument = gql`
  * @example
  * const { data, loading, error } = useGetTagsQuery({
  *   variables: {
+ *      pagination: // value for 'pagination'
  *   },
  * });
  */
-export function useGetTagsQuery(baseOptions?: Apollo.QueryHookOptions<GetTagsQuery, GetTagsQueryVariables>) {
+export function useGetTagsQuery(
+  baseOptions: Apollo.QueryHookOptions<GetTagsQuery, GetTagsQueryVariables> &
+    ({ variables: GetTagsQueryVariables; skip?: boolean } | { skip: boolean }),
+) {
   const options = { ...defaultOptions, ...baseOptions };
   return Apollo.useQuery<GetTagsQuery, GetTagsQueryVariables>(GetTagsDocument, options);
 }

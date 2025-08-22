@@ -1,11 +1,14 @@
-query getCollections($parentId: Int) {
-  getCollections(parentId: $parentId) {
-    name
-    id
-    path
-    createTime
-    updateTime
-    description
+query getCollections($parentId: Int, $pagination: Pagination!) {
+  getCollections(parentId: $parentId, pagination: $pagination) {
+    data {
+      name
+      id
+      path
+      createTime
+      updateTime
+      description
+    }
+    total
   }
 }
 mutation deleteCollection($id: Int!) {
@@ -37,5 +40,11 @@ query allCollections {
     updateTime
     description
     parentId
+  }
+}
+
+mutation updateCollection($id: Int!, $name: String!, $parentId: Int, $description: String) {
+  updateCollection(id: $id, name: $name, parentId: $parentId, description: $description) {
+    __typename
   }
 }

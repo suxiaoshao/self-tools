@@ -10,6 +10,8 @@ import {
   getCoreRowModel,
   TableActions,
   useCustomTable,
+  usePage,
+  usePageWithTotal,
 } from 'custom-table';
 import { format } from 'time';
 import CreateTagButton from './components/CreateTagButton';
@@ -18,12 +20,21 @@ import { getLabelKeyBySite } from '@bookmarks/utils/novelSite';
 
 const rowModel = getCoreRowModel();
 
-type Data = GetTagsQuery['queryTags'][0];
+type Data = GetTagsQuery['queryTags']['data'][0];
 
 const columnHelper = createCustomColumnHelper<Data>();
 
 export default function Tags() {
-  const [getTags, { data, refetch }] = useGetTagsLazyQuery();
+  const pageState = usePage();
+  const [getTags, { data: { queryTags: { data, total } = {} } = {}, refetch }] = useGetTagsLazyQuery({
+    variables: {
+      pagination: {
+        page: pageState.pageIndex,
+        pageSize: pageState.pageSize,
+      },
+    },
+  });
+  const page = usePageWithTotal(pageState, total);
   const [deleteTag] = useDeleteTagMutation();
   const onSearch = useCallback(() => {
     getTags();
@@ -93,8 +104,8 @@ export default function Tags() {
     [deleteTag, refetch, t],
   );
   const tableOptions = useMemo<CustomTableOptions<Data>>(
-    () => ({ columns, data: data?.queryTags ?? [], getCoreRowModel: rowModel }),
-    [columns, data?.queryTags],
+    () => ({ columns, data: data ?? [], getCoreRowModel: rowModel }),
+    [columns, data],
   );
   const tableInstance = useCustomTable(tableOptions);
 
@@ -118,7 +129,7 @@ export default function Tags() {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', p: 2 }}>
       {input}
-      <CustomTable tableInstance={tableInstance} />
+      <CustomTable tableInstance={tableInstance} page={page} />
     </Box>
   );
 }

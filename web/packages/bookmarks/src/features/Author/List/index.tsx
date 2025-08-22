@@ -8,6 +8,8 @@ import {
   getCoreRowModel,
   TableActions,
   useCustomTable,
+  usePage,
+  usePageWithTotal,
 } from 'custom-table';
 import { type GetAuthorsQuery, useDeleteAuthorMutation, useGetAuthorsQuery } from '../../../graphql';
 import CreateAuthorButton from './components/CreateAuthorButton';
@@ -18,11 +20,17 @@ import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { getImageUrl } from '@bookmarks/utils/image';
 import { getLabelKeyBySite } from '@bookmarks/utils/novelSite';
 
-type TableItem = GetAuthorsQuery['queryAuthors'][0];
+type TableItem = GetAuthorsQuery['queryAuthors']['data'][0];
 
 const columnHelper = createCustomColumnHelper<TableItem>();
 export default function AuthorList() {
-  const { data, refetch } = useGetAuthorsQuery();
+  // fetch
+  const pageState = usePage();
+  const { data: { queryAuthors: { data, total } = {} } = {}, refetch } = useGetAuthorsQuery({
+    variables: { pagination: { page: pageState.pageIndex, pageSize: pageState.pageSize } },
+  });
+  const page = usePageWithTotal(pageState, total);
+
   const [deleteAuthor] = useDeleteAuthorMutation();
   const t = useI18n();
   const navigate = useNavigate();
@@ -115,8 +123,8 @@ export default function AuthorList() {
     [deleteAuthor, refetch, t],
   );
   const tableOptions = useMemo<CustomTableOptions<TableItem>>(
-    () => ({ columns, data: data?.queryAuthors ?? [], getCoreRowModel: getCoreRowModel() }),
-    [columns, data?.queryAuthors],
+    () => ({ columns, data: data ?? [], getCoreRowModel: getCoreRowModel() }),
+    [columns, data],
   );
   const tableInstance = useCustomTable(tableOptions);
 
@@ -143,7 +151,7 @@ export default function AuthorList() {
           <Refresh />
         </IconButton>
       </Box>
-      <CustomTable tableInstance={tableInstance} />
+      <CustomTable tableInstance={tableInstance} page={page} />
     </Box>
   );
 }

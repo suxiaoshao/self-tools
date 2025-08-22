@@ -84,6 +84,7 @@
   "update_by_crawler_success": "Update by Crawler Success",
   "completed": "Completed",
   "ongoing": "Ongoing",
+  "paused": "Paused",
   "novel_status": "Novel Status",
   "last_update_time": "Last Update Time",
   "first_chapter_time": "First Chapter Time",

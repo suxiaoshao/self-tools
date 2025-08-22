@@ -6,29 +6,8 @@
  * @FilePath: /self-tools/server/packages/collections/src/graphql/types/input.rs
  */
 use async_graphql::InputObject;
+use graphql_common::Pagination;
 use time::OffsetDateTime;
-
-use crate::common::Paginate;
-
-#[derive(InputObject, Debug, Clone, Copy)]
-pub(crate) struct Pagination {
-    #[graphql(validator(minimum = 1))]
-    pub(crate) page: i64,
-    #[graphql(validator(minimum = 5, maximum = 100))]
-    pub(crate) page_size: i64,
-}
-
-impl Paginate for Pagination {
-    fn offset(&self) -> i64 {
-        (self.page - 1) * self.page_size
-    }
-    fn offset_plus_limit(&self) -> i64 {
-        self.offset() + self.page_size
-    }
-    fn limit(&self) -> i64 {
-        self.page_size
-    }
-}
 
 #[derive(InputObject, Debug, Clone, Copy)]
 pub(crate) struct TimeRange {

@@ -1,5 +1,6 @@
 query searchAuthor($searchName: String) {
-  queryAuthors(searchName: $searchName) {
+  # todo 取消分页或者选择器支持分页
+  allAuthors(searchName: $searchName) {
     id
     name
     description

@@ -7,6 +7,7 @@
  */
 use async_graphql::{ComplexObject, Context, SimpleObject};
 use diesel::PgConnection;
+use graphql_common::Queryable;
 use novel_crawler::{AuthorFn, JJAuthor, NovelFn, QDAuthor};
 use time::OffsetDateTime;
 use tracing::{event, Level};
@@ -129,17 +130,6 @@ impl Author {
             Ok(deleted_author.into())
         })
     }
-    /// 获取作者列表
-    pub(crate) fn query(
-        search_name: Option<String>,
-        conn: &mut PgConnection,
-    ) -> GraphqlResult<Vec<Self>> {
-        let authors = match search_name {
-            Some(search_name) => AuthorModel::get_search_list(search_name, conn)?,
-            None => AuthorModel::get_list(conn)?,
-        };
-        Ok(authors.into_iter().map(|x| x.into()).collect())
-    }
     /// 获取作者
     pub(crate) fn get(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
         // 作者不存在
@@ -197,5 +187,75 @@ impl Author {
 
             Ok(author.into())
         })
+    }
+    /// 获取全部作者
+    pub(crate) fn all(conn: &mut PgConnection) -> GraphqlResult<Vec<Author>> {
+        let authors = AuthorModel::all(conn)?;
+        Ok(authors.into_iter().map(Into::into).collect())
+    }
+    /// 更具搜索获取全部作者
+    pub(crate) fn search(
+        search_name: String,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<Vec<Author>> {
+        let authors = AuthorModel::search_all(search_name, conn)?;
+        Ok(authors.into_iter().map(Into::into).collect())
+    }
+}
+
+pub(crate) struct AuthorRunner {
+    conn: PgPool,
+    count: i64,
+    search_name: Option<String>,
+}
+graphql_common::list!(Author);
+
+impl AuthorRunner {
+    pub(crate) fn new(conn: PgPool, search_name: Option<String>) -> GraphqlResult<Self> {
+        let conn_temp = &mut conn.get()?;
+        let count = match &search_name {
+            Some(name) => AuthorModel::get_search_count(name, conn_temp)?,
+            None => AuthorModel::get_count(conn_temp)?,
+        };
+        Ok(Self {
+            conn,
+            count,
+            search_name,
+        })
+    }
+}
+
+impl Queryable for AuthorRunner {
+    type Item = Author;
+
+    type Error = GraphqlError;
+
+    async fn len(&self) -> Result<i64, Self::Error> {
+        Ok(self.count)
+    }
+
+    async fn query<P: graphql_common::Paginate>(
+        &self,
+        pagination: P,
+    ) -> Result<Vec<Self::Item>, Self::Error> {
+        let offset = pagination.offset();
+        let len = self.len().await?;
+        if len < offset {
+            event!(
+                Level::ERROR,
+                "偏移量超出范围 pagination: {:?} len: {} offset: {}",
+                pagination,
+                len,
+                offset
+            );
+            return Err(GraphqlError::PageSizeTooMore);
+        }
+        let limit = pagination.limit();
+        let conn = &mut self.conn.get()?;
+        let data = match &self.search_name {
+            Some(name) => AuthorModel::search_list_with_page(name, offset, limit, conn)?,
+            None => AuthorModel::list_with_page(offset, limit, conn)?,
+        };
+        Ok(data.into_iter().map(|x| x.into()).collect())
     }
 }

@@ -1,10 +1,10 @@
 use async_graphql::*;
 use diesel::{Connection, PgConnection};
+use graphql_common::{Paginate, Queryable};
 use time::OffsetDateTime;
 use tracing::{event, Level};
 
 use crate::{
-    common::{Paginate, Queryable},
     errors::{GraphqlError, GraphqlResult},
     graphql::types::{CollectionItemQuery, ItemAndCollection},
     model::{collection::CollectionModel, item::ItemModel, CONNECTION},
@@ -195,6 +195,8 @@ pub(crate) struct CollectionQueryRunner {
     query: CollectionItemQuery,
     count: i64,
 }
+
+graphql_common::list!(ItemAndCollection);
 
 impl CollectionQueryRunner {
     pub(crate) async fn new(query: CollectionItemQuery) -> GraphqlResult<Self> {

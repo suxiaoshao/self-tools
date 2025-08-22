@@ -5,24 +5,28 @@
  * @LastEditTime: 2024-03-25 13:55:34
  * @FilePath: /self-tools/server/packages/bookmarks/src/graphql/query.rs
  */
-use async_graphql::{Context, Object};
-use tracing::{event, Level};
-
-use crate::{
-    errors::{GraphqlError, GraphqlResult},
-    model::{
-        schema::custom_type::{NovelSite, NovelStatus},
-        PgPool,
-    },
-    service::{author::Author, collection::Collection, novel::Novel, tag::Tag},
-};
-
 use super::{
     guard::AuthGuard,
     input::TagMatch,
     output::{DraftAuthorInfo, DraftNovelInfo},
     validator::TagMatchValidator,
 };
+use crate::{
+    errors::{GraphqlError, GraphqlResult},
+    model::{
+        schema::custom_type::{NovelSite, NovelStatus},
+        PgPool,
+    },
+    service::{
+        author::{Author, AuthorList, AuthorRunner},
+        collection::{Collection, CollectionList, CollectionRunner},
+        novel::{Novel, NovelList, NovelRunner},
+        tag::{Tag, TagList, TagRunner},
+    },
+};
+use async_graphql::{Context, Object};
+use graphql_common::{Pagination, Queryable};
+use tracing::{event, Level};
 
 pub(crate) struct QueryRoot;
 
@@ -47,16 +51,18 @@ impl QueryRoot {
         &self,
         context: &Context<'_>,
         parent_id: Option<i64>,
-    ) -> GraphqlResult<Vec<Collection>> {
-        let conn = &mut context
+        pagination: Pagination,
+    ) -> GraphqlResult<CollectionList> {
+        let conn = context
             .data::<PgPool>()
             .map_err(|_| {
                 event!(Level::WARN, "graphql context data PgPool 不存在");
                 GraphqlError::NotGraphqlContextData("PgPool")
             })?
-            .get()?;
-        let directory = Collection::get_list_parent_id(parent_id, conn)?;
-        Ok(directory)
+            .clone();
+        let runner = CollectionRunner::new(conn, parent_id)?;
+        let (data, total) = tokio::try_join!(runner.query(pagination), runner.len())?;
+        Ok(CollectionList::new(data, total))
     }
     /// 获取目录详情
     #[graphql(guard = "AuthGuard")]
@@ -78,21 +84,23 @@ impl QueryRoot {
         context: &Context<'_>,
         // 搜索作者名
         search_name: Option<String>,
-    ) -> GraphqlResult<Vec<Author>> {
-        let conn = &mut context
+        pagination: Pagination,
+    ) -> GraphqlResult<AuthorList> {
+        let conn = context
             .data::<PgPool>()
             .map_err(|_| {
                 event!(Level::WARN, "graphql context data PgPool 不存在");
                 GraphqlError::NotGraphqlContextData("PgPool")
             })?
-            .get()?;
+            .clone();
         // 空字符串视为无效
         let search_name = match search_name {
             Some(x) if x.is_empty() => None,
             _ => search_name,
         };
-        let author = Author::query(search_name, conn)?;
-        Ok(author)
+        let runner = AuthorRunner::new(conn, search_name)?;
+        let (data, total) = tokio::try_join!(runner.query(pagination), runner.len())?;
+        Ok(AuthorList::new(data, total))
     }
     /// 获取作者详情
     #[graphql(guard = "AuthGuard")]
@@ -107,9 +115,13 @@ impl QueryRoot {
         let author = Author::get(id, conn)?;
         Ok(author)
     }
-    /// 获取标签列表
+    /// 获取所有作者
     #[graphql(guard = "AuthGuard")]
-    async fn query_tags(&self, context: &Context<'_>) -> GraphqlResult<Vec<Tag>> {
+    async fn all_authors(
+        &self,
+        context: &Context<'_>,
+        search_name: Option<String>,
+    ) -> GraphqlResult<Vec<Author>> {
         let conn = &mut context
             .data::<PgPool>()
             .map_err(|_| {
@@ -117,8 +129,52 @@ impl QueryRoot {
                 GraphqlError::NotGraphqlContextData("PgPool")
             })?
             .get()?;
-        let tag = Tag::query(conn)?;
-        Ok(tag)
+        // 空字符串视为无效
+        let search_name = match search_name {
+            Some(x) if x.is_empty() => None,
+            _ => search_name,
+        };
+        match search_name {
+            Some(name) => {
+                let data = Author::search(name, conn)?;
+                Ok(data)
+            }
+            None => {
+                let data = Author::all(conn)?;
+                Ok(data)
+            }
+        }
+    }
+    /// 获取标签列表
+    #[graphql(guard = "AuthGuard")]
+    async fn query_tags(
+        &self,
+        context: &Context<'_>,
+        pagination: Pagination,
+    ) -> GraphqlResult<TagList> {
+        let conn = context
+            .data::<PgPool>()
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
+            .clone();
+        let tag = TagRunner::new(conn)?;
+        let (data, total) = tokio::try_join!(tag.query(pagination), tag.len())?;
+        Ok(TagList::new(data, total))
+    }
+    /// 获取所有 tag
+    #[graphql(guard = "AuthGuard")]
+    async fn all_tags(&self, context: &Context<'_>) -> GraphqlResult<Vec<Tag>> {
+        let conn = &mut context
+            .data::<PgPool>()
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
+            .get()?;
+        let tags = Tag::all(conn)?;
+        Ok(tags)
     }
     /// 获取小说列表
     #[graphql(guard = "AuthGuard")]
@@ -128,16 +184,18 @@ impl QueryRoot {
         #[graphql(validator(custom = "TagMatchValidator"))] collection_match: Option<TagMatch>,
         #[graphql(validator(custom = "TagMatchValidator"))] tag_match: Option<TagMatch>,
         novel_status: Option<NovelStatus>,
-    ) -> GraphqlResult<Vec<Novel>> {
-        let conn = &mut context
+        pagination: Pagination,
+    ) -> GraphqlResult<NovelList> {
+        let conn = context
             .data::<PgPool>()
             .map_err(|_| {
                 event!(Level::WARN, "graphql context data PgPool 不存在");
                 GraphqlError::NotGraphqlContextData("PgPool")
             })?
-            .get()?;
-        let novel = Novel::query(collection_match, tag_match, novel_status, conn)?;
-        Ok(novel)
+            .clone();
+        let novel = NovelRunner::new(collection_match, tag_match, novel_status, conn)?;
+        let (data, total) = tokio::try_join!(novel.query(pagination), novel.len())?;
+        Ok(NovelList::new(data, total))
     }
     /// 获取小说详情
     #[graphql(guard = "AuthGuard")]

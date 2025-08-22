@@ -1,40 +1,44 @@
-import { Dialog, Box, DialogTitle, DialogContent, TextField, DialogActions, Button } from '@mui/material';
+import type { CreateCollectionMutationVariables } from '@bookmarks/graphql';
+import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField } from '@mui/material';
+import { type SubmitHandler, useForm } from 'react-hook-form';
 import { useI18n } from 'i18n';
-import { useForm, type SubmitHandler } from 'react-hook-form';
-import type { CreateCollectionMutationVariables } from '../../../graphql';
 import { match } from 'ts-pattern';
+
+export enum CollectionFormType {
+  create = 'create',
+  edit = 'edit',
+}
+
 export type CollectionFormData = Omit<CreateCollectionMutationVariables, 'parentId'>;
-export interface CollectFormProps {
+
+export interface CollectionFormProps {
   afterSubmit?: (data: CollectionFormData) => Promise<void>;
-  handleClose: () => void;
   open: boolean;
-  mode?: 'create' | 'edit';
+  handleClose: () => void;
+  mode?: CollectionFormType;
   initialValues?: CollectionFormData;
 }
 
 export default function CollectionForm({
-  afterSubmit,
-  handleClose,
   open,
-  mode = 'create',
+  handleClose,
+  afterSubmit,
   initialValues,
-}: CollectFormProps) {
+  mode = CollectionFormType.create,
+}: CollectionFormProps) {
   // 表单控制
   const { handleSubmit, register } = useForm<CollectionFormData>({ defaultValues: initialValues });
-
   const onSubmit: SubmitHandler<CollectionFormData> = async (data) => {
     await afterSubmit?.(data);
-    handleClose();
   };
   const t = useI18n();
-
   return (
     <Dialog slotProps={{ paper: { sx: { maxWidth: 700 } } }} open={open} onClose={handleClose}>
       <Box sx={{ width: 500 }} onSubmit={handleSubmit(onSubmit)} component="form">
         <DialogTitle>
           {match(mode)
-            .with('create', () => t('create_collection'))
-            .with('edit', () => t('modify_collection'))
+            .with(CollectionFormType.create, () => t('create_collection'))
+            .with(CollectionFormType.edit, () => t('modify_collection'))
             .exhaustive()}
         </DialogTitle>
         <DialogContent>

@@ -19,6 +19,11 @@ type Author {
   url: String!
 }
 
+type AuthorList {
+  data: [Author!]!
+  total: Int!
+}
+
 scalar BigDecimal
 
 type Chapter {
@@ -52,6 +57,11 @@ type Collection {
 
   # 获取子列表
   children: [Collection!]!
+}
+
+type CollectionList {
+  data: [Collection!]!
+  total: Int!
 }
 
 input CreateNovelInput {
@@ -119,6 +129,9 @@ type MutationRoot {
   # 删除目录
   deleteCollection(id: Int!): Int!
 
+  # 更新目录
+  updateCollection(id: Int!, name: String!, parentId: Int, description: String): Collection!
+
   # 创建作者
   createAuthor(name: String!, avatar: String!, description: String!, site: NovelSite!, siteId: String!): Author!
 
@@ -181,6 +194,11 @@ type Novel {
   collections: [Collection!]!
 }
 
+type NovelList {
+  data: [Novel!]!
+  total: Int!
+}
+
 enum NovelSite {
   QIDIAN
   JJWXC
@@ -189,6 +207,12 @@ enum NovelSite {
 enum NovelStatus {
   ONGOING
   COMPLETED
+  PAUSED
+}
+
+input Pagination {
+  page: Int! = 1
+  pageSize: Int! = 10
 }
 
 type QueryRoot {
@@ -196,22 +220,33 @@ type QueryRoot {
   allCollections: [Collection!]!
 
   # 获取目录列表
-  getCollections(parentId: Int): [Collection!]!
+  getCollections(parentId: Int, pagination: Pagination!): CollectionList!
 
   # 获取目录详情
   getCollection(id: Int!): Collection!
 
   # 获取作者列表
-  queryAuthors(searchName: String): [Author!]!
+  queryAuthors(searchName: String, pagination: Pagination!): AuthorList!
 
   # 获取作者详情
   getAuthor(id: Int!): Author!
 
+  # 获取所有作者
+  allAuthors(searchName: String): [Author!]!
+
   # 获取标签列表
-  queryTags: [Tag!]!
+  queryTags(pagination: Pagination!): TagList!
+
+  # 获取所有 tag
+  allTags: [Tag!]!
 
   # 获取小说列表
-  queryNovels(collectionMatch: TagMatch, tagMatch: TagMatch, novelStatus: NovelStatus): [Novel!]!
+  queryNovels(
+    collectionMatch: TagMatch
+    tagMatch: TagMatch
+    novelStatus: NovelStatus
+    pagination: Pagination!
+  ): NovelList!
 
   # 获取小说详情
   getNovel(id: Int!): Novel!
@@ -263,6 +298,11 @@ type Tag {
   createTime: DateTime!
   updateTime: DateTime!
   url: String!
+}
+
+type TagList {
+  data: [Tag!]!
+  total: Int!
 }
 
 input TagMatch {

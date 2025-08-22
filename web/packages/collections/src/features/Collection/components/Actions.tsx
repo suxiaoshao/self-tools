@@ -52,8 +52,7 @@ export default function Actions({ id, refetch, __typename, ...data }: TableActio
             },
           },
           <MenuItem
-            // eslint-disable-next-line jsx-curly-brace-presence
-            key={'edit'}
+            key="edit"
             onClick={() => {
               if (__typename === 'Item') {
                 fetchItem({ variables: { id } });

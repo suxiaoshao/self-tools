@@ -1,6 +1,9 @@
-query getAuthors {
-  queryAuthors {
-    ...AuthorAll
+query getAuthors($pagination: Pagination!) {
+  queryAuthors(pagination: $pagination) {
+    data {
+      ...AuthorAll
+    }
+    total
   }
 }
 

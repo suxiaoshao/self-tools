@@ -1,0 +1,9 @@
+[package]
+name = "graphql-common"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+tokio = { version = "1.47.1", default-features = false, features = ["macros"] }
+async-graphql = { version = "7.0.17" }
+paste = "1.0.15"
