@@ -6,6 +6,7 @@
  * @FilePath: /tauri/Users/weijie.su/Documents/code/self/self-tools/web/common/edit/src/init.ts
  */
 import { editor } from 'monaco-editor';
+import './index.css';
 import monankai from 'monaco-themes/themes/Dracula.json';
 
 editor.defineTheme('monankai', monankai as editor.IStandaloneThemeData);

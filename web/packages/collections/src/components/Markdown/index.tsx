@@ -86,6 +86,7 @@ function MyCode(props: { children: string; className?: string }) {
         color: contrastText,
         display: 'inline-flex',
         justifyContent: 'center',
+        fontFamily: 'jetbrains mono',
       })}
       className="code-inline"
     >

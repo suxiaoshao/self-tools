@@ -32,3 +32,4 @@ import 'prismjs/components/prism-rust.min';
 
 /* style */
 import 'prism-themes/themes/prism-dracula.css';
+import './index.css';

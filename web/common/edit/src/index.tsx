@@ -1,10 +1,8 @@
 import { type Ref, useCallback, useEffect, useImperativeHandle, useMemo, useState } from 'react';
 import { editor } from 'monaco-editor';
+import './init';
 import { Box, type BoxProps, useTheme } from '@mui/material';
 import { match } from 'ts-pattern';
-import monankai from 'monaco-themes/themes/Dracula.json';
-
-editor.defineTheme('monankai', monankai as editor.IStandaloneThemeData);
 
 export type MonacoEditorRef = editor.IStandaloneCodeEditor | undefined;
 
@@ -74,6 +72,7 @@ export default function Edit({ onChangeCode, code, language, wordWrap, ref, ...p
         value: code,
         fontLigatures: true,
         wordWrap,
+        fontFamily: 'jetbrains mono',
       });
       return newEditor;
     }
