@@ -1,8 +1,12 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import './init';
+import { type Ref, useCallback, useEffect, useImperativeHandle, useMemo, useState } from 'react';
 import { editor } from 'monaco-editor';
 import { Box, type BoxProps, useTheme } from '@mui/material';
 import { match } from 'ts-pattern';
+import monankai from 'monaco-themes/themes/Dracula.json';
+
+editor.defineTheme('monankai', monankai as editor.IStandaloneThemeData);
+
+export type MonacoEditorRef = editor.IStandaloneCodeEditor | undefined;
 
 /**
  * @author sushao
@@ -22,6 +26,7 @@ export interface EditProps extends Omit<BoxProps, 'onChange'> {
   onChangeCode?(newCode: string): void;
   language?: string;
   wordWrap?: 'off' | 'on' | 'wordWrapColumn' | 'bounded';
+  ref?: Ref<editor.IStandaloneCodeEditor | undefined>;
 }
 
 /**
@@ -30,7 +35,7 @@ export interface EditProps extends Omit<BoxProps, 'onChange'> {
  * @since 0.2.2
  * @description 编辑器组件
  * */
-export default function Edit({ onChangeCode, code, language, wordWrap, ...props }: EditProps) {
+export default function Edit({ onChangeCode, code, language, wordWrap, ref, ...props }: EditProps) {
   /**
    * 编辑器绑定的 dom 的引用
    * */
@@ -39,6 +44,7 @@ export default function Edit({ onChangeCode, code, language, wordWrap, ...props 
    * 编辑器实体
    * */
   const [edit, setEdit] = useState<editor.IStandaloneCodeEditor | undefined>();
+  useImperativeHandle(ref, () => edit, [edit]);
 
   const theme = useTheme();
   const editTheme = useMemo(
@@ -81,7 +87,7 @@ export default function Edit({ onChangeCode, code, language, wordWrap, ...props 
     if (newEdit !== null) {
       setEdit(newEdit);
     }
-  }, [createEditor, edit, editRef]);
+  }, [createEditor]);
   /**
    * props.readonly 改变时修改编辑器的只读属性
    * */

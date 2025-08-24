@@ -26,10 +26,11 @@ export default function CreateItemButton({ refetch, collectionId }: CreateItemBu
         {t('add_item')}
       </Button>
       <ItemForm
+        mode="create"
         afterSubmit={afterSubmit}
         open={open}
         handleClose={handleClose}
-        initialValues={{ content: '> 苏少好帅', name: '' }}
+        initialValues={{ content: '', name: '' }}
       />
     </>
   );

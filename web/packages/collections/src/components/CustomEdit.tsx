@@ -1,9 +1,29 @@
-import Edit, { type EditProps } from 'edit';
+import { proxy } from '@bookmarks/utils/proxy';
+import Edit, { type EditProps, type MonacoEditorRef } from 'edit';
+import { useImperativeHandle, useState, type Ref } from 'react';
 
-export interface CustomEditProps extends Omit<EditProps, 'code' | 'onChangeCode'> {
-  onChange: (newValue: string) => void;
+export interface CustomEditRef {
+  focus: () => void;
   value: string;
 }
-export default function CustomEdit({ value, onChange, ...props }: CustomEditProps) {
-  return <Edit code={value} onChangeCode={onChange} {...props} />;
+
+export interface CustomEditProps extends Omit<EditProps, 'code' | 'onChangeCode' | 'ref'> {
+  onChange: (newValue: string) => void;
+  value: string;
+  ref?: Ref<CustomEditRef>;
+}
+export default function CustomEdit({ value, onChange, ref, ...props }: CustomEditProps) {
+  const [editRef, setEditRef] = useState<MonacoEditorRef | null>();
+  useImperativeHandle(
+    ref,
+    () =>
+      proxy({
+        focus: () => {
+          editRef?.focus();
+        },
+        value,
+      }),
+    [value, editRef],
+  );
+  return <Edit code={value} onChangeCode={onChange} ref={setEditRef} {...props} />;
 }
