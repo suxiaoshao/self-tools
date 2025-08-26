@@ -7,14 +7,16 @@
  */
 use super::{guard::AuthGuard, types::CollectionItemQuery};
 use crate::{
-    errors::GraphqlResult,
+    errors::{GraphqlError, GraphqlResult},
+    model::PgPool,
     service::{
         collection::{Collection, CollectionQueryRunner, ItemAndCollectionList},
         item::{Item, ItemQueryRunner},
     },
 };
-use async_graphql::Object;
+use async_graphql::{Context, Object};
 use graphql_common::{QueryStack, Queryable};
+use tracing::{event, Level};
 
 pub(crate) struct QueryRoot;
 
@@ -22,25 +24,44 @@ pub(crate) struct QueryRoot;
 impl QueryRoot {
     /// 获取目录详情
     #[graphql(guard = "AuthGuard")]
-    async fn get_collection(&self, id: i64) -> GraphqlResult<Collection> {
-        let collection = Collection::get(id)?;
+    async fn get_collection(&self, context: &Context<'_>, id: i64) -> GraphqlResult<Collection> {
+        let conn = &mut context
+            .data::<PgPool>()
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
+            .get()?;
+        let collection = Collection::get(id, conn)?;
         Ok(collection)
     }
     /// 获取记录详情
     #[graphql(guard = "AuthGuard")]
-    async fn get_item(&self, id: i64) -> GraphqlResult<Item> {
-        let item = Item::get(id)?;
+    async fn get_item(&self, context: &Context<'_>, id: i64) -> GraphqlResult<Item> {
+        let conn = &mut context
+            .data::<PgPool>()
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
+            .get()?;
+        let item = Item::get(id, conn)?;
         Ok(item)
     }
     /// 获取集合下的集合和记录
     #[graphql(guard = "AuthGuard")]
     async fn collection_and_item(
         &self,
+        context: &Context<'_>,
         query: CollectionItemQuery,
     ) -> GraphqlResult<ItemAndCollectionList> {
+        let conn = context.data::<PgPool>().map_err(|_| {
+            event!(Level::WARN, "graphql context data PgPool 不存在");
+            GraphqlError::NotGraphqlContextData("PgPool")
+        })?;
         let (collection_runner, item_runner) = tokio::try_join!(
-            CollectionQueryRunner::new(query),
-            ItemQueryRunner::new(query),
+            CollectionQueryRunner::new(query, conn.clone()),
+            ItemQueryRunner::new(query, conn.clone()),
         )?;
         let runner = QueryStack::new(collection_runner).add_query(item_runner);
         let (data, total) = tokio::try_join!(runner.query(query.pagination), runner.len())?;

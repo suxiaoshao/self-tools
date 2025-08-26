@@ -10,7 +10,7 @@ import {
   usePage,
   usePageWithTotal,
 } from 'custom-table';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useGetCollectionsQuery } from '../../graphql';
 import { useAllCollection } from './collectionSlice';
 import AncestorsPath from './components/AncestorsPath';
@@ -28,6 +28,10 @@ const columnHelper = createCustomColumnHelper<CollectionTableData>();
 export default function Collections() {
   const parentId = useParentId();
   const pageState = usePage();
+  useEffect(() => {
+    // oxlint-disable-next-line react/exhaustive-deps
+    pageState.setPage(1);
+  }, [parentId]);
   const { data: { getCollections: { data, total } = {} } = {}, refetch } = useGetCollectionsQuery({
     variables: { parentId, pagination: { page: pageState.pageIndex, pageSize: pageState.pageSize } },
   });

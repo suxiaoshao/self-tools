@@ -14,7 +14,7 @@ import AncestorsPath from './components/AncestorsPath';
 import useParentId from './hooks/useParentId';
 import useTableColumns from './hooks/useTableColumns';
 import CreateItemButton from './components/CreateItemButton';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useI18n } from 'i18n';
 import useTitle from '@bookmarks/hooks/useTitle';
 
@@ -23,6 +23,10 @@ export default function Collection() {
   useTitle(t('collection_manage'));
   const id = useParentId();
   const pageState = usePage();
+  useEffect(() => {
+    // oxlint-disable-next-line react/exhaustive-deps
+    pageState.setPage(1);
+  }, [id]);
   const { data: sourceData, refetch } = useCollectionAndItemsQuery({
     variables: { query: { id, pagination: { page: pageState.pageIndex, pageSize: pageState.pageSize } } },
   });

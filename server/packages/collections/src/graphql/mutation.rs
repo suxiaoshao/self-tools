@@ -5,11 +5,13 @@
  * @LastEditTime: 2024-02-20 16:24:35
  * @FilePath: /self-tools/server/packages/collections/src/graphql/mutation.rs
  */
-use async_graphql::Object;
+use async_graphql::{Context, Object};
+use tracing::{event, Level};
 
 use super::{guard::AuthGuard, validator::DirNameValidator};
 use crate::{
-    errors::GraphqlResult,
+    errors::{GraphqlError, GraphqlResult},
+    model::PgPool,
     service::{collection::Collection, item::Item},
 };
 
@@ -21,50 +23,102 @@ impl MutationRoot {
     #[graphql(guard = "AuthGuard")]
     async fn create_collection(
         &self,
+        context: &Context<'_>,
         #[graphql(validator(custom = "DirNameValidator"))] name: String,
         parent_id: Option<i64>,
         description: Option<String>,
     ) -> GraphqlResult<Collection> {
-        let new_directory = Collection::create(&name, parent_id, description)?;
+        let conn = &mut context
+            .data::<PgPool>()
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
+            .get()?;
+        let new_directory = Collection::create(&name, parent_id, description, conn)?;
         Ok(new_directory)
     }
     /// 删除目录
     #[graphql(guard = "AuthGuard")]
-    async fn delete_collection(&self, id: i64) -> GraphqlResult<Collection> {
-        let deleted_directory = Collection::delete(id)?;
+    async fn delete_collection(&self, context: &Context<'_>, id: i64) -> GraphqlResult<Collection> {
+        let conn = &mut context
+            .data::<PgPool>()
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
+            .get()?;
+        let deleted_directory = Collection::delete(id, conn)?;
         Ok(deleted_directory)
     }
     /// 修改目录
     #[graphql(guard = "AuthGuard")]
     async fn update_collection(
         &self,
+        context: &Context<'_>,
         id: i64,
         name: String,
         description: Option<String>,
     ) -> GraphqlResult<Collection> {
-        let updated_directory = Collection::update(id, &name, description.as_deref())?;
+        let conn = &mut context
+            .data::<PgPool>()
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
+            .get()?;
+        let updated_directory = Collection::update(id, &name, description.as_deref(), conn)?;
         Ok(updated_directory)
     }
     /// 创建记录
     #[graphql(guard = "AuthGuard")]
     async fn create_item(
         &self,
+        context: &Context<'_>,
         name: String,
         content: String,
         collection_id: i64,
     ) -> GraphqlResult<Item> {
-        Item::create(name, content, collection_id)
+        let conn = &mut context
+            .data::<PgPool>()
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
+            .get()?;
+        let created_item = Item::create(name, content, collection_id, conn)?;
+        Ok(created_item)
     }
     /// 删除记录
     #[graphql(guard = "AuthGuard")]
-    async fn delete_item(&self, id: i64) -> GraphqlResult<Item> {
-        let deleted_item = Item::delete(id)?;
+    async fn delete_item(&self, context: &Context<'_>, id: i64) -> GraphqlResult<Item> {
+        let conn = &mut context
+            .data::<PgPool>()
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
+            .get()?;
+        let deleted_item = Item::delete(id, conn)?;
         Ok(deleted_item)
     }
     /// 修改记录
     #[graphql(guard = "AuthGuard")]
-    async fn update_item(&self, id: i64, name: String, content: String) -> GraphqlResult<Item> {
-        let updated_item = Item::update(id, &name, &content)?;
+    async fn update_item(
+        &self,
+        context: &Context<'_>,
+        id: i64,
+        name: String,
+        content: String,
+    ) -> GraphqlResult<Item> {
+        let conn = &mut context
+            .data::<PgPool>()
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
+            .get()?;
+        let updated_item = Item::update(id, &name, &content, conn)?;
         Ok(updated_item)
     }
 }
