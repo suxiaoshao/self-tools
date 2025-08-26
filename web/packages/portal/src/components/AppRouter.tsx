@@ -42,6 +42,10 @@ export default function AppRouter() {
   return (
     <>
       <title>{t('self_tools')}</title>
+      <link rel="icon" href="/favicon.ico" type="image/x-icon" />
+      <link rel="icon" type="image/png" href="/logo.png" sizes="32x32" />
+      <link rel="apple-touch-icon" href="/logo.png" />
+      <link rel="shortcut icon" href="/logo.png" />
       <Routes>
         <Route path="/" element={<AppDrawer />}>
           <Route path="/" element={<Home />} />
