@@ -19,6 +19,7 @@ import { useI18n } from 'i18n';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { getImageUrl } from '@bookmarks/utils/image';
 import { getLabelKeyBySite } from '@bookmarks/utils/novelSite';
+import useTitle from '@bookmarks/hooks/useTitle';
 
 type TableItem = GetAuthorsQuery['queryAuthors']['data'][0];
 
@@ -33,6 +34,7 @@ export default function AuthorList() {
 
   const [deleteAuthor] = useDeleteAuthorMutation();
   const t = useI18n();
+  useTitle(t('author_manage'));
   const navigate = useNavigate();
   const columns = useMemo<CustomColumnDefArray<TableItem>>(
     () =>

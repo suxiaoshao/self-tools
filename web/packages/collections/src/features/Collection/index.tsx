@@ -15,8 +15,12 @@ import useParentId from './hooks/useParentId';
 import useTableColumns from './hooks/useTableColumns';
 import CreateItemButton from './components/CreateItemButton';
 import { useMemo } from 'react';
+import { useI18n } from 'i18n';
+import useTitle from '@bookmarks/hooks/useTitle';
 
 export default function Collection() {
+  const t = useI18n();
+  useTitle(t('collection_manage'));
   const id = useParentId();
   const pageState = usePage();
   const { data: sourceData, refetch } = useCollectionAndItemsQuery({

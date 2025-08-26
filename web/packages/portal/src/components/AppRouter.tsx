@@ -12,6 +12,7 @@ import Login, { useLogin } from '../features/Auth';
 import { microConfigs } from '@portal/micro';
 import type { Menu } from 'types';
 import { match } from 'ts-pattern';
+import { useI18n } from 'i18n';
 
 function MenuRouter({ path }: Menu) {
   return match(path)
@@ -36,18 +37,22 @@ function MenuRouter({ path }: Menu) {
 
 export default function AppRouter() {
   useLogin();
+  const t = useI18n();
 
   return (
-    <Routes>
-      <Route path="/" element={<AppDrawer />}>
-        <Route path="/" element={<Home />} />
-        {microConfigs.map((item) => (
-          <Route key={`route-${item.getActiveRule()}`} path={item.getActiveRule()} element={item.getElement()}>
-            {item.getMenu().map((menu) => MenuRouter(menu))}
-          </Route>
-        ))}
-        <Route path="login" element={<Login />} />
-      </Route>
-    </Routes>
+    <>
+      <title>{t('self_tools')}</title>
+      <Routes>
+        <Route path="/" element={<AppDrawer />}>
+          <Route path="/" element={<Home />} />
+          {microConfigs.map((item) => (
+            <Route key={`route-${item.getActiveRule()}`} path={item.getActiveRule()} element={item.getElement()}>
+              {item.getMenu().map((menu) => MenuRouter(menu))}
+            </Route>
+          ))}
+          <Route path="login" element={<Login />} />
+        </Route>
+      </Routes>
+    </>
   );
 }

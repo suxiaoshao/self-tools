@@ -15,6 +15,7 @@ import { useI18n } from 'i18n';
 import { useShallow } from 'zustand/react/shallow';
 import { finishAuthentication, finishRegister, responseThen, startAuthentication, startRegister } from './service';
 import { enqueueSnackbar } from 'notify';
+import useTitle from '@bookmarks/hooks/useTitle';
 
 export { default as useLogin } from './useLogin';
 
@@ -44,6 +45,7 @@ export default function Login() {
     login(data);
   };
   const t = useI18n();
+  useTitle(t('login'));
   const onClickWebauthn = useCallback(
     async (data: LoginForm) => {
       const callenge = await startRegister(data);

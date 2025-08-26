@@ -21,6 +21,7 @@ import { useI18n } from 'i18n';
 import { Link as RouterLink, createSearchParams } from 'react-router-dom';
 import { format } from 'time';
 import CollectionActions from './components/CollectionActions';
+import useTitle from '@bookmarks/hooks/useTitle';
 
 const columnHelper = createCustomColumnHelper<CollectionTableData>();
 
@@ -38,6 +39,7 @@ export default function Collections() {
   }, [refetch, fetchData]);
 
   const t = useI18n();
+  useTitle(t('collection_manage'));
   const columns = useMemo<CustomColumnDefArray<CollectionTableData>>(
     () =>
       [

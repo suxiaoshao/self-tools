@@ -93,5 +93,10 @@
   "match_collections": "Match Collections List",
   "collection_whether_full_match": "Whether Collection Full Match",
   "match_tags": "Match Tags List",
-  "tag_whether_full_match": "Whether Tag Full Match"
+  "tag_whether_full_match": "Whether Tag Full Match",
+  "novel_manage": "Novel Manage",
+  "novel_detail": "Detail of novel {{novelName}}",
+  "novel_crawler": "Novel Crawler",
+  "author_detail": "Detail of author {{authorName}}",
+  "self_tools": "Self Tools"
 }

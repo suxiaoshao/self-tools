@@ -24,7 +24,7 @@ const resources = {
 } satisfies Resource;
 
 // eslint-disable-next-line no-named-as-default-member
-i18n.use(initReactI18next).init({
+i18n.use(initReactI18next).init<typeof resources>({
   resources,
   lng: 'en',
   interpolation: {

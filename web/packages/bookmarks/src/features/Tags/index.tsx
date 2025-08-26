@@ -17,6 +17,7 @@ import { format } from 'time';
 import CreateTagButton from './components/CreateTagButton';
 import { useI18n } from 'i18n';
 import { getLabelKeyBySite } from '@bookmarks/utils/novelSite';
+import useTitle from '@bookmarks/hooks/useTitle';
 
 const rowModel = getCoreRowModel();
 
@@ -43,6 +44,7 @@ export default function Tags() {
     onSearch();
   }, [onSearch]);
   const t = useI18n();
+  useTitle(t('tag_manage'));
   const columns = useMemo<CustomColumnDefArray<Data>>(
     () =>
       [
