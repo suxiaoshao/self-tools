@@ -93,5 +93,10 @@
   "match_collections": "匹配集合",
   "collection_whether_full_match": "集合是否全匹配",
   "match_tags": "匹配标签",
-  "tag_whether_full_match": "标签是否全匹配"
+  "tag_whether_full_match": "标签是否全匹配",
+  "novel_manage": "小说管理",
+  "novel_detail": "小说《{{novelName}}》的详情",
+  "novel_crawler": "小说爬取",
+  "author_detail": "作者{{authorName}}的详情",
+  "self_tools": "个人工具"
 }

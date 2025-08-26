@@ -1,7 +1,7 @@
 use async_graphql::ErrorExtensionValues;
 use axum::{response::IntoResponse, Json};
 use diesel::r2d2;
-use std::sync::Arc;
+use std::{env::VarError, sync::Arc};
 use thrift::auth::ItemServiceCheckException;
 
 #[derive(Debug)]
@@ -27,6 +27,8 @@ pub(crate) enum GraphqlError {
     /// thrift 错误
     Thrift(String),
     ClientError(&'static thrift::ClientError),
+    VarError(VarError),
+    NotGraphqlContextData(&'static str),
 }
 
 impl IntoResponse for GraphqlError {
@@ -63,6 +65,8 @@ impl GraphqlError {
             GraphqlError::UsernameNotSet => "username未设置".to_string(),
             GraphqlError::Thrift(data) => format!("thrift 错误:{data}"),
             GraphqlError::ClientError(data) => format!("thrift client错误:{data}"),
+            GraphqlError::VarError(err) => format!("env error:{err}"),
+            GraphqlError::NotGraphqlContextData(tag) => format!("graphql context data:{tag}不存在"),
         }
     }
     pub(crate) fn code(&self) -> &str {
@@ -81,6 +85,8 @@ impl GraphqlError {
             GraphqlError::UsernameNotSet => "UsernameNotSet",
             GraphqlError::Thrift(_) => "Thrift",
             GraphqlError::ClientError(_) => "ThriftClient",
+            GraphqlError::VarError(_) => "VarError",
+            GraphqlError::NotGraphqlContextData(_) => "NotGraphqlContextData",
         }
     }
 }
@@ -103,6 +109,8 @@ impl Clone for GraphqlError {
             GraphqlError::UsernameNotSet => Self::UsernameNotSet,
             GraphqlError::Thrift(data) => Self::Thrift(data.clone()),
             GraphqlError::ClientError(data) => Self::ClientError(data),
+            GraphqlError::VarError(data) => Self::VarError(data.clone()),
+            GraphqlError::NotGraphqlContextData(data) => Self::NotGraphqlContextData(data),
         }
     }
 }
@@ -167,5 +175,11 @@ impl From<GraphqlError> for async_graphql::Error {
             source: Some(Arc::new(value)),
             extensions: Some(extensions),
         }
+    }
+}
+
+impl From<VarError> for GraphqlError {
+    fn from(value: VarError) -> Self {
+        Self::VarError(value)
     }
 }

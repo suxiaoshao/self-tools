@@ -46,6 +46,8 @@ export function CustomTheme({ children }: CustomThemeProps) {
   return useMemo(
     () => (
       <ThemeProvider theme={createTheme(selectMuiTheme(state))}>
+        <meta name="theme-color" content={state.color} />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <CssBaseline />
         {children}
       </ThemeProvider>

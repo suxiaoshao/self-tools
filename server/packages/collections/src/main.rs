@@ -29,7 +29,10 @@ async fn main() -> anyhow::Result<()> {
         .init();
     // 设置跨域
     let cors = get_cors();
-    let app = get_router().layer(cors).layer(trace_layer());
+    let app = get_router()
+        .map_err(|_x| anyhow::anyhow!("VarError"))?
+        .layer(cors)
+        .layer(trace_layer());
 
     let addr = "0.0.0.0:8080";
     event!(Level::INFO, addr, "server start");

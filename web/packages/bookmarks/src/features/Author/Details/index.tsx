@@ -29,11 +29,13 @@ import { P, match } from 'ts-pattern';
 import { Details, type DetailsItem } from 'details';
 import { format } from 'time';
 import { getLabelKeyByNovelStatus } from '@bookmarks/utils/novelStatus';
+import useTitle from '@bookmarks/hooks/useTitle';
 
 export default function AuthorDetails() {
   const t = useI18n();
   const { authorId } = useParams();
   const { data, loading, refetch } = useGetAuthorQuery({ variables: { id: Number(authorId) } });
+  useTitle(t('author_detail', { authorName: data?.getAuthor?.name }));
   const navigate = useNavigate();
   const handleRefresh = useCallback(() => {
     refetch();

@@ -5,8 +5,12 @@
  * @LastEditTime: 2024-03-01 17:56:05
  * @FilePath: /self-tools/web/packages/bookmarks/src/features/Author/Fetch/index.tsx
  */
+import useTitle from '@bookmarks/hooks/useTitle';
 import { Box } from '@mui/material';
+import { useI18n } from 'i18n';
 
 export default function NovelFetch() {
+  const t = useI18n();
+  useTitle(t('novel_crawler'));
   return <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', p: 2 }}>FetchNovel</Box>;
 }

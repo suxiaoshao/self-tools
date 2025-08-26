@@ -24,11 +24,13 @@ import { P, match } from 'ts-pattern';
 import { format } from 'time';
 import AddCollection from './components/AddCollection';
 import { getLabelKeyByNovelStatus } from '@bookmarks/utils/novelStatus';
+import useTitle from '@bookmarks/hooks/useTitle';
 
 export default function NovelDetails() {
   const { novelId } = useParams();
   const { data, loading, refetch } = useGetNovelQuery({ variables: { id: Number(novelId) } });
   const t = useI18n();
+  useTitle(t('novel_detail', { novelName: data?.getNovel?.name }));
   const navigate = useNavigate();
   const handleRefresh = useCallback(() => {
     refetch();

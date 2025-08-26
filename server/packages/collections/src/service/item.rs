@@ -1,10 +1,11 @@
 use crate::{
     errors::{GraphqlError, GraphqlResult},
-    model::CONNECTION,
+    model::PgPool,
 };
 use crate::{graphql::types::CollectionItemQuery, model::collection::CollectionModel};
 use crate::{graphql::types::ItemAndCollection, model::item::ItemModel};
-use async_graphql::{ComplexObject, SimpleObject};
+use async_graphql::{ComplexObject, Context, SimpleObject};
+use diesel::PgConnection;
 use graphql_common::{Paginate, Queryable};
 use time::OffsetDateTime;
 use tracing::{event, Level};
@@ -25,8 +26,15 @@ pub(crate) struct Item {
 
 #[ComplexObject]
 impl Item {
-    async fn collection(&self) -> GraphqlResult<Option<Collection>> {
-        let collection = Collection::get(self.collection_id)?;
+    async fn collection(&self, context: &Context<'_>) -> GraphqlResult<Option<Collection>> {
+        let conn = &mut context
+            .data::<PgPool>()
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
+            .get()?;
+        let collection = Collection::get(self.collection_id, conn)?;
         Ok(Some(collection))
     }
 }
@@ -46,8 +54,12 @@ impl From<ItemModel> for Item {
 
 impl Item {
     /// 创建记录
-    pub(crate) fn create(name: String, content: String, collection_id: i64) -> GraphqlResult<Self> {
-        let conn = &mut CONNECTION.get()?;
+    pub(crate) fn create(
+        name: String,
+        content: String,
+        collection_id: i64,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<Self> {
         //  判断父目录是否存在
         if !CollectionModel::exists(collection_id, conn)? {
             event!(Level::WARN, "目录不存在: {}", collection_id);
@@ -57,8 +69,7 @@ impl Item {
         Ok(new_item.into())
     }
     /// 删除记录
-    pub(crate) fn delete(id: i64) -> GraphqlResult<Self> {
-        let conn = &mut CONNECTION.get()?;
+    pub(crate) fn delete(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
         if !ItemModel::exists(id, conn)? {
             event!(Level::WARN, "记录不存在: {}", id);
             return Err(GraphqlError::NotFound("记录", id));
@@ -67,8 +78,7 @@ impl Item {
         Ok(item.into())
     }
     /// 获取记录
-    pub(crate) fn get(id: i64) -> GraphqlResult<Self> {
-        let conn = &mut CONNECTION.get()?;
+    pub(crate) fn get(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
         if !ItemModel::exists(id, conn)? {
             event!(Level::WARN, "记录不存在: {}", id);
             return Err(GraphqlError::NotFound("记录", id));
@@ -77,8 +87,12 @@ impl Item {
         Ok(item.into())
     }
     /// 更新记录
-    pub(crate) fn update(id: i64, name: &str, content: &str) -> GraphqlResult<Self> {
-        let conn = &mut CONNECTION.get()?;
+    pub(crate) fn update(
+        id: i64,
+        name: &str,
+        content: &str,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<Self> {
         if !ItemModel::exists(id, conn)? {
             event!(Level::WARN, "记录不存在: {}", id);
             return Err(GraphqlError::NotFound("记录", id));
@@ -91,10 +105,12 @@ impl Item {
 pub(crate) struct ItemQueryRunner {
     query: CollectionItemQuery,
     count: i64,
+    conn: PgPool,
 }
 
 impl ItemQueryRunner {
-    pub(crate) async fn new(query: CollectionItemQuery) -> GraphqlResult<Self> {
+    pub(crate) async fn new(query: CollectionItemQuery, conn: PgPool) -> GraphqlResult<Self> {
+        let conn_temp = &mut conn.get()?;
         let CollectionItemQuery {
             id,
             create_time,
@@ -104,17 +120,20 @@ impl ItemQueryRunner {
         let collection_id = match id {
             Some(id) => id,
             None => {
-                return Ok(Self { query, count: 0 });
+                return Ok(Self {
+                    query,
+                    count: 0,
+                    conn,
+                });
             }
         };
-        let conn = &mut CONNECTION.get()?;
         //  判断父目录是否存在
-        if !CollectionModel::exists(collection_id, conn)? {
+        if !CollectionModel::exists(collection_id, conn_temp)? {
             event!(Level::WARN, "目录不存在: {}", collection_id);
             return Err(GraphqlError::NotFound("目录", collection_id));
         }
-        let count = ItemModel::count(collection_id, create_time, update_time, conn)?;
-        Ok(Self { query, count })
+        let count = ItemModel::count(collection_id, create_time, update_time, conn_temp)?;
+        Ok(Self { query, count, conn })
     }
 }
 
@@ -149,7 +168,7 @@ impl Queryable for ItemQueryRunner {
             return Err(GraphqlError::PageSizeTooMore);
         }
         let limit = pagination.limit();
-        let conn = &mut CONNECTION.get()?;
+        let conn = &mut self.conn.get()?;
         let collection_id = match id {
             Some(id) => id,
             None => {

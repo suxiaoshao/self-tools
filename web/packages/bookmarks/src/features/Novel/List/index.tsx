@@ -29,12 +29,18 @@ import { getLabelKeyBySite } from '@bookmarks/utils/novelSite';
 import CollectionMultiSelect from '@bookmarks/components/CollectionMultiSelect';
 import TagsSelect from '@bookmarks/components/TagsSelect';
 import { getLabelKeyByNovelStatus } from '@bookmarks/utils/novelStatus';
+import useTitle from '@bookmarks/hooks/useTitle';
 
 type Data = GetNovelsQuery['queryNovels']['data'][0];
 
 const columnHelper = createCustomColumnHelper<Data>();
 
 export default function NovelList() {
+  // i18n
+  const t = useI18n();
+  // title
+  useTitle(t('novel_manage'));
+  // form & table
   type FormData = Omit<GetNovelsQueryVariables, 'pagination'>;
   const pageState = usePage();
   const { control, watch, register } = useForm<FormData>({
@@ -49,7 +55,6 @@ export default function NovelList() {
   const page = usePageWithTotal(pageState, total);
 
   const [deleteNovel] = useDeleteNovelMutation();
-  const t = useI18n();
   const columns = useMemo<CustomColumnDefArray<Data>>(
     () =>
       [

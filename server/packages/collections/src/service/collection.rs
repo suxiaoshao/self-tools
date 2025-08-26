@@ -7,7 +7,7 @@ use tracing::{event, Level};
 use crate::{
     errors::{GraphqlError, GraphqlResult},
     graphql::types::{CollectionItemQuery, ItemAndCollection},
-    model::{collection::CollectionModel, item::ItemModel, CONNECTION},
+    model::{collection::CollectionModel, item::ItemModel, PgPool},
 };
 
 #[derive(SimpleObject)]
@@ -24,8 +24,15 @@ pub(crate) struct Collection {
 #[ComplexObject]
 impl Collection {
     /// 获取祖先列表
-    async fn ancestors(&self) -> GraphqlResult<Vec<Collection>> {
-        let ancestors = Collection::get_ancestors(self.id)?;
+    async fn ancestors(&self, context: &Context<'_>) -> GraphqlResult<Vec<Collection>> {
+        let conn = &mut context
+            .data::<PgPool>()
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
+            .get()?;
+        let ancestors = Collection::get_ancestors(self.id, conn)?;
         Ok(ancestors)
     }
 }
@@ -50,8 +57,8 @@ impl Collection {
         name: &str,
         parent_id: Option<i64>,
         description: Option<String>,
+        conn: &mut PgConnection,
     ) -> GraphqlResult<Self> {
-        let conn = &mut CONNECTION.get()?;
         match parent_id {
             None => {
                 let collection_path = format!("/{name}/");
@@ -91,8 +98,7 @@ impl Collection {
 /// id 相关
 impl Collection {
     /// 删除目录
-    pub(crate) fn delete(id: i64) -> GraphqlResult<Self> {
-        let conn = &mut CONNECTION.get()?;
+    pub(crate) fn delete(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
         conn.transaction(|conn| {
             let collection = Self::delete_inner(id, conn)?;
             Ok(collection)
@@ -111,12 +117,11 @@ impl Collection {
         //递归删除子目录
         CollectionModel::list_parent(Some(id), conn)?
             .into_iter()
-            .try_for_each(|CollectionModel { id, .. }| Collection::delete(id).map(|_| ()))?;
+            .try_for_each(|CollectionModel { id, .. }| Collection::delete(id, conn).map(|_| ()))?;
         Ok(collection.into())
     }
     /// 获取祖先目录列表
-    pub(crate) fn get_ancestors(id: i64) -> GraphqlResult<Vec<Self>> {
-        let conn = &mut CONNECTION.get()?;
+    pub(crate) fn get_ancestors(id: i64, conn: &mut PgConnection) -> GraphqlResult<Vec<Self>> {
         //  判断目录是否存在
         if !CollectionModel::exists(id, conn)? {
             event!(Level::WARN, "目录不存在: {}", id);
@@ -134,8 +139,7 @@ impl Collection {
         Ok(collections)
     }
     /// 获取集合详情
-    pub(crate) fn get(id: i64) -> GraphqlResult<Self> {
-        let conn = &mut CONNECTION.get()?;
+    pub(crate) fn get(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
         //  判断目录是否存在
         if !CollectionModel::exists(id, conn)? {
             event!(Level::WARN, "目录不存在: {}", id);
@@ -145,8 +149,12 @@ impl Collection {
         Ok(collection.into())
     }
     /// 修改集合
-    pub(crate) fn update(id: i64, name: &str, description: Option<&str>) -> GraphqlResult<Self> {
-        let conn = &mut CONNECTION.get()?;
+    pub(crate) fn update(
+        id: i64,
+        name: &str,
+        description: Option<&str>,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<Self> {
         //  判断目录是否存在
         if !CollectionModel::exists(id, conn)? {
             event!(Level::WARN, "目录不存在: {}", id);
@@ -194,28 +202,29 @@ impl Collection {
 pub(crate) struct CollectionQueryRunner {
     query: CollectionItemQuery,
     count: i64,
+    conn: PgPool,
 }
 
 graphql_common::list!(ItemAndCollection);
 
 impl CollectionQueryRunner {
-    pub(crate) async fn new(query: CollectionItemQuery) -> GraphqlResult<Self> {
+    pub(crate) async fn new(query: CollectionItemQuery, conn: PgPool) -> GraphqlResult<Self> {
+        let conn_temp = &mut conn.get()?;
         let CollectionItemQuery {
             id,
             create_time,
             update_time,
             ..
         } = query;
-        let conn = &mut CONNECTION.get()?;
         //  判断父目录是否存在
         if let Some(id) = id {
-            if !CollectionModel::exists(id, conn)? {
+            if !CollectionModel::exists(id, conn_temp)? {
                 event!(Level::WARN, "目录不存在: {}", id);
                 return Err(GraphqlError::NotFound("目录", id));
             }
         }
-        let count = CollectionModel::get_count_by_parent(id, create_time, update_time, conn)?;
-        Ok(Self { query, count })
+        let count = CollectionModel::get_count_by_parent(id, create_time, update_time, conn_temp)?;
+        Ok(Self { query, count, conn })
     }
 }
 
@@ -250,7 +259,7 @@ impl Queryable for CollectionQueryRunner {
             return Err(GraphqlError::PageSizeTooMore);
         }
         let limit = pagination.limit();
-        let conn = &mut CONNECTION.get()?;
+        let conn = &mut self.conn.get()?;
         //  判断父目录是否存在
         if let Some(id) = id {
             if !CollectionModel::exists(id, conn)? {

@@ -9,6 +9,8 @@
 use ::middleware::Logger;
 use async_graphql::{EmptySubscription, Schema};
 
+use crate::{errors::GraphqlResult, model::get_pool};
+
 use self::{mutation::MutationRoot, query::QueryRoot};
 
 mod mutation;
@@ -19,8 +21,11 @@ pub(crate) type RootSchema = Schema<QueryRoot, MutationRoot, EmptySubscription>;
 mod guard;
 mod middleware;
 
-pub(crate) fn get_schema() -> RootSchema {
-    Schema::build(QueryRoot, MutationRoot, EmptySubscription)
+pub(crate) fn get_schema() -> GraphqlResult<RootSchema> {
+    let pool = get_pool()?;
+    let schema = Schema::build(QueryRoot, MutationRoot, EmptySubscription)
         .extension(Logger)
-        .finish()
+        .data(pool)
+        .finish();
+    Ok(schema)
 }
