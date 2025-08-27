@@ -98,5 +98,6 @@
   "novel_detail": "小说《{{novelName}}》的详情",
   "novel_crawler": "小说爬取",
   "author_detail": "作者{{authorName}}的详情",
-  "self_tools": "个人工具"
+  "self_tools": "个人工具",
+  "author_crawler": "作者爬取"
 }

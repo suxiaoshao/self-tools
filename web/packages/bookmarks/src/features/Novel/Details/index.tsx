@@ -25,6 +25,7 @@ import { format } from 'time';
 import AddCollection from './components/AddCollection';
 import { getLabelKeyByNovelStatus } from '@bookmarks/utils/novelStatus';
 import useTitle from '@bookmarks/hooks/useTitle';
+import { getLabelKeyBySite } from '@bookmarks/utils/novelSite';
 
 export default function NovelDetails() {
   const { novelId } = useParams();
@@ -64,7 +65,11 @@ export default function NovelDetails() {
               },
               {
                 label: t('novel_status'),
-                value: getLabelKeyByNovelStatus(data.novelStatus),
+                value: t(getLabelKeyByNovelStatus(data.novelStatus)),
+              },
+              {
+                label: t('novel_site'),
+                value: t(getLabelKeyBySite(data.site)),
               },
               {
                 label: t('word_count'),

@@ -33,16 +33,23 @@ import { getImageUrl } from '@bookmarks/utils/image';
 import ChapterModal from '@bookmarks/components/ChapterModal';
 import { convertFetchToDraftAuthor } from './utils';
 import { enqueueSnackbar } from 'notify';
+import useTitle from '@bookmarks/hooks/useTitle';
 
 export default function AuthorFetch() {
+  // title
+  const t = useI18n();
+  useTitle(t('author_crawler'));
+
+  // fetch
   type FormData = FetchAuthorQueryVariables;
   const [fn, { data, loading }] = useFetchAuthorLazyQuery();
   const { handleSubmit, register, control } = useForm<FormData>();
-  const t = useI18n();
   const onSubmit = handleSubmit((data) => {
     fn({ variables: data });
   });
   const author = data?.fetchAuthor;
+
+  // save
   const [saveDraftAuthor, { loading: saveLoading }] = useSaveDraftAuthorMutation();
   return (
     <Box

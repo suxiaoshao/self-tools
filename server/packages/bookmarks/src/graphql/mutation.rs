@@ -18,7 +18,7 @@ use crate::{
         author::Author,
         collection::Collection,
         novel::{CreateNovelInput, Novel},
-        save_draft::SaveDraftAuthor,
+        save_draft::{SaveDraftAuthor, SaveDraftNovel},
         tag::Tag,
     },
 };
@@ -190,6 +190,22 @@ impl MutationRoot {
             })?
             .get()?;
         author.save(conn)
+    }
+    /// 保存 draft novel
+    #[graphql(guard = "AuthGuard")]
+    async fn save_draft_novel(
+        &self,
+        context: &Context<'_>,
+        novel: SaveDraftNovel,
+    ) -> GraphqlResult<Novel> {
+        let conn = &mut context
+            .data::<PgPool>()
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
+            .get()?;
+        novel.save(conn)
     }
     /// 通过 fetch 更新小说
     #[graphql(guard = "AuthGuard")]

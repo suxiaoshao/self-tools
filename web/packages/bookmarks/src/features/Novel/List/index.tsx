@@ -1,5 +1,5 @@
 import { Refresh } from '@mui/icons-material';
-import { Avatar, Box, FormControl, FormLabel, IconButton, Link, Paper, Switch } from '@mui/material';
+import { Avatar, Box, Button, FormControl, FormLabel, IconButton, Link, Paper, Switch } from '@mui/material';
 import {
   createCustomColumnHelper,
   type CustomColumnDefArray,
@@ -14,7 +14,7 @@ import {
 import { useI18n } from 'i18n';
 import { useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { format } from 'time';
 import {
   type GetNovelsQuery,
@@ -135,6 +135,7 @@ export default function NovelList() {
     [columns, data],
   );
   const tableInstance = useCustomTable(tableOptions);
+  const navigate = useNavigate();
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
       <Box
@@ -146,6 +147,15 @@ export default function NovelList() {
         }}
       >
         <CreateNovelButton refetch={refetch} />
+        <Button
+          sx={{ ml: 1 }}
+          color="primary"
+          size="large"
+          variant="contained"
+          onClick={() => navigate('/bookmarks/novel/fetch')}
+        >
+          {t('crawler')}
+        </Button>
         <IconButton sx={{ marginLeft: 'auto' }} onClick={() => refetch()}>
           <Refresh />
         </IconButton>

@@ -130,12 +130,31 @@ impl AuthorModel {
 
 /// site_id 相关的操作
 impl AuthorModel {
-    pub(crate) fn exists_by_site_id(site_id: &str, conn: &mut PgConnection) -> GraphqlResult<bool> {
+    pub(crate) fn exists_by_site_id(
+        site_id: &str,
+        site: NovelSite,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<bool> {
         let exists = diesel::select(diesel::dsl::exists(
-            author::table.filter(author::site_id.eq(site_id)),
+            author::table.filter(author::site_id.eq(site_id).and(author::site.eq(site))),
         ))
         .get_result(conn)?;
         Ok(exists)
+    }
+    pub(crate) fn get_id_by_site_id(
+        site_id: &str,
+        site: NovelSite,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<Option<i64>> {
+        let id = author::table
+            .filter(author::site_id.eq(site_id).and(author::site.eq(site)))
+            .select(author::id)
+            .first(conn);
+        match id {
+            Ok(id) => Ok(Some(id)),
+            Err(diesel::NotFound) => Ok(None),
+            Err(err) => Err(err.into()),
+        }
     }
 }
 

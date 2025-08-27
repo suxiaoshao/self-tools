@@ -172,6 +172,21 @@ impl NovelModel {
     }
 }
 
+/// site id
+impl NovelModel {
+    pub(crate) fn exists_by_site_id(
+        site_id: &str,
+        site: NovelSite,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<bool> {
+        let data = diesel::select(diesel::dsl::exists(
+            novel::table.filter(novel::site_id.eq(site_id).and(novel::site.eq(site))),
+        ))
+        .get_result(conn)?;
+        Ok(data)
+    }
+}
+
 #[cfg(test)]
 mod test {
     use diesel::{debug_query, pg::Pg};

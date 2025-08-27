@@ -143,6 +143,7 @@ export type MutationRoot = {
   deleteNovel: Novel;
   deleteTag: Tag;
   saveDraftAuthor: Author;
+  saveDraftNovel: Novel;
   updateAuthorByCrawler: Author;
   updateCollection: Collection;
   updateNovelByCrawler: Novel;
@@ -200,6 +201,10 @@ export type MutationRootDeleteTagArgs = {
 
 export type MutationRootSaveDraftAuthorArgs = {
   author: SaveDraftAuthor;
+};
+
+export type MutationRootSaveDraftNovelArgs = {
+  novel: SaveDraftNovel;
 };
 
 export type MutationRootUpdateAuthorByCrawlerArgs = {
@@ -323,6 +328,14 @@ export type QueryRootQueryTagsArgs = {
   pagination: Pagination;
 };
 
+export type SaveAuthorInfo = {
+  description: Scalars['String']['input'];
+  id: Scalars['String']['input'];
+  image: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+  site: NovelSite;
+};
+
 export type SaveChapterInfo = {
   id: Scalars['String']['input'];
   name: Scalars['String']['input'];
@@ -337,6 +350,18 @@ export type SaveDraftAuthor = {
   name: Scalars['String']['input'];
   novels: Array<SaveNovelInfo>;
   site: NovelSite;
+};
+
+export type SaveDraftNovel = {
+  author: SaveAuthorInfo;
+  chapters: Array<SaveChapterInfo>;
+  description: Scalars['String']['input'];
+  id: Scalars['String']['input'];
+  image: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+  novelStatus: NovelStatus;
+  site: NovelSite;
+  tags: Array<SaveTagInfo>;
 };
 
 export type SaveNovelInfo = {
@@ -635,6 +660,44 @@ export type UpdateCollectionMutationVariables = Exact<{
 
 export type UpdateCollectionMutation = { __typename?: 'MutationRoot'; updateCollection: { __typename: 'Collection' } };
 
+export type GetNovelsQueryVariables = Exact<{
+  collectionMatch?: InputMaybe<TagMatch>;
+  novelStatus?: InputMaybe<NovelStatus>;
+  tagMatch?: InputMaybe<TagMatch>;
+  pagination: Pagination;
+}>;
+
+export type GetNovelsQuery = {
+  __typename?: 'QueryRoot';
+  queryNovels: {
+    __typename?: 'NovelList';
+    total: number;
+    data: Array<{
+      __typename?: 'Novel';
+      id: number;
+      name: string;
+      description: string;
+      createTime: any;
+      updateTime: any;
+      novelStatus: NovelStatus;
+      avatar: string;
+      site: NovelSite;
+    }>;
+  };
+};
+
+export type CreateNovelMutationVariables = Exact<{
+  data: CreateNovelInput;
+}>;
+
+export type CreateNovelMutation = { __typename?: 'MutationRoot'; createNovel: { __typename?: 'Novel'; id: number } };
+
+export type DeleteNovelMutationVariables = Exact<{
+  id: Scalars['Int']['input'];
+}>;
+
+export type DeleteNovelMutation = { __typename?: 'MutationRoot'; deleteNovel: { __typename?: 'Novel'; id: number } };
+
 export type GetNovelQueryVariables = Exact<{
   id: Scalars['Int']['input'];
 }>;
@@ -679,7 +742,7 @@ export type GetNovelQuery = {
 
 export type FetchNovelQueryVariables = Exact<{
   id: Scalars['String']['input'];
-  NovelSite: NovelSite;
+  novelSite: NovelSite;
 }>;
 
 export type FetchNovelQuery = {
@@ -691,7 +754,16 @@ export type FetchNovelQuery = {
     name: string;
     url: string;
     site: NovelSite;
-    author: { __typename?: 'DraftAuthorInfo'; description: string; image: string; name: string; url: string };
+    status: NovelStatus;
+    id: string;
+    author: {
+      __typename?: 'DraftAuthorInfo';
+      description: string;
+      image: string;
+      name: string;
+      url: string;
+      id: string;
+    };
     chapters: Array<{
       __typename?: 'DraftChapterInfo';
       title: string;
@@ -701,6 +773,7 @@ export type FetchNovelQuery = {
       wordCount: number;
       id: string;
     }>;
+    tags: Array<{ __typename?: 'DraftTagInfo'; id: string; name: string; url: string }>;
   };
 };
 
@@ -733,43 +806,14 @@ export type DeleteCollectionForNovelMutation = {
   deleteCollectionForNovel: { __typename?: 'Novel'; id: number };
 };
 
-export type GetNovelsQueryVariables = Exact<{
-  collectionMatch?: InputMaybe<TagMatch>;
-  novelStatus?: InputMaybe<NovelStatus>;
-  tagMatch?: InputMaybe<TagMatch>;
-  pagination: Pagination;
+export type SaveDraftNovelMutationVariables = Exact<{
+  novel: SaveDraftNovel;
 }>;
 
-export type GetNovelsQuery = {
-  __typename?: 'QueryRoot';
-  queryNovels: {
-    __typename?: 'NovelList';
-    total: number;
-    data: Array<{
-      __typename?: 'Novel';
-      id: number;
-      name: string;
-      description: string;
-      createTime: any;
-      updateTime: any;
-      novelStatus: NovelStatus;
-      avatar: string;
-      site: NovelSite;
-    }>;
-  };
+export type SaveDraftNovelMutation = {
+  __typename?: 'MutationRoot';
+  saveDraftNovel: { __typename?: 'Novel'; id: number };
 };
-
-export type CreateNovelMutationVariables = Exact<{
-  data: CreateNovelInput;
-}>;
-
-export type CreateNovelMutation = { __typename?: 'MutationRoot'; createNovel: { __typename?: 'Novel'; id: number } };
-
-export type DeleteNovelMutationVariables = Exact<{
-  id: Scalars['Int']['input'];
-}>;
-
-export type DeleteNovelMutation = { __typename?: 'MutationRoot'; deleteNovel: { __typename?: 'Novel'; id: number } };
 
 export type CreateTagMutationVariables = Exact<{
   name: Scalars['String']['input'];
@@ -1585,6 +1629,147 @@ export type UpdateCollectionMutationOptions = Apollo.BaseMutationOptions<
   UpdateCollectionMutation,
   UpdateCollectionMutationVariables
 >;
+export const GetNovelsDocument = gql`
+  query getNovels(
+    $collectionMatch: TagMatch
+    $novelStatus: NovelStatus
+    $tagMatch: TagMatch
+    $pagination: Pagination!
+  ) {
+    queryNovels(
+      collectionMatch: $collectionMatch
+      novelStatus: $novelStatus
+      tagMatch: $tagMatch
+      pagination: $pagination
+    ) {
+      data {
+        id
+        name
+        description
+        createTime
+        updateTime
+        description
+        novelStatus
+        avatar
+        site
+      }
+      total
+    }
+  }
+`;
+
+/**
+ * __useGetNovelsQuery__
+ *
+ * To run a query within a React component, call `useGetNovelsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetNovelsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetNovelsQuery({
+ *   variables: {
+ *      collectionMatch: // value for 'collectionMatch'
+ *      novelStatus: // value for 'novelStatus'
+ *      tagMatch: // value for 'tagMatch'
+ *      pagination: // value for 'pagination'
+ *   },
+ * });
+ */
+export function useGetNovelsQuery(
+  baseOptions: Apollo.QueryHookOptions<GetNovelsQuery, GetNovelsQueryVariables> &
+    ({ variables: GetNovelsQueryVariables; skip?: boolean } | { skip: boolean }),
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useQuery<GetNovelsQuery, GetNovelsQueryVariables>(GetNovelsDocument, options);
+}
+export function useGetNovelsLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<GetNovelsQuery, GetNovelsQueryVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useLazyQuery<GetNovelsQuery, GetNovelsQueryVariables>(GetNovelsDocument, options);
+}
+export function useGetNovelsSuspenseQuery(
+  baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetNovelsQuery, GetNovelsQueryVariables>,
+) {
+  const options = baseOptions === Apollo.skipToken ? baseOptions : { ...defaultOptions, ...baseOptions };
+  return Apollo.useSuspenseQuery<GetNovelsQuery, GetNovelsQueryVariables>(GetNovelsDocument, options);
+}
+export type GetNovelsQueryHookResult = ReturnType<typeof useGetNovelsQuery>;
+export type GetNovelsLazyQueryHookResult = ReturnType<typeof useGetNovelsLazyQuery>;
+export type GetNovelsSuspenseQueryHookResult = ReturnType<typeof useGetNovelsSuspenseQuery>;
+export type GetNovelsQueryResult = Apollo.QueryResult<GetNovelsQuery, GetNovelsQueryVariables>;
+export const CreateNovelDocument = gql`
+  mutation createNovel($data: CreateNovelInput!) {
+    createNovel(data: $data) {
+      id
+    }
+  }
+`;
+export type CreateNovelMutationFn = Apollo.MutationFunction<CreateNovelMutation, CreateNovelMutationVariables>;
+
+/**
+ * __useCreateNovelMutation__
+ *
+ * To run a mutation, you first call `useCreateNovelMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateNovelMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createNovelMutation, { data, loading, error }] = useCreateNovelMutation({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useCreateNovelMutation(
+  baseOptions?: Apollo.MutationHookOptions<CreateNovelMutation, CreateNovelMutationVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useMutation<CreateNovelMutation, CreateNovelMutationVariables>(CreateNovelDocument, options);
+}
+export type CreateNovelMutationHookResult = ReturnType<typeof useCreateNovelMutation>;
+export type CreateNovelMutationResult = Apollo.MutationResult<CreateNovelMutation>;
+export type CreateNovelMutationOptions = Apollo.BaseMutationOptions<CreateNovelMutation, CreateNovelMutationVariables>;
+export const DeleteNovelDocument = gql`
+  mutation deleteNovel($id: Int!) {
+    deleteNovel(id: $id) {
+      id
+    }
+  }
+`;
+export type DeleteNovelMutationFn = Apollo.MutationFunction<DeleteNovelMutation, DeleteNovelMutationVariables>;
+
+/**
+ * __useDeleteNovelMutation__
+ *
+ * To run a mutation, you first call `useDeleteNovelMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteNovelMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteNovelMutation, { data, loading, error }] = useDeleteNovelMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteNovelMutation(
+  baseOptions?: Apollo.MutationHookOptions<DeleteNovelMutation, DeleteNovelMutationVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useMutation<DeleteNovelMutation, DeleteNovelMutationVariables>(DeleteNovelDocument, options);
+}
+export type DeleteNovelMutationHookResult = ReturnType<typeof useDeleteNovelMutation>;
+export type DeleteNovelMutationResult = Apollo.MutationResult<DeleteNovelMutation>;
+export type DeleteNovelMutationOptions = Apollo.BaseMutationOptions<DeleteNovelMutation, DeleteNovelMutationVariables>;
 export const GetNovelDocument = gql`
   query getNovel($id: Int!) {
     getNovel(id: $id) {
@@ -1674,13 +1859,14 @@ export type GetNovelLazyQueryHookResult = ReturnType<typeof useGetNovelLazyQuery
 export type GetNovelSuspenseQueryHookResult = ReturnType<typeof useGetNovelSuspenseQuery>;
 export type GetNovelQueryResult = Apollo.QueryResult<GetNovelQuery, GetNovelQueryVariables>;
 export const FetchNovelDocument = gql`
-  query fetchNovel($id: String!, $NovelSite: NovelSite!) {
-    fetchNovel(id: $id, novelSite: $NovelSite) {
+  query fetchNovel($id: String!, $novelSite: NovelSite!) {
+    fetchNovel(id: $id, novelSite: $novelSite) {
       author {
         description
         image
         name
         url
+        id
       }
       chapters {
         title
@@ -1690,11 +1876,18 @@ export const FetchNovelDocument = gql`
         wordCount
         id
       }
+      tags {
+        id
+        name
+        url
+      }
       description
       image
       name
       url
       site
+      status
+      id
     }
   }
 `;
@@ -1712,7 +1905,7 @@ export const FetchNovelDocument = gql`
  * const { data, loading, error } = useFetchNovelQuery({
  *   variables: {
  *      id: // value for 'id'
- *      NovelSite: // value for 'NovelSite'
+ *      novelSite: // value for 'novelSite'
  *   },
  * });
  */
@@ -1873,147 +2066,44 @@ export type DeleteCollectionForNovelMutationOptions = Apollo.BaseMutationOptions
   DeleteCollectionForNovelMutation,
   DeleteCollectionForNovelMutationVariables
 >;
-export const GetNovelsDocument = gql`
-  query getNovels(
-    $collectionMatch: TagMatch
-    $novelStatus: NovelStatus
-    $tagMatch: TagMatch
-    $pagination: Pagination!
-  ) {
-    queryNovels(
-      collectionMatch: $collectionMatch
-      novelStatus: $novelStatus
-      tagMatch: $tagMatch
-      pagination: $pagination
-    ) {
-      data {
-        id
-        name
-        description
-        createTime
-        updateTime
-        description
-        novelStatus
-        avatar
-        site
-      }
-      total
-    }
-  }
-`;
-
-/**
- * __useGetNovelsQuery__
- *
- * To run a query within a React component, call `useGetNovelsQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetNovelsQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetNovelsQuery({
- *   variables: {
- *      collectionMatch: // value for 'collectionMatch'
- *      novelStatus: // value for 'novelStatus'
- *      tagMatch: // value for 'tagMatch'
- *      pagination: // value for 'pagination'
- *   },
- * });
- */
-export function useGetNovelsQuery(
-  baseOptions: Apollo.QueryHookOptions<GetNovelsQuery, GetNovelsQueryVariables> &
-    ({ variables: GetNovelsQueryVariables; skip?: boolean } | { skip: boolean }),
-) {
-  const options = { ...defaultOptions, ...baseOptions };
-  return Apollo.useQuery<GetNovelsQuery, GetNovelsQueryVariables>(GetNovelsDocument, options);
-}
-export function useGetNovelsLazyQuery(
-  baseOptions?: Apollo.LazyQueryHookOptions<GetNovelsQuery, GetNovelsQueryVariables>,
-) {
-  const options = { ...defaultOptions, ...baseOptions };
-  return Apollo.useLazyQuery<GetNovelsQuery, GetNovelsQueryVariables>(GetNovelsDocument, options);
-}
-export function useGetNovelsSuspenseQuery(
-  baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetNovelsQuery, GetNovelsQueryVariables>,
-) {
-  const options = baseOptions === Apollo.skipToken ? baseOptions : { ...defaultOptions, ...baseOptions };
-  return Apollo.useSuspenseQuery<GetNovelsQuery, GetNovelsQueryVariables>(GetNovelsDocument, options);
-}
-export type GetNovelsQueryHookResult = ReturnType<typeof useGetNovelsQuery>;
-export type GetNovelsLazyQueryHookResult = ReturnType<typeof useGetNovelsLazyQuery>;
-export type GetNovelsSuspenseQueryHookResult = ReturnType<typeof useGetNovelsSuspenseQuery>;
-export type GetNovelsQueryResult = Apollo.QueryResult<GetNovelsQuery, GetNovelsQueryVariables>;
-export const CreateNovelDocument = gql`
-  mutation createNovel($data: CreateNovelInput!) {
-    createNovel(data: $data) {
+export const SaveDraftNovelDocument = gql`
+  mutation saveDraftNovel($novel: SaveDraftNovel!) {
+    saveDraftNovel(novel: $novel) {
       id
     }
   }
 `;
-export type CreateNovelMutationFn = Apollo.MutationFunction<CreateNovelMutation, CreateNovelMutationVariables>;
+export type SaveDraftNovelMutationFn = Apollo.MutationFunction<SaveDraftNovelMutation, SaveDraftNovelMutationVariables>;
 
 /**
- * __useCreateNovelMutation__
+ * __useSaveDraftNovelMutation__
  *
- * To run a mutation, you first call `useCreateNovelMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useCreateNovelMutation` returns a tuple that includes:
+ * To run a mutation, you first call `useSaveDraftNovelMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useSaveDraftNovelMutation` returns a tuple that includes:
  * - A mutate function that you can call at any time to execute the mutation
  * - An object with fields that represent the current status of the mutation's execution
  *
  * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
  *
  * @example
- * const [createNovelMutation, { data, loading, error }] = useCreateNovelMutation({
+ * const [saveDraftNovelMutation, { data, loading, error }] = useSaveDraftNovelMutation({
  *   variables: {
- *      data: // value for 'data'
+ *      novel: // value for 'novel'
  *   },
  * });
  */
-export function useCreateNovelMutation(
-  baseOptions?: Apollo.MutationHookOptions<CreateNovelMutation, CreateNovelMutationVariables>,
+export function useSaveDraftNovelMutation(
+  baseOptions?: Apollo.MutationHookOptions<SaveDraftNovelMutation, SaveDraftNovelMutationVariables>,
 ) {
   const options = { ...defaultOptions, ...baseOptions };
-  return Apollo.useMutation<CreateNovelMutation, CreateNovelMutationVariables>(CreateNovelDocument, options);
+  return Apollo.useMutation<SaveDraftNovelMutation, SaveDraftNovelMutationVariables>(SaveDraftNovelDocument, options);
 }
-export type CreateNovelMutationHookResult = ReturnType<typeof useCreateNovelMutation>;
-export type CreateNovelMutationResult = Apollo.MutationResult<CreateNovelMutation>;
-export type CreateNovelMutationOptions = Apollo.BaseMutationOptions<CreateNovelMutation, CreateNovelMutationVariables>;
-export const DeleteNovelDocument = gql`
-  mutation deleteNovel($id: Int!) {
-    deleteNovel(id: $id) {
-      id
-    }
-  }
-`;
-export type DeleteNovelMutationFn = Apollo.MutationFunction<DeleteNovelMutation, DeleteNovelMutationVariables>;
-
-/**
- * __useDeleteNovelMutation__
- *
- * To run a mutation, you first call `useDeleteNovelMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useDeleteNovelMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [deleteNovelMutation, { data, loading, error }] = useDeleteNovelMutation({
- *   variables: {
- *      id: // value for 'id'
- *   },
- * });
- */
-export function useDeleteNovelMutation(
-  baseOptions?: Apollo.MutationHookOptions<DeleteNovelMutation, DeleteNovelMutationVariables>,
-) {
-  const options = { ...defaultOptions, ...baseOptions };
-  return Apollo.useMutation<DeleteNovelMutation, DeleteNovelMutationVariables>(DeleteNovelDocument, options);
-}
-export type DeleteNovelMutationHookResult = ReturnType<typeof useDeleteNovelMutation>;
-export type DeleteNovelMutationResult = Apollo.MutationResult<DeleteNovelMutation>;
-export type DeleteNovelMutationOptions = Apollo.BaseMutationOptions<DeleteNovelMutation, DeleteNovelMutationVariables>;
+export type SaveDraftNovelMutationHookResult = ReturnType<typeof useSaveDraftNovelMutation>;
+export type SaveDraftNovelMutationResult = Apollo.MutationResult<SaveDraftNovelMutation>;
+export type SaveDraftNovelMutationOptions = Apollo.BaseMutationOptions<
+  SaveDraftNovelMutation,
+  SaveDraftNovelMutationVariables
+>;
 export const CreateTagDocument = gql`
   mutation createTag($name: String!, $site: NovelSite!, $siteId: String!) {
     createTag(name: $name, site: $site, siteId: $siteId) {

@@ -98,5 +98,6 @@
   "novel_detail": "Detail of novel {{novelName}}",
   "novel_crawler": "Novel Crawler",
   "author_detail": "Detail of author {{authorName}}",
-  "self_tools": "Self Tools"
+  "self_tools": "Self Tools",
+  "author_crawler": "Author Crawler"
 }

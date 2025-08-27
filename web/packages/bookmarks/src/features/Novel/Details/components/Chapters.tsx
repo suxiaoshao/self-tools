@@ -23,29 +23,30 @@ const columnHelper = createCustomColumnHelper<Data>();
 export default function Chapters({ chapters, ...props }: ChaptersProps) {
   const t = useI18n();
   const columns = useMemo<CustomColumnDefArray<Data>>(
-    () => [
-      columnHelper.accessor('title', { header: t('title'), id: 'title', cell: (context) => context.getValue() }),
-      columnHelper.accessor('wordCount', {
-        header: t('word_count'),
-        id: 'wordCount',
-        cell: (context) => context.getValue(),
-      }),
-      columnHelper.accessor(({ time }) => format(time), {
-        header: t('time'),
-        id: 'time',
-        cell: (context) => context.getValue(),
-      }),
-      columnHelper.accessor(({ createTime }) => format(createTime), {
-        header: t('create_time'),
-        id: 'createTime',
-        cell: (context) => context.getValue(),
-      }),
-      columnHelper.accessor(({ updateTime }) => format(updateTime), {
-        header: t('update_time'),
-        id: 'updateTime',
-        cell: (context) => context.getValue(),
-      }),
-    ],
+    () =>
+      [
+        columnHelper.accessor('title', { header: t('title'), id: 'title', cell: (context) => context.getValue() }),
+        columnHelper.accessor('wordCount', {
+          header: t('word_count'),
+          id: 'wordCount',
+          cell: (context) => context.getValue(),
+        }),
+        columnHelper.accessor(({ time }) => format(time), {
+          header: t('time'),
+          id: 'time',
+          cell: (context) => context.getValue(),
+        }),
+        columnHelper.accessor(({ createTime }) => format(createTime), {
+          header: t('create_time'),
+          id: 'createTime',
+          cell: (context) => context.getValue(),
+        }),
+        columnHelper.accessor(({ updateTime }) => format(updateTime), {
+          header: t('update_time'),
+          id: 'updateTime',
+          cell: (context) => context.getValue(),
+        }),
+      ] as CustomColumnDefArray<Data>,
     [t],
   );
   const tableOptions = useMemo<CustomTableOptions<Data>>(
