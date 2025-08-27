@@ -5,13 +5,6 @@
  * @LastEditTime: 2024-03-01 17:56:05
  * @FilePath: /self-tools/web/packages/bookmarks/src/features/Author/Fetch/index.tsx
  */
-import {
-  type FetchNovelQuery,
-  type FetchNovelQueryVariables,
-  NovelSite,
-  useFetchNovelLazyQuery,
-  useSaveDraftNovelMutation,
-} from '@bookmarks/graphql';
 import useTitle from '@bookmarks/hooks/useTitle';
 import { getImageUrl } from '@bookmarks/utils/image';
 import { Search, Save } from '@mui/icons-material';
@@ -48,6 +41,51 @@ import { Details, type DetailsItem } from 'details';
 import { match, P } from 'ts-pattern';
 import { getLabelKeyByNovelStatus } from '@bookmarks/utils/novelStatus';
 import { getLabelKeyBySite } from '@bookmarks/utils/novelSite';
+import { graphql } from '@bookmarks/gql';
+import { useLazyQuery, useMutation } from '@apollo/client/react';
+import { type FetchNovelQuery, type FetchNovelQueryVariables, NovelSite } from '@bookmarks/gql/graphql';
+
+const FetchNovel = graphql(`
+  query fetchNovel($id: String!, $novelSite: NovelSite!) {
+    fetchNovel(id: $id, novelSite: $novelSite) {
+      author {
+        description
+        image
+        name
+        url
+        id
+      }
+      chapters {
+        title
+        url
+        site
+        time
+        wordCount
+        id
+      }
+      tags {
+        id
+        name
+        url
+      }
+      description
+      image
+      name
+      url
+      site
+      status
+      id
+    }
+  }
+`);
+
+const SaveDraftNovel = graphql(`
+  mutation saveDraftNovel($novel: SaveDraftNovel!) {
+    saveDraftNovel(novel: $novel) {
+      id
+    }
+  }
+`);
 
 type ChapterData = FetchNovelQuery['fetchNovel']['chapters'][number];
 const columnHelper = createCustomColumnHelper<ChapterData>();
@@ -59,7 +97,7 @@ export default function NovelFetch() {
 
   // fetch
   type FormData = FetchNovelQueryVariables;
-  const [fn, { data, loading }] = useFetchNovelLazyQuery();
+  const [fn, { data, loading }] = useLazyQuery(FetchNovel);
   const { handleSubmit, register, control } = useForm<FormData>();
   const onSubmit = handleSubmit((data) => {
     fn({ variables: data });
@@ -67,7 +105,7 @@ export default function NovelFetch() {
   const novel = data?.fetchNovel;
 
   // save
-  const [saveDraftNovel, { loading: saveLoading }] = useSaveDraftNovelMutation();
+  const [saveDraftNovel, { loading: saveLoading }] = useMutation(SaveDraftNovel);
 
   // chapters table
   const columns = useMemo<CustomColumnDefArray<ChapterData>>(

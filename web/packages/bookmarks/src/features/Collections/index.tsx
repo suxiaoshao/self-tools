@@ -11,7 +11,6 @@ import {
   usePageWithTotal,
 } from 'custom-table';
 import { useCallback, useEffect, useMemo } from 'react';
-import { useGetCollectionsQuery } from '../../graphql';
 import { useAllCollection } from './collectionSlice';
 import AncestorsPath from './components/AncestorsPath';
 import CreateCollectionButton from './components/CreateCollectionButton';
@@ -22,6 +21,24 @@ import { Link as RouterLink, createSearchParams } from 'react-router-dom';
 import { format } from 'time';
 import CollectionActions from './components/CollectionActions';
 import useTitle from '@bookmarks/hooks/useTitle';
+import { graphql } from '@bookmarks/gql';
+import { useQuery } from '@apollo/client/react';
+
+const GetCollections = graphql(`
+  query getCollections($parentId: Int, $pagination: Pagination!) {
+    getCollections(parentId: $parentId, pagination: $pagination) {
+      data {
+        name
+        id
+        path
+        createTime
+        updateTime
+        description
+      }
+      total
+    }
+  }
+`);
 
 const columnHelper = createCustomColumnHelper<CollectionTableData>();
 
@@ -32,7 +49,7 @@ export default function Collections() {
     // oxlint-disable-next-line react/exhaustive-deps
     pageState.setPage(1);
   }, [parentId]);
-  const { data: { getCollections: { data, total } = {} } = {}, refetch } = useGetCollectionsQuery({
+  const { data: { getCollections: { data, total } = {} } = {}, refetch } = useQuery(GetCollections, {
     variables: { parentId, pagination: { page: pageState.pageIndex, pageSize: pageState.pageSize } },
   });
   const page = usePageWithTotal(pageState, total);

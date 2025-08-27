@@ -10,12 +10,6 @@ mutation createItem($collectionId: Int!, $name: String!, $content: String!) {
   }
 }
 
-mutation updateItem($id: Int!, $name: String!, $content: String!) {
-  updateItem(id: $id, name: $name, content: $content) {
-    name
-  }
-}
-
 query getEditItem($id: Int!) {
   getItem(id: $id) {
     name

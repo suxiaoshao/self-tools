@@ -1,4 +1,4 @@
-import type { CreateCollectionMutationVariables } from '@bookmarks/graphql';
+import type { CreateCollectionMutationVariables } from '@bookmarks/gql/graphql';
 import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField } from '@mui/material';
 import { type SubmitHandler, useForm } from 'react-hook-form';
 import { useI18n } from 'i18n';

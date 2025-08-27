@@ -5,7 +5,7 @@
  * @LastEditTime: 2024-02-29 07:10:10
  * @FilePath: /self-tools/web/packages/bookmarks/src/features/Author/Details/index.tsx
  */
-import { NovelStatus, useGetAuthorQuery, useUpdateAuthorByCrawlerMutation } from '@bookmarks/graphql';
+import { NovelStatus } from '@bookmarks/gql/graphql';
 import { getImageUrl } from '@bookmarks/utils/image';
 import { CloudDownload, Explore, KeyboardArrowLeft, Refresh } from '@mui/icons-material';
 import {
@@ -30,11 +30,53 @@ import { Details, type DetailsItem } from 'details';
 import { format } from 'time';
 import { getLabelKeyByNovelStatus } from '@bookmarks/utils/novelStatus';
 import useTitle from '@bookmarks/hooks/useTitle';
+import { graphql } from '@bookmarks/gql';
+import { useMutation, useQuery } from '@apollo/client/react';
+
+const GetAuthor = graphql(`
+  query getAuthor($id: Int!) {
+    getAuthor(id: $id) {
+      novels {
+        id
+        name
+        avatar
+        createTime
+        updateTime
+        description
+        novelStatus
+        url
+        lastChapter {
+          time
+        }
+        firstChapter {
+          time
+        }
+        wordCount
+      }
+      id
+      site
+      name
+      createTime
+      updateTime
+      avatar
+      description
+      url
+    }
+  }
+`);
+
+const UpdateAuthor = graphql(`
+  mutation updateAuthorByCrawler($authorId: Int!) {
+    updateAuthorByCrawler(authorId: $authorId) {
+      id
+    }
+  }
+`);
 
 export default function AuthorDetails() {
   const t = useI18n();
   const { authorId } = useParams();
-  const { data, loading, refetch } = useGetAuthorQuery({ variables: { id: Number(authorId) } });
+  const { data, loading, refetch } = useQuery(GetAuthor, { variables: { id: Number(authorId) } });
   useTitle(t('author_detail', { authorName: data?.getAuthor?.name }));
   const navigate = useNavigate();
   const handleRefresh = useCallback(() => {
@@ -45,7 +87,7 @@ export default function AuthorDetails() {
       window.open(data.getAuthor.url, '_blank');
     }
   }, [data?.getAuthor?.url]);
-  const [updateAuthor, { loading: updateLoading }] = useUpdateAuthorByCrawlerMutation();
+  const [updateAuthor, { loading: updateLoading }] = useMutation(UpdateAuthor);
   const handleUpdateAuthor = useCallback(async () => {
     await updateAuthor({ variables: { authorId: Number(authorId) } });
     enqueueSnackbar(t('update_by_crawler_success'), { variant: 'success' });

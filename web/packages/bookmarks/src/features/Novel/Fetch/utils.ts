@@ -1,4 +1,4 @@
-import type { FetchNovelQuery, SaveChapterInfo, SaveDraftNovel, SaveTagInfo } from '@bookmarks/graphql';
+import type { FetchNovelQuery, SaveChapterInfo, SaveDraftNovel, SaveTagInfo } from '@bookmarks/gql/graphql';
 
 export function convertFetchToDraftNovel(fetchNovel: FetchNovelQuery['fetchNovel']): SaveDraftNovel {
   const site = fetchNovel.site;

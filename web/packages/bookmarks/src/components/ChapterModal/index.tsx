@@ -5,7 +5,7 @@
  * @LastEditTime: 2024-03-31 11:42:00
  * @FilePath: /self-tools/web/packages/bookmarks/src/components/ChapterModal/index.tsx
  */
-import type { FetchAuthorQuery } from '@bookmarks/graphql';
+import type { FetchAuthorQuery } from '@bookmarks/gql/graphql';
 import { Dialog, DialogTitle, IconButton, List, ListItem, ListItemText, Tooltip } from '@mui/material';
 import { useCallback, useState } from 'react';
 import { useI18n } from 'i18n';

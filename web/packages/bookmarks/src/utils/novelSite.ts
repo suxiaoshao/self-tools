@@ -1,4 +1,4 @@
-import { NovelSite } from '@bookmarks/graphql';
+import { NovelSite } from '@bookmarks/gql/graphql';
 import { match } from 'ts-pattern';
 import type { I18nKey } from 'web/common/i18n/src';
 

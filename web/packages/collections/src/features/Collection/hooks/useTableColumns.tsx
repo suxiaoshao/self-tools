@@ -1,5 +1,5 @@
 import { Chip } from '@mui/material';
-import type { CollectionAndItemsQuery } from '../../../graphql';
+import type { CollectionAndItemsQuery } from '../../../gql/graphql';
 import { useMemo } from 'react';
 import { createCustomColumnHelper, type CustomColumnDefArray } from 'custom-table';
 import { format } from 'time';

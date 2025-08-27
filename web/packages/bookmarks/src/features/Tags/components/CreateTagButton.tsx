@@ -1,15 +1,25 @@
 import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, TextField } from '@mui/material';
 import { useState } from 'react';
-import { type CreateTagMutationVariables, NovelSite, useCreateTagMutation } from '../../../graphql';
 import { Controller, type SubmitHandler, useForm } from 'react-hook-form';
 import { useI18n } from 'i18n';
+import { graphql } from '@bookmarks/gql';
+import { useMutation } from '@apollo/client/react';
+import { NovelSite, type CreateTagMutationVariables } from '@bookmarks/gql/graphql';
 
+const CreateTag = graphql(`
+  mutation createTag($name: String!, $site: NovelSite!, $siteId: String!) {
+    createTag(name: $name, site: $site, siteId: $siteId) {
+      name
+      id
+    }
+  }
+`);
 export interface CreateTagButtonProps {
   refetch: () => void;
 }
 
 export default function CreateTagButton({ refetch }: CreateTagButtonProps) {
-  const [createTag] = useCreateTagMutation();
+  const [createTag] = useMutation(CreateTag);
 
   // 表单控制
   type FormData = Omit<CreateTagMutationVariables, 'collectionId'>;

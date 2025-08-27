@@ -7,16 +7,26 @@
  */
 import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField } from '@mui/material';
 import { useState } from 'react';
-import { type CreateAuthorMutationVariables, useCreateAuthorMutation } from '../../../../graphql';
 import { type SubmitHandler, useForm } from 'react-hook-form';
 import { useI18n } from 'i18n';
+import { graphql } from '@bookmarks/gql';
+import { useMutation } from '@apollo/client/react';
+import type { CreateAuthorMutationVariables } from '@bookmarks/gql/graphql';
+
+const CreateAuthor = graphql(`
+  mutation createAuthor($avatar: String!, $description: String!, $name: String!, $site: NovelSite!, $siteId: String!) {
+    createAuthor(avatar: $avatar, description: $description, name: $name, site: $site, siteId: $siteId) {
+      id
+    }
+  }
+`);
 
 export interface CreateAuthorButtonProps {
   refetch: () => void;
 }
 
 export default function CreateAuthorButton({ refetch }: CreateAuthorButtonProps) {
-  const [createAuthor] = useCreateAuthorMutation();
+  const [createAuthor] = useMutation(CreateAuthor);
   // 表单控制
   type FormData = CreateAuthorMutationVariables;
   const { handleSubmit, register } = useForm<FormData>();

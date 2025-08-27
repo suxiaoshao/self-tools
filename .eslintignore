@@ -1,2 +1,4 @@
 web/packages/*/src/graphql.ts
 web/packages/*/apollo.config.js
+web/packages/*/src/gql/
+.prettierrc.js

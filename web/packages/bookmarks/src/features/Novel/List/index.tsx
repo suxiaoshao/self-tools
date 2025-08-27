@@ -16,12 +16,6 @@ import { useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { format } from 'time';
-import {
-  type GetNovelsQuery,
-  type GetNovelsQueryVariables,
-  useDeleteNovelMutation,
-  useGetNovelsQuery,
-} from '../../../graphql';
 import CreateNovelButton from './Components/CreateNovelButton';
 import { convertFormToVariables } from './utils';
 import { getImageUrl } from '@bookmarks/utils/image';
@@ -30,6 +24,46 @@ import CollectionMultiSelect from '@bookmarks/components/CollectionMultiSelect';
 import TagsSelect from '@bookmarks/components/TagsSelect';
 import { getLabelKeyByNovelStatus } from '@bookmarks/utils/novelStatus';
 import useTitle from '@bookmarks/hooks/useTitle';
+import { graphql } from '@bookmarks/gql';
+import { useMutation, useQuery } from '@apollo/client/react';
+import type { GetNovelsQuery, GetNovelsQueryVariables } from '@bookmarks/gql/graphql';
+
+const GetNovels = graphql(`
+  query getNovels(
+    $collectionMatch: TagMatch
+    $novelStatus: NovelStatus
+    $tagMatch: TagMatch
+    $pagination: Pagination!
+  ) {
+    queryNovels(
+      collectionMatch: $collectionMatch
+      novelStatus: $novelStatus
+      tagMatch: $tagMatch
+      pagination: $pagination
+    ) {
+      data {
+        id
+        name
+        description
+        createTime
+        updateTime
+        description
+        novelStatus
+        avatar
+        site
+      }
+      total
+    }
+  }
+`);
+
+const DeleteNovel = graphql(`
+  mutation deleteNovel($id: Int!) {
+    deleteNovel(id: $id) {
+      id
+    }
+  }
+`);
 
 type Data = GetNovelsQuery['queryNovels']['data'][0];
 
@@ -49,12 +83,12 @@ export default function NovelList() {
     },
   });
   const form = watch();
-  const { data: { queryNovels: { data, total } = {} } = {}, refetch } = useGetNovelsQuery({
+  const { data: { queryNovels: { data, total } = {} } = {}, refetch } = useQuery(GetNovels, {
     variables: convertFormToVariables(form, pageState),
   });
   const page = usePageWithTotal(pageState, total);
 
-  const [deleteNovel] = useDeleteNovelMutation();
+  const [deleteNovel] = useMutation(DeleteNovel);
   const columns = useMemo<CustomColumnDefArray<Data>>(
     () =>
       [

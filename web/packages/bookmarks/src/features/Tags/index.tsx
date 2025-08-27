@@ -1,5 +1,4 @@
 import { Box, IconButton, Link } from '@mui/material';
-import { type GetTagsQuery, useDeleteTagMutation, useGetTagsLazyQuery } from '../../graphql';
 import { Search } from '@mui/icons-material';
 import { useCallback, useEffect, useMemo } from 'react';
 import {
@@ -18,6 +17,33 @@ import CreateTagButton from './components/CreateTagButton';
 import { useI18n } from 'i18n';
 import { getLabelKeyBySite } from '@bookmarks/utils/novelSite';
 import useTitle from '@bookmarks/hooks/useTitle';
+import { graphql } from '@bookmarks/gql';
+import { useLazyQuery, useMutation } from '@apollo/client/react';
+import type { GetTagsQuery } from '@bookmarks/gql/graphql';
+
+const GetTags = graphql(`
+  query getTags($pagination: Pagination!) {
+    queryTags(pagination: $pagination) {
+      data {
+        name
+        id
+        site
+        url
+        createTime
+        updateTime
+      }
+      total
+    }
+  }
+`);
+
+const DeleteTag = graphql(`
+  mutation deleteTag($id: Int!) {
+    deleteTag(id: $id) {
+      id
+    }
+  }
+`);
 
 const rowModel = getCoreRowModel();
 
@@ -27,19 +53,19 @@ const columnHelper = createCustomColumnHelper<Data>();
 
 export default function Tags() {
   const pageState = usePage();
-  const [getTags, { data: { queryTags: { data, total } = {} } = {}, refetch }] = useGetTagsLazyQuery({
-    variables: {
-      pagination: {
-        page: pageState.pageIndex,
-        pageSize: pageState.pageSize,
-      },
-    },
-  });
+  const [getTags, { data: { queryTags: { data, total } = {} } = {}, refetch }] = useLazyQuery(GetTags);
   const page = usePageWithTotal(pageState, total);
-  const [deleteTag] = useDeleteTagMutation();
+  const [deleteTag] = useMutation(DeleteTag);
   const onSearch = useCallback(() => {
-    getTags();
-  }, [getTags]);
+    getTags({
+      variables: {
+        pagination: {
+          page: pageState.pageIndex,
+          pageSize: pageState.pageSize,
+        },
+      },
+    });
+  }, [getTags, pageState.pageIndex, pageState.pageSize]);
   useEffect(() => {
     onSearch();
   }, [onSearch]);

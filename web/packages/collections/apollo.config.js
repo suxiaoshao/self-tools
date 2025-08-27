@@ -15,6 +15,6 @@ module.exports = {
       localSchemaFile: resolve(__dirname, './schema.graphql'),
     },
     excludes: ['./src/graphql.ts'],
-    includes: ['./src/**/*.gql', '"./src/**/*.graphql"'],
+    includes: ['./src/**/*.ts', './src/**/*.tsx'],
   },
 };

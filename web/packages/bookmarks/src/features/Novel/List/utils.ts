@@ -5,7 +5,7 @@
  * @LastEditTime: 2024-03-15 09:35:01
  * @FilePath: /self-tools/web/packages/bookmarks/src/features/Novel/utils.ts
  */
-import type { GetNovelsQueryVariables } from '@bookmarks/graphql';
+import type { GetNovelsQueryVariables } from '@bookmarks/gql/graphql';
 import { match, P } from 'ts-pattern';
 import type { PageState } from 'custom-table';
 

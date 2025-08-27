@@ -1,6 +1,7 @@
+import { useMutation } from '@apollo/client/react';
 import CollectionSelect from '@bookmarks/components/CollectionSelect';
 import { CollectionLoadingState, useAllCollection } from '@bookmarks/features/Collections/collectionSlice';
-import { useAddCollectionForNovelMutation } from '@bookmarks/graphql';
+import { graphql } from '@bookmarks/gql';
 import { valibotResolver } from '@hookform/resolvers/valibot';
 import { Add } from '@mui/icons-material';
 import { Box, Button, CircularProgress, Dialog, DialogActions, DialogTitle, IconButton } from '@mui/material';
@@ -9,6 +10,14 @@ import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { match } from 'ts-pattern';
 import { type InferInput, number, object } from 'valibot';
+
+const AddCollectionForNovel = graphql(`
+  mutation addCollectionForNovel($novelId: Int!, $collectionId: Int!) {
+    addCollectionForNovel(collectionId: $collectionId, novelId: $novelId) {
+      id
+    }
+  }
+`);
 
 export interface AddCollectionProps {
   novelId: number;
@@ -26,7 +35,7 @@ export default function AddCollection({ novelId, refetch }: AddCollectionProps) 
   const { value: allCollection, fetchData } = useAllCollection();
 
   const t = useI18n();
-  const [fn] = useAddCollectionForNovelMutation();
+  const [fn] = useMutation(AddCollectionForNovel);
 
   const { reset, control, handleSubmit } = useForm<SelectCollectionType>({
     resolver: valibotResolver(selectCollectionSchema),
@@ -49,7 +58,7 @@ export default function AddCollection({ novelId, refetch }: AddCollectionProps) 
       <IconButton onClick={handleOpen}>
         <Add />
       </IconButton>
-      <Dialog PaperProps={{ sx: { maxWidth: 700 } }} open={open} onClose={handleClose}>
+      <Dialog slotProps={{ paper: { sx: { maxWidth: 700 } } }} open={open} onClose={handleClose}>
         <Box sx={{ width: 500 }} component="form" onSubmit={onSubmit}>
           <DialogTitle>{t('select_collection')}</DialogTitle>
           {match(allCollection)

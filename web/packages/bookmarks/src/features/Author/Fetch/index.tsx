@@ -5,12 +5,7 @@
  * @LastEditTime: 2024-03-28 19:56:56
  * @FilePath: /self-tools/web/packages/bookmarks/src/features/Author/Fetch/index.tsx
  */
-import {
-  useFetchAuthorLazyQuery,
-  type FetchAuthorQueryVariables,
-  NovelSite,
-  useSaveDraftAuthorMutation,
-} from '@bookmarks/graphql';
+import { type FetchAuthorQueryVariables, NovelSite } from '@bookmarks/gql/graphql';
 import {
   Avatar,
   Backdrop,
@@ -34,6 +29,53 @@ import ChapterModal from '@bookmarks/components/ChapterModal';
 import { convertFetchToDraftAuthor } from './utils';
 import { enqueueSnackbar } from 'notify';
 import useTitle from '@bookmarks/hooks/useTitle';
+import { graphql } from '@bookmarks/gql';
+import { useLazyQuery, useMutation } from '@apollo/client/react';
+
+const FetchAuthor = graphql(`
+  query fetchAuthor($id: String!, $novelSite: NovelSite!) {
+    fetchAuthor(id: $id, novelSite: $novelSite) {
+      __typename
+      name
+      description
+      image
+      url
+      id
+      site
+      novels {
+        id
+        name
+        description
+        image
+        url
+        status
+        site
+        chapters {
+          id
+          novelId
+          title
+          url
+          time
+          wordCount
+          site
+        }
+        tags {
+          id
+          name
+          url
+        }
+      }
+    }
+  }
+`);
+
+const SaveDraftAuthor = graphql(`
+  mutation saveDraftAuthor($author: SaveDraftAuthor!) {
+    saveDraftAuthor(author: $author) {
+      id
+    }
+  }
+`);
 
 export default function AuthorFetch() {
   // title
@@ -42,7 +84,7 @@ export default function AuthorFetch() {
 
   // fetch
   type FormData = FetchAuthorQueryVariables;
-  const [fn, { data, loading }] = useFetchAuthorLazyQuery();
+  const [fn, { data, loading }] = useLazyQuery(FetchAuthor);
   const { handleSubmit, register, control } = useForm<FormData>();
   const onSubmit = handleSubmit((data) => {
     fn({ variables: data });
@@ -50,7 +92,7 @@ export default function AuthorFetch() {
   const author = data?.fetchAuthor;
 
   // save
-  const [saveDraftAuthor, { loading: saveLoading }] = useSaveDraftAuthorMutation();
+  const [saveDraftAuthor, { loading: saveLoading }] = useMutation(SaveDraftAuthor);
   return (
     <Box
       onSubmit={onSubmit}

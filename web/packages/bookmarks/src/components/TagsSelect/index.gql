@@ -1,6 +1,0 @@
-query allowTags {
-  allTags {
-    id
-    name
-  }
-}

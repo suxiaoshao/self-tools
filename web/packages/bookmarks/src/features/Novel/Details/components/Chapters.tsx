@@ -1,4 +1,4 @@
-import type { GetNovelQuery } from '@bookmarks/graphql';
+import type { GetNovelQuery } from '@bookmarks/gql/graphql';
 import { useMemo } from 'react';
 import { useI18n } from 'i18n';
 import {

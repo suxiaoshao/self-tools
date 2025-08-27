@@ -5,46 +5,53 @@
  * @LastEditTime: 2024-09-19 03:09:40
  * @FilePath: /self-tools/web/common/custom-graphql/src/index.tsx
  */
-import { ApolloClient, createHttpLink, type DefaultOptions, from, InMemoryCache } from '@apollo/client';
-import { setContext } from '@apollo/client/link/context';
-import { onError } from '@apollo/client/link/error';
+import { ApolloClient, InMemoryCache, ApolloLink, CombinedGraphQLErrors, CombinedProtocolErrors } from '@apollo/client';
+import { HttpLink } from '@apollo/client/link/http';
+import { SetContextLink } from '@apollo/client/link/context';
+import { ErrorLink } from '@apollo/client/link/error';
 import { enqueueSnackbar } from 'notify';
 
 const getHttpLink = (url: string) =>
-  createHttpLink({
+  new HttpLink({
     uri: String(url),
     credentials: 'include',
   });
 
 /** 错误处理  */
-const errorLink = onError(({ graphQLErrors, networkError }) => {
-  if (graphQLErrors) {
-    graphQLErrors.forEach(({ message, locations, path, extensions }) => {
+const errorLink = new ErrorLink(({ error }) => {
+  if (CombinedGraphQLErrors.is(error)) {
+    error.errors.forEach(({ message, locations, path, extensions }) => {
       enqueueSnackbar(message);
       // eslint-disable-next-line no-console
-      console.log(`[GraphQL error]: Message: ${message}, Location: ${locations}, Path: ${path}
-source: ${extensions?.['source']}`);
+      console.log(
+        `[GraphQL error]: Message: ${message}, Location: ${locations}, Path: ${path} source: ${extensions?.['source']}`,
+      );
     });
-  }
-  if (networkError) {
-    enqueueSnackbar(`网络错误:${networkError.message}`);
+  } else if (CombinedProtocolErrors.is(error)) {
+    error.errors.forEach(({ message, extensions }) => {
+      enqueueSnackbar(message);
+      // eslint-disable-next-line no-console
+      console.log(`[Protocol error]: Message: ${message}, Extensions: ${JSON.stringify(extensions)}`);
+    });
+  } else {
+    enqueueSnackbar(`网络错误:${error.message}`);
     // eslint-disable-next-line no-console
-    console.log(`[Network error]: ${networkError}`);
+    console.log(`[Network error]: ${error}`);
   }
 });
 
-const authLink = setContext((_, { headers }) => {
+const authLink = new SetContextLink((prevContext) => {
   const token = window.localStorage.getItem('auth');
   // return the headers to the context so httpLink can read them
   return {
     headers: {
-      ...headers,
+      ...prevContext.headers,
       authorization: token,
     },
   };
 });
 
-const defaultOptions: DefaultOptions = {
+const defaultOptions: ApolloClient.DefaultOptions = {
   watchQuery: {
     fetchPolicy: 'no-cache',
     errorPolicy: 'ignore',
@@ -57,8 +64,10 @@ const defaultOptions: DefaultOptions = {
 
 export const getClient = (url: string) =>
   new ApolloClient({
-    link: from([errorLink, authLink, getHttpLink(url)]),
+    link: ApolloLink.from([errorLink, authLink, getHttpLink(url)]),
     cache: new InMemoryCache(),
     defaultOptions,
-    connectToDevTools: process.env.NODE_ENV === 'development',
+    devtools: {
+      enabled: process.env.NODE_ENV === 'development',
+    },
   });
