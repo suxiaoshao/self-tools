@@ -17,8 +17,22 @@ import {
 import { useI18n } from 'i18n';
 import { type FocusEventHandler, useEffect, useMemo, useState } from 'react';
 import { debounceTime, Subject } from 'rxjs';
-import { type SearchAuthorQuery, useSearchAuthorQuery } from '../../graphql';
+import type { SearchAuthorQuery } from '@bookmarks/gql/graphql';
 import { getImageUrl } from '@bookmarks/utils/image';
+import { graphql } from '@bookmarks/gql';
+import { useQuery } from '@apollo/client/react';
+
+const SearchAuthor = graphql(`
+  query searchAuthor($searchName: String) {
+    # todo 取消分页或者选择器支持分页
+    allAuthors(searchName: $searchName) {
+      id
+      name
+      description
+      avatar
+    }
+  }
+`);
 
 export interface TagsSelectProps
   extends Omit<
@@ -33,7 +47,7 @@ export interface TagsSelectProps
 export default function AuthorSelect({ onBlur, onChange, sx, value, ...props }: TagsSelectProps) {
   const [searchName, setSearchName] = useState('');
 
-  const { loading, data: { allAuthors } = {} } = useSearchAuthorQuery({
+  const { loading, data: { allAuthors } = {} } = useQuery(SearchAuthor, {
     variables: { searchName },
   });
   const event = useMemo(() => new Subject<string>(), []);

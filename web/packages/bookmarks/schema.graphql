@@ -153,6 +153,9 @@ type MutationRoot {
   # 保存 draft author
   saveDraftAuthor(author: SaveDraftAuthor!): Author!
 
+  # 保存 draft novel
+  saveDraftNovel(novel: SaveDraftNovel!): Novel!
+
   # 通过 fetch 更新小说
   updateNovelByCrawler(novelId: Int!): Novel!
 
@@ -258,6 +261,14 @@ type QueryRoot {
   fetchNovel(id: String!, novelSite: NovelSite!): DraftNovelInfo!
 }
 
+input SaveAuthorInfo {
+  id: String!
+  site: NovelSite!
+  name: String!
+  description: String!
+  image: String!
+}
+
 input SaveChapterInfo {
   id: String!
   name: String!
@@ -272,6 +283,18 @@ input SaveDraftAuthor {
   description: String!
   image: String!
   novels: [SaveNovelInfo!]!
+}
+
+input SaveDraftNovel {
+  id: String!
+  site: NovelSite!
+  name: String!
+  description: String!
+  image: String!
+  chapters: [SaveChapterInfo!]!
+  tags: [SaveTagInfo!]!
+  novelStatus: NovelStatus!
+  author: SaveAuthorInfo!
 }
 
 input SaveNovelInfo {

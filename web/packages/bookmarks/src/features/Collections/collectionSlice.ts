@@ -5,11 +5,27 @@
  * @LastEditTime: 2024-09-08 14:07:12
  * @FilePath: /self-tools/web/packages/bookmarks/src/features/Collections/collectionSlice.ts
  */
-import { type AllCollectionsQuery, useAllCollectionsLazyQuery } from '@bookmarks/graphql';
+import { useLazyQuery } from '@apollo/client/react';
+import { graphql } from '@bookmarks/gql';
+import type { AllCollectionsQuery } from '@bookmarks/gql/graphql';
 import { useCallback, useEffect } from 'react';
 import type { Enum } from 'types';
 import { create } from 'zustand';
 import { useShallow } from 'zustand/react/shallow';
+
+const AllConllections = graphql(`
+  query allCollections {
+    allCollections {
+      name
+      id
+      path
+      createTime
+      updateTime
+      description
+      parentId
+    }
+  }
+`);
 
 export type AllCollectionItem = AllCollectionsQuery['allCollections'][number];
 
@@ -70,15 +86,12 @@ export function useAllCollection() {
       setError: state.setError,
     })),
   );
-  const [fn] = useAllCollectionsLazyQuery();
+  const [fn] = useLazyQuery(AllConllections);
   const fetchData = useCallback(async () => {
     setLoading();
-    const { data, loading, error } = await fn();
+    const { data, error } = await fn();
     if (data) {
       setAllCollections(data.allCollections);
-    }
-    if (loading) {
-      setLoading();
     }
     if (error) {
       setError(error);

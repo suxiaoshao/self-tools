@@ -6,7 +6,7 @@
  * @FilePath: /self-tools/web/packages/collections/src/App.tsx
  */
 import { Outlet } from 'react-router-dom';
-import { ApolloProvider } from '@apollo/client';
+import { ApolloProvider } from '@apollo/client/react';
 import { getClient } from 'custom-graphql';
 
 function App() {

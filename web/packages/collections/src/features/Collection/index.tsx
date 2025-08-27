@@ -6,7 +6,6 @@
  * @FilePath: /self-tools/web/packages/collections/src/features/Collection/index.tsx
  */
 import { Box, IconButton } from '@mui/material';
-import { useCollectionAndItemsQuery } from '../../graphql';
 import { CustomTable, getCoreRowModel, useCustomTable, usePage, usePageWithTotal } from 'custom-table';
 import { Refresh } from '@mui/icons-material';
 import CreateCollectionButton from './components/CreateCollectionButton';
@@ -17,6 +16,34 @@ import CreateItemButton from './components/CreateItemButton';
 import { useEffect, useMemo } from 'react';
 import { useI18n } from 'i18n';
 import useTitle from '@bookmarks/hooks/useTitle';
+import { graphql } from '@collections/gql';
+import { useQuery } from '@apollo/client/react';
+
+const CollectionAndItems = graphql(`
+  query collectionAndItems($query: CollectionItemQuery!) {
+    collectionAndItem(query: $query) {
+      data {
+        ... on Collection {
+          name
+          id
+          path
+          createTime
+          updateTime
+          description
+          __typename
+        }
+        ... on Item {
+          name
+          id
+          updateTime
+          createTime
+          __typename
+        }
+      }
+      total
+    }
+  }
+`);
 
 export default function Collection() {
   const t = useI18n();
@@ -27,7 +54,7 @@ export default function Collection() {
     // oxlint-disable-next-line react/exhaustive-deps
     pageState.setPage(1);
   }, [id]);
-  const { data: sourceData, refetch } = useCollectionAndItemsQuery({
+  const { data: sourceData, refetch } = useQuery(CollectionAndItems, {
     variables: { query: { id, pagination: { page: pageState.pageIndex, pageSize: pageState.pageSize } } },
   });
   const { data, total } = sourceData?.collectionAndItem ?? {};

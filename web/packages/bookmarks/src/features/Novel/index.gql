@@ -1,3 +1,36 @@
+query getNovels($collectionMatch: TagMatch, $novelStatus: NovelStatus, $tagMatch: TagMatch, $pagination: Pagination!) {
+  queryNovels(
+    collectionMatch: $collectionMatch
+    novelStatus: $novelStatus
+    tagMatch: $tagMatch
+    pagination: $pagination
+  ) {
+    data {
+      id
+      name
+      description
+      createTime
+      updateTime
+      description
+      novelStatus
+      avatar
+      site
+    }
+    total
+  }
+}
+
+mutation createNovel($data: CreateNovelInput!) {
+  createNovel(data: $data) {
+    id
+  }
+}
+mutation deleteNovel($id: Int!) {
+  deleteNovel(id: $id) {
+    id
+  }
+}
+
 query getNovel($id: Int!) {
   getNovel(id: $id) {
     id
@@ -47,13 +80,14 @@ query getNovel($id: Int!) {
   }
 }
 
-query fetchNovel($id: String!, $NovelSite: NovelSite!) {
-  fetchNovel(id: $id, novelSite: $NovelSite) {
+query fetchNovel($id: String!, $novelSite: NovelSite!) {
+  fetchNovel(id: $id, novelSite: $novelSite) {
     author {
       description
       image
       name
       url
+      id
     }
     chapters {
       title
@@ -63,11 +97,18 @@ query fetchNovel($id: String!, $NovelSite: NovelSite!) {
       wordCount
       id
     }
+    tags {
+      id
+      name
+      url
+    }
     description
     image
     name
     url
     site
+    status
+    id
   }
 }
 
@@ -85,6 +126,12 @@ mutation addCollectionForNovel($novelId: Int!, $collectionId: Int!) {
 
 mutation deleteCollectionForNovel($novelId: Int!, $collectionId: Int!) {
   deleteCollectionForNovel(collectionId: $collectionId, novelId: $novelId) {
+    id
+  }
+}
+
+mutation saveDraftNovel($novel: SaveDraftNovel!) {
+  saveDraftNovel(novel: $novel) {
     id
   }
 }

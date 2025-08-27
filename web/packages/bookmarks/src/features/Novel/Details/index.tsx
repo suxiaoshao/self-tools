@@ -5,11 +5,6 @@
  * @LastEditTime: 2024-03-28 09:57:11
  * @FilePath: /self-tools/web/packages/bookmarks/src/features/Novel/Details/index.tsx
  */
-import {
-  useDeleteCollectionForNovelMutation,
-  useGetNovelQuery,
-  useUpdateNovelByCrawlerMutation,
-} from '@bookmarks/graphql';
 import { Explore, KeyboardArrowLeft, Refresh } from '@mui/icons-material';
 import { Avatar, Box, Card, CardContent, CardHeader, IconButton, Tooltip, Link, Skeleton, Chip } from '@mui/material';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
@@ -25,10 +20,80 @@ import { format } from 'time';
 import AddCollection from './components/AddCollection';
 import { getLabelKeyByNovelStatus } from '@bookmarks/utils/novelStatus';
 import useTitle from '@bookmarks/hooks/useTitle';
+import { getLabelKeyBySite } from '@bookmarks/utils/novelSite';
+import { useMutation, useQuery } from '@apollo/client/react';
+import { graphql } from '@bookmarks/gql';
+
+const GetNovel = graphql(`
+  query getNovel($id: Int!) {
+    getNovel(id: $id) {
+      id
+      name
+      avatar
+      description
+      createTime
+      updateTime
+      description
+      novelStatus
+      url
+      chapters {
+        id
+        title
+        createTime
+        updateTime
+        url
+        wordCount
+        time
+      }
+      author {
+        avatar
+        description
+        id
+        name
+        site
+      }
+      lastChapter {
+        time
+      }
+      firstChapter {
+        time
+      }
+      wordCount
+      tags {
+        url
+        name
+        id
+      }
+      site
+      collections {
+        name
+        id
+        description
+        path
+      }
+    }
+  }
+`);
+
+const DeleteCollectionForNovel = graphql(`
+  mutation deleteCollectionForNovel($novelId: Int!, $collectionId: Int!) {
+    deleteCollectionForNovel(collectionId: $collectionId, novelId: $novelId) {
+      id
+    }
+  }
+`);
+
+const UpdateNovelByCrawler = graphql(`
+  mutation updateNovelByCrawler($novelId: Int!) {
+    updateNovelByCrawler(novelId: $novelId) {
+      id
+    }
+  }
+`);
 
 export default function NovelDetails() {
   const { novelId } = useParams();
-  const { data, loading, refetch } = useGetNovelQuery({ variables: { id: Number(novelId) } });
+  const { data, loading, refetch } = useQuery(GetNovel, { variables: { id: Number(novelId) } });
   const t = useI18n();
   useTitle(t('novel_detail', { novelName: data?.getNovel?.name }));
   const navigate = useNavigate();
@@ -40,13 +105,13 @@ export default function NovelDetails() {
       window.open(data.getNovel.url, '_blank');
     }
   }, [data?.getNovel?.url]);
-  const [updateNovel, { loading: updateLoading }] = useUpdateNovelByCrawlerMutation();
+  const [updateNovel, { loading: updateLoading }] = useMutation(UpdateNovelByCrawler);
   const handleUpdateNovel = useCallback(async () => {
     await updateNovel({ variables: { novelId: Number(novelId) } });
     enqueueSnackbar(t('update_by_crawler_success'), { variant: 'success' });
     refetch();
   }, [novelId, updateNovel, refetch, t]);
-  const [deleteCollectionForNovel] = useDeleteCollectionForNovelMutation();
+  const [deleteCollectionForNovel] = useMutation(DeleteCollectionForNovel);
   const items = useMemo<DetailsItem[]>(
     () =>
       match(data?.getNovel)
@@ -64,7 +129,11 @@ export default function NovelDetails() {
               },
               {
                 label: t('novel_status'),
-                value: getLabelKeyByNovelStatus(data.novelStatus),
+                value: t(getLabelKeyByNovelStatus(data.novelStatus)),
+              },
+              {
+                label: t('novel_site'),
+                value: t(getLabelKeyBySite(data.site)),
               },
               {
                 label: t('word_count'),

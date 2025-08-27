@@ -11,7 +11,6 @@ import {
   usePage,
   usePageWithTotal,
 } from 'custom-table';
-import { type GetAuthorsQuery, useDeleteAuthorMutation, useGetAuthorsQuery } from '../../../graphql';
 import CreateAuthorButton from './components/CreateAuthorButton';
 import { useMemo } from 'react';
 import { format } from 'time';
@@ -20,6 +19,35 @@ import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { getImageUrl } from '@bookmarks/utils/image';
 import { getLabelKeyBySite } from '@bookmarks/utils/novelSite';
 import useTitle from '@bookmarks/hooks/useTitle';
+import { graphql } from '@bookmarks/gql';
+import { useMutation, useQuery } from '@apollo/client/react';
+import type { GetAuthorsQuery } from '@bookmarks/gql/graphql';
+
+const GetAuthors = graphql(`
+  query getAuthors($pagination: Pagination!) {
+    queryAuthors(pagination: $pagination) {
+      data {
+        id
+        site
+        name
+        createTime
+        updateTime
+        avatar
+        description
+        url
+      }
+      total
+    }
+  }
+`);
+
+const DeleteAuthor = graphql(`
+  mutation deleteAuthor($id: Int!) {
+    deleteAuthor(id: $id) {
+      id
+    }
+  }
+`);
 
 type TableItem = GetAuthorsQuery['queryAuthors']['data'][0];
 
@@ -27,12 +55,12 @@ const columnHelper = createCustomColumnHelper<TableItem>();
 export default function AuthorList() {
   // fetch
   const pageState = usePage();
-  const { data: { queryAuthors: { data, total } = {} } = {}, refetch } = useGetAuthorsQuery({
+  const { data: { queryAuthors: { data, total } = {} } = {}, refetch } = useQuery(GetAuthors, {
     variables: { pagination: { page: pageState.pageIndex, pageSize: pageState.pageSize } },
   });
   const page = usePageWithTotal(pageState, total);
 
-  const [deleteAuthor] = useDeleteAuthorMutation();
+  const [deleteAuthor] = useMutation(DeleteAuthor);
   const t = useI18n();
   useTitle(t('author_manage'));
   const navigate = useNavigate();

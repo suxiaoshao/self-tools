@@ -1,9 +1,18 @@
 import { Button } from '@mui/material';
 import { useI18n } from 'i18n';
-import { useCreateCollectionMutation } from '../../../graphql';
 import useDialog from '../../../hooks/useDialog';
 import useParentId from '../hooks/useParentId';
 import CollectionForm, { type CollectionFormData } from './CollectionForm';
+import { graphql } from '@collections/gql';
+import { useMutation } from '@apollo/client/react';
+
+const CreateCollection = graphql(`
+  mutation createCollection($parentId: Int, $name: String!, $description: String) {
+    createCollection(parentId: $parentId, name: $name, description: $description) {
+      path
+    }
+  }
+`);
 
 export interface CreateCollectButtonProps {
   /** 表格重新刷新 */
@@ -13,7 +22,7 @@ export interface CreateCollectButtonProps {
 export default function CreateCollectionButton({ refetch }: CreateCollectButtonProps) {
   const parentId = useParentId();
 
-  const [createCollection] = useCreateCollectionMutation();
+  const [createCollection] = useMutation(CreateCollection);
 
   const afterSubmit = async ({ name, description }: CollectionFormData) => {
     await createCollection({ variables: { name, parentId, description } });

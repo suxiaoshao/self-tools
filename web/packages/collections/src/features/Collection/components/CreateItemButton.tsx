@@ -1,8 +1,17 @@
 import { Button } from '@mui/material';
-import { useCreateItemMutation } from '../../../graphql';
 import ItemForm, { type ItemFormData } from '../../Item/Components/ItemForm';
 import useDialog from '../../../hooks/useDialog';
 import { useI18n } from 'i18n';
+import { graphql } from '@collections/gql';
+import { useMutation } from '@apollo/client/react';
+
+const CreateItem = graphql(`
+  mutation createItem($collectionId: Int!, $name: String!, $content: String!) {
+    createItem(collectionId: $collectionId, name: $name, content: $content) {
+      name
+    }
+  }
+`);
 
 export interface CreateItemButtonProps {
   /** 表格重新刷新 */
@@ -11,7 +20,7 @@ export interface CreateItemButtonProps {
 }
 
 export default function CreateItemButton({ refetch, collectionId }: CreateItemButtonProps) {
-  const [createItem] = useCreateItemMutation();
+  const [createItem] = useMutation(CreateItem);
 
   const afterSubmit = async ({ name, content }: ItemFormData) => {
     await createItem({ variables: { name, collectionId, content } });

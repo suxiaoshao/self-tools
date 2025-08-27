@@ -3,27 +3,65 @@ import { TableActions } from 'custom-table';
 import { useI18n } from 'i18n';
 import { match } from 'ts-pattern';
 import type { CollectionAndItem } from '../types';
-import {
-  useDeleteCollectionMutation,
-  useDeleteItemMutation,
-  useGetEditItemLazyQuery,
-  useUpdateCollectionMutation,
-  useUpdateItemMutation,
-} from '../../../graphql';
 import useDialog from '../../../hooks/useDialog';
 import ItemForm, { type ItemFormData } from '../../Item/Components/ItemForm';
 import CollectionForm, { type CollectionFormData } from './CollectionForm';
+import { graphql } from '@collections/gql';
+import { useLazyQuery, useMutation } from '@apollo/client/react';
+
+const DeleteCollection = graphql(`
+  mutation deleteCollection($id: Int!) {
+    deleteCollection(id: $id) {
+      path
+    }
+  }
+`);
+
+const DeleteItem = graphql(`
+  mutation deleteItem($id: Int!) {
+    deleteItem(id: $id) {
+      name
+    }
+  }
+`);
+
+const GetEditItem = graphql(`
+  query getEditItem($id: Int!) {
+    getItem(id: $id) {
+      name
+      content
+    }
+  }
+`);
+
+const UpdateCollection = graphql(`
+  mutation updateCollection($id: Int!, $name: String!, $description: String) {
+    updateCollection(id: $id, name: $name, description: $description) {
+      path
+    }
+  }
+`);
+
+const UpdateItem = graphql(`
+  mutation updateItem($id: Int!, $name: String!, $content: String!) {
+    updateItem(id: $id, name: $name, content: $content) {
+      id
+      name
+      content
+    }
+  }
+`);
 
 export type TableActionsProps = CollectionAndItem & {
   refetch: () => void;
 };
 
 export default function Actions({ id, refetch, __typename, ...data }: TableActionsProps) {
-  const [deleteCollection] = useDeleteCollectionMutation();
-  const [deleteItem] = useDeleteItemMutation();
-  const [updateCollection] = useUpdateCollectionMutation();
-  const [updateItem] = useUpdateItemMutation();
-  const [fetchItem, { loading, data: editItemData }] = useGetEditItemLazyQuery();
+  const [deleteCollection] = useMutation(DeleteCollection);
+  const [deleteItem] = useMutation(DeleteItem);
+  const [updateCollection] = useMutation(UpdateCollection);
+  const [updateItem] = useMutation(UpdateItem);
+  const [fetchItem, { loading, data: editItemData }] = useLazyQuery(GetEditItem);
   const { open, handleClose, handleOpen } = useDialog();
   const collectionAfterSubmit = async ({ name, description }: CollectionFormData) => {
     await updateCollection({ variables: { id, name, description } });

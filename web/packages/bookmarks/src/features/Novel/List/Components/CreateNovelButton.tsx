@@ -11,7 +11,17 @@ import { useState } from 'react';
 import { useForm, type SubmitHandler, Controller } from 'react-hook-form';
 import AuthorSelect from '../../../../components/AuthorSelect';
 import TagsSelect from '../../../../components/TagsSelect';
-import { type CreateNovelMutationVariables, useCreateNovelMutation } from '../../../../graphql';
+import { graphql } from '@bookmarks/gql';
+import { useMutation } from '@apollo/client/react';
+import type { CreateNovelMutationVariables } from '@bookmarks/gql/graphql';
+
+const CreateNovel = graphql(`
+  mutation createNovel($data: CreateNovelInput!) {
+    createNovel(data: $data) {
+      id
+    }
+  }
+`);
 
 export interface CreateNovelButtonProps {
   /** 表格重新刷新 */
@@ -23,7 +33,7 @@ export default function CreateNovelButton({ refetch }: CreateNovelButtonProps) {
   // 表单控制
   const { handleSubmit, register, control } = useForm<FormData>({ defaultValues: { tags: [] } });
 
-  const [createNovel] = useCreateNovelMutation();
+  const [createNovel] = useMutation(CreateNovel);
 
   const onSubmit: SubmitHandler<FormData> = async ({ ...formData }) => {
     await createNovel({ variables: { data: { ...formData } } });

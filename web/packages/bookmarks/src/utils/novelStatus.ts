@@ -1,4 +1,4 @@
-import { NovelStatus } from '@bookmarks/graphql';
+import { NovelStatus } from '@bookmarks/gql/graphql';
 import type { I18nKey } from 'i18n';
 import { match } from 'ts-pattern';
 

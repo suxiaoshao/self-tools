@@ -11,7 +11,17 @@ import {
 import { useI18n } from 'i18n';
 import { type FocusEventHandler, useMemo } from 'react';
 import { match, P } from 'ts-pattern';
-import { useAllowTagsQuery } from '../../graphql';
+import { graphql } from '@bookmarks/gql';
+import { useQuery } from '@apollo/client/react';
+
+const AllTags = graphql(`
+  query allTags {
+    allTags {
+      id
+      name
+    }
+  }
+`);
 
 const ITEM_HEIGHT = 48;
 const ITEM_PADDING_TOP = 8;
@@ -31,7 +41,7 @@ export interface TagsSelectProps extends Omit<FormControlProps, 'name' | 'onChan
 }
 
 export default function TagsSelect({ value, onChange, onBlur, sx, ...props }: TagsSelectProps) {
-  const { data: { allTags } = {}, loading } = useAllowTagsQuery();
+  const { data: { allTags } = {}, loading } = useQuery(AllTags);
   const formValue = useMemo(() => {
     return (
       match(value)

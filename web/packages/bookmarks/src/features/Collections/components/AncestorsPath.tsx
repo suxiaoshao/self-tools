@@ -1,11 +1,25 @@
 import { Breadcrumbs, LinearProgress, Link } from '@mui/material';
 import { createSearchParams, Link as RouterLink } from 'react-router-dom';
-import { useGetCollectionAncestorsQuery } from '../../../graphql';
 import useParentId from './useParentId';
+import { graphql } from '@bookmarks/gql';
+import { useQuery } from '@apollo/client/react';
+
+const GetCollectionAncestors = graphql(`
+  query getCollectionAncestors($id: Int!) {
+    getCollection(id: $id) {
+      ancestors {
+        id
+        name
+      }
+      id
+      name
+    }
+  }
+`);
 
 export default function AncestorsPath() {
   const parentId = useParentId();
-  const { data: { getCollection } = {}, loading } = useGetCollectionAncestorsQuery({
+  const { data: { getCollection } = {}, loading } = useQuery(GetCollectionAncestors, {
     variables: { id: parentId ?? 0 },
     skip: parentId === null,
   });

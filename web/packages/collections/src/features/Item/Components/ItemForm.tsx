@@ -20,7 +20,7 @@ import { Controller, type SubmitHandler, useForm } from 'react-hook-form';
 import { match } from 'ts-pattern';
 import CustomEdit from '../../../components/CustomEdit';
 import Markdown from '../../../components/Markdown';
-import type { CreateItemMutationVariables } from '../../../graphql';
+import type { CreateItemMutationVariables } from '../../../gql/graphql';
 export type ItemFormData = Omit<CreateItemMutationVariables, 'collectionId'>;
 
 export interface ItemFormProps {
