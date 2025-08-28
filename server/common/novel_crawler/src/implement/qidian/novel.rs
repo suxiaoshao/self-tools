@@ -35,7 +35,7 @@ static SELECTOR_AUTHOR: LazyLock<Selector> =
 static SELECTOR_STATUS: LazyLock<Selector> =
     LazyLock::new(|| Selector::parse("head > meta[property=\"og:novel:status\"]").unwrap());
 static SELECTOR_TAGS: LazyLock<Selector> =
-    LazyLock::new(|| Selector::parse("div.search-tags > a").unwrap());
+    LazyLock::new(|| Selector::parse("div.tags-wrapper > ul.tags > li").unwrap());
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct QDNovel {
