@@ -38,6 +38,7 @@ type Chapter {
   createTime: DateTime!
   updateTime: DateTime!
   siteNovelId: String!
+  isRead: Boolean!
   novel: Novel!
   url: String!
   author: Author!
@@ -195,6 +196,12 @@ type Novel {
 
   # 集合列表
   collections: [Collection!]!
+
+  # 阅读百分比
+  readPercentage: Float!
+
+  # 评论
+  comments: String
 }
 
 type NovelList {

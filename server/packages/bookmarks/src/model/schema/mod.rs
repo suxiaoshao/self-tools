@@ -74,6 +74,26 @@ diesel::table! {
 }
 
 diesel::table! {
+    novel_comment (id) {
+        id -> Int8,
+        novel_id -> Int8,
+        author_id -> Int8,
+        content -> Text,
+        create_time -> Timestamptz,
+        update_time -> Timestamptz,
+    }
+}
+
+diesel::table! {
+    read_record (id) {
+        id -> Int8,
+        novel_id -> Int8,
+        chapter_id -> Int8,
+        read_time -> Timestamptz,
+    }
+}
+
+diesel::table! {
     use diesel::sql_types::*;
     use super::sql_types::NovelStatus;
     use super::sql_types::NovelSite;
@@ -110,6 +130,10 @@ diesel::table! {
 
 diesel::joinable!(collection_novel -> collection (collection_id));
 diesel::joinable!(collection_novel -> novel (novel_id));
+diesel::joinable!(novel_comment -> author (author_id));
+diesel::joinable!(novel_comment -> novel (novel_id));
+diesel::joinable!(read_record -> chapter (chapter_id));
+diesel::joinable!(read_record -> novel (novel_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     author,
@@ -117,5 +141,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     collection,
     collection_novel,
     novel,
+    novel_comment,
+    read_record,
     tag,
 );

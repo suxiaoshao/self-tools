@@ -3,6 +3,8 @@ use std::collections::HashSet;
 use crate::model::chapter::{ChapterModel, NewChapter, UpdateChapterModel};
 use crate::model::collection_novel::CollectionNovelModel;
 use crate::model::novel::UpdateNovelModel;
+use crate::model::novel_comment::NovelCommentModel;
+use crate::model::read_record::ReadRecordModel;
 use crate::model::{collection::CollectionModel, schema::custom_type::NovelSite, tag::TagModel};
 use crate::model::{
     novel::{NewNovel, NovelModel},
@@ -131,6 +133,29 @@ impl Novel {
             })?
             .get()?;
         Collection::many_by_novel_id(self.id, conn)
+    }
+    /// 阅读百分比
+    async fn read_percentage(&self, context: &Context<'_>) -> GraphqlResult<f64> {
+        let conn = &mut context
+            .data::<PgPool>()
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
+            .get()?;
+        let read_percentage = ReadRecordModel::read_percentage_by_novel_id(self.id, conn)?;
+        Ok(read_percentage)
+    }
+    /// 评论
+    async fn comments(&self, context: &Context<'_>) -> GraphqlResult<Option<String>> {
+        let conn = &mut context
+            .data::<PgPool>()
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
+            .get()?;
+        NovelCommentModel::content_by_novel_id(self.id, conn)
     }
 }
 

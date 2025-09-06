@@ -26,3 +26,4 @@ remote-schema.graphql
 *.njsproj
 *.sln
 *.sw?
+postgrestools.jsonc
