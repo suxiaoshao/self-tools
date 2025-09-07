@@ -23,7 +23,7 @@ middleware = { path = "../../common/middleware", features = ["cors", "trace"] }
 
 # log
 tracing = "0.1.41"
-tracing-subscriber = "0.3.19"
+tracing-subscriber = "0.3.20"
 
 # thrift
 thrift = { path = "../../common/thrift" }

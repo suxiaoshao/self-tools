@@ -18,7 +18,7 @@ graphql-common = { path = "../../common/graphql-common" }
 
 # database
 diesel = { version = "2.2.12", features = ["postgres", "time", "r2d2"] }
-time = "0.3.41"
+time = "0.3.43"
 
 # error
 anyhow = "1.0.99"
@@ -33,7 +33,7 @@ middleware = { path = "../../common/middleware", features = [
 
 # log
 tracing = "0.1.41"
-tracing-subscriber = "0.3.19"
+tracing-subscriber = "0.3.20"
 
 # thrift
 thrift = { path = "../../common/thrift" }

@@ -14,6 +14,7 @@ This is a full-stack monorepo containing personal tools with a microservices arc
 ## Development Commands
 
 ### Frontend Development
+
 ```bash
 # Install dependencies
 pnpm install
@@ -33,6 +34,7 @@ pnpm test
 ```
 
 ### Backend Development
+
 ```bash
 # Build all Rust services
 cargo build
@@ -46,34 +48,39 @@ cd server/packages/bookmarks && cargo run
 ```
 
 ### GraphQL Code Generation
+
 ```bash
 # Generate GraphQL types for bookmarks
 cd web/packages/bookmarks && pnpm generate
 
-# Generate GraphQL types for collections  
+# Generate GraphQL types for collections
 cd web/packages/collections && pnpm generate
 ```
 
 ## Architecture
 
 ### Backend Services
+
 - **auth**: Thrift service on port 80 for authentication
-- **login**: GraphQL service for login functionality  
+- **login**: GraphQL service for login functionality
 - **bookmarks**: GraphQL service on port 8080 for bookmark management
 - **collections**: GraphQL service for collection management
 
 All GraphQL services use:
+
 - Axum web framework
 - async-graphql for GraphQL implementation
 - Diesel ORM for PostgreSQL
 - Middleware for CORS and tracing
 
 ### Frontend Architecture
+
 - **portal**: Main React application using Module Federation
 - **bookmarks**: Federated module for bookmark functionality
 - **collections**: Federated module for collections functionality
 
 Key frontend technologies:
+
 - RSBuild for bundling with React Compiler
 - Module Federation for micro-frontends
 - Material-UI components
@@ -81,7 +88,9 @@ Key frontend technologies:
 - React Hook Form with Valibot validation
 
 ### Database Schema
+
 PostgreSQL database shared across services:
+
 - Each service connects independently
 - Database migrations handled per service
 - Connection pooling with r2d2
@@ -89,6 +98,7 @@ PostgreSQL database shared across services:
 ## Common Development Patterns
 
 ### Adding a New Backend Service
+
 1. Create new package in `server/packages/`
 2. Add to workspace in root `Cargo.toml`
 3. Implement GraphQL schema with async-graphql
@@ -97,6 +107,7 @@ PostgreSQL database shared across services:
 6. Update `docker-compose.yml`
 
 ### Adding a New Frontend Package
+
 1. Create package in `web/packages/` or `web/common/`
 2. Add to pnpm workspace in `pnpm-workspace.yaml`
 3. Configure RSBuild if standalone app
@@ -104,6 +115,7 @@ PostgreSQL database shared across services:
 5. Add GraphQL codegen config if using GraphQL
 
 ### GraphQL Integration
+
 - Backend exposes GraphQL endpoints at `/graphql`
 - Frontend uses Apollo Client with generated TypeScript types
 - Schema introspection configured in `graphql.config.yml`
@@ -112,12 +124,14 @@ PostgreSQL database shared across services:
 ## Testing
 
 ### Frontend Tests
+
 - Jest with SWC for transformation
-- Testing Library for React components  
+- Testing Library for React components
 - jsdom test environment
 - Run with `pnpm test`
 
 ### Backend Tests
+
 - Standard Rust testing with `cargo test`
 - Integration tests per service
 - Database testing with test containers
@@ -125,6 +139,7 @@ PostgreSQL database shared across services:
 ## Docker Development
 
 ### Local Development
+
 ```bash
 # Start all services
 ./scripts/compose.sh
@@ -134,9 +149,10 @@ PostgreSQL database shared across services:
 ```
 
 ### Service URLs (when running with Docker)
+
 - Web: https://localhost (with SSL)
 - Auth: Internal Thrift service
-- Login: Internal GraphQL service  
+- Login: Internal GraphQL service
 - Bookmarks: Internal GraphQL service
 - Collections: Internal GraphQL service
 - PostgreSQL: localhost:5432
@@ -144,12 +160,14 @@ PostgreSQL database shared across services:
 ## Code Organization
 
 ### Shared Libraries
+
 - `server/common/graphql-common`: GraphQL utilities and pagination
 - `server/common/middleware`: CORS, tracing, and GraphQL middleware
 - `server/common/thrift`: Thrift service definitions
 - `server/common/novel_crawler`: Novel crawling utilities
 
 ### Frontend Common Packages
+
 - `web/common/custom-graphql`: GraphQL components and hooks
 - `web/common/custom-table`: Reusable table components
 - `web/common/i18n`: Internationalization utilities
@@ -159,10 +177,12 @@ PostgreSQL database shared across services:
 ## Environment Configuration
 
 Services expect these environment variables:
+
 - Database connection strings
 - Authentication tokens
 - Service URLs
 
 Environment files:
+
 - `.env` in Docker compose directory for production
 - Use `dotenv` crate for development in Rust services
