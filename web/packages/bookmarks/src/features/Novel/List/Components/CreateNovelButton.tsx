@@ -48,7 +48,14 @@ export default function CreateNovelButton({ refetch }: CreateNovelButtonProps) {
   const t = useI18n();
   return (
     <>
-      <Button color="primary" size="large" variant="contained" onClick={() => setOpen(true)}>
+      <Button
+        color="primary"
+        size="large"
+        variant="contained"
+        onClick={() => {
+          setOpen(true);
+        }}
+      >
         {t('add_novel')}
       </Button>
       <Dialog PaperProps={{ sx: { maxWidth: 700 } }} open={open} onClose={handleClose}>

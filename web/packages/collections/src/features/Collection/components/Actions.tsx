@@ -3,7 +3,7 @@ import { TableActions } from 'custom-table';
 import { useI18n } from 'i18n';
 import { match } from 'ts-pattern';
 import type { CollectionAndItem } from '../types';
-import useDialog from '../../../hooks/useDialog';
+import useDialog from '@collections/hooks/useDialog';
 import ItemForm, { type ItemFormData } from '../../Item/Components/ItemForm';
 import CollectionForm, { type CollectionFormData } from './CollectionForm';
 import { graphql } from '@collections/gql';
@@ -86,7 +86,7 @@ export default function Actions({ id, refetch, __typename, ...data }: TableActio
                 await deleteItem({ variables: { id } });
               }
               onClose();
-              await refetch();
+              refetch();
             },
           },
           <MenuItem

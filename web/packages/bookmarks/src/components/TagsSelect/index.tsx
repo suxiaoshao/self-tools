@@ -60,7 +60,9 @@ export default function TagsSelect({ value, onChange, onBlur, sx, ...props }: Ta
         multiple
         value={formValue}
         onChange={(e) => {
-          match(e.target.value).with(P.array(P.number), (value) => onChange(value));
+          match(e.target.value).with(P.array(P.number), (value) => {
+            onChange(value);
+          });
         }}
         onBlur={onBlur}
         input={<OutlinedInput label={t('tags')} />}

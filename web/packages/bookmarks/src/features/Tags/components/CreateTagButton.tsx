@@ -38,7 +38,15 @@ export default function CreateTagButton({ refetch }: CreateTagButtonProps) {
   const t = useI18n();
   return (
     <>
-      <Button sx={{ ml: 1 }} color="primary" size="large" variant="contained" onClick={() => setOpen(true)}>
+      <Button
+        sx={{ ml: 1 }}
+        color="primary"
+        size="large"
+        variant="contained"
+        onClick={() => {
+          setOpen(true);
+        }}
+      >
         {t('add_tag')}
       </Button>
       <Dialog PaperProps={{ sx: { maxWidth: 700 } }} open={open} onClose={handleClose}>

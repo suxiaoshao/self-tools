@@ -18,6 +18,7 @@ use crate::{
         author::Author,
         collection::Collection,
         novel::{CreateNovelInput, Novel},
+        novel_comment::NovelComment,
         save_draft::{SaveDraftAuthor, SaveDraftNovel},
         tag::Tag,
     },
@@ -280,5 +281,55 @@ impl MutationRoot {
             })?
             .get()?;
         Novel::delete_collection(collection_id, novel_id, conn)
+    }
+    /// 给小说添加评论
+    #[graphql(guard = "AuthGuard")]
+    async fn add_comment_for_novel(
+        &self,
+        context: &Context<'_>,
+        novel_id: i64,
+        content: String,
+    ) -> GraphqlResult<NovelComment> {
+        let conn = &mut context
+            .data::<PgPool>()
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
+            .get()?;
+        NovelComment::create(novel_id, &content, conn)
+    }
+    /// 给小说删除评论
+    #[graphql(guard = "AuthGuard")]
+    async fn delete_comment_for_novel(
+        &self,
+        context: &Context<'_>,
+        novel_id: i64,
+    ) -> GraphqlResult<NovelComment> {
+        let conn = &mut context
+            .data::<PgPool>()
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
+            .get()?;
+        NovelComment::delete(novel_id, conn)
+    }
+    /// 给小说修改评论
+    #[graphql(guard = "AuthGuard")]
+    async fn update_comment_for_novel(
+        &self,
+        context: &Context<'_>,
+        novel_id: i64,
+        content: String,
+    ) -> GraphqlResult<NovelComment> {
+        let conn = &mut context
+            .data::<PgPool>()
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
+            .get()?;
+        NovelComment::update(novel_id, &content, conn)
     }
 }

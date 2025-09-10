@@ -43,7 +43,15 @@ export default function CreateAuthorButton({ refetch }: CreateAuthorButtonProps)
   const t = useI18n();
   return (
     <>
-      <Button sx={{ ml: 1 }} color="primary" size="large" variant="contained" onClick={() => setOpen(true)}>
+      <Button
+        sx={{ ml: 1 }}
+        color="primary"
+        size="large"
+        variant="contained"
+        onClick={() => {
+          setOpen(true);
+        }}
+      >
         {t('add_author')}
       </Button>
       <Dialog slotProps={{ paper: { sx: { maxWidth: 700 } } }} open={open} onClose={handleClose}>

@@ -74,22 +74,26 @@ create table collection_novel
     foreign key (novel_id) references novel (id)
 );
 
-create table read_record(
-    id          bigserial primary key,
-    novel_id    bigint not null,
-    chapter_id  bigint not null,
-    read_time   timestamptz not null,
+create table read_record
+(
+    id         bigserial primary key,
+    novel_id   bigint      not null,
+    chapter_id bigint      not null,
+    read_time  timestamptz not null,
     foreign key (novel_id) references novel (id),
-    foreign key (chapter_id) references chapter (id)
+    foreign key (chapter_id) references chapter (id),
+    unique (chapter_id)
 );
 
-create table novel_comment(
+create table novel_comment
+(
     id          bigserial primary key,
-    novel_id    bigint not null,
-    author_id   bigint not null,
-    content     text not null,
+    novel_id    bigint      not null,
+    author_id   bigint      not null,
+    content     text        not null,
     create_time timestamptz not null,
     update_time timestamptz not null,
     foreign key (novel_id) references novel (id),
-    foreign key (author_id) references author (id)
+    foreign key (author_id) references author (id),
+    unique (novel_id)
 );

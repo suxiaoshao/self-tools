@@ -47,7 +47,7 @@ function CustomHead(props: TypographyProps) {
         sx={{
           margin: `${marginTop}px 0 0 10px`,
         }}
-        id={String(props.children)}
+        id={JSON.stringify(props.children)}
         variant={props.variant}
       >
         {props.children}
@@ -116,7 +116,7 @@ function MyListItem(props: { children: JSX.Element[] }) {
                 margin: '6px 0 6px 0',
                 display: 'inline-block',
               }}
-              key={value.toString()}
+              key={JSON.stringify(value)}
             >
               {value}
             </Typography>

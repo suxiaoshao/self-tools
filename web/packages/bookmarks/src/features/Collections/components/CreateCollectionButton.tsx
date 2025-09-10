@@ -40,7 +40,14 @@ export default function CreateCollectionButton({ refetch }: CreateCollectButtonP
   const t = useI18n();
   return (
     <>
-      <Button color="primary" size="large" variant="contained" onClick={() => setOpen(true)}>
+      <Button
+        color="primary"
+        size="large"
+        variant="contained"
+        onClick={() => {
+          setOpen(true);
+        }}
+      >
         {t('add_collection')}
       </Button>
       <CollectionForm afterSubmit={onSubmit} handleClose={handleClose} open={open} />

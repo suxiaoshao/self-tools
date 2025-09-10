@@ -5,12 +5,11 @@
  * @LastEditTime: 2024-04-01 03:54:18
  * @FilePath: /self-tools/server/packages/bookmarks/src/model/author.rs
  */
-use crate::errors::GraphqlResult;
-
 use super::schema::{
     author::{self},
     custom_type::NovelSite,
 };
+use crate::errors::GraphqlResult;
 use diesel::prelude::*;
 use time::OffsetDateTime;
 

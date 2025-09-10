@@ -54,7 +54,11 @@ export default function ThemeDrawerItem() {
 
   return (
     <>
-      <ListItemButton onClick={() => setOpen(true)}>
+      <ListItemButton
+        onClick={() => {
+          setOpen(true);
+        }}
+      >
         <ListItemIcon>
           <Palette />
         </ListItemIcon>

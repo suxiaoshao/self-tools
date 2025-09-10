@@ -62,7 +62,11 @@ export default function I18nDrawerItem() {
 
   return (
     <>
-      <ListItemButton onClick={() => setOpen(true)}>
+      <ListItemButton
+        onClick={() => {
+          setOpen(true);
+        }}
+      >
         <ListItemIcon>
           <Language />
         </ListItemIcon>

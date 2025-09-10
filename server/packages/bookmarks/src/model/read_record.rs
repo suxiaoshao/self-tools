@@ -2,15 +2,49 @@ use crate::{
     errors::GraphqlResult,
     model::schema::{chapter, read_record},
 };
-use diesel::{prelude::Queryable, ExpressionMethods, PgConnection, QueryDsl, RunQueryDsl};
-// use time::OffsetDateTime;
+use diesel::prelude::*;
+use time::OffsetDateTime;
+
+#[derive(Insertable)]
+#[diesel(table_name = read_record)]
+pub(crate) struct NewReadRecord {
+    pub novel_id: i64,
+    pub chapter_id: i64,
+    pub read_time: OffsetDateTime,
+}
+
+impl NewReadRecord {
+    pub(crate) fn new(novel_id: i64, chapter_id: i64, read_time: OffsetDateTime) -> Self {
+        Self {
+            novel_id,
+            chapter_id,
+            read_time,
+        }
+    }
+
+    pub(crate) fn create(&self, conn: &mut PgConnection) -> GraphqlResult<ReadRecordModel> {
+        let new_read_record = diesel::insert_into(read_record::table)
+            .values(self)
+            .get_result(conn)?;
+        Ok(new_read_record)
+    }
+    pub(crate) fn create_many(
+        read_records: &[NewReadRecord],
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<Vec<ReadRecordModel>> {
+        let new_read_records = diesel::insert_into(read_record::table)
+            .values(read_records)
+            .get_results(conn)?;
+        Ok(new_read_records)
+    }
+}
 
 #[derive(Queryable)]
 pub(crate) struct ReadRecordModel {
-    // id: i64,
-    // novel_id: i64,
-    // chapter_id: i64,
-    // read_time: OffsetDateTime,
+    id: i64,
+    novel_id: i64,
+    chapter_id: i64,
+    read_time: OffsetDateTime,
 }
 
 impl ReadRecordModel {

@@ -8,7 +8,11 @@ export default function AuthDrawerItem() {
   const logout = useAuthStore(useShallow(({ logout }) => logout));
   const t = useI18n();
   return (
-    <ListItemButton onClick={() => logout()}>
+    <ListItemButton
+      onClick={() => {
+        logout();
+      }}
+    >
       <ListItemIcon>
         <Logout />
       </ListItemIcon>

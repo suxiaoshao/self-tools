@@ -8,7 +8,11 @@ export default function useDialog({ initOpen = false }: UseDialogOptions = {}) {
   const [open, setOpen] = useState(initOpen);
   return {
     open,
-    handleClose: () => setOpen(false),
-    handleOpen: () => setOpen(true),
+    handleClose: () => {
+      setOpen(false);
+    },
+    handleOpen: () => {
+      setOpen(true);
+    },
   };
 }

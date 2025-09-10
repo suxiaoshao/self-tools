@@ -55,26 +55,31 @@ export type CollectionData =
 export interface CollectionSliceType {
   value: CollectionData;
 
-  setAllCollections(allCollection: AllCollectionItem[]): void;
+  setAllCollections: (allCollection: AllCollectionItem[]) => void;
 
-  setLoading(): void;
+  setLoading: () => void;
 
-  setError(error: Error): void;
+  setError: (error: Error) => void;
 }
 
 const getDefault = () => ({ tag: CollectionLoadingState.init }) satisfies CollectionData;
 
 export const useCollectionsStore = create<CollectionSliceType>((set) => ({
   value: getDefault(),
-  setAllCollections: (allCollection: AllCollectionItem[]) =>
+  setAllCollections: (allCollection: AllCollectionItem[]) => {
     set({
       value: {
         tag: CollectionLoadingState.state,
         value: new Map(allCollection.map((item) => [item.id, item])),
       },
-    }),
-  setLoading: () => set({ value: { tag: CollectionLoadingState.loading } }),
-  setError: (error: Error) => set({ value: { tag: CollectionLoadingState.error, value: error } }),
+    });
+  },
+  setLoading: () => {
+    set({ value: { tag: CollectionLoadingState.loading } });
+  },
+  setError: (error: Error) => {
+    set({ value: { tag: CollectionLoadingState.error, value: error } });
+  },
 }));
 
 export function useAllCollection() {

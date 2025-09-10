@@ -65,6 +65,7 @@ function CollectionMultiSelect({ onChange, value, sx, ref, ...props }: Collectio
   const [sourceRef, setSourceRef] = React.useState<HTMLDivElement | null>(null);
   useImperativeHandle<HTMLDivElement | null, HTMLDivElement | null>(ref, () => sourceRef, [sourceRef]);
   return (
+    // oxlint-disable-next-line typescript/no-misused-spread
     <Box {...props} ref={setSourceRef} sx={{ display: 'flex', alignItems: 'center', ...sx }}>
       {content}
     </Box>
@@ -118,12 +119,22 @@ function InnerCollectionSelect({ allCollections, onChange, value }: InnerCollect
   return (
     <Box sx={{ display: 'flex', gap: 1 }}>
       {selectList.map(({ path, id }) => (
-        <Chip label={path} key={id} onDelete={() => onDelete(id)} />
+        <Chip
+          label={path}
+          key={id}
+          onDelete={() => {
+            onDelete(id);
+          }}
+        />
       ))}
-      <IconButton onClick={() => setOpen(true)}>
+      <IconButton
+        onClick={() => {
+          setOpen(true);
+        }}
+      >
         <Add />
       </IconButton>
-      <Dialog PaperProps={{ sx: { maxWidth: 700 } }} open={open} onClose={handleClose}>
+      <Dialog slotProps={{ paper: { sx: { maxWidth: 700 } } }} open={open} onClose={handleClose}>
         <Box sx={{ width: 500 }} component="form" onSubmit={onSubmit}>
           <DialogTitle>{t('select_collection')}</DialogTitle>
           <Controller

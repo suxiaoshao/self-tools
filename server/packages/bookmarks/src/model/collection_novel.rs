@@ -1,8 +1,6 @@
-use std::collections::{HashMap, HashSet};
-
-use diesel::prelude::*;
-
 use crate::{errors::GraphqlResult, model::schema::collection_novel};
+use diesel::prelude::*;
+use std::collections::{HashMap, HashSet};
 
 #[derive(Queryable, Insertable)]
 #[diesel(table_name = collection_novel)]

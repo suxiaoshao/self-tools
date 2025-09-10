@@ -21,7 +21,7 @@ export interface EditProps extends Omit<BoxProps, 'onChange'> {
   /**
    * 当编辑器代码改变时触发的方法
    * */
-  onChangeCode?(newCode: string): void;
+  onChangeCode?: (newCode: string) => void;
   language?: string;
   wordWrap?: 'off' | 'on' | 'wordWrapColumn' | 'bounded';
   ref?: Ref<editor.IStandaloneCodeEditor | undefined>;

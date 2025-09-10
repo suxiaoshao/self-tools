@@ -18,7 +18,7 @@ export interface I18nType {
 
 export interface I18nSliceType {
   value: I18nType;
-  setLangSetting(settings: Pick<I18nType, 'customLang' | 'langMode'>): void;
+  setLangSetting: (settings: Pick<I18nType, 'customLang' | 'langMode'>) => void;
 }
 
 export const getLang = (data: I18nType) => {
