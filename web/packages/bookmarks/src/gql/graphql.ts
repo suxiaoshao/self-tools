@@ -44,6 +44,7 @@ export type Chapter = {
   content?: Maybe<Scalars['String']['output']>;
   createTime: Scalars['DateTime']['output'];
   id: Scalars['Int']['output'];
+  isRead: Scalars['Boolean']['output'];
   novel: Novel;
   novelId: Scalars['Int']['output'];
   site: NovelSite;
@@ -227,6 +228,7 @@ export type Novel = {
   avatar: Scalars['String']['output'];
   chapters: Array<Chapter>;
   collections: Array<Collection>;
+  comments?: Maybe<Scalars['String']['output']>;
   createTime: Scalars['DateTime']['output'];
   description: Scalars['String']['output'];
   firstChapter?: Maybe<Chapter>;
@@ -234,6 +236,7 @@ export type Novel = {
   lastChapter?: Maybe<Chapter>;
   name: Scalars['String']['output'];
   novelStatus: NovelStatus;
+  readPercentage: Scalars['Float']['output'];
   site: NovelSite;
   siteId: Scalars['String']['output'];
   tags: Array<Tag>;

@@ -40,8 +40,8 @@ impl NewNovelComment<'_> {
 #[derive(Queryable)]
 pub(crate) struct NovelCommentModel {
     _id: i64,
-    pub(crate) novel_id: i64,
-    pub(crate) author_id: i64,
+    _novel_id: i64,
+    _author_id: i64,
     pub(crate) content: String,
     pub(crate) create_time: OffsetDateTime,
     pub(crate) update_time: OffsetDateTime,
@@ -49,14 +49,13 @@ pub(crate) struct NovelCommentModel {
 
 // novel id
 impl NovelCommentModel {
-    pub(crate) fn content_by_novel_id(
+    pub(crate) fn find_by_novel_id(
         novel_id: i64,
         conn: &mut PgConnection,
-    ) -> GraphqlResult<Option<String>> {
+    ) -> GraphqlResult<Option<Self>> {
         use crate::model::schema::novel_comment;
         let comment = novel_comment::table
             .filter(novel_comment::novel_id.eq(novel_id))
-            .select(novel_comment::content)
             .first(conn);
         match comment {
             Ok(id) => Ok(Some(id)),

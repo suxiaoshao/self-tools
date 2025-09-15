@@ -332,4 +332,37 @@ impl MutationRoot {
             .get()?;
         NovelComment::update(novel_id, &content, conn)
     }
+    /// 给章节添加阅读记录
+    #[graphql(guard = "AuthGuard")]
+    async fn add_read_records_for_chapter(
+        &self,
+        context: &Context<'_>,
+        novel_id: i64,
+        chapter_ids: Vec<i64>,
+    ) -> GraphqlResult<usize> {
+        let conn = &mut context
+            .data::<PgPool>()
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
+            .get()?;
+        Novel::add_read_records(novel_id, &chapter_ids, conn)
+    }
+    /// 给章节删除阅读记录
+    #[graphql(guard = "AuthGuard")]
+    async fn delete_read_records_for_chapter(
+        &self,
+        context: &Context<'_>,
+        chapter_ids: Vec<i64>,
+    ) -> GraphqlResult<usize> {
+        let conn = &mut context
+            .data::<PgPool>()
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
+            .get()?;
+        Novel::delete_read_records(&chapter_ids, conn)
+    }
 }

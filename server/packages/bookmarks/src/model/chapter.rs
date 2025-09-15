@@ -180,6 +180,17 @@ impl ChapterModel {
             .optional()?;
         Ok(chapter)
     }
+    /// 获取某个 novel 下的所有章节 id
+    pub(crate) fn get_chapter_ids(
+        novel_id: i64,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<Vec<i64>> {
+        let chapter_ids = chapter::table
+            .filter(chapter::novel_id.eq(novel_id))
+            .select(chapter::id)
+            .load::<i64>(conn)?;
+        Ok(chapter_ids)
+    }
 }
 
 #[derive(Insertable)]

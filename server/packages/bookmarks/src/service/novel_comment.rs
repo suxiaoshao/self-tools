@@ -13,10 +13,6 @@ use crate::{
 
 #[derive(SimpleObject, Clone)]
 pub(crate) struct NovelComment {
-    #[graphql(skip)]
-    novel_id: i64,
-    #[graphql(skip)]
-    author_id: i64,
     content: String,
     pub(crate) create_time: OffsetDateTime,
     pub(crate) update_time: OffsetDateTime,
@@ -27,15 +23,11 @@ impl From<NovelCommentModel> for NovelComment {
         NovelCommentModel {
             create_time,
             update_time,
-            author_id,
             content,
-            novel_id,
             ..
         }: NovelCommentModel,
     ) -> Self {
         Self {
-            novel_id,
-            author_id,
             content,
             create_time,
             update_time,
