@@ -61,7 +61,7 @@ function CustomHead(props: TypographyProps) {
   );
 }
 
-function MyCode(props: { children: string; className?: string }) {
+function CustomCode(props: { children: string; className?: string }) {
   if (props.className) {
     return <code className={props.className}>{props.children}</code>;
   }
@@ -95,7 +95,7 @@ function MyCode(props: { children: string; className?: string }) {
   );
 }
 
-function MyPre(props: { children: string }) {
+function CustomPre(props: { children: string }) {
   return (
     <div>
       <pre className="line-numbers">{props.children}</pre>
@@ -103,7 +103,7 @@ function MyPre(props: { children: string }) {
   );
 }
 
-function MyListItem(props: { children: JSX.Element[] }) {
+function CustomListItem(props: { children: JSX.Element[] }) {
   return (
     <li>
       {props.children.map((value) =>
@@ -127,7 +127,7 @@ function MyListItem(props: { children: JSX.Element[] }) {
   );
 }
 
-function MyTable(props: { children: JSX.Element }) {
+function CustomTable(props: { children: JSX.Element }) {
   return (
     <TableContainer
       component={Paper}
@@ -141,7 +141,7 @@ function MyTable(props: { children: JSX.Element }) {
   );
 }
 
-function MyBlockquote(props: { children: JSX.Element }) {
+function CustomBlockquote(props: { children: JSX.Element }) {
   return (
     <Box
       sx={{
@@ -196,20 +196,20 @@ const option: MarkdownToJSX.Options = {
     },
     img: CustomImage,
     a: CustomLink,
-    code: MyCode,
-    pre: MyPre,
-    li: MyListItem,
-    table: MyTable,
+    code: CustomCode,
+    pre: CustomPre,
+    li: CustomListItem,
+    table: CustomTable,
     thead: TableHead,
     tr: TableRow,
     tbody: TableBody,
     td: TableCell,
     th: TableCell,
     hr: Divider,
-    blockquote: MyBlockquote,
+    blockquote: CustomBlockquote,
   },
 };
-export default function MyMarkdown({ value, ...props }: MarkdownProps) {
+export default function CustomMarkdown({ value, ...props }: MarkdownProps) {
   useEffect(() => {
     Prism.highlightAll();
   }, []);

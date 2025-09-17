@@ -5,7 +5,7 @@
  * @LastEditTime: 2024-03-28 09:57:11
  * @FilePath: /self-tools/web/packages/bookmarks/src/features/Novel/Details/index.tsx
  */
-import { Explore, KeyboardArrowLeft, Refresh } from '@mui/icons-material';
+import { Edit, Explore, KeyboardArrowLeft, Refresh } from '@mui/icons-material';
 import { Avatar, Box, Card, CardContent, CardHeader, IconButton, Tooltip, Link, Skeleton, Chip } from '@mui/material';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 import { useI18n } from 'i18n';
@@ -23,6 +23,7 @@ import useTitle from '@bookmarks/hooks/useTitle';
 import { getLabelKeyBySite } from '@bookmarks/utils/novelSite';
 import { useMutation, useQuery } from '@apollo/client/react';
 import { graphql } from '@bookmarks/gql';
+import CustomMarkdown from '@collections/components/Markdown';
 
 const GetNovel = graphql(`
   query getNovel($id: Int!) {
@@ -44,6 +45,7 @@ const GetNovel = graphql(`
         url
         wordCount
         time
+        isRead
       }
       author {
         avatar
@@ -70,6 +72,9 @@ const GetNovel = graphql(`
         id
         description
         path
+      }
+      comments {
+        content
       }
     }
   }
@@ -171,7 +176,7 @@ export default function NovelDetails() {
                       ))}
                     </Box>
                   )),
-                span: 3,
+                span: 2,
               },
               {
                 label: t('collections'),
@@ -195,12 +200,12 @@ export default function NovelDetails() {
                     <AddCollection novelId={data.id} refetch={refetch} />
                   </Box>
                 ),
-                span: 3,
+                span: 4,
               },
               {
                 label: t('description'),
                 value: data.description,
-                span: 3,
+                span: 4,
               },
             ] satisfies DetailsItem[],
         )
@@ -208,8 +213,8 @@ export default function NovelDetails() {
     [data, t, deleteCollectionForNovel, navigate, refetch],
   );
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', p: 2, gap: 2 }}>
-      <Box sx={{ display: 'flex', width: '100%' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
+      <Box sx={{ display: 'flex', width: '100%', pl: 2, pr: 2 }}>
         <IconButton onClick={() => navigate(-1)}>
           <KeyboardArrowLeft />
         </IconButton>
@@ -218,43 +223,62 @@ export default function NovelDetails() {
           <Refresh />
         </IconButton>
       </Box>
-      {data?.getNovel && (
-        <>
-          <Card>
-            <CardHeader
-              avatar={<Avatar src={getImageUrl(data.getNovel.avatar)} />}
-              title={data.getNovel.name}
-              subheader={data.getNovel.author.name}
-              action={
-                <>
-                  <Tooltip title={t('update_by_crawler')}>
-                    <IconButton disabled={updateLoading} onClick={handleUpdateNovel}>
-                      <CloudDownloadIcon />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title={t('go_to_source_site')}>
-                    <IconButton onClick={goToSourceSite}>
-                      <Explore />
-                    </IconButton>
-                  </Tooltip>
-                </>
-              }
-            />
-            <CardContent>
-              <Details items={items} />
-            </CardContent>
-          </Card>
-          <Chapters chapters={data.getNovel.chapters} />
-        </>
-      )}
-      {loading && (
-        <Card>
-          <Skeleton variant="text" sx={{ fontSize: '1rem' }} />
-          <Skeleton variant="circular" width={40} height={40} />
-          <Skeleton variant="rectangular" width={210} height={60} />
-          <Skeleton variant="rounded" width={210} height={60} />
-        </Card>
-      )}
+      <Box sx={{ flex: '1 1 0', overflow: 'auto', p: 2 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {data?.getNovel && (
+            <>
+              <Card>
+                <CardHeader
+                  avatar={<Avatar src={getImageUrl(data.getNovel.avatar)} />}
+                  title={data.getNovel.name}
+                  subheader={data.getNovel.author.name}
+                  action={
+                    <>
+                      <Tooltip title={t('update_by_crawler')}>
+                        <IconButton disabled={updateLoading} onClick={handleUpdateNovel}>
+                          <CloudDownloadIcon />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title={t('go_to_source_site')}>
+                        <IconButton onClick={goToSourceSite}>
+                          <Explore />
+                        </IconButton>
+                      </Tooltip>
+                    </>
+                  }
+                />
+                <CardContent>
+                  <Details items={items} sx={{ gap: 1 }} fullSpan={4} />
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader
+                  title={t('comment')}
+                  action={
+                    <Tooltip title={t('edit')}>
+                      <IconButton>
+                        <Edit />
+                      </IconButton>
+                    </Tooltip>
+                  }
+                />
+                <CardContent>
+                  <CustomMarkdown value={data.getNovel.comments?.content || '-'} />
+                </CardContent>
+              </Card>
+              <Chapters chapters={data.getNovel.chapters} />
+            </>
+          )}
+          {loading && (
+            <Card>
+              <Skeleton variant="text" sx={{ fontSize: '1rem' }} />
+              <Skeleton variant="circular" width={40} height={40} />
+              <Skeleton variant="rectangular" width={210} height={60} />
+              <Skeleton variant="rounded" width={210} height={60} />
+            </Card>
+          )}
+        </Box>
+      </Box>
     </Box>
   );
 }

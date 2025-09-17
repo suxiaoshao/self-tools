@@ -4,5 +4,5 @@ export interface DetailsItem {
   key?: Key;
   label: string;
   value: ReactNode;
-  span?: 1 | 2 | 3;
+  span?: 1 | 2 | 3 | 4;
 }

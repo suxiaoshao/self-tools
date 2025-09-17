@@ -11,6 +11,7 @@ import {
   useCustomTable,
 } from 'custom-table';
 import { format } from 'time';
+import { match } from 'ts-pattern';
 
 type Data = GetNovelQuery['getNovel']['chapters'][0];
 
@@ -46,6 +47,19 @@ export default function Chapters({ chapters, ...props }: ChaptersProps) {
           id: 'updateTime',
           cell: (context) => context.getValue(),
         }),
+        columnHelper.accessor(
+          ({ isRead }) =>
+            match(isRead)
+              .with(true, () => t('is_read_yes'))
+              .with(false, () => t('is_read_no'))
+              .exhaustive(),
+
+          {
+            header: t('is_read'),
+            id: 'isRead',
+            cell: (context) => context.getValue(),
+          },
+        ),
       ] as CustomColumnDefArray<Data>,
     [t],
   );
@@ -54,5 +68,5 @@ export default function Chapters({ chapters, ...props }: ChaptersProps) {
     [columns, chapters],
   );
   const tableInstance = useCustomTable(tableOptions);
-  return <CustomTable tableInstance={tableInstance} {...props} />;
+  return <CustomTable sx={{ height: '600px', flex: null, overflow: null }} tableInstance={tableInstance} {...props} />;
 }

@@ -133,6 +133,8 @@ export type DraftTagInfo = {
 export type MutationRoot = {
   __typename?: 'MutationRoot';
   addCollectionForNovel: Novel;
+  addCommentForNovel: NovelComment;
+  addReadRecordsForChapter: Scalars['Int']['output'];
   createAuthor: Author;
   createCollection: Collection;
   createNovel: Novel;
@@ -140,17 +142,30 @@ export type MutationRoot = {
   deleteAuthor: Author;
   deleteCollection: Scalars['Int']['output'];
   deleteCollectionForNovel: Novel;
+  deleteCommentForNovel: NovelComment;
   deleteNovel: Novel;
+  deleteReadRecordsForChapter: Scalars['Int']['output'];
   deleteTag: Tag;
   saveDraftAuthor: Author;
   saveDraftNovel: Novel;
   updateAuthorByCrawler: Author;
   updateCollection: Collection;
+  updateCommentForNovel: NovelComment;
   updateNovelByCrawler: Novel;
 };
 
 export type MutationRootAddCollectionForNovelArgs = {
   collectionId: Scalars['Int']['input'];
+  novelId: Scalars['Int']['input'];
+};
+
+export type MutationRootAddCommentForNovelArgs = {
+  content: Scalars['String']['input'];
+  novelId: Scalars['Int']['input'];
+};
+
+export type MutationRootAddReadRecordsForChapterArgs = {
+  chapterIds: Array<Scalars['Int']['input']>;
   novelId: Scalars['Int']['input'];
 };
 
@@ -191,8 +206,16 @@ export type MutationRootDeleteCollectionForNovelArgs = {
   novelId: Scalars['Int']['input'];
 };
 
+export type MutationRootDeleteCommentForNovelArgs = {
+  novelId: Scalars['Int']['input'];
+};
+
 export type MutationRootDeleteNovelArgs = {
   id: Scalars['Int']['input'];
+};
+
+export type MutationRootDeleteReadRecordsForChapterArgs = {
+  chapterIds: Array<Scalars['Int']['input']>;
 };
 
 export type MutationRootDeleteTagArgs = {
@@ -218,6 +241,11 @@ export type MutationRootUpdateCollectionArgs = {
   parentId?: InputMaybe<Scalars['Int']['input']>;
 };
 
+export type MutationRootUpdateCommentForNovelArgs = {
+  content: Scalars['String']['input'];
+  novelId: Scalars['Int']['input'];
+};
+
 export type MutationRootUpdateNovelByCrawlerArgs = {
   novelId: Scalars['Int']['input'];
 };
@@ -228,7 +256,7 @@ export type Novel = {
   avatar: Scalars['String']['output'];
   chapters: Array<Chapter>;
   collections: Array<Collection>;
-  comments?: Maybe<Scalars['String']['output']>;
+  comments?: Maybe<NovelComment>;
   createTime: Scalars['DateTime']['output'];
   description: Scalars['String']['output'];
   firstChapter?: Maybe<Chapter>;
@@ -243,6 +271,13 @@ export type Novel = {
   updateTime: Scalars['DateTime']['output'];
   url: Scalars['String']['output'];
   wordCount: Scalars['BigDecimal']['output'];
+};
+
+export type NovelComment = {
+  __typename?: 'NovelComment';
+  content: Scalars['String']['output'];
+  createTime: Scalars['DateTime']['output'];
+  updateTime: Scalars['DateTime']['output'];
 };
 
 export type NovelList = {
@@ -664,6 +699,7 @@ export type GetNovelQuery = {
       url: string;
       wordCount: number;
       time: any;
+      isRead: boolean;
     }>;
     author: { __typename?: 'Author'; avatar: string; description: string; id: number; name: string; site: NovelSite };
     lastChapter?: { __typename?: 'Chapter'; time: any } | null;
@@ -676,6 +712,7 @@ export type GetNovelQuery = {
       description?: string | null;
       path: string;
     }>;
+    comments?: { __typename?: 'NovelComment'; content: string } | null;
   };
 };
 
@@ -1713,6 +1750,7 @@ export const GetNovelDocument = {
                       { kind: 'Field', name: { kind: 'Name', value: 'url' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'wordCount' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'time' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'isRead' } },
                     ],
                   },
                 },
@@ -1771,6 +1809,14 @@ export const GetNovelDocument = {
                       { kind: 'Field', name: { kind: 'Name', value: 'description' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'path' } },
                     ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'comments' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [{ kind: 'Field', name: { kind: 'Name', value: 'content' } }],
                   },
                 },
               ],
