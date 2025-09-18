@@ -92,10 +92,8 @@ export default function Edit({ onChangeCode, code, language, wordWrap, ref, ...p
    * */
   useEffect(() => {
     const id = edit?.getModel()?.onDidChangeContent(() => {
-      const content = edit?.getValue();
-      if (content) {
-        onChangeCode?.(content);
-      }
+      const content = edit.getValue();
+      onChangeCode?.(content);
     });
     return () => {
       id?.dispose();

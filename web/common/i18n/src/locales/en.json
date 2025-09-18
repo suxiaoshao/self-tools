@@ -103,5 +103,7 @@
   "is_read": "Whether Read",
   "is_read_yes": "Readed",
   "is_read_no": "No",
-  "comment": "Comment"
+  "comment": "Comment",
+  "add_comment": "Add Comment",
+  "update_comment": "Update Comment"
 }

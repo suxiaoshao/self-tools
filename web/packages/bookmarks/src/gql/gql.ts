@@ -30,9 +30,12 @@ type Documents = {
   '\n  mutation createCollection($parentId: Int, $name: String!, $description: String) {\n    createCollection(parentId: $parentId, name: $name, description: $description) {\n      path\n    }\n  }\n': typeof types.CreateCollectionDocument;
   '\n  query getCollections($parentId: Int, $pagination: Pagination!) {\n    getCollections(parentId: $parentId, pagination: $pagination) {\n      data {\n        name\n        id\n        path\n        createTime\n        updateTime\n        description\n      }\n      total\n    }\n  }\n': typeof types.GetCollectionsDocument;
   '\n  mutation addCollectionForNovel($novelId: Int!, $collectionId: Int!) {\n    addCollectionForNovel(collectionId: $collectionId, novelId: $novelId) {\n      id\n    }\n  }\n': typeof types.AddCollectionForNovelDocument;
+  '\n  mutation CreateComment($novelId: Int!, $content: String!) {\n    addCommentForNovel(novelId: $novelId, content: $content) {\n      __typename\n    }\n  }\n': typeof types.CreateCommentDocument;
+  '\n  mutation UpdateComment($novelId: Int!, $content: String!) {\n    updateCommentForNovel(novelId: $novelId, content: $content) {\n      __typename\n    }\n  }\n': typeof types.UpdateCommentDocument;
   '\n  query getNovel($id: Int!) {\n    getNovel(id: $id) {\n      id\n      name\n      avatar\n      description\n      createTime\n      updateTime\n      description\n      novelStatus\n      url\n      chapters {\n        id\n        title\n        createTime\n        updateTime\n        url\n        wordCount\n        time\n        isRead\n      }\n      author {\n        avatar\n        description\n        id\n        name\n        site\n      }\n      lastChapter {\n        time\n      }\n      firstChapter {\n        time\n      }\n      wordCount\n      tags {\n        url\n        name\n        id\n      }\n      site\n      collections {\n        name\n        id\n        description\n        path\n      }\n      comments {\n        content\n      }\n    }\n  }\n': typeof types.GetNovelDocument;
   '\n  mutation deleteCollectionForNovel($novelId: Int!, $collectionId: Int!) {\n    deleteCollectionForNovel(collectionId: $collectionId, novelId: $novelId) {\n      id\n    }\n  }\n': typeof types.DeleteCollectionForNovelDocument;
   '\n  mutation updateNovelByCrawler($novelId: Int!) {\n    updateNovelByCrawler(novelId: $novelId) {\n      id\n    }\n  }\n': typeof types.UpdateNovelByCrawlerDocument;
+  '\n  mutation deleteCommentForNovel($novelId: Int!) {\n    deleteCommentForNovel(novelId: $novelId) {\n      __typename\n    }\n  }\n': typeof types.DeleteCommentForNovelDocument;
   '\n  query fetchNovel($id: String!, $novelSite: NovelSite!) {\n    fetchNovel(id: $id, novelSite: $novelSite) {\n      author {\n        description\n        image\n        name\n        url\n        id\n      }\n      chapters {\n        title\n        url\n        site\n        time\n        wordCount\n        id\n      }\n      tags {\n        id\n        name\n        url\n      }\n      description\n      image\n      name\n      url\n      site\n      status\n      id\n    }\n  }\n': typeof types.FetchNovelDocument;
   '\n  mutation saveDraftNovel($novel: SaveDraftNovel!) {\n    saveDraftNovel(novel: $novel) {\n      id\n    }\n  }\n': typeof types.SaveDraftNovelDocument;
   '\n  mutation createNovel($data: CreateNovelInput!) {\n    createNovel(data: $data) {\n      id\n    }\n  }\n': typeof types.CreateNovelDocument;
@@ -73,12 +76,18 @@ const documents: Documents = {
     types.GetCollectionsDocument,
   '\n  mutation addCollectionForNovel($novelId: Int!, $collectionId: Int!) {\n    addCollectionForNovel(collectionId: $collectionId, novelId: $novelId) {\n      id\n    }\n  }\n':
     types.AddCollectionForNovelDocument,
+  '\n  mutation CreateComment($novelId: Int!, $content: String!) {\n    addCommentForNovel(novelId: $novelId, content: $content) {\n      __typename\n    }\n  }\n':
+    types.CreateCommentDocument,
+  '\n  mutation UpdateComment($novelId: Int!, $content: String!) {\n    updateCommentForNovel(novelId: $novelId, content: $content) {\n      __typename\n    }\n  }\n':
+    types.UpdateCommentDocument,
   '\n  query getNovel($id: Int!) {\n    getNovel(id: $id) {\n      id\n      name\n      avatar\n      description\n      createTime\n      updateTime\n      description\n      novelStatus\n      url\n      chapters {\n        id\n        title\n        createTime\n        updateTime\n        url\n        wordCount\n        time\n        isRead\n      }\n      author {\n        avatar\n        description\n        id\n        name\n        site\n      }\n      lastChapter {\n        time\n      }\n      firstChapter {\n        time\n      }\n      wordCount\n      tags {\n        url\n        name\n        id\n      }\n      site\n      collections {\n        name\n        id\n        description\n        path\n      }\n      comments {\n        content\n      }\n    }\n  }\n':
     types.GetNovelDocument,
   '\n  mutation deleteCollectionForNovel($novelId: Int!, $collectionId: Int!) {\n    deleteCollectionForNovel(collectionId: $collectionId, novelId: $novelId) {\n      id\n    }\n  }\n':
     types.DeleteCollectionForNovelDocument,
   '\n  mutation updateNovelByCrawler($novelId: Int!) {\n    updateNovelByCrawler(novelId: $novelId) {\n      id\n    }\n  }\n':
     types.UpdateNovelByCrawlerDocument,
+  '\n  mutation deleteCommentForNovel($novelId: Int!) {\n    deleteCommentForNovel(novelId: $novelId) {\n      __typename\n    }\n  }\n':
+    types.DeleteCommentForNovelDocument,
   '\n  query fetchNovel($id: String!, $novelSite: NovelSite!) {\n    fetchNovel(id: $id, novelSite: $novelSite) {\n      author {\n        description\n        image\n        name\n        url\n        id\n      }\n      chapters {\n        title\n        url\n        site\n        time\n        wordCount\n        id\n      }\n      tags {\n        id\n        name\n        url\n      }\n      description\n      image\n      name\n      url\n      site\n      status\n      id\n    }\n  }\n':
     types.FetchNovelDocument,
   '\n  mutation saveDraftNovel($novel: SaveDraftNovel!) {\n    saveDraftNovel(novel: $novel) {\n      id\n    }\n  }\n':
@@ -210,6 +219,18 @@ export function graphql(
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(
+  source: '\n  mutation CreateComment($novelId: Int!, $content: String!) {\n    addCommentForNovel(novelId: $novelId, content: $content) {\n      __typename\n    }\n  }\n',
+): (typeof documents)['\n  mutation CreateComment($novelId: Int!, $content: String!) {\n    addCommentForNovel(novelId: $novelId, content: $content) {\n      __typename\n    }\n  }\n'];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(
+  source: '\n  mutation UpdateComment($novelId: Int!, $content: String!) {\n    updateCommentForNovel(novelId: $novelId, content: $content) {\n      __typename\n    }\n  }\n',
+): (typeof documents)['\n  mutation UpdateComment($novelId: Int!, $content: String!) {\n    updateCommentForNovel(novelId: $novelId, content: $content) {\n      __typename\n    }\n  }\n'];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(
   source: '\n  query getNovel($id: Int!) {\n    getNovel(id: $id) {\n      id\n      name\n      avatar\n      description\n      createTime\n      updateTime\n      description\n      novelStatus\n      url\n      chapters {\n        id\n        title\n        createTime\n        updateTime\n        url\n        wordCount\n        time\n        isRead\n      }\n      author {\n        avatar\n        description\n        id\n        name\n        site\n      }\n      lastChapter {\n        time\n      }\n      firstChapter {\n        time\n      }\n      wordCount\n      tags {\n        url\n        name\n        id\n      }\n      site\n      collections {\n        name\n        id\n        description\n        path\n      }\n      comments {\n        content\n      }\n    }\n  }\n',
 ): (typeof documents)['\n  query getNovel($id: Int!) {\n    getNovel(id: $id) {\n      id\n      name\n      avatar\n      description\n      createTime\n      updateTime\n      description\n      novelStatus\n      url\n      chapters {\n        id\n        title\n        createTime\n        updateTime\n        url\n        wordCount\n        time\n        isRead\n      }\n      author {\n        avatar\n        description\n        id\n        name\n        site\n      }\n      lastChapter {\n        time\n      }\n      firstChapter {\n        time\n      }\n      wordCount\n      tags {\n        url\n        name\n        id\n      }\n      site\n      collections {\n        name\n        id\n        description\n        path\n      }\n      comments {\n        content\n      }\n    }\n  }\n'];
 /**
@@ -224,6 +245,12 @@ export function graphql(
 export function graphql(
   source: '\n  mutation updateNovelByCrawler($novelId: Int!) {\n    updateNovelByCrawler(novelId: $novelId) {\n      id\n    }\n  }\n',
 ): (typeof documents)['\n  mutation updateNovelByCrawler($novelId: Int!) {\n    updateNovelByCrawler(novelId: $novelId) {\n      id\n    }\n  }\n'];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(
+  source: '\n  mutation deleteCommentForNovel($novelId: Int!) {\n    deleteCommentForNovel(novelId: $novelId) {\n      __typename\n    }\n  }\n',
+): (typeof documents)['\n  mutation deleteCommentForNovel($novelId: Int!) {\n    deleteCommentForNovel(novelId: $novelId) {\n      __typename\n    }\n  }\n'];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

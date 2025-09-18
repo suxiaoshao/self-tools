@@ -5,7 +5,7 @@
  * @LastEditTime: 2024-03-28 09:57:11
  * @FilePath: /self-tools/web/packages/bookmarks/src/features/Novel/Details/index.tsx
  */
-import { Edit, Explore, KeyboardArrowLeft, Refresh } from '@mui/icons-material';
+import { Delete, Explore, KeyboardArrowLeft, Refresh } from '@mui/icons-material';
 import { Avatar, Box, Card, CardContent, CardHeader, IconButton, Tooltip, Link, Skeleton, Chip } from '@mui/material';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 import { useI18n } from 'i18n';
@@ -24,6 +24,8 @@ import { getLabelKeyBySite } from '@bookmarks/utils/novelSite';
 import { useMutation, useQuery } from '@apollo/client/react';
 import { graphql } from '@bookmarks/gql';
 import CustomMarkdown from '@collections/components/Markdown';
+import CommentEdit from './components/CommentEdit';
+import { NetworkStatus } from '@apollo/client';
 
 const GetNovel = graphql(`
   query getNovel($id: Int!) {
@@ -95,10 +97,20 @@ const UpdateNovelByCrawler = graphql(`
     }
   }
 `);
+const DeleteCommentForNovel = graphql(`
+  mutation deleteCommentForNovel($novelId: Int!) {
+    deleteCommentForNovel(novelId: $novelId) {
+      __typename
+    }
+  }
+`);
 
 export default function NovelDetails() {
+  // fetch data
   const { novelId } = useParams();
-  const { data, loading, refetch } = useQuery(GetNovel, { variables: { id: Number(novelId) } });
+  const { data, loading, refetch, networkStatus } = useQuery(GetNovel, { variables: { id: Number(novelId) } });
+
+  // title
   const t = useI18n();
   useTitle(t('novel_detail', { novelName: data?.getNovel?.name }));
   const navigate = useNavigate();
@@ -212,6 +224,11 @@ export default function NovelDetails() {
         .otherwise(() => []),
     [data, t, deleteCollectionForNovel, navigate, refetch],
   );
+  const [deleteComment] = useMutation(DeleteCommentForNovel, { variables: { novelId: data?.getNovel?.id } });
+  const handleDeleteComment = async () => {
+    await deleteComment({ variables: { novelId: data?.getNovel?.id } });
+    refetch();
+  };
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
       <Box sx={{ display: 'flex', width: '100%', pl: 2, pr: 2 }}>
@@ -225,7 +242,7 @@ export default function NovelDetails() {
       </Box>
       <Box sx={{ flex: '1 1 0', overflow: 'auto', p: 2 }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {data?.getNovel && (
+          {data?.getNovel && networkStatus === NetworkStatus.ready && (
             <>
               <Card>
                 <CardHeader
@@ -255,11 +272,23 @@ export default function NovelDetails() {
                 <CardHeader
                   title={t('comment')}
                   action={
-                    <Tooltip title={t('edit')}>
-                      <IconButton>
-                        <Edit />
-                      </IconButton>
-                    </Tooltip>
+                    <>
+                      <CommentEdit
+                        refetch={refetch}
+                        novelId={data.getNovel.id}
+                        mode={match(data.getNovel.comments?.content)
+                          .with(P.nonNullable, () => 'update' as const)
+                          .otherwise(() => 'create' as const)}
+                        initContent={data.getNovel.comments?.content}
+                      />
+                      {data.getNovel.comments?.content && (
+                        <Tooltip title={t('delete')}>
+                          <IconButton onClick={handleDeleteComment}>
+                            <Delete />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                    </>
                   }
                 />
                 <CardContent>
@@ -269,7 +298,7 @@ export default function NovelDetails() {
               <Chapters chapters={data.getNovel.chapters} />
             </>
           )}
-          {loading && (
+          {(loading || networkStatus === NetworkStatus.refetch) && (
             <Card>
               <Skeleton variant="text" sx={{ fontSize: '1rem' }} />
               <Skeleton variant="circular" width={40} height={40} />

@@ -103,5 +103,7 @@
   "is_read": "是否已读",
   "is_read_yes": "已读",
   "is_read_no": "未读",
-  "comment": "评论"
+  "comment": "评论",
+  "add_comment": "添加评论",
+  "update_comment": "更新评论"
 }

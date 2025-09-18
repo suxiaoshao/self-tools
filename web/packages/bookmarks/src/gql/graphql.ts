@@ -672,6 +672,23 @@ export type AddCollectionForNovelMutation = {
   addCollectionForNovel: { __typename?: 'Novel'; id: number };
 };
 
+export type CreateCommentMutationVariables = Exact<{
+  novelId: Scalars['Int']['input'];
+  content: Scalars['String']['input'];
+}>;
+
+export type CreateCommentMutation = { __typename?: 'MutationRoot'; addCommentForNovel: { __typename: 'NovelComment' } };
+
+export type UpdateCommentMutationVariables = Exact<{
+  novelId: Scalars['Int']['input'];
+  content: Scalars['String']['input'];
+}>;
+
+export type UpdateCommentMutation = {
+  __typename?: 'MutationRoot';
+  updateCommentForNovel: { __typename: 'NovelComment' };
+};
+
 export type GetNovelQueryVariables = Exact<{
   id: Scalars['Int']['input'];
 }>;
@@ -733,6 +750,15 @@ export type UpdateNovelByCrawlerMutationVariables = Exact<{
 export type UpdateNovelByCrawlerMutation = {
   __typename?: 'MutationRoot';
   updateNovelByCrawler: { __typename?: 'Novel'; id: number };
+};
+
+export type DeleteCommentForNovelMutationVariables = Exact<{
+  novelId: Scalars['Int']['input'];
+}>;
+
+export type DeleteCommentForNovelMutation = {
+  __typename?: 'MutationRoot';
+  deleteCommentForNovel: { __typename: 'NovelComment' };
 };
 
 export type FetchNovelQueryVariables = Exact<{
@@ -1698,6 +1724,100 @@ export const AddCollectionForNovelDocument = {
     },
   ],
 } as unknown as DocumentNode<AddCollectionForNovelMutation, AddCollectionForNovelMutationVariables>;
+export const CreateCommentDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'CreateComment' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'novelId' } },
+          type: { kind: 'NonNullType', type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'content' } },
+          type: { kind: 'NonNullType', type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'addCommentForNovel' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'novelId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'novelId' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'content' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'content' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [{ kind: 'Field', name: { kind: 'Name', value: '__typename' } }],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<CreateCommentMutation, CreateCommentMutationVariables>;
+export const UpdateCommentDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'UpdateComment' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'novelId' } },
+          type: { kind: 'NonNullType', type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'content' } },
+          type: { kind: 'NonNullType', type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'updateCommentForNovel' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'novelId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'novelId' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'content' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'content' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [{ kind: 'Field', name: { kind: 'Name', value: '__typename' } }],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<UpdateCommentMutation, UpdateCommentMutationVariables>;
 export const GetNovelDocument = {
   kind: 'Document',
   definitions: [
@@ -1911,6 +2031,43 @@ export const UpdateNovelByCrawlerDocument = {
     },
   ],
 } as unknown as DocumentNode<UpdateNovelByCrawlerMutation, UpdateNovelByCrawlerMutationVariables>;
+export const DeleteCommentForNovelDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'deleteCommentForNovel' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'novelId' } },
+          type: { kind: 'NonNullType', type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'deleteCommentForNovel' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'novelId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'novelId' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [{ kind: 'Field', name: { kind: 'Name', value: '__typename' } }],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<DeleteCommentForNovelMutation, DeleteCommentForNovelMutationVariables>;
 export const FetchNovelDocument = {
   kind: 'Document',
   definitions: [
