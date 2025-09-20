@@ -11,17 +11,18 @@ import {
   useCustomTable,
 } from 'custom-table';
 import { format } from 'time';
-import { match } from 'ts-pattern';
+import ChapterTableAction from './ChapterTableAction';
 
 type Data = GetNovelQuery['getNovel']['chapters'][0];
 
 export interface ChaptersProps extends Omit<CustomTableProps<Data>, 'tableInstance'> {
   chapters: Data[];
+  refetch: () => void;
 }
 
 const columnHelper = createCustomColumnHelper<Data>();
 
-export default function Chapters({ chapters, ...props }: ChaptersProps) {
+export default function Chapters({ chapters, refetch, ...props }: ChaptersProps) {
   const t = useI18n();
   const columns = useMemo<CustomColumnDefArray<Data>>(
     () =>
@@ -48,11 +49,9 @@ export default function Chapters({ chapters, ...props }: ChaptersProps) {
           cell: (context) => context.getValue(),
         }),
         columnHelper.accessor(
-          ({ isRead }) =>
-            match(isRead)
-              .with(true, () => t('is_read_yes'))
-              .with(false, () => t('is_read_no'))
-              .exhaustive(),
+          ({ isRead, id, novelId }) => (
+            <ChapterTableAction isRead={isRead} chapterId={id} novelId={novelId} refetch={refetch} />
+          ),
 
           {
             header: t('is_read'),
@@ -61,7 +60,7 @@ export default function Chapters({ chapters, ...props }: ChaptersProps) {
           },
         ),
       ] as CustomColumnDefArray<Data>,
-    [t],
+    [t, refetch],
   );
   const tableOptions = useMemo<CustomTableOptions<Data>>(
     () => ({ columns, data: chapters, getCoreRowModel: getCoreRowModel() }),

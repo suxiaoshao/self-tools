@@ -10,3 +10,9 @@ import './index.css';
 import monankai from 'monaco-themes/themes/Dracula.json';
 
 editor.defineTheme('monankai', monankai as editor.IStandaloneThemeData);
+
+self.MonacoEnvironment = {
+  getWorker: function getWorker() {
+    return new Worker(new URL('monaco-editor/esm/vs/editor/editor.worker', import.meta.url));
+  },
+};

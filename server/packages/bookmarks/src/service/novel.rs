@@ -408,8 +408,8 @@ impl Novel {
             .into_iter()
             .collect::<HashSet<_>>();
         // 判断是否存在不存在的 chapter_id
-        let difference = all_chapter_ids
-            .difference(&chapter_sets)
+        let difference = chapter_sets
+            .difference(&all_chapter_ids)
             .copied()
             .collect::<Vec<_>>();
         if !difference.is_empty() {
