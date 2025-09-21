@@ -730,7 +730,6 @@ export type GetNovelQuery = {
       wordCount: number;
       time: any;
       isRead: boolean;
-      novelId: number;
     }>;
     author: { __typename?: 'Author'; avatar: string; description: string; id: number; name: string; site: NovelSite };
     lastChapter?: { __typename?: 'Chapter'; time: any } | null;
@@ -1973,7 +1972,6 @@ export const GetNovelDocument = {
                       { kind: 'Field', name: { kind: 'Name', value: 'wordCount' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'time' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'isRead' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'novelId' } },
                     ],
                   },
                 },

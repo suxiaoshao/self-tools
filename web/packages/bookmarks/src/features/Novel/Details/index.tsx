@@ -44,7 +44,6 @@ const GetNovel = graphql(`
         wordCount
         time
         isRead
-        novelId
       }
       author {
         avatar
@@ -189,7 +188,7 @@ export default function NovelDetails() {
                   <CustomMarkdown value={data.getNovel.comments?.content || '-'} />
                 </CardContent>
               </Card>
-              <Chapters chapters={data.getNovel.chapters} refetch={refetch} />
+              <Chapters chapters={data.getNovel.chapters} refetch={refetch} novelId={data.getNovel.id} />
             </>
           )}
           {loading && (

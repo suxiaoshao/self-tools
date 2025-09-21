@@ -3,13 +3,13 @@ import { graphql } from '@bookmarks/gql';
 import { useMutation } from '@apollo/client/react';
 import { Switch } from '@mui/material';
 
-const AddReadRecord = graphql(`
+export const AddReadRecord = graphql(`
   mutation addReadRecord($novelId: Int!, $chapterIds: [Int!]!) {
     addReadRecordsForChapter(novelId: $novelId, chapterIds: $chapterIds)
   }
 `);
 
-const DeleteReadRecord = graphql(`
+export const DeleteReadRecord = graphql(`
   mutation deleteReadRecord($chapterIds: [Int!]!) {
     deleteReadRecordsForChapter(chapterIds: $chapterIds)
   }

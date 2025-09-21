@@ -105,5 +105,8 @@
   "is_read_no": "No",
   "comment": "Comment",
   "add_comment": "Add Comment",
-  "update_comment": "Update Comment"
+  "update_comment": "Update Comment",
+  "batch_update": "Batch Update",
+  "select_all": "Select All",
+  "select_none": "Select None"
 }
