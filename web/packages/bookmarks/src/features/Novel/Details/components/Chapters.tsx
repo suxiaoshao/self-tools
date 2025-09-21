@@ -4,23 +4,26 @@ import { useI18n } from 'i18n';
 import {
   type CustomColumnDefArray,
   CustomTable,
-  type CustomTableOptions,
   type CustomTableProps,
   createCustomColumnHelper,
   getCoreRowModel,
   useCustomTable,
 } from 'custom-table';
 import { format } from 'time';
+import ChapterTableAction from './ChapterTableAction';
+import ChapterBatchUpdate from './ChapterBatchUpdate';
 
 type Data = GetNovelQuery['getNovel']['chapters'][0];
 
 export interface ChaptersProps extends Omit<CustomTableProps<Data>, 'tableInstance'> {
   chapters: Data[];
+  refetch: () => void;
+  novelId: number;
 }
 
 const columnHelper = createCustomColumnHelper<Data>();
 
-export default function Chapters({ chapters, ...props }: ChaptersProps) {
+export default function Chapters({ chapters, refetch, novelId, ...props }: ChaptersProps) {
   const t = useI18n();
   const columns = useMemo<CustomColumnDefArray<Data>>(
     () =>
@@ -46,13 +49,18 @@ export default function Chapters({ chapters, ...props }: ChaptersProps) {
           id: 'updateTime',
           cell: (context) => context.getValue(),
         }),
+        columnHelper.accessor(
+          ({ isRead, id }) => <ChapterTableAction isRead={isRead} chapterId={id} novelId={novelId} refetch={refetch} />,
+
+          {
+            header: () => <ChapterBatchUpdate chapters={chapters} novelId={novelId} refetch={refetch} />,
+            id: 'isRead',
+            cell: (context) => context.getValue(),
+          },
+        ),
       ] as CustomColumnDefArray<Data>,
-    [t],
+    [t, refetch, chapters, novelId],
   );
-  const tableOptions = useMemo<CustomTableOptions<Data>>(
-    () => ({ columns, data: chapters, getCoreRowModel: getCoreRowModel() }),
-    [columns, chapters],
-  );
-  const tableInstance = useCustomTable(tableOptions);
-  return <CustomTable tableInstance={tableInstance} {...props} />;
+  const tableInstance = useCustomTable({ columns, data: chapters, getCoreRowModel: getCoreRowModel() });
+  return <CustomTable sx={{ height: '600px', flex: null, overflow: null }} tableInstance={tableInstance} {...props} />;
 }

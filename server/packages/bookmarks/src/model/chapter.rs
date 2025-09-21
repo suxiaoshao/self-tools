@@ -5,7 +5,13 @@
  * @LastEditTime: 2024-05-25 17:24:18
  * @FilePath: /self-tools/server/packages/bookmarks/src/model/chapter.rs
  */
+use super::{
+    novel::NovelModel,
+    schema::{chapter, custom_type::NovelSite, read_record},
+};
+use crate::errors::GraphqlResult;
 use diesel::{
+    dsl::exists,
     pg::Pg,
     prelude::*,
     query_builder::{QueryFragment, QueryId},
@@ -14,12 +20,6 @@ use diesel::{
 use novel_crawler::{AuthorFn, ChapterFn};
 use std::collections::{HashMap, HashSet};
 use time::OffsetDateTime;
-
-use super::{
-    novel::NovelModel,
-    schema::{chapter, custom_type::NovelSite},
-};
-use crate::errors::GraphqlResult;
 
 #[derive(Queryable)]
 pub(crate) struct ChapterModel {
@@ -34,6 +34,8 @@ pub(crate) struct ChapterModel {
     pub(crate) author_id: i64,
     pub(crate) create_time: OffsetDateTime,
     pub(crate) update_time: OffsetDateTime,
+    // 是否已读
+    pub(crate) is_read: bool,
 }
 
 /// 小说章节
@@ -46,6 +48,21 @@ impl ChapterModel {
         let chapters = chapter::table
             .filter(chapter::novel_id.eq(novel_id))
             .order(chapter::time.asc())
+            .select((
+                chapter::id,
+                chapter::title,
+                chapter::site,
+                chapter::site_id,
+                chapter::content,
+                chapter::time,
+                chapter::word_count,
+                chapter::novel_id,
+                chapter::author_id,
+                chapter::create_time,
+                chapter::update_time,
+                // is_read: true if there's any matching read_record
+                exists(read_record::table.filter(read_record::chapter_id.eq(chapter::id))),
+            ))
             .load::<Self>(conn)?;
         Ok(chapters)
     }
@@ -79,6 +96,21 @@ impl ChapterModel {
     ) -> GraphqlResult<Vec<Self>> {
         let chapters = chapter::table
             .filter(chapter::author_id.eq(author_id))
+            .select((
+                chapter::id,
+                chapter::title,
+                chapter::site,
+                chapter::site_id,
+                chapter::content,
+                chapter::time,
+                chapter::word_count,
+                chapter::novel_id,
+                chapter::author_id,
+                chapter::create_time,
+                chapter::update_time,
+                // is_read: true if there's any matching read_record
+                exists(read_record::table.filter(read_record::chapter_id.eq(chapter::id))),
+            ))
             .load::<Self>(conn)?;
         Ok(chapters)
     }
@@ -102,6 +134,21 @@ impl ChapterModel {
         let chapter = chapter::table
             .filter(chapter::novel_id.eq(novel_id))
             .order(chapter::time.desc())
+            .select((
+                chapter::id,
+                chapter::title,
+                chapter::site,
+                chapter::site_id,
+                chapter::content,
+                chapter::time,
+                chapter::word_count,
+                chapter::novel_id,
+                chapter::author_id,
+                chapter::create_time,
+                chapter::update_time,
+                // is_read: true if there's any matching read_record
+                exists(read_record::table.filter(read_record::chapter_id.eq(chapter::id))),
+            ))
             .first::<Self>(conn)
             .optional()?;
         Ok(chapter)
@@ -114,9 +161,35 @@ impl ChapterModel {
         let chapter = chapter::table
             .filter(chapter::novel_id.eq(novel_id))
             .order(chapter::time.asc())
+            .select((
+                chapter::id,
+                chapter::title,
+                chapter::site,
+                chapter::site_id,
+                chapter::content,
+                chapter::time,
+                chapter::word_count,
+                chapter::novel_id,
+                chapter::author_id,
+                chapter::create_time,
+                chapter::update_time,
+                // is_read: true if there's any matching read_record
+                exists(read_record::table.filter(read_record::chapter_id.eq(chapter::id))),
+            ))
             .first::<Self>(conn)
             .optional()?;
         Ok(chapter)
+    }
+    /// 获取某个 novel 下的所有章节 id
+    pub(crate) fn get_chapter_ids(
+        novel_id: i64,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<Vec<i64>> {
+        let chapter_ids = chapter::table
+            .filter(chapter::novel_id.eq(novel_id))
+            .select(chapter::id)
+            .load::<i64>(conn)?;
+        Ok(chapter_ids)
     }
 }
 
@@ -141,9 +214,42 @@ impl NewChapter<'_> {
         data: &[NewChapter],
         conn: &mut PgConnection,
     ) -> GraphqlResult<Vec<ChapterModel>> {
-        let new_chapters = diesel::insert_into(chapter::table)
+        let new_chapters: Vec<_> = diesel::insert_into(chapter::table)
             .values(data)
             .get_results(conn)?;
+        let new_chapters = new_chapters
+            .into_iter()
+            .map(
+                |(
+                    id,
+                    title,
+                    site,
+                    site_id,
+                    content,
+                    time,
+                    word_count,
+                    novel_id,
+                    author_id,
+                    create_time,
+                    update_time,
+                )| {
+                    ChapterModel {
+                        id,
+                        title,
+                        site,
+                        site_id,
+                        content,
+                        time,
+                        word_count,
+                        novel_id,
+                        author_id,
+                        create_time,
+                        update_time,
+                        is_read: false,
+                    }
+                },
+            )
+            .collect();
         Ok(new_chapters)
     }
 }

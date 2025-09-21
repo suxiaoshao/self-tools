@@ -1,5 +1,3 @@
-use std::collections::{HashMap, HashSet};
-
 use super::schema::{
     custom_type::{NovelSite, NovelStatus},
     novel,
@@ -12,6 +10,7 @@ use diesel::{
     sql_types::{BigInt, Nullable, Text, Timestamptz},
 };
 use novel_crawler::{AuthorFn, NovelFn};
+use std::collections::{HashMap, HashSet};
 use time::OffsetDateTime;
 
 #[derive(Insertable)]

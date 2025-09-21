@@ -1,4 +1,5 @@
 {
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
   "env": {
     "browser": true
   },
@@ -308,7 +309,8 @@
     "no-return-in-finally": "warn",
     "exhaustive-deps": "warn",
     "require-render-return": "warn",
-    "consistent-type-imports": "warn"
+    "consistent-type-imports": "warn",
+    "no-floating-promises": "off"
   },
   "plugins": [
     "typescript",

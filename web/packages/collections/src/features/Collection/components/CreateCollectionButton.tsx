@@ -1,6 +1,6 @@
 import { Button } from '@mui/material';
 import { useI18n } from 'i18n';
-import useDialog from '../../../hooks/useDialog';
+import useDialog from '@collections/hooks/useDialog';
 import useParentId from '../hooks/useParentId';
 import CollectionForm, { type CollectionFormData } from './CollectionForm';
 import { graphql } from '@collections/gql';

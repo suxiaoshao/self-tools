@@ -1,23 +1,20 @@
-use std::sync::LazyLock;
-
-use scraper::{ElementRef, Html, Selector};
-use serde::{Deserialize, Serialize};
-use time::{
-    macros::{format_description, offset},
-    PrimitiveDateTime,
-};
-
 use crate::{
     errors::NovelResult,
     implement::{parse_attr, text_from_url},
     novel::{NovelFn, NovelStatus},
     NovelError, QDAuthor,
 };
-
 use nom::{
     bytes::{complete::tag, streaming::take_until},
     combinator::{all_consuming, eof},
     IResult, Parser,
+};
+use scraper::{ElementRef, Html, Selector};
+use serde::{Deserialize, Serialize};
+use std::sync::LazyLock;
+use time::{
+    macros::{format_description, offset},
+    PrimitiveDateTime,
 };
 
 use super::{chapter::QDChapter, tag::QDTag};
@@ -35,7 +32,7 @@ static SELECTOR_AUTHOR: LazyLock<Selector> =
 static SELECTOR_STATUS: LazyLock<Selector> =
     LazyLock::new(|| Selector::parse("head > meta[property=\"og:novel:status\"]").unwrap());
 static SELECTOR_TAGS: LazyLock<Selector> =
-    LazyLock::new(|| Selector::parse("div.search-tags > a").unwrap());
+    LazyLock::new(|| Selector::parse("div.tags-wrapper > ul.tags > li").unwrap());
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct QDNovel {

@@ -138,4 +138,4 @@ export {
   type CustomTableOptions,
 } from './useCustomTable';
 
-export { getCoreRowModel } from '@tanstack/react-table';
+export { getCoreRowModel, getFilteredRowModel, getPaginationRowModel } from '@tanstack/react-table';

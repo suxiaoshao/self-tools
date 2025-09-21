@@ -10,7 +10,9 @@ describe('notify', () => {
   it('use enqueueSnackbar fn', async () => {
     render(<SnackbarProvider>111</SnackbarProvider>);
     expect(screen.getByText('111')).toBeTruthy();
-    await waitFor(() => enqueueSnackbar('test'));
+    await waitFor(() => {
+      enqueueSnackbar('test');
+    });
     expect(screen.getByText('test')).toBeTruthy();
   });
   it('use hooks', async () => {
@@ -30,7 +32,9 @@ describe('notify', () => {
       </SnackbarProvider>,
     );
     expect(screen.getByText('test')).toBeTruthy();
-    await waitFor(() => screen.getByText('test').click());
+    await waitFor(() => {
+      screen.getByText('test').click();
+    });
     expect(screen.getByText('test click')).toBeTruthy();
     expect(screen.getByText('test click')).toHaveTextContent('test click');
   });

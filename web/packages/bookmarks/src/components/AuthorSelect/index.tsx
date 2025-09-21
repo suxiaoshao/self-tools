@@ -52,7 +52,9 @@ export default function AuthorSelect({ onBlur, onChange, sx, value, ...props }: 
   });
   const event = useMemo(() => new Subject<string>(), []);
   useEffect(() => {
-    const key = event.pipe(debounceTime(300)).subscribe((value) => setSearchName(value));
+    const key = event.pipe(debounceTime(300)).subscribe((value) => {
+      setSearchName(value);
+    });
     return () => {
       key.unsubscribe();
     };
@@ -73,7 +75,14 @@ export default function AuthorSelect({ onBlur, onChange, sx, value, ...props }: 
       getOptionLabel={({ name }) => name}
       loading={loading}
       renderInput={(params) => (
-        <TextField {...params} onChange={(e) => event.next(e.target.value)} label={t('author')} fullWidth />
+        <TextField
+          {...params}
+          onChange={(e) => {
+            event.next(e.target.value);
+          }}
+          label={t('author')}
+          fullWidth
+        />
       )}
       renderOption={(props, { name, avatar }) => (
         <MenuItem {...props}>

@@ -99,5 +99,14 @@
   "novel_crawler": "小说爬取",
   "author_detail": "作者{{authorName}}的详情",
   "self_tools": "个人工具",
-  "author_crawler": "作者爬取"
+  "author_crawler": "作者爬取",
+  "is_read": "是否已读",
+  "is_read_yes": "已读",
+  "is_read_no": "未读",
+  "comment": "评论",
+  "add_comment": "添加评论",
+  "update_comment": "更新评论",
+  "batch_update": "批量更新",
+  "select_all": "全选",
+  "select_none": "全不选"
 }

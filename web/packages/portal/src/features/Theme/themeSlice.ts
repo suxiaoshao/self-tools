@@ -49,7 +49,9 @@ export const useThemeStore = create<
   }
 >((set) => ({
   ...getInitDate(),
-  setSystemColorScheme: (scheme) => set({ systemColorScheme: scheme }),
+  setSystemColorScheme: (scheme) => {
+    set({ systemColorScheme: scheme });
+  },
   updateColor: (color, colorSetting) => {
     window.localStorage.setItem('color', color);
     window.localStorage.setItem('colorSetting', colorSetting);

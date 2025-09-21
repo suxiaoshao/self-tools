@@ -38,6 +38,7 @@ type Chapter {
   createTime: DateTime!
   updateTime: DateTime!
   siteNovelId: String!
+  isRead: Boolean!
   novel: Novel!
   url: String!
   author: Author!
@@ -167,6 +168,21 @@ type MutationRoot {
 
   # 给小说删除集合
   deleteCollectionForNovel(collectionId: Int!, novelId: Int!): Novel!
+
+  # 给小说添加评论
+  addCommentForNovel(novelId: Int!, content: String!): NovelComment!
+
+  # 给小说删除评论
+  deleteCommentForNovel(novelId: Int!): NovelComment!
+
+  # 给小说修改评论
+  updateCommentForNovel(novelId: Int!, content: String!): NovelComment!
+
+  # 给章节添加阅读记录
+  addReadRecordsForChapter(novelId: Int!, chapterIds: [Int!]!): Int!
+
+  # 给章节删除阅读记录
+  deleteReadRecordsForChapter(chapterIds: [Int!]!): Int!
 }
 
 type Novel {
@@ -195,6 +211,18 @@ type Novel {
 
   # 集合列表
   collections: [Collection!]!
+
+  # 阅读百分比
+  readPercentage: Float!
+
+  # 评论
+  comments: NovelComment
+}
+
+type NovelComment {
+  content: String!
+  createTime: DateTime!
+  updateTime: DateTime!
 }
 
 type NovelList {

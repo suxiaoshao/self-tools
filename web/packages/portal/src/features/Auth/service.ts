@@ -12,11 +12,21 @@ export type HttpResponse<T> =
 
 export function responseThen<T>(response: HttpResponse<T>, doThen: (data: T) => void): void {
   match(response as HttpResponse<unknown>)
-    .with({ tag: 'response' }, ({ value }) => doThen(value as T))
-    .with({ tag: 'json' }, () => enqueueSnackbar('json error', { variant: 'error' }))
-    .with({ tag: 'error' }, ({ value }) => enqueueSnackbar(value, { variant: 'error' }))
-    .with({ tag: 'network' }, () => enqueueSnackbar('network error', { variant: 'error' }))
-    .with({ tag: 'unknown' }, () => enqueueSnackbar('unknown error', { variant: 'error' }));
+    .with({ tag: 'response' }, ({ value }) => {
+      doThen(value as T);
+    })
+    .with({ tag: 'json' }, () => {
+      enqueueSnackbar('json error', { variant: 'error' });
+    })
+    .with({ tag: 'error' }, ({ value }) => {
+      enqueueSnackbar(value, { variant: 'error' });
+    })
+    .with({ tag: 'network' }, () => {
+      enqueueSnackbar('network error', { variant: 'error' });
+    })
+    .with({ tag: 'unknown' }, () => {
+      enqueueSnackbar('unknown error', { variant: 'error' });
+    });
 }
 
 async function fetchBase<Bod, Res>(url: string, body: Bod): Promise<HttpResponse<Res>> {

@@ -1,5 +1,10 @@
-use std::{collections::HashSet, sync::LazyLock};
-
+use super::novel::QDNovel;
+use crate::{
+    author::AuthorFn,
+    errors::{NovelError, NovelResult},
+    implement::{parse_attr, parse_inner_html, parse_text, text_from_url},
+    novel::NovelFn,
+};
 use futures::future::try_join_all;
 use nom::{
     bytes::complete::{tag, take_until},
@@ -7,25 +12,17 @@ use nom::{
     IResult, Parser,
 };
 use scraper::{ElementRef, Html, Selector};
-
-use crate::{
-    author::AuthorFn,
-    errors::{NovelError, NovelResult},
-    implement::{parse_attr, parse_inner_html, parse_text, text_from_url},
-    novel::NovelFn,
-};
-
-use super::novel::QDNovel;
+use std::{collections::HashSet, sync::LazyLock};
 
 static SELECTOR_AUTHOR_NAME: LazyLock<Selector> = LazyLock::new(|| {
-    Selector::parse("#appContentWrap > div > div > div > div[class^=authorName] > h1").unwrap()
+    Selector::parse("#appContentWrap > div > div > div > div[class*=authorName] > h1").unwrap()
 });
 static SELECTOR_AUTHOR_DESCRIPTION: LazyLock<Selector> =
-    LazyLock::new(|| Selector::parse("p[class^=\"authorDesc\"]").unwrap());
+    LazyLock::new(|| Selector::parse("p[class*=\"authorDesc\"]").unwrap());
 static SELECTOR_AUTHOR_IMAGE: LazyLock<Selector> =
     LazyLock::new(|| Selector::parse("#appContentWrap > div > div > div > div > img").unwrap());
 static SELECTOR_NOVEL_URLS: LazyLock<Selector> = LazyLock::new(|| {
-    Selector::parse("#appContentWrap > div > div > div > div[class^=allBookListItem] > a").unwrap()
+    Selector::parse("#appContentWrap > div > div > div > div[class*=allBookListItem] > a").unwrap()
 });
 
 #[derive(Debug, Clone, PartialEq, Eq)]

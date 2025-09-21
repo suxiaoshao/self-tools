@@ -21,7 +21,14 @@ export default function Item({ label, value, span }: Omit<DetailsItem, 'key'>) {
       }}
     >
       <Typography variant="subtitle1">{label}</Typography>
-      <Typography variant="body1">{value ?? '-'}</Typography>
+      <Typography
+        variant="body1"
+        {...match(value)
+          .with(P.string.or(P.nullish), () => null)
+          .otherwise(() => ({ component: 'div' as const }))}
+      >
+        {value ?? '-'}
+      </Typography>
     </Box>
   );
 }

@@ -16,6 +16,7 @@ export interface DetailsProps extends BoxProps {
 
 export default function Details({ sx, items, fullSpan = 3, ...props }: DetailsProps) {
   return (
+    // oxlint-disable-next-line no-misused-spread
     <Box sx={{ display: 'grid', gridTemplateColumns: `repeat(${fullSpan}, 1fr)`, gap: 2, ...sx }} {...props}>
       {items.map(({ key, ...props }) => (
         <Item key={key ?? props.label} {...props} />

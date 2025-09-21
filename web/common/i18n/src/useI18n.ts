@@ -5,7 +5,8 @@ import type { TOptionsBase } from 'i18next';
 import type { $Dictionary } from 'i18next/typescript/helpers';
 export type I18nKey = keyof typeof en;
 
-export function useI18n(): (key: I18nKey, options?: (TOptionsBase & $Dictionary) | undefined) => string {
+// oxlint-disable-next-line no-redundant-type-constituents
+export function useI18n(): (key: I18nKey, options?: TOptionsBase & $Dictionary) => string {
   const trans = useTranslation();
   return useMemo(() => trans.t, [trans]);
 }

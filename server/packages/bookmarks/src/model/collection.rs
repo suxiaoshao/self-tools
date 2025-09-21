@@ -1,9 +1,7 @@
-use std::collections::{HashMap, HashSet};
-
-use crate::errors::{GraphqlError, GraphqlResult};
-
 use super::schema::collection::{self};
+use crate::errors::{GraphqlError, GraphqlResult};
 use diesel::prelude::*;
+use std::collections::{HashMap, HashSet};
 use time::OffsetDateTime;
 use tracing::{event, Level};
 

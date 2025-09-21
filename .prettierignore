@@ -8,3 +8,4 @@ dist-ssr
 
 **/target
 pnpm-lock.yaml
+postgrestools.jsonc

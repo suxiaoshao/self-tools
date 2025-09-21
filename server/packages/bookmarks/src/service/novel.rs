@@ -3,11 +3,14 @@ use std::collections::HashSet;
 use crate::model::chapter::{ChapterModel, NewChapter, UpdateChapterModel};
 use crate::model::collection_novel::CollectionNovelModel;
 use crate::model::novel::UpdateNovelModel;
+use crate::model::novel_comment::NovelCommentModel;
+use crate::model::read_record::{NewReadRecord, ReadRecordModel};
 use crate::model::{collection::CollectionModel, schema::custom_type::NovelSite, tag::TagModel};
 use crate::model::{
     novel::{NewNovel, NovelModel},
     PgPool,
 };
+use crate::service::novel_comment::NovelComment;
 use crate::{
     errors::{GraphqlError, GraphqlResult},
     model::schema::custom_type::NovelStatus,
@@ -131,6 +134,30 @@ impl Novel {
             })?
             .get()?;
         Collection::many_by_novel_id(self.id, conn)
+    }
+    /// 阅读百分比
+    async fn read_percentage(&self, context: &Context<'_>) -> GraphqlResult<f64> {
+        let conn = &mut context
+            .data::<PgPool>()
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
+            .get()?;
+        let read_percentage = ReadRecordModel::read_percentage_by_novel_id(self.id, conn)?;
+        Ok(read_percentage)
+    }
+    /// 评论
+    async fn comments(&self, context: &Context<'_>) -> GraphqlResult<Option<NovelComment>> {
+        let conn = &mut context
+            .data::<PgPool>()
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
+            .get()?;
+        let comments = NovelCommentModel::find_by_novel_id(self.id, conn)?;
+        Ok(comments.map(Into::into))
     }
 }
 
@@ -362,6 +389,55 @@ impl Novel {
         CollectionNovelModel::delete(collection_id, novel_id, conn)?;
         let novel = NovelModel::find_one(novel_id, conn)?;
         Ok(novel.into())
+    }
+}
+
+/// chapter id 相关
+impl Novel {
+    /// 添加阅读记录
+    pub(crate) fn add_read_records(
+        novel_id: i64,
+        chapter_ids: &[i64],
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<usize> {
+        let chapter_sets = chapter_ids.iter().copied().collect::<HashSet<_>>();
+        let all_chapter_ids = ChapterModel::get_chapter_ids(novel_id, conn)?
+            .into_iter()
+            .collect::<HashSet<_>>();
+        let read_chapter_ids = ReadRecordModel::read_chapter_ids_by_novel_id(novel_id, conn)?
+            .into_iter()
+            .collect::<HashSet<_>>();
+        // 判断是否存在不存在的 chapter_id
+        let difference = chapter_sets
+            .difference(&all_chapter_ids)
+            .copied()
+            .collect::<Vec<_>>();
+        if !difference.is_empty() {
+            event!(Level::WARN, "输入中有不存在的章节:{:?}", difference);
+            return Err(GraphqlError::NotFoundChapterId(difference));
+        }
+        // 判断是否存在已经已读的章节
+        let intersection = read_chapter_ids
+            .intersection(&chapter_sets)
+            .copied()
+            .collect::<Vec<_>>();
+        if !intersection.is_empty() {
+            event!(Level::WARN, "输入中有已读的章节:{:?}", intersection);
+            return Err(GraphqlError::AlreadyReadChapterId(intersection));
+        }
+        let now = OffsetDateTime::now_utc();
+        let new_read_records = chapter_ids
+            .iter()
+            .map(|chapter_id| NewReadRecord::new(novel_id, *chapter_id, now))
+            .collect::<Vec<_>>();
+        NewReadRecord::create_many(&new_read_records, conn)
+    }
+    /// 删除阅读记录
+    pub(crate) fn delete_read_records(
+        chapter_ids: &[i64],
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<usize> {
+        ReadRecordModel::delete_by_chapter_ids(chapter_ids, conn)
     }
 }
 

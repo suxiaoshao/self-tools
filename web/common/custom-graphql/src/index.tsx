@@ -1,8 +1,8 @@
 /*
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-01-06 01:30:13
- * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-09-19 03:09:40
+ * @LastEditors: suxiaoshao 48886207+suxiaoshao@users.noreply.github.com
+ * @LastEditTime: 2025-09-14 00:14:57
  * @FilePath: /self-tools/web/common/custom-graphql/src/index.tsx
  */
 import { ApolloClient, InMemoryCache, ApolloLink, CombinedGraphQLErrors, CombinedProtocolErrors } from '@apollo/client';
@@ -22,7 +22,7 @@ const errorLink = new ErrorLink(({ error }) => {
   if (CombinedGraphQLErrors.is(error)) {
     error.errors.forEach(({ message, locations, path, extensions }) => {
       enqueueSnackbar(message);
-      // eslint-disable-next-line no-console
+      // oxlint-disable-next-line no-console
       console.log(
         `[GraphQL error]: Message: ${message}, Location: ${locations}, Path: ${path} source: ${extensions?.['source']}`,
       );

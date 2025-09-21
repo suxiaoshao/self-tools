@@ -9,6 +9,7 @@ pub(crate) mod author;
 pub(crate) mod chapter;
 pub(crate) mod collection;
 pub(crate) mod novel;
+pub(crate) mod novel_comment;
 pub(crate) mod save_draft;
 pub(crate) mod tag;
 mod utils;

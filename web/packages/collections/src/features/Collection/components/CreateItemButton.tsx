@@ -1,6 +1,6 @@
 import { Button } from '@mui/material';
 import ItemForm, { type ItemFormData } from '../../Item/Components/ItemForm';
-import useDialog from '../../../hooks/useDialog';
+import useDialog from '@collections/hooks/useDialog';
 import { useI18n } from 'i18n';
 import { graphql } from '@collections/gql';
 import { useMutation } from '@apollo/client/react';

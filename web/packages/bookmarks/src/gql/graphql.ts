@@ -44,6 +44,7 @@ export type Chapter = {
   content?: Maybe<Scalars['String']['output']>;
   createTime: Scalars['DateTime']['output'];
   id: Scalars['Int']['output'];
+  isRead: Scalars['Boolean']['output'];
   novel: Novel;
   novelId: Scalars['Int']['output'];
   site: NovelSite;
@@ -132,6 +133,8 @@ export type DraftTagInfo = {
 export type MutationRoot = {
   __typename?: 'MutationRoot';
   addCollectionForNovel: Novel;
+  addCommentForNovel: NovelComment;
+  addReadRecordsForChapter: Scalars['Int']['output'];
   createAuthor: Author;
   createCollection: Collection;
   createNovel: Novel;
@@ -139,17 +142,30 @@ export type MutationRoot = {
   deleteAuthor: Author;
   deleteCollection: Scalars['Int']['output'];
   deleteCollectionForNovel: Novel;
+  deleteCommentForNovel: NovelComment;
   deleteNovel: Novel;
+  deleteReadRecordsForChapter: Scalars['Int']['output'];
   deleteTag: Tag;
   saveDraftAuthor: Author;
   saveDraftNovel: Novel;
   updateAuthorByCrawler: Author;
   updateCollection: Collection;
+  updateCommentForNovel: NovelComment;
   updateNovelByCrawler: Novel;
 };
 
 export type MutationRootAddCollectionForNovelArgs = {
   collectionId: Scalars['Int']['input'];
+  novelId: Scalars['Int']['input'];
+};
+
+export type MutationRootAddCommentForNovelArgs = {
+  content: Scalars['String']['input'];
+  novelId: Scalars['Int']['input'];
+};
+
+export type MutationRootAddReadRecordsForChapterArgs = {
+  chapterIds: Array<Scalars['Int']['input']>;
   novelId: Scalars['Int']['input'];
 };
 
@@ -190,8 +206,16 @@ export type MutationRootDeleteCollectionForNovelArgs = {
   novelId: Scalars['Int']['input'];
 };
 
+export type MutationRootDeleteCommentForNovelArgs = {
+  novelId: Scalars['Int']['input'];
+};
+
 export type MutationRootDeleteNovelArgs = {
   id: Scalars['Int']['input'];
+};
+
+export type MutationRootDeleteReadRecordsForChapterArgs = {
+  chapterIds: Array<Scalars['Int']['input']>;
 };
 
 export type MutationRootDeleteTagArgs = {
@@ -217,6 +241,11 @@ export type MutationRootUpdateCollectionArgs = {
   parentId?: InputMaybe<Scalars['Int']['input']>;
 };
 
+export type MutationRootUpdateCommentForNovelArgs = {
+  content: Scalars['String']['input'];
+  novelId: Scalars['Int']['input'];
+};
+
 export type MutationRootUpdateNovelByCrawlerArgs = {
   novelId: Scalars['Int']['input'];
 };
@@ -227,6 +256,7 @@ export type Novel = {
   avatar: Scalars['String']['output'];
   chapters: Array<Chapter>;
   collections: Array<Collection>;
+  comments?: Maybe<NovelComment>;
   createTime: Scalars['DateTime']['output'];
   description: Scalars['String']['output'];
   firstChapter?: Maybe<Chapter>;
@@ -234,12 +264,20 @@ export type Novel = {
   lastChapter?: Maybe<Chapter>;
   name: Scalars['String']['output'];
   novelStatus: NovelStatus;
+  readPercentage: Scalars['Float']['output'];
   site: NovelSite;
   siteId: Scalars['String']['output'];
   tags: Array<Tag>;
   updateTime: Scalars['DateTime']['output'];
   url: Scalars['String']['output'];
   wordCount: Scalars['BigDecimal']['output'];
+};
+
+export type NovelComment = {
+  __typename?: 'NovelComment';
+  content: Scalars['String']['output'];
+  createTime: Scalars['DateTime']['output'];
+  updateTime: Scalars['DateTime']['output'];
 };
 
 export type NovelList = {
@@ -634,6 +672,36 @@ export type AddCollectionForNovelMutation = {
   addCollectionForNovel: { __typename?: 'Novel'; id: number };
 };
 
+export type AddReadRecordMutationVariables = Exact<{
+  novelId: Scalars['Int']['input'];
+  chapterIds: Array<Scalars['Int']['input']> | Scalars['Int']['input'];
+}>;
+
+export type AddReadRecordMutation = { __typename?: 'MutationRoot'; addReadRecordsForChapter: number };
+
+export type DeleteReadRecordMutationVariables = Exact<{
+  chapterIds: Array<Scalars['Int']['input']> | Scalars['Int']['input'];
+}>;
+
+export type DeleteReadRecordMutation = { __typename?: 'MutationRoot'; deleteReadRecordsForChapter: number };
+
+export type CreateCommentMutationVariables = Exact<{
+  novelId: Scalars['Int']['input'];
+  content: Scalars['String']['input'];
+}>;
+
+export type CreateCommentMutation = { __typename?: 'MutationRoot'; addCommentForNovel: { __typename: 'NovelComment' } };
+
+export type UpdateCommentMutationVariables = Exact<{
+  novelId: Scalars['Int']['input'];
+  content: Scalars['String']['input'];
+}>;
+
+export type UpdateCommentMutation = {
+  __typename?: 'MutationRoot';
+  updateCommentForNovel: { __typename: 'NovelComment' };
+};
+
 export type GetNovelQueryVariables = Exact<{
   id: Scalars['Int']['input'];
 }>;
@@ -661,6 +729,7 @@ export type GetNovelQuery = {
       url: string;
       wordCount: number;
       time: any;
+      isRead: boolean;
     }>;
     author: { __typename?: 'Author'; avatar: string; description: string; id: number; name: string; site: NovelSite };
     lastChapter?: { __typename?: 'Chapter'; time: any } | null;
@@ -673,7 +742,26 @@ export type GetNovelQuery = {
       description?: string | null;
       path: string;
     }>;
+    comments?: { __typename?: 'NovelComment'; content: string } | null;
   };
+};
+
+export type UpdateNovelByCrawlerMutationVariables = Exact<{
+  novelId: Scalars['Int']['input'];
+}>;
+
+export type UpdateNovelByCrawlerMutation = {
+  __typename?: 'MutationRoot';
+  updateNovelByCrawler: { __typename?: 'Novel'; id: number };
+};
+
+export type DeleteCommentForNovelMutationVariables = Exact<{
+  novelId: Scalars['Int']['input'];
+}>;
+
+export type DeleteCommentForNovelMutation = {
+  __typename?: 'MutationRoot';
+  deleteCommentForNovel: { __typename: 'NovelComment' };
 };
 
 export type DeleteCollectionForNovelMutationVariables = Exact<{
@@ -684,15 +772,6 @@ export type DeleteCollectionForNovelMutationVariables = Exact<{
 export type DeleteCollectionForNovelMutation = {
   __typename?: 'MutationRoot';
   deleteCollectionForNovel: { __typename?: 'Novel'; id: number };
-};
-
-export type UpdateNovelByCrawlerMutationVariables = Exact<{
-  novelId: Scalars['Int']['input'];
-}>;
-
-export type UpdateNovelByCrawlerMutation = {
-  __typename?: 'MutationRoot';
-  updateNovelByCrawler: { __typename?: 'Novel'; id: number };
 };
 
 export type FetchNovelQueryVariables = Exact<{
@@ -1658,6 +1737,188 @@ export const AddCollectionForNovelDocument = {
     },
   ],
 } as unknown as DocumentNode<AddCollectionForNovelMutation, AddCollectionForNovelMutationVariables>;
+export const AddReadRecordDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'addReadRecord' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'novelId' } },
+          type: { kind: 'NonNullType', type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'chapterIds' } },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'ListType',
+              type: { kind: 'NonNullType', type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } } },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'addReadRecordsForChapter' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'novelId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'novelId' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'chapterIds' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'chapterIds' } },
+              },
+            ],
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<AddReadRecordMutation, AddReadRecordMutationVariables>;
+export const DeleteReadRecordDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'deleteReadRecord' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'chapterIds' } },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'ListType',
+              type: { kind: 'NonNullType', type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } } },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'deleteReadRecordsForChapter' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'chapterIds' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'chapterIds' } },
+              },
+            ],
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<DeleteReadRecordMutation, DeleteReadRecordMutationVariables>;
+export const CreateCommentDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'CreateComment' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'novelId' } },
+          type: { kind: 'NonNullType', type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'content' } },
+          type: { kind: 'NonNullType', type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'addCommentForNovel' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'novelId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'novelId' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'content' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'content' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [{ kind: 'Field', name: { kind: 'Name', value: '__typename' } }],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<CreateCommentMutation, CreateCommentMutationVariables>;
+export const UpdateCommentDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'UpdateComment' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'novelId' } },
+          type: { kind: 'NonNullType', type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'content' } },
+          type: { kind: 'NonNullType', type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'updateCommentForNovel' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'novelId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'novelId' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'content' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'content' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [{ kind: 'Field', name: { kind: 'Name', value: '__typename' } }],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<UpdateCommentMutation, UpdateCommentMutationVariables>;
 export const GetNovelDocument = {
   kind: 'Document',
   definitions: [
@@ -1710,6 +1971,7 @@ export const GetNovelDocument = {
                       { kind: 'Field', name: { kind: 'Name', value: 'url' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'wordCount' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'time' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'isRead' } },
                     ],
                   },
                 },
@@ -1770,6 +2032,14 @@ export const GetNovelDocument = {
                     ],
                   },
                 },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'comments' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [{ kind: 'Field', name: { kind: 'Name', value: 'content' } }],
+                  },
+                },
               ],
             },
           },
@@ -1778,6 +2048,80 @@ export const GetNovelDocument = {
     },
   ],
 } as unknown as DocumentNode<GetNovelQuery, GetNovelQueryVariables>;
+export const UpdateNovelByCrawlerDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'updateNovelByCrawler' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'novelId' } },
+          type: { kind: 'NonNullType', type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'updateNovelByCrawler' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'novelId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'novelId' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [{ kind: 'Field', name: { kind: 'Name', value: 'id' } }],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<UpdateNovelByCrawlerMutation, UpdateNovelByCrawlerMutationVariables>;
+export const DeleteCommentForNovelDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'deleteCommentForNovel' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'novelId' } },
+          type: { kind: 'NonNullType', type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'deleteCommentForNovel' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'novelId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'novelId' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [{ kind: 'Field', name: { kind: 'Name', value: '__typename' } }],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<DeleteCommentForNovelMutation, DeleteCommentForNovelMutationVariables>;
 export const DeleteCollectionForNovelDocument = {
   kind: 'Document',
   definitions: [
@@ -1825,43 +2169,6 @@ export const DeleteCollectionForNovelDocument = {
     },
   ],
 } as unknown as DocumentNode<DeleteCollectionForNovelMutation, DeleteCollectionForNovelMutationVariables>;
-export const UpdateNovelByCrawlerDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'mutation',
-      name: { kind: 'Name', value: 'updateNovelByCrawler' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'novelId' } },
-          type: { kind: 'NonNullType', type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } } },
-        },
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'updateNovelByCrawler' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'novelId' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'novelId' } },
-              },
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [{ kind: 'Field', name: { kind: 'Name', value: 'id' } }],
-            },
-          },
-        ],
-      },
-    },
-  ],
-} as unknown as DocumentNode<UpdateNovelByCrawlerMutation, UpdateNovelByCrawlerMutationVariables>;
 export const FetchNovelDocument = {
   kind: 'Document',
   definitions: [

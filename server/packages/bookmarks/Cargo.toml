@@ -30,7 +30,7 @@ diesel = { version = "2.2.12", features = [
     "r2d2",
     "numeric",
 ] }
-time = { version = "0.3.41" }
+time = { version = "0.3.43" }
 bigdecimal = "0.4.8"
 graphql-common = { path = "../../common/graphql-common" }
 
@@ -47,7 +47,7 @@ middleware = { path = "../../common/middleware", features = [
 
 # log
 tracing = "0.1.41"
-tracing-subscriber = "0.3.19"
+tracing-subscriber = "0.3.20"
 
 # thrift
 thrift = { path = "../../common/thrift" }

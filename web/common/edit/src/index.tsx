@@ -21,7 +21,7 @@ export interface EditProps extends Omit<BoxProps, 'onChange'> {
   /**
    * 当编辑器代码改变时触发的方法
    * */
-  onChangeCode?(newCode: string): void;
+  onChangeCode?: (newCode: string) => void;
   language?: string;
   wordWrap?: 'off' | 'on' | 'wordWrapColumn' | 'bounded';
   ref?: Ref<editor.IStandaloneCodeEditor | undefined>;
@@ -92,10 +92,8 @@ export default function Edit({ onChangeCode, code, language, wordWrap, ref, ...p
    * */
   useEffect(() => {
     const id = edit?.getModel()?.onDidChangeContent(() => {
-      const content = edit?.getValue();
-      if (content) {
-        onChangeCode?.(content);
-      }
+      const content = edit.getValue();
+      onChangeCode?.(content);
     });
     return () => {
       id?.dispose();

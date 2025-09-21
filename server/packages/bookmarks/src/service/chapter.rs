@@ -34,6 +34,7 @@ pub(crate) struct Chapter {
     pub(crate) create_time: OffsetDateTime,
     pub(crate) update_time: OffsetDateTime,
     pub(crate) site_novel_id: String,
+    is_read: bool,
 }
 
 #[ComplexObject]
@@ -83,6 +84,7 @@ impl Chapter {
             create_time: value.create_time,
             update_time: value.update_time,
             site_novel_id,
+            is_read: value.is_read,
         }
     }
 }

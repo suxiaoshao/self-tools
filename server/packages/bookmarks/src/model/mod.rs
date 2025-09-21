@@ -19,6 +19,8 @@ pub(crate) mod chapter;
 pub(crate) mod collection;
 pub(crate) mod collection_novel;
 pub(crate) mod novel;
+pub(crate) mod novel_comment;
+pub(crate) mod read_record;
 pub(crate) mod tag;
 
 pub(crate) type PgPool = Pool<ConnectionManager<PgConnection>>;
