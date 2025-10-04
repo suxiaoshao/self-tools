@@ -59,7 +59,8 @@ export const useThemeStore = create<
   },
 }));
 
-export const selectColorMode = (state: ThemeSliceType) => getColorScheme(state.colorSetting, state.systemColorScheme);
+export const selectColorMode = (state: Pick<ThemeSliceType, 'colorSetting' | 'systemColorScheme'>) =>
+  getColorScheme(state.colorSetting, state.systemColorScheme);
 
 export const selectActiveYouTheme = (state: ThemeSliceType) => {
   const colorScheme = selectColorMode(state);

@@ -6,7 +6,7 @@ import '@fontsource/roboto/500.css';
 import '@fontsource/roboto/700.css';
 import './index.css';
 import setYouThemeToCssVars from './utils/cssVar';
-import { colorSchemaMatch, selectActiveYouTheme, selectMuiTheme, useThemeStore } from './themeSlice';
+import { colorSchemaMatch, selectActiveYouTheme, selectColorMode, selectMuiTheme, useThemeStore } from './themeSlice';
 import { match } from 'ts-pattern';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -21,6 +21,7 @@ export function CustomTheme({ children }: CustomThemeProps) {
       colorSetting,
       systemColorScheme,
       setSystemColorScheme,
+      colorMode: selectColorMode({ colorSetting, systemColorScheme }),
     })),
   );
 
@@ -48,6 +49,7 @@ export function CustomTheme({ children }: CustomThemeProps) {
       <ThemeProvider theme={createTheme(selectMuiTheme(state))}>
         <meta name="theme-color" content={state.color} />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="color-scheme" content={state.colorMode} />
         <CssBaseline />
         {children}
       </ThemeProvider>
@@ -55,9 +57,5 @@ export function CustomTheme({ children }: CustomThemeProps) {
     [children, state],
   );
 }
-
-export { hexFromArgb } from '@material/material-color-utilities';
-
-export { selectActiveYouTheme } from './themeSlice';
 
 export { default as ThemeDrawerItem } from './components/ThemeDrawerItem';
