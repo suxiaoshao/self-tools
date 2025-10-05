@@ -64,7 +64,7 @@ export interface CollectionSliceType {
 
 const getDefault = () => ({ tag: CollectionLoadingState.init }) satisfies CollectionData;
 
-export const useCollectionsStore = create<CollectionSliceType>((set) => ({
+const useCollectionsStore = create<CollectionSliceType>((set) => ({
   value: getDefault(),
   setAllCollections: (allCollection: AllCollectionItem[]) => {
     set({

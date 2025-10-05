@@ -13,6 +13,7 @@ import { microConfigs } from '@portal/micro';
 import type { Menu } from 'types';
 import { match } from 'ts-pattern';
 import { useI18n } from 'i18n';
+import ErrorPage from '../components/Error';
 
 function MenuRouter({ path }: Menu) {
   return match(path)
@@ -56,6 +57,7 @@ export default function AppRouter() {
           ))}
           <Route path="login" element={<Login />} />
         </Route>
+        <Route path="*" element={<ErrorPage />} />
       </Routes>
     </>
   );

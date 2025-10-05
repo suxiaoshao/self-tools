@@ -83,9 +83,9 @@ export default function ThemeDrawerItem() {
                       field.onChange(newValue as 'dark' | 'light' | 'system');
                     }}
                   >
-                    <FormControlLabel value="light" control={<Radio />} label={t('light')} />
-                    <FormControlLabel value="dark" control={<Radio />} label={t('dark')} />
-                    <FormControlLabel value="system" control={<Radio />} label={t('system')} />
+                    <FormControlLabel value={ColorSetting.light} control={<Radio />} label={t('light')} />
+                    <FormControlLabel value={ColorSetting.dark} control={<Radio />} label={t('dark')} />
+                    <FormControlLabel value={ColorSetting.system} control={<Radio />} label={t('system')} />
                   </RadioGroup>
                 )}
               />
