@@ -1,4 +1,4 @@
-use crate::{errors::GraphqlResult, graphql::types::TimeRange};
+use crate::{errors::GraphqlResult, graphql::types::TimeRange, model::schema::collection_item};
 
 use super::schema::item;
 use diesel::prelude::*;
@@ -10,7 +10,6 @@ pub(crate) struct ItemModel {
     pub(crate) id: i64,
     pub(crate) name: String,
     pub(crate) content: String,
-    pub(crate) collection_id: i64,
     pub(crate) create_time: OffsetDateTime,
     pub(crate) update_time: OffsetDateTime,
 }
@@ -19,7 +18,6 @@ pub(crate) struct ItemModel {
 struct NewItem<'a> {
     pub(crate) name: &'a str,
     pub(crate) content: &'a str,
-    pub(crate) collection_id: i64,
     pub(crate) create_time: OffsetDateTime,
     pub(crate) update_time: OffsetDateTime,
 }
@@ -30,14 +28,12 @@ impl ItemModel {
     pub(crate) fn create(
         name: &str,
         content: &str,
-        collection_id: i64,
         conn: &mut PgConnection,
     ) -> GraphqlResult<Self> {
         let now = time::OffsetDateTime::now_utc();
         let new_item = NewItem {
             name,
             content,
-            collection_id,
             create_time: now,
             update_time: now,
         };
@@ -94,39 +90,43 @@ impl ItemModel {
         match (create_time, update_time) {
             (None, None) => {
                 let data = item::table
-                    .filter(item::collection_id.eq(collection_id))
+                    .inner_join(collection_item::table)
+                    .filter(collection_item::collection_id.eq(collection_id))
                     .offset(offset)
                     .limit(limit)
-                    .load(conn)?;
-                Ok(data)
+                    .load::<(ItemModel, (i64, i64))>(conn)?;
+                Ok(data.into_iter().map(|(item, _)| item).collect())
             }
             (None, Some(update_time)) => {
                 let data = item::table
-                    .filter(item::collection_id.eq(collection_id))
+                    .inner_join(collection_item::table)
+                    .filter(collection_item::collection_id.eq(collection_id))
                     .filter(item::update_time.between(update_time.start, update_time.end))
                     .offset(offset)
                     .limit(limit)
-                    .load(conn)?;
-                Ok(data)
+                    .load::<(ItemModel, (i64, i64))>(conn)?;
+                Ok(data.into_iter().map(|(item, _)| item).collect())
             }
             (Some(create_time), None) => {
                 let data = item::table
-                    .filter(item::collection_id.eq(collection_id))
+                    .inner_join(collection_item::table)
+                    .filter(collection_item::collection_id.eq(collection_id))
                     .filter(item::create_time.between(create_time.start, create_time.end))
                     .offset(offset)
                     .limit(limit)
-                    .load(conn)?;
-                Ok(data)
+                    .load::<(ItemModel, (i64, i64))>(conn)?;
+                Ok(data.into_iter().map(|(item, _)| item).collect())
             }
             (Some(create_time), Some(update_time)) => {
                 let data = item::table
-                    .filter(item::collection_id.eq(collection_id))
+                    .inner_join(collection_item::table)
+                    .filter(collection_item::collection_id.eq(collection_id))
                     .filter(item::create_time.between(create_time.start, create_time.end))
                     .filter(item::update_time.between(update_time.start, update_time.end))
                     .offset(offset)
                     .limit(limit)
-                    .load(conn)?;
-                Ok(data)
+                    .load::<(ItemModel, (i64, i64))>(conn)?;
+                Ok(data.into_iter().map(|(item, _)| item).collect())
             }
         }
     }
@@ -140,14 +140,16 @@ impl ItemModel {
         match (create_time, update_time) {
             (None, None) => {
                 let count = item::table
-                    .filter(item::collection_id.eq(collection_id))
+                    .inner_join(collection_item::table)
+                    .filter(collection_item::collection_id.eq(collection_id))
                     .count()
                     .get_result(conn)?;
                 Ok(count)
             }
             (None, Some(update_time)) => {
                 let count = item::table
-                    .filter(item::collection_id.eq(collection_id))
+                    .inner_join(collection_item::table)
+                    .filter(collection_item::collection_id.eq(collection_id))
                     .filter(item::update_time.between(update_time.start, update_time.end))
                     .count()
                     .get_result(conn)?;
@@ -155,7 +157,8 @@ impl ItemModel {
             }
             (Some(create_time), None) => {
                 let count = item::table
-                    .filter(item::collection_id.eq(collection_id))
+                    .inner_join(collection_item::table)
+                    .filter(collection_item::collection_id.eq(collection_id))
                     .filter(item::create_time.between(create_time.start, create_time.end))
                     .count()
                     .get_result(conn)?;
@@ -163,7 +166,8 @@ impl ItemModel {
             }
             (Some(create_time), Some(update_time)) => {
                 let count = item::table
-                    .filter(item::collection_id.eq(collection_id))
+                    .inner_join(collection_item::table)
+                    .filter(collection_item::collection_id.eq(collection_id))
                     .filter(item::create_time.between(create_time.start, create_time.end))
                     .filter(item::update_time.between(update_time.start, update_time.end))
                     .count()
@@ -177,8 +181,10 @@ impl ItemModel {
         collection_id: i64,
         conn: &mut PgConnection,
     ) -> GraphqlResult<usize> {
-        let deleted = diesel::delete(item::table.filter(item::collection_id.eq(collection_id)))
-            .execute(conn)?;
+        let deleted = diesel::delete(
+            collection_item::table.filter(collection_item::collection_id.eq(collection_id)),
+        )
+        .execute(conn)?;
         Ok(deleted)
     }
 }

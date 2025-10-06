@@ -1,4 +1,4 @@
-use crate::{errors::GraphqlResult, graphql::types::TimeRange};
+use crate::{errors::GraphqlResult, graphql::types::TimeRange, model::schema::collection_item};
 
 use super::schema::collection;
 use diesel::prelude::*;
@@ -284,5 +284,19 @@ impl CollectionModel {
                 Ok(count)
             }
         }
+    }
+}
+
+/// item id 相关
+impl CollectionModel {
+    pub(crate) fn get_collections_by_item_id(
+        item_id: i64,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<Vec<CollectionModel>> {
+        let collections = collection::table
+            .inner_join(collection_item::table)
+            .filter(collection_item::item_id.eq(item_id))
+            .load::<(CollectionModel, (i64, i64))>(conn)?;
+        Ok(collections.into_iter().map(|(model, _)| model).collect())
     }
 }

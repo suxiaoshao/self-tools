@@ -18,15 +18,13 @@ pub(crate) struct Item {
     pub(crate) id: i64,
     pub(crate) name: String,
     pub(crate) content: String,
-    #[graphql(skip)]
-    pub(crate) collection_id: i64,
     pub(crate) create_time: OffsetDateTime,
     pub(crate) update_time: OffsetDateTime,
 }
 
 #[ComplexObject]
 impl Item {
-    async fn collection(&self, context: &Context<'_>) -> GraphqlResult<Option<Collection>> {
+    async fn collections(&self, context: &Context<'_>) -> GraphqlResult<Vec<Collection>> {
         let conn = &mut context
             .data::<PgPool>()
             .map_err(|_| {
@@ -34,8 +32,8 @@ impl Item {
                 GraphqlError::NotGraphqlContextData("PgPool")
             })?
             .get()?;
-        let collection = Collection::get(self.collection_id, conn)?;
-        Ok(Some(collection))
+        let collection = CollectionModel::get_collections_by_item_id(self.id, conn)?;
+        Ok(collection.into_iter().map(|c| c.into()).collect())
     }
 }
 
@@ -45,7 +43,6 @@ impl From<ItemModel> for Item {
             id: value.id,
             name: value.name,
             content: value.content,
-            collection_id: value.collection_id,
             create_time: value.create_time,
             update_time: value.update_time,
         }
@@ -65,7 +62,7 @@ impl Item {
             event!(Level::WARN, "目录不存在: {}", collection_id);
             return Err(GraphqlError::NotFound("目录", collection_id));
         }
-        let new_item = ItemModel::create(&name, &content, collection_id, conn)?;
+        let new_item = ItemModel::create(&name, &content, conn)?;
         Ok(new_item.into())
     }
     /// 删除记录
