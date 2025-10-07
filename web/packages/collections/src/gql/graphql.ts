@@ -1,7 +1,7 @@
 /* eslint-disable */
 import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 export type Maybe<T> = T | null;
-export type InputMaybe<T> = Maybe<T>;
+export type InputMaybe<T> = T | null | undefined;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
 export type MakeOptional<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]?: Maybe<T[SubKey]> };
 export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]: Maybe<T[SubKey]> };
@@ -38,7 +38,7 @@ export type CollectionItemQuery = {
 
 export type Item = {
   __typename?: 'Item';
-  collection?: Maybe<Collection>;
+  collections: Array<Collection>;
   content: Scalars['String']['output'];
   createTime: Scalars['DateTime']['output'];
   id: Scalars['Int']['output'];
@@ -71,7 +71,7 @@ export type MutationRootCreateCollectionArgs = {
 };
 
 export type MutationRootCreateItemArgs = {
-  collectionId: Scalars['Int']['input'];
+  collectionIds: Array<Scalars['Int']['input']>;
   content: Scalars['String']['input'];
   name: Scalars['String']['input'];
 };
@@ -146,7 +146,12 @@ export type GetEditItemQueryVariables = Exact<{
 
 export type GetEditItemQuery = {
   __typename?: 'QueryRoot';
-  getItem: { __typename?: 'Item'; name: string; content: string };
+  getItem: {
+    __typename?: 'Item';
+    name: string;
+    content: string;
+    collections: Array<{ __typename?: 'Collection'; id: number }>;
+  };
 };
 
 export type UpdateCollectionMutationVariables = Exact<{
@@ -197,7 +202,7 @@ export type CreateCollectionMutation = {
 };
 
 export type CreateItemMutationVariables = Exact<{
-  collectionId: Scalars['Int']['input'];
+  collectionIds: Array<Scalars['Int']['input']> | Scalars['Int']['input'];
   name: Scalars['String']['input'];
   content: Scalars['String']['input'];
 }>;
@@ -334,6 +339,14 @@ export const GetEditItemDocument = {
               selections: [
                 { kind: 'Field', name: { kind: 'Name', value: 'name' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'content' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'collections' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [{ kind: 'Field', name: { kind: 'Name', value: 'id' } }],
+                  },
+                },
               ],
             },
           },
@@ -578,8 +591,14 @@ export const CreateItemDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'collectionId' } },
-          type: { kind: 'NonNullType', type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } } },
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'collectionIds' } },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'ListType',
+              type: { kind: 'NonNullType', type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } } },
+            },
+          },
         },
         {
           kind: 'VariableDefinition',
@@ -601,8 +620,8 @@ export const CreateItemDocument = {
             arguments: [
               {
                 kind: 'Argument',
-                name: { kind: 'Name', value: 'collectionId' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'collectionId' } },
+                name: { kind: 'Name', value: 'collectionIds' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'collectionIds' } },
               },
               {
                 kind: 'Argument',

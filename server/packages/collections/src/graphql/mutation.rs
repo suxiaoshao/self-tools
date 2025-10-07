@@ -77,7 +77,7 @@ impl MutationRoot {
         context: &Context<'_>,
         name: String,
         content: String,
-        collection_id: i64,
+        collection_ids: Vec<i64>,
     ) -> GraphqlResult<Item> {
         let conn = &mut context
             .data::<PgPool>()
@@ -86,7 +86,7 @@ impl MutationRoot {
                 GraphqlError::NotGraphqlContextData("PgPool")
             })?
             .get()?;
-        let created_item = Item::create(name, content, collection_id, conn)?;
+        let created_item = Item::create(name, content, collection_ids, conn)?;
         Ok(created_item)
     }
     /// 删除记录

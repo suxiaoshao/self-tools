@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use crate::{errors::GraphqlResult, graphql::types::TimeRange, model::schema::collection_item};
 
 use super::schema::collection;
@@ -59,6 +61,16 @@ impl CollectionModel {
         .get_result(conn)?;
         Ok(exists)
     }
+    /// 判断目录是否存在
+    pub(crate) fn exists_many(ids: &[i64], conn: &mut PgConnection) -> GraphqlResult<bool> {
+        let agg_ids = collection::table
+            .select(collection::id)
+            .load::<i64>(conn)?
+            .into_iter()
+            .collect::<HashSet<i64>>();
+        let ids = ids.iter().copied().collect::<HashSet<i64>>();
+        Ok(agg_ids.is_superset(&ids))
+    }
     /// 查找目录
     pub(crate) fn find_one(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
         let collection = collection::table
@@ -90,6 +102,17 @@ impl CollectionModel {
             ))
             .get_result(conn)?;
         Ok(collection)
+    }
+    /// 根据 collection_id 删除记录
+    pub(crate) fn delete_reletive_by_collection_id(
+        collection_id: i64,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<usize> {
+        let deleted = diesel::delete(
+            collection_item::table.filter(collection_item::collection_id.eq(collection_id)),
+        )
+        .execute(conn)?;
+        Ok(deleted)
     }
 }
 

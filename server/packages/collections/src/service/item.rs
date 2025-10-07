@@ -5,7 +5,7 @@ use crate::{
 use crate::{graphql::types::CollectionItemQuery, model::collection::CollectionModel};
 use crate::{graphql::types::ItemAndCollection, model::item::ItemModel};
 use async_graphql::{ComplexObject, Context, SimpleObject};
-use diesel::PgConnection;
+use diesel::{Connection, PgConnection};
 use graphql_common::{Paginate, Queryable};
 use time::OffsetDateTime;
 use tracing::{event, Level};
@@ -54,16 +54,20 @@ impl Item {
     pub(crate) fn create(
         name: String,
         content: String,
-        collection_id: i64,
+        collection_ids: Vec<i64>,
         conn: &mut PgConnection,
     ) -> GraphqlResult<Self> {
         //  判断父目录是否存在
-        if !CollectionModel::exists(collection_id, conn)? {
-            event!(Level::WARN, "目录不存在: {}", collection_id);
-            return Err(GraphqlError::NotFound("目录", collection_id));
+        if !CollectionModel::exists_many(&collection_ids, conn)? {
+            event!(Level::WARN, "父目录不存在: {:?}", collection_ids);
+            return Err(GraphqlError::NotFoundMany("父目录", collection_ids));
         }
-        let new_item = ItemModel::create(&name, &content, conn)?;
-        Ok(new_item.into())
+        let new_item = conn.transaction::<_, GraphqlError, _>(|conn| {
+            let new_item = ItemModel::create(&name, &content, conn)?;
+            new_item.add_collections(&collection_ids, conn)?;
+            Ok(new_item.into())
+        })?;
+        Ok(new_item)
     }
     /// 删除记录
     pub(crate) fn delete(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
@@ -71,8 +75,13 @@ impl Item {
             event!(Level::WARN, "记录不存在: {}", id);
             return Err(GraphqlError::NotFound("记录", id));
         }
-        let item = ItemModel::delete(id, conn)?;
-        Ok(item.into())
+        let data = conn.transaction::<_, GraphqlError, _>(|conn| {
+            // 删除关系
+            ItemModel::delete_reletive_by_item_id(id, conn)?;
+            let item = ItemModel::delete(id, conn)?;
+            Ok(item.into())
+        })?;
+        Ok(data)
     }
     /// 获取记录
     pub(crate) fn get(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {

@@ -1,7 +1,7 @@
 import { MenuItem } from '@mui/material';
 import { TableActions } from 'custom-table';
 import { useI18n } from 'i18n';
-import { match } from 'ts-pattern';
+import { match, P } from 'ts-pattern';
 import type { CollectionAndItem } from '../types';
 import useDialog from '@collections/hooks/useDialog';
 import ItemForm, { type ItemFormData } from '../../Item/Components/ItemForm';
@@ -30,6 +30,9 @@ const GetEditItem = graphql(`
     getItem(id: $id) {
       name
       content
+      collections {
+        id
+      }
     }
   }
 `);
@@ -116,7 +119,14 @@ export default function Actions({ id, refetch, __typename, ...data }: TableActio
         .otherwise(() => (
           <ItemForm
             loading={loading}
-            initialValues={editItemData?.getItem}
+            initialValues={match(editItemData?.getItem)
+              .with(P.nonNullable, ({ collections, content, name }) => ({
+                collectionIds: collections.map((collection) => collection.id),
+                content: content,
+                name: name,
+              }))
+              //oxlint-disable-next-line unicorn/no-useless-undefined
+              .otherwise(() => undefined)}
             mode="edit"
             open={open}
             handleClose={handleClose}

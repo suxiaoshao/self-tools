@@ -14,6 +14,8 @@ pub(crate) enum GraphqlError {
     Unauthenticated,
     /// 资源不存在
     NotFound(&'static str, i64),
+    /// 资源不存在
+    NotFoundMany(&'static str, Vec<i64>),
     /// 已存在
     AlreadyExists(String),
     PageSizeTooMore,
@@ -67,6 +69,9 @@ impl GraphqlError {
             GraphqlError::ClientError(data) => format!("thrift client错误:{data}"),
             GraphqlError::VarError(err) => format!("env error:{err}"),
             GraphqlError::NotGraphqlContextData(tag) => format!("graphql context data:{tag}不存在"),
+            GraphqlError::NotFoundMany(tag, items) => {
+                format!(r#"{tag}"{:?}"不存在"#, items)
+            }
         }
     }
     pub(crate) fn code(&self) -> &str {
@@ -87,6 +92,7 @@ impl GraphqlError {
             GraphqlError::ClientError(_) => "ThriftClient",
             GraphqlError::VarError(_) => "VarError",
             GraphqlError::NotGraphqlContextData(_) => "NotGraphqlContextData",
+            GraphqlError::NotFoundMany(_, _) => "NotFoundMany",
         }
     }
 }
@@ -111,6 +117,7 @@ impl Clone for GraphqlError {
             GraphqlError::ClientError(data) => Self::ClientError(data),
             GraphqlError::VarError(data) => Self::VarError(data.clone()),
             GraphqlError::NotGraphqlContextData(data) => Self::NotGraphqlContextData(data),
+            GraphqlError::NotFoundMany(tag, data) => Self::NotFoundMany(tag, data.clone()),
         }
     }
 }

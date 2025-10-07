@@ -74,6 +74,36 @@ impl ItemModel {
             .get_result(conn)?;
         Ok(item)
     }
+    /// 根据 item_id 删除记录
+    pub(crate) fn delete_reletive_by_item_id(
+        item_id: i64,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<usize> {
+        let deleted =
+            diesel::delete(collection_item::table.filter(collection_item::item_id.eq(item_id)))
+                .execute(conn)?;
+        Ok(deleted)
+    }
+    /// 添加 collections
+    pub(crate) fn add_collections(
+        &self,
+        collection_ids: &[i64],
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<usize> {
+        let values = collection_ids
+            .iter()
+            .map(|collection_id| {
+                (
+                    collection_item::item_id.eq(self.id),
+                    collection_item::collection_id.eq(*collection_id),
+                )
+            })
+            .collect::<Vec<_>>();
+        let inserted = diesel::insert_into(collection_item::table)
+            .values(values)
+            .execute(conn)?;
+        Ok(inserted)
+    }
 }
 
 /// collection_id 相关
@@ -175,16 +205,5 @@ impl ItemModel {
                 Ok(count)
             }
         }
-    }
-    /// 根据 collection_id 删除记录
-    pub(crate) fn delete_by_collection_id(
-        collection_id: i64,
-        conn: &mut PgConnection,
-    ) -> GraphqlResult<usize> {
-        let deleted = diesel::delete(
-            collection_item::table.filter(collection_item::collection_id.eq(collection_id)),
-        )
-        .execute(conn)?;
-        Ok(deleted)
     }
 }

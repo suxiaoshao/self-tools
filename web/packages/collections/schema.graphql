@@ -40,7 +40,7 @@ type Item {
   content: String!
   createTime: DateTime!
   updateTime: DateTime!
-  collection: Collection
+  collections: [Collection!]!
 }
 
 union ItemAndCollection = Item | Collection
@@ -61,7 +61,7 @@ type MutationRoot {
   updateCollection(id: Int!, name: String!, description: String): Collection!
 
   # 创建记录
-  createItem(name: String!, content: String!, collectionId: Int!): Item!
+  createItem(name: String!, content: String!, collectionIds: [Int!]!): Item!
 
   # 删除记录
   deleteItem(id: Int!): Item!

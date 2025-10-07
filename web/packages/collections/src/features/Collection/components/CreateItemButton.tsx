@@ -6,8 +6,8 @@ import { graphql } from '@collections/gql';
 import { useMutation } from '@apollo/client/react';
 
 const CreateItem = graphql(`
-  mutation createItem($collectionId: Int!, $name: String!, $content: String!) {
-    createItem(collectionId: $collectionId, name: $name, content: $content) {
+  mutation createItem($collectionIds: [Int!]!, $name: String!, $content: String!) {
+    createItem(collectionIds: $collectionIds, name: $name, content: $content) {
       name
     }
   }
@@ -22,8 +22,8 @@ export interface CreateItemButtonProps {
 export default function CreateItemButton({ refetch, collectionId }: CreateItemButtonProps) {
   const [createItem] = useMutation(CreateItem);
 
-  const afterSubmit = async ({ name, content }: ItemFormData) => {
-    await createItem({ variables: { name, collectionId, content } });
+  const afterSubmit = async ({ name, content, collectionIds }: ItemFormData) => {
+    await createItem({ variables: { name, collectionIds, content } });
     refetch();
   };
   const { open, handleClose, handleOpen } = useDialog();
@@ -39,7 +39,7 @@ export default function CreateItemButton({ refetch, collectionId }: CreateItemBu
         afterSubmit={afterSubmit}
         open={open}
         handleClose={handleClose}
-        initialValues={{ content: '', name: '' }}
+        initialValues={{ content: '', name: '', collectionIds: [collectionId] }}
       />
     </>
   );
