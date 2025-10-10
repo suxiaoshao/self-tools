@@ -1,18 +1,19 @@
+use super::collection::Collection;
 use crate::{
     errors::{GraphqlError, GraphqlResult},
-    model::PgPool,
+    model::{collection_item::CollectionItemModel, PgPool},
+    service::utils::{find_all_children, find_all_item_by_collection},
 };
 use crate::{graphql::types::CollectionItemQuery, model::collection::CollectionModel};
 use crate::{graphql::types::ItemAndCollection, model::item::ItemModel};
 use async_graphql::{ComplexObject, Context, SimpleObject};
 use diesel::{Connection, PgConnection};
-use graphql_common::{Paginate, Queryable};
+use graphql_common::{Paginate, Queryable, TagMatch};
+use std::collections::HashSet;
 use time::OffsetDateTime;
 use tracing::{event, Level};
 
-use super::collection::Collection;
-
-#[derive(SimpleObject)]
+#[derive(SimpleObject, Clone)]
 #[graphql(complex)]
 pub(crate) struct Item {
     pub(crate) id: i64,
@@ -77,7 +78,7 @@ impl Item {
         }
         let data = conn.transaction::<_, GraphqlError, _>(|conn| {
             // 删除关系
-            ItemModel::delete_reletive_by_item_id(id, conn)?;
+            CollectionItemModel::delete_by_item_id(id, conn)?;
             let item = ItemModel::delete(id, conn)?;
             Ok(item.into())
         })?;
@@ -105,6 +106,74 @@ impl Item {
         }
         let item = ItemModel::update(id, name, content, conn)?;
         Ok(item.into())
+    }
+    /// 查询
+    pub(crate) fn query(
+        collection_match: Option<TagMatch>,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<Vec<Self>> {
+        if let Some(TagMatch { match_set, .. }) = &collection_match {
+            // collection 不存在
+            CollectionModel::exists_all(match_set, conn)?;
+        }
+        let mut data = ItemModel::all(conn)?
+            .into_iter()
+            .map(Into::into)
+            .collect::<Vec<Self>>();
+        if let Some(TagMatch {
+            match_set,
+            full_match,
+        }) = collection_match
+        {
+            // 构建一个 `id` 到其子节点列表的映射
+            let collection_collection_map = CollectionModel::get_map(conn)?;
+
+            if full_match {
+                let collection_item_map = CollectionItemModel::map_collection_item(conn)?;
+                // 找到所有集合对应的条目，然后取他们的交集
+                let item_ids = match match_set.into_iter().try_fold(
+                    HashSet::new(),
+                    |mut acc, collection_id| -> Option<HashSet<i64>> {
+                        let mut item_ids = HashSet::new();
+                        find_all_item_by_collection(
+                            &mut item_ids,
+                            collection_id,
+                            &collection_collection_map,
+                            &collection_item_map,
+                        );
+                        match (acc.is_empty(), item_ids.is_empty()) {
+                            (_, true) => None,
+                            (true, false) => Some(item_ids),
+                            (false, false) => {
+                                acc.retain(|e| item_ids.contains(e));
+                                Some(acc)
+                            }
+                        }
+                    },
+                ) {
+                    Some(id) => id,
+                    None => return Ok(vec![]),
+                };
+
+                data.retain(|Item { id, .. }| item_ids.contains(id));
+            } else {
+                // 初始化结果列表，并调用递归函数
+                let mut all_set = HashSet::new();
+                for id in &match_set {
+                    all_set.insert(*id);
+                    find_all_children(&mut all_set, *id, &collection_collection_map);
+                }
+                let item_collection_map = CollectionItemModel::map_item_collection(conn)?;
+                data.retain(|Item { id, .. }| {
+                    let item_collection = match item_collection_map.get(id) {
+                        Some(novel_collection) => novel_collection,
+                        None => return false,
+                    };
+                    !all_set.is_disjoint(item_collection)
+                });
+            }
+        }
+        Ok(data)
     }
 }
 
@@ -191,5 +260,52 @@ impl Queryable for ItemQueryRunner {
             .map(|d| ItemAndCollection::Item(Item::from(d)))
             .collect();
         Ok(data)
+    }
+}
+
+graphql_common::list!(Item);
+
+pub(crate) struct ItemRunner {
+    data: Vec<Item>,
+}
+
+impl ItemRunner {
+    pub(crate) fn new(collection_match: Option<TagMatch>, conn: PgPool) -> GraphqlResult<Self> {
+        let conn = &mut conn.get()?;
+        let data = Item::query(collection_match, conn)?;
+        Ok(Self { data })
+    }
+}
+
+impl Queryable for ItemRunner {
+    type Item = Item;
+
+    type Error = GraphqlError;
+
+    async fn len(&self) -> Result<i64, Self::Error> {
+        Ok(self.data.len() as i64)
+    }
+
+    async fn query<P: Paginate>(&self, pagination: P) -> Result<Vec<Self::Item>, Self::Error> {
+        let offset = pagination.offset();
+        let len = self.len().await?;
+        if len < offset {
+            event!(
+                Level::ERROR,
+                "偏移量超出范围 pagination: {:?} len: {} offset: {}",
+                pagination,
+                len,
+                offset
+            );
+            return Err(GraphqlError::PageSizeTooMore);
+        }
+        let limit = pagination.limit();
+        Ok(self
+            .data
+            .iter()
+            .skip(offset as usize)
+            .take(limit as usize)
+            .cloned()
+            .collect())
     }
 }

@@ -8,6 +8,7 @@ use diesel::{
 use crate::errors::GraphqlResult;
 
 pub(crate) mod collection;
+pub(crate) mod collection_item;
 pub(crate) mod item;
 pub(crate) mod schema;
 

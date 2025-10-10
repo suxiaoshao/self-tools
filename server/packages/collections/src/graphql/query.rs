@@ -11,11 +11,11 @@ use crate::{
     model::PgPool,
     service::{
         collection::{Collection, CollectionQueryRunner, ItemAndCollectionList},
-        item::{Item, ItemQueryRunner},
+        item::{Item, ItemList, ItemQueryRunner, ItemRunner},
     },
 };
 use async_graphql::{Context, Object};
-use graphql_common::{QueryStack, Queryable};
+use graphql_common::{Pagination, QueryStack, Queryable, TagMatch, TagMatchValidator};
 use tracing::{event, Level};
 
 pub(crate) struct QueryRoot;
@@ -66,5 +66,24 @@ impl QueryRoot {
         let runner = QueryStack::new(collection_runner).add_query(item_runner);
         let (data, total) = tokio::try_join!(runner.query(query.pagination), runner.len())?;
         Ok(ItemAndCollectionList::new(data, total))
+    }
+    /// 获取条目列表
+    #[graphql(guard = "AuthGuard")]
+    async fn query_items(
+        &self,
+        context: &Context<'_>,
+        #[graphql(validator(custom = "TagMatchValidator"))] collection_match: Option<TagMatch>,
+        pagination: Pagination,
+    ) -> GraphqlResult<ItemList> {
+        let conn = context
+            .data::<PgPool>()
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
+            .clone();
+        let runner = ItemRunner::new(collection_match, conn)?;
+        let (data, total) = tokio::try_join!(runner.query(pagination), runner.len())?;
+        Ok(ItemList::new(data, total))
     }
 }

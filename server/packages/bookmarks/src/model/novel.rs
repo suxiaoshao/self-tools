@@ -2,13 +2,14 @@ use super::schema::{
     custom_type::{NovelSite, NovelStatus},
     novel,
 };
-use crate::{errors::GraphqlResult, graphql::input::TagMatch, model::schema};
+use crate::{errors::GraphqlResult, model::schema};
 use diesel::{
     pg::Pg,
     prelude::*,
     query_builder::{QueryFragment, QueryId},
     sql_types::{BigInt, Nullable, Text, Timestamptz},
 };
+use graphql_common::TagMatch;
 use novel_crawler::{AuthorFn, NovelFn};
 use std::collections::{HashMap, HashSet};
 use time::OffsetDateTime;

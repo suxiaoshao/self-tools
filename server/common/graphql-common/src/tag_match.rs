@@ -1,9 +1,15 @@
+use async_graphql::InputObject;
 use async_graphql::{CustomValidator, InputValueError};
-use tracing::{event, Level};
+use std::collections::HashSet;
+use tracing::{Level, event};
 
-use crate::graphql::input::TagMatch;
+#[derive(InputObject)]
+pub struct TagMatch {
+    pub match_set: HashSet<i64>,
+    pub full_match: bool,
+}
 
-pub(crate) struct TagMatchValidator;
+pub struct TagMatchValidator;
 
 impl CustomValidator<TagMatch> for TagMatchValidator {
     fn check(&self, input: &TagMatch) -> Result<(), InputValueError<TagMatch>> {
@@ -17,13 +23,10 @@ impl CustomValidator<TagMatch> for TagMatchValidator {
 
 #[cfg(test)]
 mod test {
-    use std::collections::HashSet;
-
-    use async_graphql::CustomValidator;
-
-    use crate::graphql::input::TagMatch;
-
     use super::TagMatchValidator;
+    use crate::TagMatch;
+    use async_graphql::CustomValidator;
+    use std::collections::HashSet;
     #[test]
     fn test_validate_folder() {
         let validator = TagMatchValidator;

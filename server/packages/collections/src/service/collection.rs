@@ -7,7 +7,7 @@ use tracing::{event, Level};
 use crate::{
     errors::{GraphqlError, GraphqlResult},
     graphql::types::{CollectionItemQuery, ItemAndCollection},
-    model::{collection::CollectionModel, PgPool},
+    model::{collection::CollectionModel, collection_item::CollectionItemModel, PgPool},
 };
 
 #[derive(SimpleObject)]
@@ -112,7 +112,7 @@ impl Collection {
             return Err(GraphqlError::NotFound("目录", id));
         }
         // 删除关系
-        CollectionModel::delete_reletive_by_collection_id(id, conn)?;
+        CollectionItemModel::delete_by_collection_id(id, conn)?;
         let collection = CollectionModel::delete(id, conn)?;
         //递归删除子目录
         CollectionModel::list_parent(Some(id), conn)?

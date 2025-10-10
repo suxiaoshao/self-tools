@@ -74,16 +74,6 @@ impl ItemModel {
             .get_result(conn)?;
         Ok(item)
     }
-    /// 根据 item_id 删除记录
-    pub(crate) fn delete_reletive_by_item_id(
-        item_id: i64,
-        conn: &mut PgConnection,
-    ) -> GraphqlResult<usize> {
-        let deleted =
-            diesel::delete(collection_item::table.filter(collection_item::item_id.eq(item_id)))
-                .execute(conn)?;
-        Ok(deleted)
-    }
     /// 添加 collections
     pub(crate) fn add_collections(
         &self,
@@ -205,5 +195,14 @@ impl ItemModel {
                 Ok(count)
             }
         }
+    }
+}
+
+/// all
+impl ItemModel {
+    /// all
+    pub fn all(conn: &mut PgConnection) -> GraphqlResult<Vec<Self>> {
+        let items = item::table.load(conn)?;
+        Ok(items)
     }
 }
