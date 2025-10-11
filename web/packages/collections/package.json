@@ -12,7 +12,7 @@
     "custom-table": "workspace:^",
     "edit": "workspace:^",
     "i18n": "workspace:^",
-    "markdown-to-jsx": "^7.7.14",
+    "markdown-to-jsx": "^7.7.15",
     "prism-themes": "^1.9.0",
     "prismjs": "^1.30.0",
     "time": "workspace:^",
