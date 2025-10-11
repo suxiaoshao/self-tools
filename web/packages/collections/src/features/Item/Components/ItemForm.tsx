@@ -6,6 +6,7 @@ import {
   Button,
   CircularProgress,
   Dialog,
+  FormControl,
   FormLabel,
   IconButton,
   TextField,
@@ -20,8 +21,16 @@ import { Controller, type SubmitHandler, useForm } from 'react-hook-form';
 import { match } from 'ts-pattern';
 import CustomEdit from '../../../components/CustomEdit';
 import Markdown from '../../../components/Markdown';
-import type { CreateItemMutationVariables } from '../../../gql/graphql';
-export type ItemFormData = Omit<CreateItemMutationVariables, 'collectionId'>;
+import CollectionMultiSelect from '@collections/components/CollectionMultiSelect';
+import { array, type InferInput, integer, number, object, pipe, string } from 'valibot';
+
+const itemFormSchema = object({
+  collectionIds: array(pipe(number(), integer())),
+  name: string(),
+  content: string(),
+});
+
+export type ItemFormData = InferInput<typeof itemFormSchema>;
 
 export interface ItemFormProps {
   afterSubmit?: (data: ItemFormData) => Promise<void>;
@@ -91,6 +100,14 @@ export default function ItemForm({
             label={t('item_name')}
             {...register('name', { required: true })}
           />
+          <FormControl component="fieldset" variant="standard">
+            <FormLabel component="legend">{t('match_collections')} </FormLabel>
+            <Controller
+              control={control}
+              name="collectionIds"
+              render={({ field }) => <CollectionMultiSelect {...field} />}
+            />
+          </FormControl>
 
           <Controller
             control={control}

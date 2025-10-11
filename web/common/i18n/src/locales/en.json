@@ -108,5 +108,6 @@
   "update_comment": "Update Comment",
   "batch_update": "Batch Update",
   "select_all": "Select All",
-  "select_none": "Select None"
+  "select_none": "Select None",
+  "item_manage": "Item Manage"
 }

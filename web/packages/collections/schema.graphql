@@ -50,6 +50,11 @@ type ItemAndCollectionList {
   total: Int!
 }
 
+type ItemList {
+  data: [Item!]!
+  total: Int!
+}
+
 type MutationRoot {
   # 创建目录
   createCollection(name: String!, parentId: Int, description: String): Collection!
@@ -76,6 +81,9 @@ input Pagination {
 }
 
 type QueryRoot {
+  # 获取所有集合
+  allCollections: [Collection!]!
+
   # 获取目录详情
   getCollection(id: Int!): Collection!
 
@@ -84,6 +92,14 @@ type QueryRoot {
 
   # 获取集合下的集合和记录
   collectionAndItem(query: CollectionItemQuery!): ItemAndCollectionList!
+
+  # 获取条目列表
+  queryItems(collectionMatch: TagMatch, pagination: Pagination!): ItemList!
+}
+
+input TagMatch {
+  matchSet: [Int!]!
+  fullMatch: Boolean!
 }
 
 input TimeRange {

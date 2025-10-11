@@ -93,6 +93,11 @@ impl Collection {
             }
         }
     }
+    /// 获取所有 collections
+    pub(crate) fn all_collections(conn: &mut PgConnection) -> GraphqlResult<Vec<Self>> {
+        let data = CollectionModel::get_list(conn)?;
+        Ok(data.into_iter().map(From::from).collect())
+    }
 }
 
 /// id 相关

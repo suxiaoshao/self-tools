@@ -13,11 +13,12 @@ import AncestorsPath from './components/AncestorsPath';
 import useParentId from './hooks/useParentId';
 import useTableColumns from './hooks/useTableColumns';
 import CreateItemButton from './components/CreateItemButton';
-import { useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useI18n } from 'i18n';
 import useTitle from '@bookmarks/hooks/useTitle';
 import { graphql } from '@collections/gql';
 import { useQuery } from '@apollo/client/react';
+import { useAllCollection } from './collectionSlice';
 
 const CollectionAndItems = graphql(`
   query collectionAndItems($query: CollectionItemQuery!) {
@@ -53,14 +54,19 @@ export default function Collection() {
   useEffect(() => {
     // oxlint-disable-next-line react/exhaustive-deps
     pageState.setPage(1);
+    // oxlint-disable-next-line exhaustive-deps
   }, [id]);
   const { data: sourceData, refetch } = useQuery(CollectionAndItems, {
     variables: { query: { id, pagination: { page: pageState.pageIndex, pageSize: pageState.pageSize } } },
   });
+  const { fetchData } = useAllCollection();
+  const allRefetch = useCallback(async () => {
+    await Promise.all([refetch(), fetchData()]);
+  }, [refetch, fetchData]);
   const { data, total } = sourceData?.collectionAndItem ?? {};
   const page = usePageWithTotal(pageState, total);
 
-  const columns = useTableColumns(refetch);
+  const columns = useTableColumns(allRefetch);
   const tableOptions = useMemo(
     () => ({ columns, data: data ?? [], getCoreRowModel: getCoreRowModel() }),
     [columns, data],
@@ -77,8 +83,8 @@ export default function Collection() {
           display: 'flex',
         }}
       >
-        <CreateCollectionButton refetch={refetch} />
-        {id && <CreateItemButton refetch={refetch} collectionId={id} />}
+        <CreateCollectionButton refetch={allRefetch} />
+        {id && <CreateItemButton sx={{ ml: 2 }} refetch={allRefetch} collectionIds={[id]} />}
         <IconButton sx={{ marginLeft: 'auto' }} onClick={() => refetch()}>
           <Refresh />
         </IconButton>

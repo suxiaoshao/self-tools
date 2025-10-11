@@ -54,6 +54,12 @@ export type ItemAndCollectionList = {
   total: Scalars['Int']['output'];
 };
 
+export type ItemList = {
+  __typename?: 'ItemList';
+  data: Array<Item>;
+  total: Scalars['Int']['output'];
+};
+
 export type MutationRoot = {
   __typename?: 'MutationRoot';
   createCollection: Collection;
@@ -103,9 +109,11 @@ export type Pagination = {
 
 export type QueryRoot = {
   __typename?: 'QueryRoot';
+  allCollections: Array<Collection>;
   collectionAndItem: ItemAndCollectionList;
   getCollection: Collection;
   getItem: Item;
+  queryItems: ItemList;
 };
 
 export type QueryRootCollectionAndItemArgs = {
@@ -120,9 +128,35 @@ export type QueryRootGetItemArgs = {
   id: Scalars['Int']['input'];
 };
 
+export type QueryRootQueryItemsArgs = {
+  collectionMatch?: InputMaybe<TagMatch>;
+  pagination: Pagination;
+};
+
+export type TagMatch = {
+  fullMatch: Scalars['Boolean']['input'];
+  matchSet: Array<Scalars['Int']['input']>;
+};
+
 export type TimeRange = {
   end: Scalars['DateTime']['input'];
   start: Scalars['DateTime']['input'];
+};
+
+export type AllCollectionsQueryVariables = Exact<{ [key: string]: never }>;
+
+export type AllCollectionsQuery = {
+  __typename?: 'QueryRoot';
+  allCollections: Array<{
+    __typename?: 'Collection';
+    name: string;
+    id: number;
+    path: string;
+    createTime: any;
+    updateTime: any;
+    description?: string | null;
+    parentId?: number | null;
+  }>;
 };
 
 export type DeleteCollectionMutationVariables = Exact<{
@@ -233,6 +267,51 @@ export type CollectionAndItemsQuery = {
   };
 };
 
+export type GetItemsQueryVariables = Exact<{
+  collectionMatch?: InputMaybe<TagMatch>;
+  pagination: Pagination;
+}>;
+
+export type GetItemsQuery = {
+  __typename?: 'QueryRoot';
+  queryItems: {
+    __typename?: 'ItemList';
+    total: number;
+    data: Array<{ __typename?: 'Item'; id: number; name: string; content: string; createTime: any; updateTime: any }>;
+  };
+};
+
+export const AllCollectionsDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'allCollections' },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'allCollections' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'path' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'createTime' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'updateTime' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'parentId' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<AllCollectionsQuery, AllCollectionsQueryVariables>;
 export const DeleteCollectionDocument = {
   kind: 'Document',
   definitions: [
@@ -725,3 +804,66 @@ export const CollectionAndItemsDocument = {
     },
   ],
 } as unknown as DocumentNode<CollectionAndItemsQuery, CollectionAndItemsQueryVariables>;
+export const GetItemsDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'getItems' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'collectionMatch' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'TagMatch' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'pagination' } },
+          type: { kind: 'NonNullType', type: { kind: 'NamedType', name: { kind: 'Name', value: 'Pagination' } } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'queryItems' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'collectionMatch' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'collectionMatch' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'pagination' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'pagination' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'data' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'content' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'createTime' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'updateTime' } },
+                    ],
+                  },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'total' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<GetItemsQuery, GetItemsQueryVariables>;

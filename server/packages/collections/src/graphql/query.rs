@@ -22,6 +22,19 @@ pub(crate) struct QueryRoot;
 
 #[Object]
 impl QueryRoot {
+    /// 获取所有集合
+    #[graphql(guard = "AuthGuard")]
+    async fn all_collections(&self, context: &Context<'_>) -> GraphqlResult<Vec<Collection>> {
+        let conn = &mut context
+            .data::<PgPool>()
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
+            .get()?;
+        let directory = Collection::all_collections(conn)?;
+        Ok(directory)
+    }
     /// 获取目录详情
     #[graphql(guard = "AuthGuard")]
     async fn get_collection(&self, context: &Context<'_>, id: i64) -> GraphqlResult<Collection> {

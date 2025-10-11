@@ -17,7 +17,7 @@ const DeleteCollection = graphql(`
   }
 `);
 
-const DeleteItem = graphql(`
+export const DeleteItem = graphql(`
   mutation deleteItem($id: Int!) {
     deleteItem(id: $id) {
       name

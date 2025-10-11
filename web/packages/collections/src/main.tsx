@@ -9,7 +9,6 @@ import type { Menu, MicroConfig } from 'types';
 import Collection from './features/Collection';
 import type { ReactNode } from 'react';
 import App from './App';
-import Item from './features/Item';
 import { Route } from 'react-router-dom';
 import ItemList from './features/Item/List';
 import ItemDetails from './features/Item/Details';
