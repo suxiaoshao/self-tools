@@ -166,7 +166,7 @@ impl Item {
                 let item_collection_map = CollectionItemModel::map_item_collection(conn)?;
                 data.retain(|Item { id, .. }| {
                     let item_collection = match item_collection_map.get(id) {
-                        Some(novel_collection) => novel_collection,
+                        Some(item_collection) => item_collection,
                         None => return false,
                     };
                     !all_set.is_disjoint(item_collection)
@@ -174,6 +174,52 @@ impl Item {
             }
         }
         Ok(data)
+    }
+    /// 添加集合
+    pub(crate) fn add_collection(
+        collection_id: i64,
+        item_id: i64,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<Item> {
+        if !CollectionModel::exists(collection_id, conn)? {
+            event!(Level::WARN, "目录不存在: {}", collection_id);
+            return Err(GraphqlError::NotFound("目录", collection_id));
+        }
+        if !ItemModel::exists(item_id, conn)? {
+            event!(Level::WARN, "小说不存在: {}", item_id);
+            return Err(GraphqlError::NotFound("小说", item_id));
+        }
+        if CollectionItemModel::exists(collection_id, item_id, conn)? {
+            event!(Level::WARN, "小说集合关系存在: {}", item_id);
+            return Err(GraphqlError::AlreadyExists(format!(
+                "{collection_id}/{item_id}"
+            )));
+        }
+        CollectionItemModel::save(collection_id, item_id, conn)?;
+        let item = ItemModel::find_one(item_id, conn)?;
+        Ok(item.into())
+    }
+    /// 删除
+    pub(crate) fn delete_collection(
+        collection_id: i64,
+        item_id: i64,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<Item> {
+        if !CollectionModel::exists(collection_id, conn)? {
+            event!(Level::WARN, "目录不存在: {}", collection_id);
+            return Err(GraphqlError::NotFound("目录", collection_id));
+        }
+        if !ItemModel::exists(item_id, conn)? {
+            event!(Level::WARN, "小说不存在: {}", item_id);
+            return Err(GraphqlError::NotFound("小说", item_id));
+        }
+        if !CollectionItemModel::exists(collection_id, item_id, conn)? {
+            event!(Level::WARN, "小说集合关系不存在: {}", item_id);
+            return Err(GraphqlError::NotFound("小说集合关系", collection_id));
+        }
+        CollectionItemModel::delete(collection_id, item_id, conn)?;
+        let item = ItemModel::find_one(item_id, conn)?;
+        Ok(item.into())
     }
 }
 

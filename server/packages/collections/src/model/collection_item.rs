@@ -14,6 +14,19 @@ pub(crate) struct CollectionItemModel {
 }
 
 impl CollectionItemModel {
+    pub(crate) fn save(
+        collection_id: i64,
+        item_id: i64,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<()> {
+        diesel::insert_into(collection_item::table)
+            .values(CollectionItemModel {
+                collection_id,
+                item_id,
+            })
+            .execute(conn)?;
+        Ok(())
+    }
     /// 根据 collection_id 删除记录
     pub(crate) fn delete_by_collection_id(
         collection_id: i64,
@@ -57,5 +70,29 @@ impl CollectionItemModel {
             lookup.entry(item_id).or_default().insert(collection_id);
         }
         Ok(lookup)
+    }
+    pub(crate) fn exists(
+        collection_id: i64,
+        item_id: i64,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<bool> {
+        let exists = diesel::select(diesel::dsl::exists(
+            collection_item::table
+                .filter(collection_item::collection_id.eq(collection_id))
+                .filter(collection_item::item_id.eq(item_id)),
+        ))
+        .get_result(conn)?;
+        Ok(exists)
+    }
+    pub(crate) fn delete(
+        collection_id: i64,
+        item_id: i64,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<()> {
+        diesel::delete(collection_item::table)
+            .filter(collection_item::collection_id.eq(collection_id))
+            .filter(collection_item::item_id.eq(item_id))
+            .execute(conn)?;
+        Ok(())
     }
 }

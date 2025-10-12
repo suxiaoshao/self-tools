@@ -16,7 +16,8 @@
     "prism-themes": "^1.9.0",
     "prismjs": "^1.30.0",
     "time": "workspace:^",
-    "types": "workspace:^"
+    "types": "workspace:^",
+    "details": "workspace:^"
   },
   "devDependencies": {
     "@types/prismjs": "^1.26.5"

@@ -121,4 +121,38 @@ impl MutationRoot {
         let updated_item = Item::update(id, &name, &content, conn)?;
         Ok(updated_item)
     }
+    /// 给条目添加集合
+    #[graphql(guard = "AuthGuard")]
+    async fn add_collection_for_item(
+        &self,
+        context: &Context<'_>,
+        collection_id: i64,
+        item_id: i64,
+    ) -> GraphqlResult<Item> {
+        let conn = &mut context
+            .data::<PgPool>()
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
+            .get()?;
+        Item::add_collection(collection_id, item_id, conn)
+    }
+    /// 给条目删除集合
+    #[graphql(guard = "AuthGuard")]
+    async fn delete_collection_for_item(
+        &self,
+        context: &Context<'_>,
+        collection_id: i64,
+        item_id: i64,
+    ) -> GraphqlResult<Item> {
+        let conn = &mut context
+            .data::<PgPool>()
+            .map_err(|_| {
+                event!(Level::WARN, "graphql context data PgPool 不存在");
+                GraphqlError::NotGraphqlContextData("PgPool")
+            })?
+            .get()?;
+        Item::delete_collection(collection_id, item_id, conn)
+    }
 }

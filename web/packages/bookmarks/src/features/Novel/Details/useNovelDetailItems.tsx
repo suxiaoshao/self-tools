@@ -3,7 +3,7 @@ import { graphql } from '@bookmarks/gql';
 import type { GetNovelQuery } from '@bookmarks/gql/graphql';
 import { getLabelKeyBySite } from '@bookmarks/utils/novelSite';
 import { getLabelKeyByNovelStatus } from '@bookmarks/utils/novelStatus';
-import { Box, Chip, Link } from '@mui/material';
+import { Box, Chip, Link, Tooltip } from '@mui/material';
 import type { DetailsItem } from 'details';
 import { useI18n } from 'i18n';
 import { useMemo } from 'react';
@@ -89,20 +89,21 @@ export default function useNovelDetailItems(data: GetNovelQuery | undefined, ref
                 label: t('collections'),
                 value: (
                   <Box sx={{ gap: 1, display: 'flex' }}>
-                    {data.collections.map(({ id, name }) => (
-                      <Chip
-                        color="primary"
-                        variant="outlined"
-                        label={name}
-                        onClick={() => {
-                          navigate(`/bookmarks/collections?parentId=${id}`);
-                        }}
-                        onDelete={async () => {
-                          await deleteCollectionForNovel({ variables: { collectionId: id, novelId: data.id } });
-                          refetch();
-                        }}
-                        key={id}
-                      />
+                    {data.collections.map(({ id, name, path }) => (
+                      <Tooltip key={id} title={path}>
+                        <Chip
+                          color="primary"
+                          variant="outlined"
+                          label={name}
+                          onClick={() => {
+                            navigate(`/bookmarks/collections?parentId=${id}`);
+                          }}
+                          onDelete={async () => {
+                            await deleteCollectionForNovel({ variables: { collectionId: id, novelId: data.id } });
+                            refetch();
+                          }}
+                        />
+                      </Tooltip>
                     ))}
                     <AddCollection novelId={data.id} refetch={refetch} />
                   </Box>

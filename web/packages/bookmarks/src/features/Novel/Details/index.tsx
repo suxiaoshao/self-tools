@@ -10,8 +10,7 @@ import { graphql } from '@bookmarks/gql';
 import useTitle from '@bookmarks/hooks/useTitle';
 import { getImageUrl } from '@bookmarks/utils/image';
 import CustomMarkdown from '@collections/components/Markdown';
-import { Delete, Explore, KeyboardArrowLeft, Refresh } from '@mui/icons-material';
-import CloudDownloadIcon from '@mui/icons-material/CloudDownload';
+import { Delete, Explore, KeyboardArrowLeft, Refresh, CloudDownload } from '@mui/icons-material';
 import { Avatar, Box, Card, CardContent, CardHeader, IconButton, Skeleton, Tooltip } from '@mui/material';
 import { Details } from 'details';
 import { useI18n } from 'i18n';
@@ -146,7 +145,7 @@ export default function NovelDetails() {
                     <>
                       <Tooltip title={t('update_by_crawler')}>
                         <IconButton disabled={updateLoading} onClick={handleUpdateNovel}>
-                          <CloudDownloadIcon />
+                          <CloudDownload />
                         </IconButton>
                       </Tooltip>
                       <Tooltip title={t('go_to_source_site')}>

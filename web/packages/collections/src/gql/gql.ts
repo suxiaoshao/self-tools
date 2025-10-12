@@ -24,6 +24,9 @@ type Documents = {
   '\n  mutation createCollection($parentId: Int, $name: String!, $description: String) {\n    createCollection(parentId: $parentId, name: $name, description: $description) {\n      path\n    }\n  }\n': typeof types.CreateCollectionDocument;
   '\n  mutation createItem($collectionIds: [Int!]!, $name: String!, $content: String!) {\n    createItem(collectionIds: $collectionIds, name: $name, content: $content) {\n      name\n    }\n  }\n': typeof types.CreateItemDocument;
   '\n  query collectionAndItems($query: CollectionItemQuery!) {\n    collectionAndItem(query: $query) {\n      data {\n        ... on Collection {\n          name\n          id\n          path\n          createTime\n          updateTime\n          description\n          __typename\n        }\n        ... on Item {\n          name\n          id\n          updateTime\n          createTime\n          __typename\n        }\n      }\n      total\n    }\n  }\n': typeof types.CollectionAndItemsDocument;
+  '\n  mutation addCollectionForItem($itemId: Int!, $collectionId: Int!) {\n    addCollectionForItem(itemId: $itemId, collectionId: $collectionId) {\n      id\n    }\n  }\n': typeof types.AddCollectionForItemDocument;
+  '\n  query getItem($id: Int!) {\n    getItem(id: $id) {\n      id\n      name\n      content\n      createTime\n      updateTime\n      collections {\n        id\n        name\n        path\n        description\n      }\n    }\n  }\n': typeof types.GetItemDocument;
+  '\n  mutation deleteCollectionForItem($collectionId: Int!, $itemId: Int!) {\n    deleteCollectionForItem(collectionId: $collectionId, itemId: $itemId) {\n      id\n    }\n  }\n': typeof types.DeleteCollectionForItemDocument;
   '\n  query getItems($collectionMatch: TagMatch, $pagination: Pagination!) {\n    queryItems(collectionMatch: $collectionMatch, pagination: $pagination) {\n      data {\n        id\n        name\n        content\n        createTime\n        updateTime\n      }\n      total\n    }\n  }\n': typeof types.GetItemsDocument;
 };
 const documents: Documents = {
@@ -46,6 +49,12 @@ const documents: Documents = {
     types.CreateItemDocument,
   '\n  query collectionAndItems($query: CollectionItemQuery!) {\n    collectionAndItem(query: $query) {\n      data {\n        ... on Collection {\n          name\n          id\n          path\n          createTime\n          updateTime\n          description\n          __typename\n        }\n        ... on Item {\n          name\n          id\n          updateTime\n          createTime\n          __typename\n        }\n      }\n      total\n    }\n  }\n':
     types.CollectionAndItemsDocument,
+  '\n  mutation addCollectionForItem($itemId: Int!, $collectionId: Int!) {\n    addCollectionForItem(itemId: $itemId, collectionId: $collectionId) {\n      id\n    }\n  }\n':
+    types.AddCollectionForItemDocument,
+  '\n  query getItem($id: Int!) {\n    getItem(id: $id) {\n      id\n      name\n      content\n      createTime\n      updateTime\n      collections {\n        id\n        name\n        path\n        description\n      }\n    }\n  }\n':
+    types.GetItemDocument,
+  '\n  mutation deleteCollectionForItem($collectionId: Int!, $itemId: Int!) {\n    deleteCollectionForItem(collectionId: $collectionId, itemId: $itemId) {\n      id\n    }\n  }\n':
+    types.DeleteCollectionForItemDocument,
   '\n  query getItems($collectionMatch: TagMatch, $pagination: Pagination!) {\n    queryItems(collectionMatch: $collectionMatch, pagination: $pagination) {\n      data {\n        id\n        name\n        content\n        createTime\n        updateTime\n      }\n      total\n    }\n  }\n':
     types.GetItemsDocument,
 };
@@ -124,6 +133,24 @@ export function graphql(
 export function graphql(
   source: '\n  query collectionAndItems($query: CollectionItemQuery!) {\n    collectionAndItem(query: $query) {\n      data {\n        ... on Collection {\n          name\n          id\n          path\n          createTime\n          updateTime\n          description\n          __typename\n        }\n        ... on Item {\n          name\n          id\n          updateTime\n          createTime\n          __typename\n        }\n      }\n      total\n    }\n  }\n',
 ): (typeof documents)['\n  query collectionAndItems($query: CollectionItemQuery!) {\n    collectionAndItem(query: $query) {\n      data {\n        ... on Collection {\n          name\n          id\n          path\n          createTime\n          updateTime\n          description\n          __typename\n        }\n        ... on Item {\n          name\n          id\n          updateTime\n          createTime\n          __typename\n        }\n      }\n      total\n    }\n  }\n'];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(
+  source: '\n  mutation addCollectionForItem($itemId: Int!, $collectionId: Int!) {\n    addCollectionForItem(itemId: $itemId, collectionId: $collectionId) {\n      id\n    }\n  }\n',
+): (typeof documents)['\n  mutation addCollectionForItem($itemId: Int!, $collectionId: Int!) {\n    addCollectionForItem(itemId: $itemId, collectionId: $collectionId) {\n      id\n    }\n  }\n'];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(
+  source: '\n  query getItem($id: Int!) {\n    getItem(id: $id) {\n      id\n      name\n      content\n      createTime\n      updateTime\n      collections {\n        id\n        name\n        path\n        description\n      }\n    }\n  }\n',
+): (typeof documents)['\n  query getItem($id: Int!) {\n    getItem(id: $id) {\n      id\n      name\n      content\n      createTime\n      updateTime\n      collections {\n        id\n        name\n        path\n        description\n      }\n    }\n  }\n'];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(
+  source: '\n  mutation deleteCollectionForItem($collectionId: Int!, $itemId: Int!) {\n    deleteCollectionForItem(collectionId: $collectionId, itemId: $itemId) {\n      id\n    }\n  }\n',
+): (typeof documents)['\n  mutation deleteCollectionForItem($collectionId: Int!, $itemId: Int!) {\n    deleteCollectionForItem(collectionId: $collectionId, itemId: $itemId) {\n      id\n    }\n  }\n'];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

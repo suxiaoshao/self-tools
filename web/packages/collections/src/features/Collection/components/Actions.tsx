@@ -45,7 +45,7 @@ const UpdateCollection = graphql(`
   }
 `);
 
-const UpdateItem = graphql(`
+export const UpdateItem = graphql(`
   mutation updateItem($id: Int!, $name: String!, $content: String!) {
     updateItem(id: $id, name: $name, content: $content) {
       id

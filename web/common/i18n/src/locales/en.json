@@ -109,5 +109,6 @@
   "batch_update": "Batch Update",
   "select_all": "Select All",
   "select_none": "Select None",
-  "item_manage": "Item Manage"
+  "item_manage": "Item Manage",
+  "item_detail_title": "Detail of item {{itemName}}"
 }

@@ -4,7 +4,11 @@ import { Link as RouterLink, createSearchParams } from 'react-router-dom';
 
 export default function Name({ name, id, __typename }: CollectionAndItem) {
   if (__typename === 'Item') {
-    return <Link>{name}</Link>;
+    return (
+      <Link component={RouterLink} to={`/collections/item/${id}`}>
+        {name}
+      </Link>
+    );
   }
   return (
     <Link component={RouterLink} to={{ search: createSearchParams({ parentId: id.toString() }).toString() }}>
