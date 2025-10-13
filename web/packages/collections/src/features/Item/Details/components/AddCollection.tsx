@@ -1,26 +1,26 @@
-import { useMutation } from '@apollo/client/react';
-import CollectionSelect from '@bookmarks/components/CollectionSelect';
-import { CollectionLoadingState, useAllCollection } from '@bookmarks/features/Collections/collectionSlice';
-import { graphql } from '@bookmarks/gql';
+import CollectionSelect from '@collections/components/CollectionSelect';
+import { CollectionLoadingState, useAllCollection } from '@collections/features/Collection/collectionSlice';
 import useDialog from '@collections/hooks/useDialog';
-import { valibotResolver } from '@hookform/resolvers/valibot';
 import { Add } from '@mui/icons-material';
 import { Box, Button, CircularProgress, Dialog, DialogActions, DialogTitle, IconButton } from '@mui/material';
-import { useI18n } from 'i18n';
 import { Controller, useForm } from 'react-hook-form';
 import { match } from 'ts-pattern';
+import { useI18n } from 'i18n';
+import { graphql } from '@collections/gql';
 import { type InferInput, number, object } from 'valibot';
+import { useMutation } from '@apollo/client/react';
+import { valibotResolver } from '@hookform/resolvers/valibot';
 
-const AddCollectionForNovel = graphql(`
-  mutation addCollectionForNovel($novelId: Int!, $collectionId: Int!) {
-    addCollectionForNovel(collectionId: $collectionId, novelId: $novelId) {
+const AddCollectionForItem = graphql(`
+  mutation addCollectionForItem($itemId: Int!, $collectionId: Int!) {
+    addCollectionForItem(itemId: $itemId, collectionId: $collectionId) {
       id
     }
   }
 `);
 
-export interface AddCollectionProps {
-  novelId: number;
+interface AddCollectionProps {
+  itemId: number;
   refetch: () => void;
 }
 
@@ -30,18 +30,17 @@ const selectCollectionSchema = object({
 
 type SelectCollectionType = InferInput<typeof selectCollectionSchema>;
 
-export default function AddCollection({ novelId, refetch }: AddCollectionProps) {
+export default function AddCollection({ itemId, refetch }: AddCollectionProps) {
   const { open, handleClose, handleOpen } = useDialog();
-  const { value: allCollection, fetchData } = useAllCollection();
-
   const t = useI18n();
-  const [fn] = useMutation(AddCollectionForNovel);
+  const { value: allCollection, fetchData } = useAllCollection();
+  const [fn] = useMutation(AddCollectionForItem);
 
   const { control, handleSubmit } = useForm<SelectCollectionType>({
     resolver: valibotResolver(selectCollectionSchema),
   });
   const onSubmit = handleSubmit(async ({ collectionId }) => {
-    await fn({ variables: { collectionId, novelId } });
+    await fn({ variables: { collectionId, itemId } });
     handleClose();
     refetch();
   });

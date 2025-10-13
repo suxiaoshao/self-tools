@@ -7,3 +7,6 @@ edition = "2024"
 tokio = { version = "1.47.1", default-features = false, features = ["macros"] }
 async-graphql = { version = "7.0.17" }
 paste = "1.0.15"
+
+# log
+tracing = "0.1.41"

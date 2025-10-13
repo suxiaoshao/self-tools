@@ -58,7 +58,7 @@ export default function CreateNovelButton({ refetch }: CreateNovelButtonProps) {
       >
         {t('add_novel')}
       </Button>
-      <Dialog PaperProps={{ sx: { maxWidth: 700 } }} open={open} onClose={handleClose}>
+      <Dialog slotProps={{ paper: { sx: { maxWidth: 700 } } }} open={open} onClose={handleClose}>
         <Box sx={{ width: 500 }} onSubmit={handleSubmit(onSubmit)} component="form">
           <DialogTitle>{t('create_novel')}</DialogTitle>
           <DialogContent>

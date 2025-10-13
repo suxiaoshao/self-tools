@@ -11,12 +11,12 @@ tokio = { version = "1.47.1", features = ["macros", "rt-multi-thread"] }
 
 # graphql
 async-graphql = { version = "7.0.17", features = ["time", "bigdecimal"] }
-axum = { version = "0.8.4", features = ["query"] }
+axum = { version = "0.8.6", features = ["query"] }
 async-graphql-axum = "7.0.17"
-serde_json = "1.0.143"
+serde_json = "1.0.145"
 
 # fetch content
-serde = { version = "1.0.219", features = ["derive"] }
+serde = { version = "1.0.228", features = ["derive"] }
 reqwest = { version = "0.12.23", features = [
     "gzip",
     "rustls-tls",
@@ -24,19 +24,19 @@ reqwest = { version = "0.12.23", features = [
 ], default-features = false }
 
 # database
-diesel = { version = "2.2.12", features = [
+diesel = { version = "2.3.2", features = [
     "postgres",
     "time",
     "r2d2",
     "numeric",
 ] }
-time = { version = "0.3.43" }
+time = { version = "0.3.44" }
 bigdecimal = "0.4.8"
 graphql-common = { path = "../../common/graphql-common" }
 
 # error
-anyhow = "1.0.99"
-thiserror = "2.0.16"
+anyhow = "1.0.100"
+thiserror = "2.0.17"
 
 # cors
 middleware = { path = "../../common/middleware", features = [

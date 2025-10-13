@@ -14,7 +14,6 @@ use crate::{errors::GraphqlResult, model::get_pool};
 use self::{mutation::MutationRoot, query::QueryRoot};
 
 mod guard;
-pub(crate) mod input;
 mod mutation;
 mod output;
 mod query;

@@ -1,5 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
+/// 找到所有子收藏夹
 pub(super) fn find_all_children(
     ids: &mut HashSet<i64>,
     id: i64,
@@ -14,22 +15,22 @@ pub(super) fn find_all_children(
 }
 
 /// 获取收藏夹下的所有小说
-pub(super) fn find_all_novel_by_collection(
-    novel_ids: &mut HashSet<i64>,
+pub(super) fn find_all_item_by_collection(
+    item_ids: &mut HashSet<i64>,
     collection_id: i64,
     collection_collection_map: &HashMap<i64, Vec<i64>>,
-    collection_novel_map: &HashMap<i64, HashSet<i64>>,
+    collection_item_map: &HashMap<i64, HashSet<i64>>,
 ) {
-    if let Some(novel_list) = collection_novel_map.get(&collection_id) {
-        novel_ids.extend(novel_list);
+    if let Some(item_list) = collection_item_map.get(&collection_id) {
+        item_ids.extend(item_list);
     }
     if let Some(collection_list) = collection_collection_map.get(&collection_id) {
         for &child_id in collection_list {
-            find_all_novel_by_collection(
-                novel_ids,
+            find_all_item_by_collection(
+                item_ids,
                 child_id,
                 collection_collection_map,
-                collection_novel_map,
+                collection_item_map,
             );
         }
     }

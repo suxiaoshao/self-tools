@@ -108,5 +108,7 @@
   "update_comment": "更新评论",
   "batch_update": "批量更新",
   "select_all": "全选",
-  "select_none": "全不选"
+  "select_none": "全不选",
+  "item_manage": "条目管理",
+  "item_detail_title": "条目{{itemName}}的详情"
 }

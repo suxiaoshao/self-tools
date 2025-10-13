@@ -1,7 +1,9 @@
 mod paginate;
+mod tag_match;
 
 pub use paginate::{Paginate, Pagination, QueryStack, Queryable};
 pub use paste::paste;
+pub use tag_match::{TagMatch, TagMatchValidator};
 
 #[macro_export]
 macro_rules! list {

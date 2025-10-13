@@ -7,9 +7,7 @@
  */
 use super::{
     guard::AuthGuard,
-    input::TagMatch,
     output::{DraftAuthorInfo, DraftNovelInfo},
-    validator::TagMatchValidator,
 };
 use crate::{
     errors::{GraphqlError, GraphqlResult},
@@ -25,7 +23,7 @@ use crate::{
     },
 };
 use async_graphql::{Context, Object};
-use graphql_common::{Pagination, Queryable};
+use graphql_common::{Pagination, Queryable, TagMatch, TagMatchValidator};
 use tracing::{event, Level};
 
 pub(crate) struct QueryRoot;

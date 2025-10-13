@@ -1,4 +1,4 @@
-import { Button } from '@mui/material';
+import { Button, type SxProps, type Theme } from '@mui/material';
 import ItemForm, { type ItemFormData } from '../../Item/Components/ItemForm';
 import useDialog from '@collections/hooks/useDialog';
 import { useI18n } from 'i18n';
@@ -6,8 +6,8 @@ import { graphql } from '@collections/gql';
 import { useMutation } from '@apollo/client/react';
 
 const CreateItem = graphql(`
-  mutation createItem($collectionId: Int!, $name: String!, $content: String!) {
-    createItem(collectionId: $collectionId, name: $name, content: $content) {
+  mutation createItem($collectionIds: [Int!]!, $name: String!, $content: String!) {
+    createItem(collectionIds: $collectionIds, name: $name, content: $content) {
       name
     }
   }
@@ -16,14 +16,15 @@ const CreateItem = graphql(`
 export interface CreateItemButtonProps {
   /** 表格重新刷新 */
   refetch: () => void;
-  collectionId: number;
+  collectionIds: number[];
+  sx?: SxProps<Theme>;
 }
 
-export default function CreateItemButton({ refetch, collectionId }: CreateItemButtonProps) {
+export default function CreateItemButton({ refetch, collectionIds, sx }: CreateItemButtonProps) {
   const [createItem] = useMutation(CreateItem);
 
-  const afterSubmit = async ({ name, content }: ItemFormData) => {
-    await createItem({ variables: { name, collectionId, content } });
+  const afterSubmit = async ({ name, content, collectionIds }: ItemFormData) => {
+    await createItem({ variables: { name, collectionIds, content } });
     refetch();
   };
   const { open, handleClose, handleOpen } = useDialog();
@@ -31,7 +32,7 @@ export default function CreateItemButton({ refetch, collectionId }: CreateItemBu
 
   return (
     <>
-      <Button color="secondary" sx={{ ml: 2 }} size="large" variant="contained" onClick={handleOpen}>
+      <Button color="secondary" sx={sx} size="large" variant="contained" onClick={handleOpen}>
         {t('add_item')}
       </Button>
       <ItemForm
@@ -39,7 +40,7 @@ export default function CreateItemButton({ refetch, collectionId }: CreateItemBu
         afterSubmit={afterSubmit}
         open={open}
         handleClose={handleClose}
-        initialValues={{ content: '', name: '' }}
+        initialValues={{ content: '', name: '', collectionIds }}
       />
     </>
   );

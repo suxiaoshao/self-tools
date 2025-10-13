@@ -1,8 +1,13 @@
-use crate::{errors::GraphqlResult, graphql::types::TimeRange};
-
 use super::schema::collection;
+use crate::{
+    errors::{GraphqlError, GraphqlResult},
+    graphql::types::TimeRange,
+    model::schema::collection_item,
+};
 use diesel::prelude::*;
+use std::collections::{HashMap, HashSet};
 use time::OffsetDateTime;
+use tracing::{event, Level};
 
 #[derive(Queryable)]
 #[cfg_attr(test, derive(Debug))]
@@ -59,6 +64,16 @@ impl CollectionModel {
         .get_result(conn)?;
         Ok(exists)
     }
+    /// 判断目录是否存在
+    pub(crate) fn exists_many(ids: &[i64], conn: &mut PgConnection) -> GraphqlResult<bool> {
+        let agg_ids = collection::table
+            .select(collection::id)
+            .load::<i64>(conn)?
+            .into_iter()
+            .collect::<HashSet<i64>>();
+        let ids = ids.iter().copied().collect::<HashSet<i64>>();
+        Ok(agg_ids.is_superset(&ids))
+    }
     /// 查找目录
     pub(crate) fn find_one(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
         let collection = collection::table
@@ -90,6 +105,18 @@ impl CollectionModel {
             ))
             .get_result(conn)?;
         Ok(collection)
+    }
+    /// 判断集合是否全部存在
+    pub(crate) fn exists_all(tag_ids: &HashSet<i64>, conn: &mut PgConnection) -> GraphqlResult<()> {
+        let database_tags = CollectionModel::get_list(conn)?;
+        let database_tags: HashSet<i64> = database_tags.into_iter().map(|tag| tag.id).collect();
+        for id in tag_ids {
+            if !database_tags.contains(id) {
+                event!(Level::ERROR, "集合不存在: {}", id);
+                return Err(GraphqlError::NotFound("集合", *id));
+            }
+        }
+        Ok(())
     }
 }
 
@@ -284,5 +311,43 @@ impl CollectionModel {
                 Ok(count)
             }
         }
+    }
+}
+
+/// item id 相关
+impl CollectionModel {
+    pub(crate) fn get_collections_by_item_id(
+        item_id: i64,
+        conn: &mut PgConnection,
+    ) -> GraphqlResult<Vec<CollectionModel>> {
+        let collections = collection::table
+            .inner_join(collection_item::table)
+            .filter(collection_item::item_id.eq(item_id))
+            .load::<(CollectionModel, (i64, i64))>(conn)?;
+        Ok(collections.into_iter().map(|(model, _)| model).collect())
+    }
+}
+
+/// alll
+impl CollectionModel {
+    /// 获取所有目录
+    pub(crate) fn get_list(conn: &mut PgConnection) -> GraphqlResult<Vec<Self>> {
+        let collections = collection::table.load(conn)?;
+        Ok(collections)
+    }
+    /// 获取所有目录映射
+    pub(crate) fn get_map(conn: &mut PgConnection) -> GraphqlResult<HashMap<i64, Vec<i64>>> {
+        let all_collections = collection::table
+            .select((collection::id, collection::parent_id))
+            .get_results::<(i64, Option<i64>)>(conn)?;
+        // 构建一个 `id` 到其子节点列表的映射
+        let mut lookup: HashMap<i64, Vec<i64>> = HashMap::new();
+        for (id, parent_id) in all_collections {
+            if let Some(parent_id) = parent_id {
+                lookup.entry(parent_id).or_default().push(id);
+            }
+        }
+
+        Ok(lookup)
     }
 }

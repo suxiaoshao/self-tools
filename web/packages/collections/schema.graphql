@@ -40,13 +40,18 @@ type Item {
   content: String!
   createTime: DateTime!
   updateTime: DateTime!
-  collection: Collection
+  collections: [Collection!]!
 }
 
 union ItemAndCollection = Item | Collection
 
 type ItemAndCollectionList {
   data: [ItemAndCollection!]!
+  total: Int!
+}
+
+type ItemList {
+  data: [Item!]!
   total: Int!
 }
 
@@ -61,13 +66,19 @@ type MutationRoot {
   updateCollection(id: Int!, name: String!, description: String): Collection!
 
   # 创建记录
-  createItem(name: String!, content: String!, collectionId: Int!): Item!
+  createItem(name: String!, content: String!, collectionIds: [Int!]!): Item!
 
   # 删除记录
   deleteItem(id: Int!): Item!
 
   # 修改记录
   updateItem(id: Int!, name: String!, content: String!): Item!
+
+  # 给条目添加集合
+  addCollectionForItem(collectionId: Int!, itemId: Int!): Item!
+
+  # 给条目删除集合
+  deleteCollectionForItem(collectionId: Int!, itemId: Int!): Item!
 }
 
 input Pagination {
@@ -76,6 +87,9 @@ input Pagination {
 }
 
 type QueryRoot {
+  # 获取所有集合
+  allCollections: [Collection!]!
+
   # 获取目录详情
   getCollection(id: Int!): Collection!
 
@@ -84,6 +98,14 @@ type QueryRoot {
 
   # 获取集合下的集合和记录
   collectionAndItem(query: CollectionItemQuery!): ItemAndCollectionList!
+
+  # 获取条目列表
+  queryItems(collectionMatch: TagMatch, pagination: Pagination!): ItemList!
+}
+
+input TagMatch {
+  matchSet: [Int!]!
+  fullMatch: Boolean!
 }
 
 input TimeRange {

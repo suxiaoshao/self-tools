@@ -13,7 +13,7 @@ use tracing::{event, Level};
 use self::env::{env_password, env_secret_key, env_username};
 
 mod env;
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Claims {
     /// 用户名
     name: String,
@@ -71,7 +71,10 @@ impl Claims {
     }
 }
 
-fn jwt_decode<T: DeserializeOwned>(token: &str) -> Result<T, AuthErrorCode> {
+fn jwt_decode<T>(token: &str) -> Result<T, AuthErrorCode>
+where
+    T: DeserializeOwned + Clone,
+{
     let secret_key = env_secret_key()?;
     let key = secret_key.as_bytes();
     match decode::<T>(

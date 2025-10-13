@@ -9,6 +9,9 @@ import type { Menu, MicroConfig } from 'types';
 import Collection from './features/Collection';
 import type { ReactNode } from 'react';
 import App from './App';
+import { Route } from 'react-router-dom';
+import ItemList from './features/Item/List';
+import ItemDetails from './features/Item/Details';
 
 export default class CollectionConfig implements MicroConfig {
   getName() {
@@ -29,7 +32,10 @@ export default class CollectionConfig implements MicroConfig {
           tag: 'path',
           value: {
             path: '/collections',
-            element: <>home</>,
+            children: [
+              <Route key="item-list" index element={<ItemList />} />,
+              <Route key="item-details" path="/collections/item/:itemId" element={<ItemDetails />} />,
+            ],
           },
         },
       },

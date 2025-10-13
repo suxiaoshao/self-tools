@@ -7,7 +7,7 @@ use tracing::{event, Level};
 use crate::{
     errors::{GraphqlError, GraphqlResult},
     graphql::types::{CollectionItemQuery, ItemAndCollection},
-    model::{collection::CollectionModel, item::ItemModel, PgPool},
+    model::{collection::CollectionModel, collection_item::CollectionItemModel, PgPool},
 };
 
 #[derive(SimpleObject)]
@@ -93,6 +93,11 @@ impl Collection {
             }
         }
     }
+    /// 获取所有 collections
+    pub(crate) fn all_collections(conn: &mut PgConnection) -> GraphqlResult<Vec<Self>> {
+        let data = CollectionModel::get_list(conn)?;
+        Ok(data.into_iter().map(From::from).collect())
+    }
 }
 
 /// id 相关
@@ -111,8 +116,8 @@ impl Collection {
             event!(Level::WARN, "目录不存在: {}", id);
             return Err(GraphqlError::NotFound("目录", id));
         }
-        // 删除目录下的记录
-        ItemModel::delete_by_collection_id(id, conn)?;
+        // 删除关系
+        CollectionItemModel::delete_by_collection_id(id, conn)?;
         let collection = CollectionModel::delete(id, conn)?;
         //递归删除子目录
         CollectionModel::list_parent(Some(id), conn)?
