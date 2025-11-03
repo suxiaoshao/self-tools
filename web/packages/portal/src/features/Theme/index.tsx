@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useMemo } from 'react';
+import { type ReactNode, useEffect, useEffectEvent, useMemo } from 'react';
 import { createTheme, CssBaseline, ThemeProvider } from '@mui/material';
 import '@fontsource/roboto/300.css';
 import '@fontsource/roboto/400.css';
@@ -28,22 +28,19 @@ export function CustomTheme({ children }: CustomThemeProps) {
   useEffect(() => {
     setYouThemeToCssVars(selectActiveYouTheme(state));
   }, [state]);
+  const handleColorSchemaChange = useEffectEvent((e: MediaQueryListEvent) => {
+    const colorScheme = match(e.matches)
+      .with(true, () => 'dark' as const)
+      .otherwise(() => 'light' as const);
+    setSystemColorScheme(colorScheme);
+  });
   useEffect(() => {
     const sign = new AbortController();
-    colorSchemaMatch.addEventListener(
-      'change',
-      (e) => {
-        const colorScheme = match(e.matches)
-          .with(true, () => 'dark' as const)
-          .otherwise(() => 'light' as const);
-        setSystemColorScheme(colorScheme);
-      },
-      { signal: sign.signal },
-    );
+    colorSchemaMatch.addEventListener('change', handleColorSchemaChange, { signal: sign.signal });
     return () => {
       sign.abort();
     };
-  }, [setSystemColorScheme]);
+  }, []);
   return useMemo(
     () => (
       <ThemeProvider theme={createTheme(selectMuiTheme(state))}>

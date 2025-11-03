@@ -10,14 +10,14 @@
   "dependencies": {
     "custom-graphql": "workspace:^",
     "custom-table": "workspace:^",
+    "details": "workspace:^",
     "edit": "workspace:^",
     "i18n": "workspace:^",
-    "markdown-to-jsx": "^7.7.15",
+    "markdown-to-jsx": "^8.0.0",
     "prism-themes": "^1.9.0",
     "prismjs": "^1.30.0",
     "time": "workspace:^",
-    "types": "workspace:^",
-    "details": "workspace:^"
+    "types": "workspace:^"
   },
   "devDependencies": {
     "@types/prismjs": "^1.26.5"

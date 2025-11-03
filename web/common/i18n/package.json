@@ -8,7 +8,7 @@
   "license": "ISC",
   "dependencies": {
     "i18next": "^25.6.0",
-    "react-i18next": "^16.0.0",
+    "react-i18next": "^16.2.3",
     "types": "workspace:*"
   }
 }

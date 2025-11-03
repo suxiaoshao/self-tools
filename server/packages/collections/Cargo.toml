@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 # runtime
-tokio = { version = "1.47.1", features = ["macros", "rt-multi-thread"] }
+tokio = { version = "1.48.0", features = ["macros", "rt-multi-thread"] }
 
 # graphql
 async-graphql = { version = "7.0.17", features = ["time"] }
@@ -17,7 +17,7 @@ serde_json = "1.0.145"
 graphql-common = { path = "../../common/graphql-common" }
 
 # database
-diesel = { version = "2.3.2", features = ["postgres", "time", "r2d2"] }
+diesel = { version = "2.3.3", features = ["postgres", "time", "r2d2"] }
 time = "0.3.44"
 
 # error
