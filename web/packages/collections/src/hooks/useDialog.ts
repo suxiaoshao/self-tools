@@ -14,5 +14,8 @@ export default function useDialog({ initOpen = false }: UseDialogOptions = {}) {
     handleOpen: () => {
       setOpen(true);
     },
+    handleOpenChange: (isOpen: boolean) => {
+      setOpen(isOpen);
+    },
   };
 }

@@ -326,5 +326,5 @@
     "jest",
     "vitest"
   ],
-  "ignorePatterns": ["changelog.config.js", "*.d.ts"]
+  "ignorePatterns": ["changelog.config.js", "*.d.ts", "**/components/ui/**/*"]
 }

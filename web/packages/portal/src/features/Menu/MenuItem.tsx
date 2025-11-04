@@ -5,65 +5,50 @@
  * @LastEditTime: 2024-01-14 02:35:05
  * @FilePath: /self-tools/web/packages/portal/src/features/Menu/MenuItem.tsx
  */
-import { ExpandLess, ExpandMore } from '@mui/icons-material';
 import RouterListItem from '../../components/AppDrawer/RouterItem';
-import { useState } from 'react';
-import {
-  Avatar,
-  Collapse,
-  List,
-  ListItemButton,
-  type ListItemButtonProps,
-  ListItemIcon,
-  ListItemText,
-} from '@mui/material';
 import { type I18nKey, useI18n } from 'i18n';
 import type { Menu } from 'types';
 import { match } from 'ts-pattern';
+import { SidebarMenuButton, SidebarMenuItem, SidebarMenuSub } from '@portal/components/ui/sidebar';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@portal/components/ui/collapsible';
+import { ChevronRight } from 'lucide-react';
 
-export interface MenuItemProps extends ListItemButtonProps {
+export interface MenuItemProps extends React.ComponentProps<'li'> {
   menu: Menu;
+  subItem: boolean;
 }
 
-export default function MenuItem({ menu, ...props }: MenuItemProps) {
-  const [open, setOpen] = useState(false);
-  const handleClick = () => {
-    setOpen((value) => !value);
-  };
+export default function MenuItem({ menu, subItem, ...props }: MenuItemProps) {
   const t = useI18n();
   return match(menu)
     .with({ path: { tag: 'menu' } }, ({ path: { value } }) => (
-      <>
-        <ListItemButton {...props} onClick={handleClick}>
-          <ListItemIcon>
-            <Avatar sx={{ bgcolor: 'transparent' }}>{menu.icon}</Avatar>
-          </ListItemIcon>
-          <ListItemText primary={t(menu.name as I18nKey)} />
-          {match(open)
-            .with(true, () => <ExpandLess />)
-            .with(false, () => <ExpandMore />)
-            .otherwise(() => null)}
-        </ListItemButton>
-        <Collapse in={open} timeout="auto" unmountOnExit>
-          <List component="div" disablePadding>
+      <Collapsible defaultOpen className="group/collapsible">
+        <SidebarMenuItem {...props}>
+          <CollapsibleTrigger asChild>
+            <SidebarMenuButton>
+              {menu.icon}
+              <span>{t(menu.name as I18nKey)}</span>
+              <ChevronRight className="transition-transform ml-auto group-data-[state=open]/collapsible:rotate-90" />
+            </SidebarMenuButton>
+          </CollapsibleTrigger>
+        </SidebarMenuItem>
+        <CollapsibleContent>
+          <SidebarMenuSub>
             {value.map((item) => (
-              <MenuItem sx={{ pl: 4 }} menu={item} key={item.name} />
+              <MenuItem subItem menu={item} key={item.name} />
             ))}
-          </List>
-        </Collapse>
-      </>
+          </SidebarMenuSub>
+        </CollapsibleContent>
+      </Collapsible>
     ))
     .with({ path: { tag: 'path' } }, ({ path: { value } }) => {
       const path = value.path;
       return (
         <RouterListItem
+          subItem={subItem}
           key={path}
           {...props}
-          icon={
-            <ListItemIcon>
-              <Avatar sx={{ bgcolor: 'transparent' }}>{menu.icon}</Avatar>
-            </ListItemIcon>
-          }
+          icon={menu.icon}
           matchPaths={[path]}
           text={t(menu.name as I18nKey)}
           toPath={path}

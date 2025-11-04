@@ -21,6 +21,7 @@ export default function DrawerMenu() {
               value: item.getMenu(),
             },
           }}
+          subItem={false}
         />
       ))}
     </>
