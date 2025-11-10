@@ -1,11 +1,11 @@
 import useDialog from '@collections/hooks/useDialog';
-import { MenuItem } from '@mui/material';
 import { TableActions } from 'custom-table';
 import { useI18n } from 'i18n';
 import CollectionForm, { type CollectionFormData } from './CollectionForm';
 import type { CollectionTableData } from '../types';
 import { graphql } from '@bookmarks/gql';
 import { useMutation } from '@apollo/client/react';
+import { DropdownMenuItem } from '@portal/components/ui/dropdown-menu';
 
 const DeleteCollection = graphql(`
   mutation deleteCollection($id: Int!) {
@@ -28,7 +28,7 @@ export type CollectionActionsProps = CollectionTableData & {
 export default function CollectionActions({ id, refetch, ...data }: CollectionActionsProps) {
   const [deleteCollection] = useMutation(DeleteCollection);
   const [editCollection] = useMutation(UpdateCollection);
-  const { open, handleClose, handleOpen } = useDialog();
+  const { open, handleClose, handleOpen, handleOpenChange } = useDialog();
   const t = useI18n();
   const onSubmit = async ({ name, description }: CollectionFormData) => {
     await editCollection({ variables: { description, id, name } });
@@ -38,27 +38,25 @@ export default function CollectionActions({ id, refetch, ...data }: CollectionAc
   return (
     <>
       <TableActions>
-        {(onClose) => [
+        {() => [
           {
             text: t('delete'),
             onClick: async () => {
               await deleteCollection({ variables: { id } });
-              onClose();
               await refetch();
             },
           },
-          <MenuItem
+          <DropdownMenuItem
             key="edit"
             onClick={() => {
-              onClose();
               handleOpen();
             }}
           >
             {t('edit')}
-          </MenuItem>,
+          </DropdownMenuItem>,
         ]}
       </TableActions>
-      <CollectionForm afterSubmit={onSubmit} handleClose={handleClose} open={open} initialValues={data} />
+      <CollectionForm afterSubmit={onSubmit} onOpenChange={handleOpenChange} open={open} initialValues={data} />
     </>
   );
 }

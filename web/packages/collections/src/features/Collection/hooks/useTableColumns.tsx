@@ -1,20 +1,30 @@
-import { Chip } from '@mui/material';
 import type { CollectionAndItemsQuery } from '../../../gql/graphql';
 import { useMemo } from 'react';
 import { createCustomColumnHelper, type CustomColumnDefArray } from 'custom-table';
 import { format } from 'time';
 import Name from '../components/Name';
 import Actions from '../components/Actions';
-import { Article, Folder } from '@mui/icons-material';
+import { File, Folder } from 'lucide-react';
 import { useI18n } from 'i18n';
 import { match, P } from 'ts-pattern';
 import type { CollectionAndItem } from '../types';
+import { Badge } from '@portal/components/ui/badge';
 
 const Typename = ({ __typename }: { __typename: CollectionAndItem['__typename'] }) => {
   const t = useI18n();
   return match(__typename)
-    .with('Collection', () => <Chip icon={<Folder />} variant="outlined" label={t('collection')} color="primary" />)
-    .with('Item', () => <Chip icon={<Article />} variant="outlined" label={t('item')} color="secondary" />)
+    .with('Collection', () => (
+      <Badge variant="outline">
+        <Folder className="fill-blue-500" />
+        {t('collection')}
+      </Badge>
+    ))
+    .with('Item', () => (
+      <Badge variant="outline">
+        <File />
+        {t('item')}
+      </Badge>
+    ))
     .exhaustive();
 };
 
@@ -74,7 +84,7 @@ export default function useTableColumns(refetch: () => void) {
         columnHelper.accessor((item) => <Actions {...item} refetch={refetch} />, {
           header: t('actions'),
           id: 'action',
-          cellProps: { padding: 'none' },
+          cellProps: { className: 'p-0' },
           cell: (context) => context.getValue(),
         }),
       ] as CustomColumnDefArray<CollectionAndItemsQuery['collectionAndItem']['data'][0]>,

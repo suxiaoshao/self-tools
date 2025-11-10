@@ -1,6 +1,6 @@
 import type React from 'react';
-import { type To, useLocation, useNavigate } from 'react-router-dom';
-import { SidebarMenuButton, SidebarMenuItem } from '../ui/sidebar';
+import { type To, useLocation, Link } from 'react-router-dom';
+import { SidebarMenuButton, SidebarMenuItem, SidebarMenuSubButton, SidebarMenuSubItem } from '../ui/sidebar';
 
 export interface RouterItem extends React.ComponentProps<'li'> {
   matchPaths: (string | RegExp)[];
@@ -12,7 +12,6 @@ export interface RouterItem extends React.ComponentProps<'li'> {
 }
 export default function RouterItem({ matchPaths, toPath, text, icon, children, subItem, ...props }: RouterItem) {
   const { pathname } = useLocation();
-  const navigate = useNavigate();
   const selected = matchPaths.some((value) => {
     if (typeof value === 'string') {
       return value === pathname;
@@ -21,31 +20,25 @@ export default function RouterItem({ matchPaths, toPath, text, icon, children, s
   });
   if (subItem) {
     return (
-      <SidebarMenuItem {...props}>
-        <SidebarMenuButton
-          isActive={selected}
-          onClick={() => {
-            navigate(toPath);
-          }}
-        >
-          {icon}
-          <span>{text}</span>
-          {children}
-        </SidebarMenuButton>
-      </SidebarMenuItem>
+      <SidebarMenuSubItem {...props}>
+        <SidebarMenuSubButton asChild isActive={selected}>
+          <Link to={toPath}>
+            {icon}
+            <span>{text}</span>
+            {children}
+          </Link>
+        </SidebarMenuSubButton>
+      </SidebarMenuSubItem>
     );
   }
   return (
     <SidebarMenuItem {...props}>
-      <SidebarMenuButton
-        isActive={selected}
-        onClick={() => {
-          navigate(toPath);
-        }}
-      >
-        {icon}
-        <span>{text}</span>
-        {children}
+      <SidebarMenuButton isActive={selected} asChild>
+        <Link to={toPath}>
+          {icon}
+          <span>{text}</span>
+          {children}
+        </Link>
       </SidebarMenuButton>
     </SidebarMenuItem>
   );

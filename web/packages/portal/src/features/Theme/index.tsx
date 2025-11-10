@@ -41,6 +41,13 @@ export function CustomTheme({ children }: CustomThemeProps) {
       sign.abort();
     };
   }, []);
+  useEffect(() => {
+    const root = window.document.documentElement;
+
+    root.classList.remove('light', 'dark');
+
+    root.classList.add(state.colorMode);
+  }, [state.colorMode]);
   return useMemo(
     () => (
       <ThemeProvider theme={createTheme(selectMuiTheme(state))}>

@@ -5,9 +5,8 @@
  * @LastEditTime: 2024-01-26 13:27:19
  * @FilePath: /self-tools/web/packages/collections/src/features/Collection/index.tsx
  */
-import { Box, IconButton } from '@mui/material';
 import { CustomTable, getCoreRowModel, useCustomTable, usePage, usePageWithTotal } from 'custom-table';
-import { Refresh } from '@mui/icons-material';
+import { RefreshCcw } from 'lucide-react';
 import CreateCollectionButton from './components/CreateCollectionButton';
 import AncestorsPath from './components/AncestorsPath';
 import useParentId from './hooks/useParentId';
@@ -19,6 +18,7 @@ import useTitle from '@bookmarks/hooks/useTitle';
 import { graphql } from '@collections/gql';
 import { useQuery } from '@apollo/client/react';
 import { useAllCollection } from './collectionSlice';
+import { Button } from '@portal/components/ui/button';
 
 const CollectionAndItems = graphql(`
   query collectionAndItems($query: CollectionItemQuery!) {
@@ -65,31 +65,29 @@ export default function Collection() {
   }, [refetch, fetchData]);
   const { data, total } = sourceData?.collectionAndItem ?? {};
   const page = usePageWithTotal(pageState, total);
-
   const columns = useTableColumns(allRefetch);
-  const tableOptions = useMemo(
-    () => ({ columns, data: data ?? [], getCoreRowModel: getCoreRowModel() }),
-    [columns, data],
+  const tableInstance = useCustomTable(
+    useMemo(
+      () => ({
+        columns,
+        data: data ?? [],
+        getCoreRowModel: getCoreRowModel(),
+      }),
+      [columns, data],
+    ),
   );
-  const tableInstance = useCustomTable(tableOptions);
 
   return (
-    <Box sx={{ width: '100%', height: '100%', p: 2, display: 'flex', flexDirection: 'column' }}>
+    <div className="size-full p-4 flex flex-col">
       <AncestorsPath />
-      <Box
-        sx={{
-          flex: '0 0 auto',
-          marginBottom: 2,
-          display: 'flex',
-        }}
-      >
+      <div className="flex-[0_0_auto] mb-2 flex">
         <CreateCollectionButton refetch={allRefetch} />
-        {id && <CreateItemButton sx={{ ml: 2 }} refetch={allRefetch} collectionIds={[id]} />}
-        <IconButton sx={{ marginLeft: 'auto' }} onClick={() => refetch()}>
-          <Refresh />
-        </IconButton>
-      </Box>
+        {id && <CreateItemButton className="ml-2" refetch={allRefetch} collectionIds={[id]} />}
+        <Button variant="ghost" className="ml-auto rounded-full" size="icon" onClick={() => refetch()}>
+          <RefreshCcw />
+        </Button>
+      </div>
       <CustomTable tableInstance={tableInstance} page={page} />
-    </Box>
+    </div>
   );
 }

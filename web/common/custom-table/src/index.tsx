@@ -1,51 +1,34 @@
 'use no memo';
-import {
-  TableContainer,
-  Paper,
-  Table,
-  TableHead,
-  TableRow,
-  TableCell,
-  TableBody,
-  type TableContainerProps,
-  TablePagination,
-  TableFooter,
-  TablePaginationActions,
-} from '@mui/material';
 import { type Table as TableType, flexRender } from '@tanstack/react-table';
 import type { CustomColumnDef } from './useCustomTable';
 import type { PageWithTotal } from './usePage';
 import { match } from 'ts-pattern';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@portal/components/ui/table';
+import { cn } from '@portal/lib/utils';
+import type { ComponentProps } from 'react';
+import TablePagination from './TablePagination';
 
-export interface CustomTableProps<D extends object> extends Omit<TableContainerProps, 'ref'> {
+export interface CustomTableProps<D extends object> extends Omit<ComponentProps<'table'>, 'ref'> {
   tableInstance: TableType<D>;
   page?: PageWithTotal;
-  containerProps?: TableContainerProps;
+  containerProps?: ComponentProps<'div'>;
 }
 
 export function CustomTable<D extends object>({
   tableInstance,
   page,
   containerProps,
-  sx,
+  className,
   ...tableProps
 }: CustomTableProps<D>) {
   const { getHeaderGroups, getRowModel } = tableInstance;
   return (
-    <TableContainer
-      sx={{
-        flex: '1 1 0',
-        display: 'flex',
-        flexDirection: 'column',
-        maxHeight: '100%',
-        overflowY: 'auto',
-        ...sx,
-      }}
-      component={Paper}
+    <div
+      className={cn('grow shrink-0 basis-0 flex flex-col max-h-full overflow-y-auto', className)}
       {...containerProps}
     >
       <Table {...tableProps}>
-        <TableHead>
+        <TableHeader>
           {
             // Loop over the header rows
             getHeaderGroups().map((headerGroup) => (
@@ -59,21 +42,21 @@ export function CustomTable<D extends object>({
 
                     return (
                       // Apply the header cell props
-                      <TableCell colSpan={header.colSpan} key={header.id} {...headerProps}>
+                      <TableHead colSpan={header.colSpan} key={header.id} {...headerProps}>
                         {match(header.isPlaceholder)
                           .with(true, () => null)
                           .with(false, () => flexRender(header.column.columnDef.header, header.getContext()))
                           .exhaustive()}
-                      </TableCell>
+                      </TableHead>
                     );
                   })
                 }
               </TableRow>
             ))
           }
-        </TableHead>
+        </TableHeader>
         {/* Apply the table body props */}
-        <TableBody sx={{ flex: '1 1 0' }}>
+        <TableBody className="flex-1">
           {
             // Loop over the table rows
             getRowModel().rows.map((row) => {
@@ -100,28 +83,9 @@ export function CustomTable<D extends object>({
             })
           }
         </TableBody>
-        {page && page.total > page.pageSize && (
-          <TableFooter>
-            <TableRow>
-              <TablePagination
-                count={page.total}
-                rowsPerPage={page.pageSize}
-                page={page.pageIndex - 1}
-                onPageChange={(_, p) => {
-                  page.setPage(p + 1);
-                }}
-                ActionsComponent={TablePaginationActions}
-                rowsPerPageOptions={page.pageSizeOptions}
-                onRowsPerPageChange={(event) => {
-                  page.setPageSize(Number.parseInt(event.target.value, 10));
-                  page.setPage(1);
-                }}
-              />
-            </TableRow>
-          </TableFooter>
-        )}
       </Table>
-    </TableContainer>
+      {page && page.total > page.pageSize && <TablePagination {...page} />}
+    </div>
   );
 }
 
@@ -137,5 +101,7 @@ export {
   type CustomExtendsType,
   type CustomTableOptions,
 } from './useCustomTable';
+
+export { default as TablePagination } from './TablePagination';
 
 export { getCoreRowModel, getFilteredRowModel, getPaginationRowModel } from '@tanstack/react-table';

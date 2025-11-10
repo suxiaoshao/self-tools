@@ -1,4 +1,3 @@
-import { MenuItem } from '@mui/material';
 import { TableActions } from 'custom-table';
 import { useI18n } from 'i18n';
 import { match, P } from 'ts-pattern';
@@ -8,6 +7,8 @@ import ItemForm, { type ItemFormData } from '../../Item/Components/ItemForm';
 import CollectionForm, { type CollectionFormData } from './CollectionForm';
 import { graphql } from '@collections/gql';
 import { useLazyQuery, useMutation } from '@apollo/client/react';
+import { DropdownMenuItem } from '@portal/components/ui/dropdown-menu';
+import { Dialog } from '@portal/components/ui/dialog';
 
 const DeleteCollection = graphql(`
   mutation deleteCollection($id: Int!) {
@@ -65,7 +66,7 @@ export default function Actions({ id, refetch, __typename, ...data }: TableActio
   const [updateCollection] = useMutation(UpdateCollection);
   const [updateItem] = useMutation(UpdateItem);
   const [fetchItem, { loading, data: editItemData }] = useLazyQuery(GetEditItem);
-  const { open, handleClose, handleOpen } = useDialog();
+  const { open, handleClose, handleOpenChange, handleOpen } = useDialog();
   const collectionAfterSubmit = async ({ name, description }: CollectionFormData) => {
     await updateCollection({ variables: { id, name, description } });
     refetch();
@@ -79,7 +80,7 @@ export default function Actions({ id, refetch, __typename, ...data }: TableActio
   return (
     <>
       <TableActions>
-        {(onClose) => [
+        {() => [
           {
             text: t('delete'),
             onClick: async () => {
@@ -88,51 +89,50 @@ export default function Actions({ id, refetch, __typename, ...data }: TableActio
               } else {
                 await deleteItem({ variables: { id } });
               }
-              onClose();
               refetch();
             },
           },
-          <MenuItem
+
+          <DropdownMenuItem
             key="edit"
             onClick={() => {
               if (__typename === 'Item') {
                 fetchItem({ variables: { id } });
               }
-              onClose();
               handleOpen();
             }}
           >
             {t('edit')}
-          </MenuItem>,
+          </DropdownMenuItem>,
         ]}
       </TableActions>
-      {match(__typename)
-        .with('Collection', () => (
-          <CollectionForm
-            mode="edit"
-            initialValues={data}
-            open={open}
-            handleClose={handleClose}
-            afterSubmit={collectionAfterSubmit}
-          />
-        ))
-        .otherwise(() => (
-          <ItemForm
-            loading={loading}
-            initialValues={match(editItemData?.getItem)
-              .with(P.nonNullable, ({ collections, content, name }) => ({
-                collectionIds: collections.map((collection) => collection.id),
-                content: content,
-                name: name,
-              }))
-              //oxlint-disable-next-line unicorn/no-useless-undefined
-              .otherwise(() => undefined)}
-            mode="edit"
-            open={open}
-            handleClose={handleClose}
-            afterSubmit={itemAfterSubmit}
-          />
-        ))}
+      <Dialog open={open} onOpenChange={handleOpenChange}>
+        {match(__typename)
+          .with('Collection', () => (
+            <CollectionForm
+              mode="edit"
+              initialValues={data}
+              handleClose={handleClose}
+              afterSubmit={collectionAfterSubmit}
+            />
+          ))
+          .otherwise(() => (
+            <ItemForm
+              loading={loading}
+              initialValues={match(editItemData?.getItem)
+                .with(P.nonNullable, ({ collections, content, name }) => ({
+                  collectionIds: collections.map((collection) => collection.id),
+                  content: content,
+                  name: name,
+                }))
+                //oxlint-disable-next-line unicorn/no-useless-undefined
+                .otherwise(() => undefined)}
+              mode="edit"
+              handleClose={handleClose}
+              afterSubmit={itemAfterSubmit}
+            />
+          ))}
+      </Dialog>
     </>
   );
 }

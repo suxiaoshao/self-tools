@@ -10,17 +10,22 @@ import { graphql } from '@bookmarks/gql';
 import useTitle from '@bookmarks/hooks/useTitle';
 import { getImageUrl } from '@bookmarks/utils/image';
 import CustomMarkdown from '@collections/components/Markdown';
-import { Delete, Explore, KeyboardArrowLeft, Refresh, CloudDownload } from '@mui/icons-material';
-import { Avatar, Box, Card, CardContent, CardHeader, IconButton, Skeleton, Tooltip } from '@mui/material';
+import { Delete, RefreshCcw, Download, SquareArrowOutUpRight, ChevronLeft } from 'lucide-react';
 import { Details } from 'details';
 import { useI18n } from 'i18n';
-import { enqueueSnackbar } from 'notify';
 import { useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { P, match } from 'ts-pattern';
 import Chapters from './components/Chapters';
 import CommentEdit from './components/CommentEdit';
 import useNovelDetailItems from './useNovelDetailItems';
+import { toast } from 'sonner';
+import { Card, CardAction, CardContent, CardHeader, CardTitle } from '@portal/components/ui/card';
+import { Skeleton } from '@portal/components/ui/skeleton';
+import { Button } from '@portal/components/ui/button';
+import { Item, ItemActions, ItemContent, ItemDescription, ItemMedia, ItemTitle } from '@portal/components/ui/item';
+import { Avatar, AvatarFallback, AvatarImage } from '@portal/components/ui/avatar';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@portal/components/ui/tooltip';
 
 const GetNovel = graphql(`
   query getNovel($id: Int!) {
@@ -112,7 +117,7 @@ export default function NovelDetails() {
   const [updateNovel, { loading: updateLoading }] = useMutation(UpdateNovelByCrawler);
   const handleUpdateNovel = useCallback(async () => {
     await updateNovel({ variables: { novelId: Number(novelId) } });
-    enqueueSnackbar(t('update_by_crawler_success'), { variant: 'success' });
+    toast.success(t('update_by_crawler_success'));
     refetch();
   }, [novelId, updateNovel, refetch, t]);
   const items = useNovelDetailItems(data, refetch);
@@ -122,67 +127,79 @@ export default function NovelDetails() {
     refetch();
   };
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
-      <Box sx={{ display: 'flex', width: '100%', pl: 2, pr: 2 }}>
-        <IconButton onClick={() => navigate(-1)}>
-          <KeyboardArrowLeft />
-        </IconButton>
-        <Box sx={{ flexGrow: 1 }} />
-        <IconButton onClick={handleRefresh}>
-          <Refresh />
-        </IconButton>
-      </Box>
-      <Box sx={{ flex: '1 1 0', overflow: 'auto', p: 2 }}>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+    <div className="flex flex-col size-full h-screen">
+      <div className="flex w-full p-4 pb-0">
+        <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+          <ChevronLeft />
+        </Button>
+        <div className="grow" />
+        <Button variant="ghost" size="icon" onClick={handleRefresh}>
+          <RefreshCcw />
+        </Button>
+      </div>
+      <div className="flex-1 overflow-auto p-4 overscroll-contain">
+        <div className="flex flex-col gap-4">
           {data?.getNovel && (
             <>
               <Card>
-                <CardHeader
-                  avatar={<Avatar src={getImageUrl(data.getNovel.avatar)} />}
-                  title={data.getNovel.name}
-                  subheader={data.getNovel.author.name}
-                  action={
-                    <>
-                      <Tooltip title={t('update_by_crawler')}>
-                        <IconButton disabled={updateLoading} onClick={handleUpdateNovel}>
-                          <CloudDownload />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title={t('go_to_source_site')}>
-                        <IconButton onClick={goToSourceSite}>
-                          <Explore />
-                        </IconButton>
-                      </Tooltip>
-                    </>
-                  }
-                />
+                <Item className="pt-0 px-6">
+                  <ItemMedia>
+                    <Avatar className="size-10">
+                      <AvatarImage src={getImageUrl(data.getNovel.avatar)} />
+                      <AvatarFallback>{data.getNovel.name[0]}</AvatarFallback>
+                    </Avatar>
+                  </ItemMedia>
+                  <ItemContent>
+                    <ItemTitle>{data.getNovel.name}</ItemTitle>
+                    <ItemDescription>{data.getNovel.author.name}</ItemDescription>
+                  </ItemContent>
+                  <ItemActions>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" disabled={updateLoading} onClick={handleUpdateNovel}>
+                          <Download />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>{t('update_by_crawler')}</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" onClick={goToSourceSite}>
+                          <SquareArrowOutUpRight />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>{t('go_to_source_site')}</TooltipContent>
+                    </Tooltip>
+                  </ItemActions>
+                </Item>
                 <CardContent>
-                  <Details items={items} sx={{ gap: 1 }} fullSpan={4} />
+                  <Details items={items} className="gap-2" fullSpan={4} />
                 </CardContent>
               </Card>
               <Card>
-                <CardHeader
-                  title={t('comment')}
-                  action={
-                    <>
-                      <CommentEdit
-                        refetch={refetch}
-                        novelId={data.getNovel.id}
-                        mode={match(data.getNovel.comments?.content)
-                          .with(P.nonNullable, () => 'update' as const)
-                          .otherwise(() => 'create' as const)}
-                        initContent={data.getNovel.comments?.content}
-                      />
-                      {data.getNovel.comments?.content && (
-                        <Tooltip title={t('delete')}>
-                          <IconButton onClick={handleDeleteComment}>
+                <CardHeader>
+                  <CardTitle>{t('comment')}</CardTitle>
+                  <CardAction>
+                    <CommentEdit
+                      refetch={refetch}
+                      novelId={data.getNovel.id}
+                      mode={match(data.getNovel.comments?.content)
+                        .with(P.nonNullable, () => 'update' as const)
+                        .otherwise(() => 'create' as const)}
+                      initContent={data.getNovel.comments?.content}
+                    />
+                    {data.getNovel.comments?.content && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" onClick={handleDeleteComment}>
                             <Delete />
-                          </IconButton>
-                        </Tooltip>
-                      )}
-                    </>
-                  }
-                />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>{t('delete')}</TooltipContent>
+                      </Tooltip>
+                    )}
+                  </CardAction>
+                </CardHeader>
                 <CardContent>
                   <CustomMarkdown value={data.getNovel.comments?.content || '-'} />
                 </CardContent>
@@ -192,14 +209,17 @@ export default function NovelDetails() {
           )}
           {loading && (
             <Card>
-              <Skeleton variant="text" sx={{ fontSize: '1rem' }} />
-              <Skeleton variant="circular" width={40} height={40} />
-              <Skeleton variant="rectangular" width={210} height={60} />
-              <Skeleton variant="rounded" width={210} height={60} />
+              <CardContent className="flex items-center space-x-4">
+                <Skeleton className="h-12 w-12 rounded-full" />
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-[250px]" />
+                  <Skeleton className="h-4 w-[200px]" />
+                </div>
+              </CardContent>
             </Card>
           )}
-        </Box>
-      </Box>
-    </Box>
+        </div>
+      </div>
+    </div>
   );
 }

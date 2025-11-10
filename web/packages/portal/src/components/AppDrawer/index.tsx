@@ -16,15 +16,13 @@ import { ThemeDrawerItem } from '../../features/Theme';
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
-  SidebarHeader,
   SidebarMenu,
   SidebarProvider,
-  SidebarTrigger,
 } from '../ui/sidebar';
+import { Toaster } from '../ui/sonner';
 
 export default function AppDrawer() {
   const t = useI18n();
@@ -51,6 +49,7 @@ export default function AppDrawer() {
       </Sidebar>
       <main className="flex-1">
         <Outlet />
+        <Toaster />
       </main>
     </SidebarProvider>
   );

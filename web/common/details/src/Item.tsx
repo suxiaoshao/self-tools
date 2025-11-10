@@ -5,30 +5,19 @@
  * @LastEditTime: 2024-05-01 02:47:11
  * @FilePath: /tauri/common/details/src/Item.tsx
  */
-import { Box, Typography } from '@mui/material';
 import type { DetailsItem } from './types';
 import { match, P } from 'ts-pattern';
+import { cn } from '@portal/lib/utils';
+import { FieldDescription, FieldLegend } from '@portal/components/ui/field';
 
 export default function Item({ label, value, span }: Omit<DetailsItem, 'key'>) {
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        ...match(span)
-          .with(P.nonNullable, () => ({ gridColumn: `span ${span}` }))
-          .otherwise(() => ({})),
-      }}
-    >
-      <Typography variant="subtitle1">{label}</Typography>
-      <Typography
-        variant="body1"
-        {...match(value)
-          .with(P.string.or(P.nullish), () => null)
-          .otherwise(() => ({ component: 'div' as const }))}
-      >
-        {value ?? '-'}
-      </Typography>
-    </Box>
+    //  @ts-expect-error css variable property
+    <div className={cn('flex flex-col col-span-(--span)')} style={{ '--span': span }}>
+      <FieldLegend>{label}</FieldLegend>
+      {match(value)
+        .with(P.string.or(P.nullish), (value) => <FieldDescription>{value ?? '-'}</FieldDescription>)
+        .otherwise((value) => value)}
+    </div>
   );
 }

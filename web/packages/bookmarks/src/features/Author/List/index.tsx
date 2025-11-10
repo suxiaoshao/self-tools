@@ -1,5 +1,4 @@
-import { Avatar, Box, Button, IconButton, Link, Typography } from '@mui/material';
-import { Refresh } from '@mui/icons-material';
+import { RefreshCcw } from 'lucide-react';
 import {
   createCustomColumnHelper,
   type CustomColumnDefArray,
@@ -15,13 +14,15 @@ import CreateAuthorButton from './components/CreateAuthorButton';
 import { useMemo } from 'react';
 import { format } from 'time';
 import { useI18n } from 'i18n';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { getImageUrl } from '@bookmarks/utils/image';
 import { getLabelKeyBySite } from '@bookmarks/utils/novelSite';
 import useTitle from '@bookmarks/hooks/useTitle';
 import { graphql } from '@bookmarks/gql';
 import { useMutation, useQuery } from '@apollo/client/react';
 import type { GetAuthorsQuery } from '@bookmarks/gql/graphql';
+import { Button } from '@portal/components/ui/button';
+import { Avatar, AvatarImage } from '@portal/components/ui/avatar';
 
 const GetAuthors = graphql(`
   query getAuthors($pagination: Pagination!) {
@@ -63,15 +64,14 @@ export default function AuthorList() {
   const [deleteAuthor] = useMutation(DeleteAuthor);
   const t = useI18n();
   useTitle(t('author_manage'));
-  const navigate = useNavigate();
   const columns = useMemo<CustomColumnDefArray<TableItem>>(
     () =>
       [
         columnHelper.accessor(
           ({ name, id }) => (
-            <Link to={`/bookmarks/authors/${id}`} component={RouterLink}>
-              {name}
-            </Link>
+            <Button variant="link" className="text-foreground w-fit px-0 text-left" asChild>
+              <Link to={`/bookmarks/authors/${id}`}>{name}</Link>
+            </Button>
           ),
           {
             header: t('name'),
@@ -85,35 +85,31 @@ export default function AuthorList() {
           id: 'site',
           cell: (context) => context.getValue(),
         }),
-        columnHelper.accessor(({ avatar }) => <Avatar src={getImageUrl(avatar)} />, {
-          header: t('avatar'),
-          id: 'avatar',
-          cell: (context) => context.getValue(),
-        }),
         columnHelper.accessor(
-          ({ description }) => (
-            <Typography variant="body2" noWrap>
-              {description}
-            </Typography>
+          ({ avatar }) => (
+            <Avatar>
+              <AvatarImage src={getImageUrl(avatar)} />
+            </Avatar>
           ),
           {
-            header: t('description'),
-            id: 'description',
-            cellProps: {
-              sx: {
-                maxWidth: 200,
-              },
-            },
+            header: t('avatar'),
+            id: 'avatar',
             cell: (context) => context.getValue(),
           },
         ),
+        columnHelper.accessor(({ description }) => <p className="truncate">{description}</p>, {
+          header: t('description'),
+          id: 'description',
+          cellProps: {
+            className: 'max-w-[200px]',
+          },
+          cell: (context) => context.getValue(),
+        }),
         columnHelper.accessor(({ createTime }) => format(createTime), {
           header: t('create_time'),
           id: 'createTime',
           cellProps: {
-            sx: {
-              maxWidth: 150,
-            },
+            className: 'max-w-[150px]',
           },
           cell: (context) => context.getValue(),
         }),
@@ -121,21 +117,18 @@ export default function AuthorList() {
           header: t('update_time'),
           id: 'updateTime',
           cellProps: {
-            sx: {
-              maxWidth: 150,
-            },
+            className: 'max-w-[150px]',
           },
           cell: (context) => context.getValue(),
         }),
         columnHelper.accessor(
           ({ id }) => (
             <TableActions>
-              {(onClose) => [
+              {() => [
                 {
                   text: t('delete'),
                   onClick: async () => {
                     await deleteAuthor({ variables: { id } });
-                    onClose();
                     await refetch();
                   },
                 },
@@ -145,7 +138,6 @@ export default function AuthorList() {
           {
             header: t('actions'),
             id: 'action',
-            cellProps: { padding: 'none' },
             cell: (context) => context.getValue(),
           },
         ),
@@ -159,29 +151,17 @@ export default function AuthorList() {
   const tableInstance = useCustomTable(tableOptions);
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', p: 2 }}>
-      <Box
-        sx={{
-          flex: '0 0 auto',
-          marginBottom: 2,
-          display: 'flex',
-        }}
-      >
+    <div className="flex flex-col size-full p-4">
+      <div className="flex-[0_0_auto] mb-4 flex">
         <CreateAuthorButton refetch={refetch} />
-        <Button
-          sx={{ ml: 1 }}
-          color="primary"
-          size="large"
-          variant="contained"
-          onClick={() => navigate('/bookmarks/authors/fetch')}
-        >
-          {t('crawler')}
+        <Button className="ml-2" asChild>
+          <Link to="/bookmarks/authors/fetch">{t('crawler')}</Link>
         </Button>
-        <IconButton sx={{ marginLeft: 'auto' }} onClick={() => refetch()}>
-          <Refresh />
-        </IconButton>
-      </Box>
+        <Button className="ml-auto" variant="ghost" size="icon" onClick={() => refetch()}>
+          <RefreshCcw />
+        </Button>
+      </div>
       <CustomTable tableInstance={tableInstance} page={page} />
-    </Box>
+    </div>
   );
 }

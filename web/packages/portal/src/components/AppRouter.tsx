@@ -55,8 +55,8 @@ export default function AppRouter() {
               {item.getMenu().map((menu) => MenuRouter(menu))}
             </Route>
           ))}
-          <Route path="login" element={<Login />} />
         </Route>
+        <Route path="login" element={<Login />} />
         <Route path="*" element={<ErrorPage />} />
       </Routes>
     </>

@@ -1,10 +1,30 @@
-import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, TextField } from '@mui/material';
-import { useState } from 'react';
 import { Controller, type SubmitHandler, useForm } from 'react-hook-form';
 import { useI18n } from 'i18n';
 import { graphql } from '@bookmarks/gql';
 import { useMutation } from '@apollo/client/react';
 import { NovelSite, type CreateTagMutationVariables } from '@bookmarks/gql/graphql';
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogFooter,
+  DialogTitle,
+  DialogTrigger,
+} from '@portal/components/ui/dialog';
+import useDialog from '@collections/hooks/useDialog';
+import { Button } from '@portal/components/ui/button';
+import { FieldError, FieldGroup, FieldLegend, FieldSet } from '@portal/components/ui/field';
+import { Input } from '@portal/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@portal/components/ui/select';
+import { valibotResolver } from '@hookform/resolvers/valibot';
+import { enum_, object, string } from 'valibot';
 
 const CreateTag = graphql(`
   mutation createTag($name: String!, $site: NovelSite!, $siteId: String!) {
@@ -23,7 +43,20 @@ export default function CreateTagButton({ refetch }: CreateTagButtonProps) {
 
   // 表单控制
   type FormData = Omit<CreateTagMutationVariables, 'collectionId'>;
-  const { handleSubmit, register, control } = useForm<FormData>();
+  const {
+    handleSubmit,
+    register,
+    control,
+    formState: { errors },
+  } = useForm<FormData>({
+    resolver: valibotResolver(
+      object({
+        name: string(),
+        site: enum_(NovelSite),
+        siteId: string(),
+      }),
+    ),
+  });
   const onSubmit: SubmitHandler<FormData> = async ({ name, site, siteId }) => {
     await createTag({ variables: { name, site, siteId } });
     refetch();
@@ -31,69 +64,59 @@ export default function CreateTagButton({ refetch }: CreateTagButtonProps) {
   };
 
   // 控制 dialog
-  const [open, setOpen] = useState(false);
-  const handleClose = () => {
-    setOpen(false);
-  };
+  const { open, handleClose, handleOpenChange } = useDialog();
   const t = useI18n();
   return (
-    <>
-      <Button
-        sx={{ ml: 1 }}
-        color="primary"
-        size="large"
-        variant="contained"
-        onClick={() => {
-          setOpen(true);
-        }}
-      >
-        {t('add_tag')}
-      </Button>
-      <Dialog PaperProps={{ sx: { maxWidth: 700 } }} open={open} onClose={handleClose}>
-        <Box sx={{ width: 500 }} onSubmit={handleSubmit(onSubmit)} component="form">
-          <DialogTitle>{t('create_tag')}</DialogTitle>
-          <DialogContent>
-            <TextField
-              variant="standard"
-              required
-              fullWidth
-              label={t('tag_name')}
-              {...register('name', { required: true })}
-            />
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogTrigger asChild>
+        <Button>{t('add_tag')}</Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogTitle>{t('create_tag')}</DialogTitle>
+        <form className="flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)}>
+          <FieldGroup>
+            <FieldSet>
+              <FieldLegend>{t('tag_name')}</FieldLegend>
+              <Input {...register('name', { required: true })} />
+              <FieldError errors={[errors.name]} />
+            </FieldSet>
             <Controller
               control={control}
               name="site"
               rules={{ required: true }}
-              render={({ field, fieldState }) => (
-                <TextField
-                  error={!!fieldState?.error?.message}
-                  helperText={fieldState?.error?.message}
-                  select
-                  label={t('novel_site')}
-                  required
-                  fullWidth
-                  {...field}
-                >
-                  <MenuItem value={NovelSite.Jjwxc}>{t('jjwxc')}</MenuItem>
-                  <MenuItem value={NovelSite.Qidian}>{t('qidian')}</MenuItem>
-                </TextField>
+              render={({ field: { onChange, ...field }, fieldState }) => (
+                <FieldSet className="flex-1">
+                  <FieldLegend>{t('novel_site')}</FieldLegend>
+                  <Select required {...field} onValueChange={onChange}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectItem value={NovelSite.Jjwxc}>{t('jjwxc')}</SelectItem>
+                        <SelectItem value={NovelSite.Qidian}>{t('qidian')}</SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                  <FieldError errors={[fieldState.error]} />
+                </FieldSet>
               )}
             />
-            <TextField
-              variant="standard"
-              required
-              fullWidth
-              label={t('tag_site_id')}
-              {...register('siteId', { required: true })}
-            />
-          </DialogContent>
+            <FieldSet>
+              <FieldLegend>{t('tag_site_id')}</FieldLegend>
+              <Input {...register('siteId', { required: true })} />
+              <FieldError errors={[errors.siteId]} />
+            </FieldSet>
+          </FieldGroup>
 
-          <DialogActions>
-            <Button onClick={handleClose}>{t('cancel')}</Button>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="secondary">{t('cancel')}</Button>
+            </DialogClose>
             <Button type="submit">{t('submit')}</Button>
-          </DialogActions>
-        </Box>
-      </Dialog>
-    </>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

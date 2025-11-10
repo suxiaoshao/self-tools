@@ -111,5 +111,19 @@
   "select_none": "全不选",
   "item_manage": "条目管理",
   "item_detail_title": "条目{{itemName}}的详情",
-  "pages": "页面"
+  "pages": "页面",
+  "table_pagination_total": "共 {{pageCount}} 页/{{total}} 条",
+  "table_pagination_row_per_page": "每页行数",
+  "table_pagination_page": "/{{pageCount}} 页",
+  "go_to_previous_page": "上一页",
+  "go_to_next_page": "下一页",
+  "go_to_last_page": "最后一页",
+  "go_to_first_page": "首页",
+  "search_page": "搜索页面",
+  "no_page_found": "未找到页面",
+  "no_tags_found": "未找到标签",
+  "loading": "加载中...",
+  "select_author": "选择作者",
+  "search": "搜索",
+  "no_author_found": "未找到作者"
 }

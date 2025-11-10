@@ -5,13 +5,24 @@
  * @LastEditTime: 2024-03-01 17:52:09
  * @FilePath: /self-tools/web/packages/bookmarks/src/features/Author/List/components/CreateAuthorButton.tsx
  */
-import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField } from '@mui/material';
-import { useState } from 'react';
 import { type SubmitHandler, useForm } from 'react-hook-form';
 import { useI18n } from 'i18n';
 import { graphql } from '@bookmarks/gql';
 import { useMutation } from '@apollo/client/react';
 import type { CreateAuthorMutationVariables } from '@bookmarks/gql/graphql';
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@portal/components/ui/dialog';
+import { Button } from '@portal/components/ui/button';
+import useDialog from '@collections/hooks/useDialog';
+import { FieldGroup, FieldLegend, FieldSet } from '@portal/components/ui/field';
+import { Input } from '@portal/components/ui/input';
 
 const CreateAuthor = graphql(`
   mutation createAuthor($avatar: String!, $description: String!, $name: String!, $site: NovelSite!, $siteId: String!) {
@@ -30,70 +41,55 @@ export default function CreateAuthorButton({ refetch }: CreateAuthorButtonProps)
   // 表单控制
   type FormData = CreateAuthorMutationVariables;
   const { handleSubmit, register } = useForm<FormData>();
+  // 控制 dialog
+  const { handleClose, open, handleOpenChange } = useDialog();
   const onSubmit: SubmitHandler<FormData> = async (data) => {
     await createAuthor({ variables: { ...data } });
     refetch();
     handleClose();
   };
-  // 控制 dialog
-  const [open, setOpen] = useState(false);
-  const handleClose = () => {
-    setOpen(false);
-  };
+
   const t = useI18n();
   return (
-    <>
-      <Button
-        sx={{ ml: 1 }}
-        color="primary"
-        size="large"
-        variant="contained"
-        onClick={() => {
-          setOpen(true);
-        }}
-      >
-        {t('add_author')}
-      </Button>
-      <Dialog slotProps={{ paper: { sx: { maxWidth: 700 } } }} open={open} onClose={handleClose}>
-        <Box sx={{ width: 500 }} onSubmit={handleSubmit(onSubmit)} component="form">
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogTrigger asChild>
+        <Button className="ml-2" color="primary">
+          {t('add_author')}
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
           <DialogTitle>{t('create_author')}</DialogTitle>
-          <DialogContent>
-            <TextField
-              variant="standard"
-              required
-              fullWidth
-              label={t('author_name')}
-              {...register('name', { required: true })}
-            />
-            <TextField
-              variant="standard"
-              required
-              fullWidth
-              label={t('avatar')}
-              {...register('avatar', { required: true })}
-            />
-            <TextField
-              variant="standard"
-              required
-              fullWidth
-              label={t('link')}
-              {...register('site', { required: true })}
-            />
-            <TextField
-              variant="standard"
-              required
-              fullWidth
-              label={t('description')}
-              {...register('description', { required: true })}
-            />
-          </DialogContent>
-
-          <DialogActions>
-            <Button onClick={handleClose}>{t('cancel')}</Button>
-            <Button type="submit">{t('submit')}</Button>
-          </DialogActions>
-        </Box>
-      </Dialog>
-    </>
+        </DialogHeader>
+        <form id="create-author-form" onSubmit={handleSubmit(onSubmit)}>
+          <FieldGroup>
+            <FieldSet>
+              <FieldLegend>{t('author_name')}</FieldLegend>
+              <Input required {...register('name', { required: true })} />
+            </FieldSet>
+            <FieldSet>
+              <FieldLegend>{t('avatar')}</FieldLegend>
+              <Input required {...register('avatar', { required: true })} />
+            </FieldSet>
+            <FieldSet>
+              <FieldLegend>{t('link')}</FieldLegend>
+              <Input required {...register('site', { required: true })} />
+            </FieldSet>
+            <FieldSet>
+              <FieldLegend>{t('description')}</FieldLegend>
+              <Input {...register('description', { required: true })} />
+            </FieldSet>
+          </FieldGroup>
+        </form>
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button variant="secondary">{t('cancel')}</Button>
+          </DialogClose>
+          <Button type="submit" form="create-author-form">
+            {t('submit')}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
