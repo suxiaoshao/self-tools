@@ -9,8 +9,9 @@ import {
 } from 'react';
 import { editor } from 'monaco-editor';
 import './init';
-import { useTheme } from '@mui/material';
 import { match } from 'ts-pattern';
+import { ColorSetting, selectColorMode, useThemeStore } from '@portal/features/Theme/themeSlice';
+import { useShallow } from 'zustand/react/shallow';
 
 export type MonacoEditorRef = editor.IStandaloneCodeEditor | undefined;
 
@@ -52,14 +53,14 @@ export default function Edit({ onChangeCode, code, language, wordWrap, ref, ...p
   const [edit, setEdit] = useState<editor.IStandaloneCodeEditor | undefined>();
   useImperativeHandle(ref, () => edit, [edit]);
 
-  const theme = useTheme();
+  const theme = useThemeStore(useShallow((state) => selectColorMode(state)));
   const editTheme = useMemo(
     () =>
-      match(theme.palette.mode)
-        .with('dark', () => 'monankai')
+      match(theme)
+        .with('dark', ColorSetting.dark, () => 'monankai')
         // eslint-disable-next-line no-useless-undefined
         .otherwise(() => undefined),
-    [theme.palette.mode],
+    [theme],
   );
   const createEditor = useEffectEvent(() => {
     if (editRef === null) {
