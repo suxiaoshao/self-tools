@@ -54,7 +54,7 @@ export default function TagsSelect({ value, onChange, className, ...props }: Tag
         >
           <div className="flex-[1_1_0] flex gap-1 overflow-x-auto">
             {selectedTags.map(({ id, name }) => (
-              <Badge variant="outline" key={id}>
+              <Badge variant="secondary" key={id}>
                 {name}
                 <Button
                   variant="ghost"

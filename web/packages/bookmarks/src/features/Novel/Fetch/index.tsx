@@ -81,7 +81,6 @@ const FetchNovel = graphql(`
     }
   }
 `);
-
 const SaveDraftNovel = graphql(`
   mutation saveDraftNovel($novel: SaveDraftNovel!) {
     saveDraftNovel(novel: $novel) {
@@ -94,10 +93,8 @@ type ChapterData = FetchNovelQuery['fetchNovel']['chapters'][number];
 const columnHelper = createCustomColumnHelper<ChapterData>();
 
 export default function NovelFetch() {
-  // title
   const t = useI18n();
   useTitle(t('novel_crawler'));
-
   // fetch
   type FormData = FetchNovelQueryVariables;
   const [fn, { data, loading }] = useLazyQuery(FetchNovel);
@@ -106,11 +103,7 @@ export default function NovelFetch() {
     fn({ variables: data });
   });
   const novel = data?.fetchNovel;
-
-  // save
   const [saveDraftNovel, { loading: saveLoading }] = useMutation(SaveDraftNovel);
-
-  // chapters table
   const columns = useMemo<CustomColumnDefArray<ChapterData>>(
     () =>
       [
@@ -133,7 +126,6 @@ export default function NovelFetch() {
     [columns, novel?.chapters],
   );
   const tableInstance = useCustomTable(tableOptions);
-
   // details
   const items = useMemo<DetailsItem[]>(
     () =>

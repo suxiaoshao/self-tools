@@ -9,7 +9,7 @@ import {
   usePage,
   usePageWithTotal,
 } from 'custom-table';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useEffectEvent, useMemo } from 'react';
 import { useAllCollection } from './collectionSlice';
 import AncestorsPath from './components/AncestorsPath';
 import CreateCollectionButton from './components/CreateCollectionButton';
@@ -45,9 +45,11 @@ const columnHelper = createCustomColumnHelper<CollectionTableData>();
 export default function Collections() {
   const parentId = useParentId();
   const pageState = usePage();
-  useEffect(() => {
-    // oxlint-disable-next-line react/exhaustive-deps
+  const resetPage = useEffectEvent(() => {
     pageState.setPage(1);
+  });
+  useEffect(() => {
+    resetPage();
   }, [parentId]);
   const { data: { getCollections: { data, total } = {} } = {}, refetch } = useQuery(GetCollections, {
     variables: { parentId, pagination: { page: pageState.pageIndex, pageSize: pageState.pageSize } },
