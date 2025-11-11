@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 # http
-tokio = { version = "1.47.1", features = ["macros", "rt-multi-thread"] }
+tokio = { version = "1.48.0", features = ["macros", "rt-multi-thread"] }
 axum = { version = "0.8.6", features = ["json"] }
 
 # error
@@ -30,7 +30,7 @@ thrift = { path = "../../common/thrift" }
 volo-thrift = "0.11.2"
 
 # webauthn
-webauthn-rs = { version = "0.5.2", features = [
+webauthn-rs = { version = "0.5.3", features = [
     "danger-allow-state-serialisation",
 ] }
 url = "2.5.7"

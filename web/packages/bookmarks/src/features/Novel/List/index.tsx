@@ -1,5 +1,4 @@
-import { Refresh } from '@mui/icons-material';
-import { Avatar, Box, Button, FormControl, FormLabel, IconButton, Link, Paper, Switch } from '@mui/material';
+import { RefreshCcw } from 'lucide-react';
 import {
   createCustomColumnHelper,
   type CustomColumnDefArray,
@@ -14,7 +13,7 @@ import {
 import { useI18n } from 'i18n';
 import { useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { format } from 'time';
 import CreateNovelButton from './Components/CreateNovelButton';
 import { convertFormToVariables } from './utils';
@@ -27,6 +26,11 @@ import useTitle from '@bookmarks/hooks/useTitle';
 import { graphql } from '@bookmarks/gql';
 import { useMutation, useQuery } from '@apollo/client/react';
 import type { GetNovelsQuery, GetNovelsQueryVariables } from '@bookmarks/gql/graphql';
+import { Button } from '@portal/components/ui/button';
+import { Card, CardContent } from '@portal/components/ui/card';
+import { Switch } from '@portal/components/ui/switch';
+import { FieldLegend, FieldSet } from '@portal/components/ui/field';
+import { Avatar, AvatarImage } from '@portal/components/ui/avatar';
 
 const GetNovels = graphql(`
   query getNovels(
@@ -77,9 +81,10 @@ export default function NovelList() {
   // form & table
   type FormData = Omit<GetNovelsQueryVariables, 'pagination'>;
   const pageState = usePage();
-  const { control, watch, register } = useForm<FormData>({
+  const { control, watch } = useForm<FormData>({
     defaultValues: {
-      tagMatch: { matchSet: [] },
+      tagMatch: { matchSet: [], fullMatch: false },
+      collectionMatch: { matchSet: [], fullMatch: false },
     },
   });
   const form = watch();
@@ -94,9 +99,9 @@ export default function NovelList() {
       [
         columnHelper.accessor(
           ({ id, name }) => (
-            <Link to={`/bookmarks/novel/${id}`} underline="hover" component={RouterLink}>
-              {name}
-            </Link>
+            <Button variant="link" className="text-foreground w-fit px-0 text-left" asChild>
+              <Link to={`/bookmarks/novel/${id}`}>{name}</Link>
+            </Button>
           ),
           {
             header: t('name'),
@@ -109,11 +114,18 @@ export default function NovelList() {
           id: 'site',
           cell: (context) => context.getValue(),
         }),
-        columnHelper.accessor(({ avatar }) => <Avatar src={getImageUrl(avatar)} />, {
-          header: t('avatar'),
-          id: 'avatar',
-          cell: (context) => context.getValue(),
-        }),
+        columnHelper.accessor(
+          ({ avatar }) => (
+            <Avatar>
+              <AvatarImage src={getImageUrl(avatar)} />
+            </Avatar>
+          ),
+          {
+            header: t('avatar'),
+            id: 'avatar',
+            cell: (context) => context.getValue(),
+          },
+        ),
         columnHelper.accessor(({ novelStatus }) => t(getLabelKeyByNovelStatus(novelStatus)), {
           header: t('novel_status'),
           id: 'status',
@@ -124,9 +136,7 @@ export default function NovelList() {
           id: 'description',
           cellProps: {
             align: 'center',
-            sx: {
-              maxWidth: 700,
-            },
+            className: 'max-w-[200px] truncate',
           },
           cell: (context) => context.getValue(),
         }),
@@ -143,12 +153,11 @@ export default function NovelList() {
         columnHelper.accessor(
           ({ id }) => (
             <TableActions>
-              {(onClose) => [
+              {() => [
                 {
                   text: t('delete'),
                   onClick: async () => {
                     await deleteNovel({ variables: { id } });
-                    onClose();
                     await refetch();
                   },
                 },
@@ -171,66 +180,63 @@ export default function NovelList() {
   const tableInstance = useCustomTable(tableOptions);
   const navigate = useNavigate();
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
-      <Box
-        sx={{
-          flex: '0 0 auto',
-          display: 'flex',
-          p: 2,
-          pb: 0,
-        }}
-      >
+    <div className="flex flex-col size-full">
+      <div className="basis-auto flex p-4 pb-0 gap-4">
         <CreateNovelButton refetch={refetch} />
-        <Button
-          sx={{ ml: 1 }}
-          color="primary"
-          size="large"
-          variant="contained"
-          onClick={() => navigate('/bookmarks/novel/fetch')}
-        >
+        <Button color="primary" onClick={() => navigate('/bookmarks/novel/fetch')}>
           {t('crawler')}
         </Button>
-        <IconButton sx={{ marginLeft: 'auto' }} onClick={() => refetch()}>
-          <Refresh />
-        </IconButton>
-      </Box>
-      <Box sx={{ flex: '1 1 0', overflowY: 'auto', p: 2, pr: 1 }}>
-        <Paper
-          sx={{ display: 'grid', gridTemplateColumns: 'auto 1fr', p: 1, marginBottom: 2, rowGap: 1, columnGap: 2 }}
-        >
-          <FormControl>
-            <FormLabel id="collection-full-match">{t('collection_whether_full_match')}</FormLabel>
-            <Switch aria-labelledby="collection-full-match" {...register('collectionMatch.fullMatch')} />
-          </FormControl>
+        <div className="grow" />
+        <Button variant="ghost" size="icon" onClick={() => refetch()}>
+          <RefreshCcw />
+        </Button>
+      </div>
+      <div className="flex-[1_1_0] overflow-y-auto p-4 pr-1 w-full">
+        <Card className="mb-4 gap-0">
+          <CardContent className="grid grid-cols-[auto_1fr] gap-y-2 gap-x-4">
+            <FieldSet>
+              <FieldLegend>{t('collection_whether_full_match')}</FieldLegend>
+              <Controller
+                control={control}
+                name="collectionMatch.fullMatch"
+                render={({ field: { value, onChange, ...field } }) => (
+                  <Switch checked={value} onCheckedChange={onChange} {...field} />
+                )}
+              />
+            </FieldSet>
 
-          <FormControl component="fieldset" variant="standard">
-            <FormLabel component="legend">{t('match_collections')} </FormLabel>
-            <Controller
-              control={control}
-              name="collectionMatch.matchSet"
-              render={({ field }) => <CollectionMultiSelect {...field} />}
-            />
-          </FormControl>
-          <FormControl>
-            <FormLabel id="tag-full-match">{t('tag_whether_full_match')}</FormLabel>
-            <Switch aria-labelledby="tag-full-match" {...register('tagMatch.fullMatch')} />
-          </FormControl>
+            <FieldSet>
+              <FieldLegend>{t('match_collections')}</FieldLegend>
+              <Controller
+                control={control}
+                name="collectionMatch.matchSet"
+                render={({ field }) => <CollectionMultiSelect {...field} />}
+              />
+            </FieldSet>
 
-          <FormControl component="fieldset" variant="standard">
-            <FormLabel component="legend">{t('match_tags')}</FormLabel>
-            <Controller control={control} name="tagMatch.matchSet" render={({ field }) => <TagsSelect {...field} />} />
-          </FormControl>
-        </Paper>
-        <CustomTable
-          sx={{
-            overflowY: 'hidden',
-            flex: undefined,
-            maxHeight: undefined,
-          }}
-          tableInstance={tableInstance}
-          page={page}
-        />
-      </Box>
-    </Box>
+            <FieldSet>
+              <FieldLegend>{t('tag_whether_full_match')}</FieldLegend>
+              <Controller
+                control={control}
+                name="tagMatch.fullMatch"
+                render={({ field: { value, onChange, ...field } }) => (
+                  <Switch checked={value} onCheckedChange={onChange} {...field} />
+                )}
+              />
+            </FieldSet>
+
+            <FieldSet>
+              <FieldLegend>{t('match_tags')}</FieldLegend>
+              <Controller
+                control={control}
+                name="tagMatch.matchSet"
+                render={({ field }) => <TagsSelect className="w-[400px]" {...field} />}
+              />
+            </FieldSet>
+          </CardContent>
+        </Card>
+        <CustomTable className="w-full" tableInstance={tableInstance} page={page} />
+      </div>
+    </div>
   );
 }

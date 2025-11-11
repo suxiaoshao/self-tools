@@ -1,10 +1,11 @@
-import { Button } from '@mui/material';
 import { useI18n } from 'i18n';
 import useDialog from '@collections/hooks/useDialog';
 import useParentId from '../hooks/useParentId';
 import CollectionForm, { type CollectionFormData } from './CollectionForm';
 import { graphql } from '@collections/gql';
 import { useMutation } from '@apollo/client/react';
+import { Dialog, DialogTrigger } from '@portal/components/ui/dialog';
+import { Button } from '@portal/components/ui/button';
 
 const CreateCollection = graphql(`
   mutation createCollection($parentId: Int, $name: String!, $description: String) {
@@ -28,14 +29,14 @@ export default function CreateCollectionButton({ refetch }: CreateCollectButtonP
     await createCollection({ variables: { name, parentId, description } });
     refetch();
   };
-  const { open, handleClose, handleOpen } = useDialog();
+  const { open, handleClose, handleOpenChange } = useDialog();
   const t = useI18n();
   return (
-    <>
-      <Button color="primary" size="large" variant="contained" onClick={handleOpen}>
-        {t('add_collection')}
-      </Button>
-      <CollectionForm handleClose={handleClose} open={open} afterSubmit={afterSubmit} />
-    </>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogTrigger asChild>
+        <Button color="primary">{t('add_collection')}</Button>
+      </DialogTrigger>
+      <CollectionForm handleClose={handleClose} afterSubmit={afterSubmit} />
+    </Dialog>
   );
 }

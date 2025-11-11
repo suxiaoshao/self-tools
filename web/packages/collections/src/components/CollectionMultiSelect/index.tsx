@@ -10,25 +10,26 @@ import {
   CollectionLoadingState,
   useAllCollection,
 } from '@collections/features/Collection/collectionSlice';
-import { Add } from '@mui/icons-material';
-import {
-  Box,
-  type BoxProps,
-  Button,
-  Chip,
-  CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogTitle,
-  IconButton,
-} from '@mui/material';
 import { useI18n } from 'i18n';
-import React, { type FocusEventHandler, type ForwardedRef, useImperativeHandle, useMemo, useState } from 'react';
+import React, {
+  type ComponentProps,
+  type FocusEventHandler,
+  type ForwardedRef,
+  useImperativeHandle,
+  useMemo,
+} from 'react';
 import { match } from 'ts-pattern';
 import CollectionSelect from '../CollectionSelect';
 import { Controller, useForm } from 'react-hook-form';
 import { number, object, type InferInput } from 'valibot';
 import { valibotResolver } from '@hookform/resolvers/valibot';
+import { cn } from '@portal/lib/utils';
+import { Badge } from '@portal/components/ui/badge';
+import { Plus, X } from 'lucide-react';
+import { Button } from '@portal/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@portal/components/ui/popover';
+import { Spinner } from '@portal/components/ui/spinner';
+import useDialog from '@collections/hooks/useDialog';
 
 const selectCollectionSchema = object({
   collectionId: number(),
@@ -36,14 +37,15 @@ const selectCollectionSchema = object({
 
 type SelectCollectionType = InferInput<typeof selectCollectionSchema>;
 
-export interface CollectionMultiSelectProps extends Omit<BoxProps, 'name' | 'onChange' | 'onBlur' | 'value'> {
+export interface CollectionMultiSelectProps
+  extends Omit<ComponentProps<'div'>, 'name' | 'onChange' | 'onBlur' | 'value'> {
   onChange: (newValue: number[] | null | undefined) => void;
   onBlur: FocusEventHandler<HTMLInputElement> | undefined;
   value: number[] | null | undefined;
   ref: ForwardedRef<HTMLDivElement | null>;
 }
 
-function CollectionMultiSelect({ onChange, value, sx, ref, ...props }: CollectionMultiSelectProps) {
+function CollectionMultiSelect({ onChange, value, className, ref, ...props }: CollectionMultiSelectProps) {
   const { value: allCollection, fetchData } = useAllCollection();
   const t = useI18n();
   const content = useMemo(
@@ -51,11 +53,11 @@ function CollectionMultiSelect({ onChange, value, sx, ref, ...props }: Collectio
       match(allCollection)
         .with({ tag: CollectionLoadingState.init }, () => null)
         .with({ tag: CollectionLoadingState.error }, ({ value }) => (
-          <Box>
+          <div>
             {value.toString()} <Button onClick={fetchData}>{t('refresh')}</Button>
-          </Box>
+          </div>
         ))
-        .with({ tag: CollectionLoadingState.loading }, () => <CircularProgress />)
+        .with({ tag: CollectionLoadingState.loading }, () => <Spinner />)
         .with({ tag: CollectionLoadingState.state }, ({ value: allCollections }) => (
           <InnerCollectionSelect onChange={onChange} value={value} allCollections={allCollections} />
         ))
@@ -65,10 +67,9 @@ function CollectionMultiSelect({ onChange, value, sx, ref, ...props }: Collectio
   const [sourceRef, setSourceRef] = React.useState<HTMLDivElement | null>(null);
   useImperativeHandle<HTMLDivElement | null, HTMLDivElement | null>(ref, () => sourceRef, [sourceRef]);
   return (
-    // oxlint-disable-next-line typescript/no-misused-spread
-    <Box {...props} ref={setSourceRef} sx={{ display: 'flex', alignItems: 'center', ...sx }}>
+    <div {...props} ref={setSourceRef} className={cn('flex items-center', className)}>
       {content}
-    </Box>
+    </div>
   );
 }
 
@@ -85,8 +86,6 @@ function InnerCollectionSelect({ allCollections, onChange, value }: InnerCollect
     () => value?.map((id) => allCollections.get(id)).filter((item) => item !== undefined) ?? [],
     [allCollections, value],
   );
-  // 控制 dialog
-  const [open, setOpen] = useState(false);
 
   const t = useI18n();
   const onDelete = (id: number) => {
@@ -100,43 +99,48 @@ function InnerCollectionSelect({ allCollections, onChange, value }: InnerCollect
     resolver: valibotResolver(selectCollectionSchema),
   });
 
-  const handleClose = () => {
+  const { open, handleOpenChange, handleClose } = useDialog();
+
+  const onClose = () => {
     reset();
-    setOpen(false);
+    handleClose();
   };
   const onSubmit = handleSubmit(({ collectionId }) => {
     if (!value) {
       onChange([collectionId]);
-      handleClose();
+      onClose();
       return;
     }
     if (!value.includes(collectionId)) {
       onChange([...value, collectionId]);
     }
-    handleClose();
+    onClose();
   });
 
   return (
-    <Box sx={{ display: 'flex', gap: 1 }}>
+    <div className="flex gap-1 items-center">
       {selectList.map(({ path, id }) => (
-        <Chip
-          label={path}
-          key={id}
-          onDelete={() => {
-            onDelete(id);
-          }}
-        />
+        <Badge key={id} variant="secondary">
+          {path}
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            className="data-[state=open]:bg-muted size-6 rounded-full"
+            onClick={() => {
+              onDelete(id);
+            }}
+          >
+            <X />
+          </Button>
+        </Badge>
       ))}
-      <IconButton
-        onClick={() => {
-          setOpen(true);
-        }}
-      >
-        <Add />
-      </IconButton>
-      <Dialog slotProps={{ paper: { sx: { maxWidth: 700 } } }} open={open} onClose={handleClose}>
-        <Box sx={{ width: 500 }} component="form" onSubmit={onSubmit}>
-          <DialogTitle>{t('select_collection')}</DialogTitle>
+      <Popover open={open} onOpenChange={handleOpenChange}>
+        <PopoverTrigger asChild>
+          <Button variant="ghost" size="icon-sm" className="rounded-full">
+            <Plus />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent>
           <Controller
             control={control}
             name="collectionId"
@@ -144,13 +148,11 @@ function InnerCollectionSelect({ allCollections, onChange, value }: InnerCollect
               <CollectionSelect {...field} allCollections={allCollections} errorMessage={fieldState.error?.message} />
             )}
           />
-
-          <DialogActions>
-            <Button onClick={handleClose}>{t('cancel')}</Button>
-            <Button type="submit">{t('submit')}</Button>
-          </DialogActions>
-        </Box>
-      </Dialog>
-    </Box>
+          <div className="flex flex-row-reverse w-full">
+            <Button onClick={onSubmit}>{t('submit')}</Button>
+          </div>
+        </PopoverContent>
+      </Popover>
+    </div>
   );
 }

@@ -1,24 +1,20 @@
-import { Dialog, Box, DialogTitle, DialogContent, TextField, DialogActions, Button } from '@mui/material';
 import { useI18n } from 'i18n';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import type { CreateCollectionMutationVariables } from '../../../gql/graphql';
 import { match } from 'ts-pattern';
+import { DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@portal/components/ui/dialog';
+import { Button } from '@portal/components/ui/button';
+import { FieldGroup, FieldLegend, FieldSet } from '@portal/components/ui/field';
+import { Input } from '@portal/components/ui/input';
 export type CollectionFormData = Omit<CreateCollectionMutationVariables, 'parentId'>;
 export interface CollectFormProps {
   afterSubmit?: (data: CollectionFormData) => Promise<void>;
   handleClose: () => void;
-  open: boolean;
   mode?: 'create' | 'edit';
   initialValues?: CollectionFormData;
 }
 
-export default function CollectionForm({
-  afterSubmit,
-  handleClose,
-  open,
-  mode = 'create',
-  initialValues,
-}: CollectFormProps) {
+export default function CollectionForm({ afterSubmit, handleClose, mode = 'create', initialValues }: CollectFormProps) {
   // 表单控制
   const { handleSubmit, register } = useForm<CollectionFormData>({ defaultValues: initialValues });
 
@@ -29,36 +25,40 @@ export default function CollectionForm({
   const t = useI18n();
 
   return (
-    <Dialog slotProps={{ paper: { sx: { maxWidth: 700 } } }} open={open} onClose={handleClose}>
-      <Box sx={{ width: 500 }} onSubmit={handleSubmit(onSubmit)} component="form">
+    <DialogContent>
+      <DialogHeader>
         <DialogTitle>
           {match(mode)
             .with('create', () => t('create_collection'))
             .with('edit', () => t('modify_collection'))
             .exhaustive()}
         </DialogTitle>
-        <DialogContent>
-          <TextField
-            variant="standard"
-            required
-            fullWidth
-            label={t('collection_name')}
-            {...register('name', { required: true })}
-          />
-          <TextField
-            sx={{ mt: 1 }}
-            variant="standard"
-            fullWidth
-            label={t('description')}
-            {...register('description', { setValueAs: (value) => value || null })}
-          />
-        </DialogContent>
+      </DialogHeader>
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <FieldGroup>
+          <FieldSet>
+            <FieldLegend>{t('collection_name')}</FieldLegend>
+            <Input required {...register('name', { required: true })} />
+          </FieldSet>
+          <FieldSet>
+            <FieldLegend>{t('description')}</FieldLegend>
+            <Input {...register('description', { setValueAs: (value) => value || null })} />
+          </FieldSet>
+        </FieldGroup>
+      </form>
 
-        <DialogActions>
-          <Button onClick={handleClose}>{t('cancel')}</Button>
-          <Button type="submit">{t('submit')}</Button>
-        </DialogActions>
-      </Box>
-    </Dialog>
+      <DialogFooter>
+        <DialogClose asChild>
+          <Button>{t('cancel')}</Button>
+        </DialogClose>
+        <Button
+          onClick={() => {
+            handleSubmit(onSubmit)();
+          }}
+        >
+          {t('submit')}
+        </Button>
+      </DialogFooter>
+    </DialogContent>
   );
 }

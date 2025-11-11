@@ -4,12 +4,22 @@ import { CollectionLoadingState, useAllCollection } from '@bookmarks/features/Co
 import { graphql } from '@bookmarks/gql';
 import useDialog from '@collections/hooks/useDialog';
 import { valibotResolver } from '@hookform/resolvers/valibot';
-import { Add } from '@mui/icons-material';
-import { Box, Button, CircularProgress, Dialog, DialogActions, DialogTitle, IconButton } from '@mui/material';
+import { Plus } from 'lucide-react';
 import { useI18n } from 'i18n';
 import { Controller, useForm } from 'react-hook-form';
 import { match } from 'ts-pattern';
 import { type InferInput, number, object } from 'valibot';
+import { Button } from '@portal/components/ui/button';
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@portal/components/ui/dialog';
+import { Spinner } from '@portal/components/ui/spinner';
 
 const AddCollectionForNovel = graphql(`
   mutation addCollectionForNovel($novelId: Int!, $collectionId: Int!) {
@@ -31,7 +41,7 @@ const selectCollectionSchema = object({
 type SelectCollectionType = InferInput<typeof selectCollectionSchema>;
 
 export default function AddCollection({ novelId, refetch }: AddCollectionProps) {
-  const { open, handleClose, handleOpen } = useDialog();
+  const { open, handleClose, handleOpenChange } = useDialog();
   const { value: allCollection, fetchData } = useAllCollection();
 
   const t = useI18n();
@@ -46,21 +56,25 @@ export default function AddCollection({ novelId, refetch }: AddCollectionProps) 
     refetch();
   });
   return (
-    <>
-      <IconButton onClick={handleOpen}>
-        <Add />
-      </IconButton>
-      <Dialog slotProps={{ paper: { sx: { maxWidth: 700 } } }} open={open} onClose={handleClose}>
-        <Box sx={{ width: 500 }} component="form" onSubmit={onSubmit}>
-          <DialogTitle>{t('select_collection')}</DialogTitle>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="icon">
+          <Plus />
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <form onSubmit={onSubmit}>
+          <DialogHeader>
+            <DialogTitle>{t('select_collection')}</DialogTitle>
+          </DialogHeader>
           {match(allCollection)
             .with({ tag: CollectionLoadingState.init }, () => null)
             .with({ tag: CollectionLoadingState.error }, ({ value }) => (
-              <Box>
+              <div>
                 {value.toString()} <Button onClick={fetchData}>{t('refresh')}</Button>
-              </Box>
+              </div>
             ))
-            .with({ tag: CollectionLoadingState.loading }, () => <CircularProgress />)
+            .with({ tag: CollectionLoadingState.loading }, () => <Spinner />)
             .with({ tag: CollectionLoadingState.state }, ({ value: allCollections }) => (
               <Controller
                 control={control}
@@ -76,12 +90,14 @@ export default function AddCollection({ novelId, refetch }: AddCollectionProps) 
             ))
             .otherwise(() => null)}
 
-          <DialogActions>
-            <Button onClick={handleClose}>{t('cancel')}</Button>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button>{t('cancel')}</Button>
+            </DialogClose>
             <Button type="submit">{t('submit')}</Button>
-          </DialogActions>
-        </Box>
-      </Dialog>
-    </>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

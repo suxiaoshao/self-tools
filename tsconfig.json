@@ -20,8 +20,7 @@
       "@portal/*": ["./web/packages/portal/src/*"],
       "@bookmarks/*": ["./web/packages/bookmarks/src/*"],
       "@collections/*": ["./web/packages/collections/src/*"]
-    },
-    "baseUrl": "."
+    }
   },
   "include": [
     "./web/packages/*/src",

@@ -6,42 +6,50 @@
  * @FilePath: /self-tools/web/packages/bookmarks/src/components/ChapterModal/index.tsx
  */
 import type { FetchAuthorQuery } from '@bookmarks/gql/graphql';
-import { Dialog, DialogTitle, IconButton, List, ListItem, ListItemText, Tooltip } from '@mui/material';
-import { useCallback, useState } from 'react';
 import { useI18n } from 'i18n';
-import { ViewList } from '@mui/icons-material';
+import { TableOfContents } from 'lucide-react';
 import { format } from 'time';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@portal/components/ui/dialog';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@portal/components/ui/tooltip';
+import { Button } from '@portal/components/ui/button';
+import { Item, ItemContent, ItemDescription, ItemTitle } from '@portal/components/ui/item';
 
 export interface ChapterModalProps {
   chapters: FetchAuthorQuery['fetchAuthor']['novels'][0]['chapters'];
 }
 
 export default function ChapterModal({ chapters }: ChapterModalProps) {
-  const [open, setOpen] = useState(false);
-  const handleClose = useCallback(() => {
-    setOpen(false);
-  }, []);
-  const handleOpen = useCallback(() => {
-    setOpen(true);
-  }, []);
   const t = useI18n();
   return (
-    <>
-      <Tooltip title={t('view_novel_chapters')}>
-        <IconButton onClick={handleOpen}>
-          <ViewList />
-        </IconButton>
+    <Dialog>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <DialogTrigger asChild>
+            <Button type="button" variant="ghost" size="icon">
+              <TableOfContents />
+            </Button>
+          </DialogTrigger>
+        </TooltipTrigger>
+        <TooltipContent>{t('view_novel_chapters')}</TooltipContent>
       </Tooltip>
-      <Dialog fullWidth maxWidth="xs" onClose={handleClose} open={open}>
-        <DialogTitle>{t('novel_chapters')}</DialogTitle>
-        <List sx={{ pt: 0 }}>
+      <DialogContent className="px-0 pb-0 sm:max-w-sm">
+        <DialogHeader className="px-6">
+          <DialogTitle>{t('novel_chapters')}</DialogTitle>
+        </DialogHeader>
+        <li className="max-h-[70vh] overflow-y-auto">
           {chapters.map((chapter) => (
-            <ListItem key={chapter.url}>
-              <ListItemText primary={chapter.title} secondary={`${format(chapter.time)} - ${chapter.wordCount}`} />
-            </ListItem>
+            <Item size="sm" key={chapter.url}>
+              <ItemContent>
+                <ItemTitle>{chapter.title}</ItemTitle>
+                <ItemDescription>{format(chapter.time)}</ItemDescription>
+              </ItemContent>
+              <ItemContent className="flex-none text-center">
+                <ItemDescription>{chapter.wordCount}</ItemDescription>
+              </ItemContent>
+            </Item>
           ))}
-        </List>
-      </Dialog>
-    </>
+        </li>
+      </DialogContent>
+    </Dialog>
   );
 }

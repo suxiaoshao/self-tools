@@ -1,7 +1,7 @@
 import { useOptimistic, useTransition } from 'react';
 import { graphql } from '@bookmarks/gql';
 import { useMutation } from '@apollo/client/react';
-import { Switch } from '@mui/material';
+import { Switch } from '@portal/components/ui/switch';
 
 export const AddReadRecord = graphql(`
   mutation addReadRecord($novelId: Int!, $chapterIds: [Int!]!) {
@@ -27,7 +27,7 @@ export default function ChapterTableAction({ isRead, novelId, chapterId, refetch
   const [deleteReadRecord] = useMutation(DeleteReadRecord);
   const [optimisticIsRead, setOptimisticIsRead] = useOptimistic(isRead);
   const [isPending, startTransition] = useTransition();
-  const handleToggle = (_event: React.ChangeEvent<HTMLInputElement>, checked: boolean) => {
+  const handleToggle = (checked: boolean) => {
     startTransition(async () => {
       setOptimisticIsRead(checked);
       try {
@@ -43,5 +43,5 @@ export default function ChapterTableAction({ isRead, novelId, chapterId, refetch
       }
     });
   };
-  return <Switch checked={optimisticIsRead} onChange={handleToggle} disabled={isPending} />;
+  return <Switch checked={optimisticIsRead} onCheckedChange={handleToggle} disabled={isPending} />;
 }

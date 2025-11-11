@@ -1,6 +1,4 @@
 import { create } from 'zustand';
-import { argbFromHex, themeFromSourceColor } from '@material/material-color-utilities';
-import { youThemeToMuiTheme } from './utils/youTheme';
 import { match } from 'ts-pattern';
 
 export enum ColorSetting {
@@ -61,14 +59,3 @@ export const useThemeStore = create<
 
 export const selectColorMode = (state: Pick<ThemeSliceType, 'colorSetting' | 'systemColorScheme'>) =>
   getColorScheme(state.colorSetting, state.systemColorScheme);
-
-export const selectActiveYouTheme = (state: ThemeSliceType) => {
-  const colorScheme = selectColorMode(state);
-  return themeFromSourceColor(argbFromHex(state.color)).schemes[colorScheme];
-};
-
-export const selectMuiTheme = (state: ThemeSliceType) => {
-  const colorScheme = selectColorMode(state);
-  const youTheme = selectActiveYouTheme(state);
-  return youThemeToMuiTheme(youTheme, colorScheme);
-};

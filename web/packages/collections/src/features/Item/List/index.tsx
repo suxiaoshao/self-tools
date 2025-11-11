@@ -14,15 +14,18 @@ import {
 } from 'custom-table';
 import { Controller, useForm } from 'react-hook-form';
 import { useMutation, useQuery } from '@apollo/client/react';
-import { Box, FormControl, FormLabel, IconButton, Link, Paper, Switch } from '@mui/material';
-import { Refresh } from '@mui/icons-material';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useMemo } from 'react';
 import { DeleteItem } from '@collections/features/Collection/components/Actions';
 import { convertFormToVariables } from './utils';
 import CollectionMultiSelect from '@collections/components/CollectionMultiSelect';
 import { format } from 'time';
 import CreateItemButton from '@collections/features/Collection/components/CreateItemButton';
+import { Button } from '@portal/components/ui/button';
+import { RefreshCcw } from 'lucide-react';
+import { Card, CardContent } from '@portal/components/ui/card';
+import { FieldLegend, FieldSet } from '@portal/components/ui/field';
+import { Switch } from '@portal/components/ui/switch';
 
 const GetItems = graphql(`
   query getItems($collectionMatch: TagMatch, $pagination: Pagination!) {
@@ -51,9 +54,9 @@ export default function ItemList() {
   // form & table
   type FormData = Omit<GetItemsQueryVariables, 'pagination'>;
   const pageState = usePage();
-  const { control, watch, register } = useForm<FormData>({
+  const { control, watch } = useForm<FormData>({
     defaultValues: {
-      collectionMatch: { matchSet: [] },
+      collectionMatch: { matchSet: [], fullMatch: false },
     },
   });
   const form = watch();
@@ -67,9 +70,9 @@ export default function ItemList() {
       [
         columnHelper.accessor(
           ({ id, name }) => (
-            <Link to={`/collections/item/${id}`} underline="hover" component={RouterLink}>
-              {name}
-            </Link>
+            <Button variant="link" className="text-foreground w-fit px-0 text-left">
+              <Link to={`/collections/item/${id}`}>{name}</Link>
+            </Button>
           ),
           {
             header: t('name'),
@@ -90,12 +93,11 @@ export default function ItemList() {
         columnHelper.accessor(
           ({ id }) => (
             <TableActions>
-              {(onClose) => [
+              {() => [
                 {
                   text: t('delete'),
                   onClick: async () => {
                     await deleteItem({ variables: { id } });
-                    onClose();
                     await refetch();
                   },
                 },
@@ -111,50 +113,43 @@ export default function ItemList() {
       ] as CustomColumnDefArray<Data>,
     [deleteItem, refetch, t],
   );
-  const tableInstance = useCustomTable({ columns, data: data ?? [], getCoreRowModel: getCoreRowModel() });
+  const tableInstance = useCustomTable(
+    useMemo(() => ({ columns, data: data ?? [], getCoreRowModel: getCoreRowModel() }), [columns, data]),
+  );
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
-      <Box
-        sx={{
-          flex: '0 0 auto',
-          display: 'flex',
-          p: 2,
-          pb: 0,
-        }}
-      >
-        <CreateItemButton refetch={refetch} collectionIds={[]} />
-        <IconButton sx={{ marginLeft: 'auto' }} onClick={() => refetch()}>
-          <Refresh />
-        </IconButton>
-      </Box>
-      <Box sx={{ flex: '1 1 0', overflowY: 'auto', p: 2, pr: 1 }}>
-        <Paper
-          sx={{ display: 'grid', gridTemplateColumns: 'auto 1fr', p: 1, marginBottom: 2, rowGap: 1, columnGap: 2 }}
-        >
-          <FormControl>
-            <FormLabel id="collection-full-match">{t('collection_whether_full_match')}</FormLabel>
-            <Switch aria-labelledby="collection-full-match" {...register('collectionMatch.fullMatch')} />
-          </FormControl>
+    <div className="flex flex-col size-full">
+      <div className="flex-[0_0_auto] flex p-4 pb-0">
+        <CreateItemButton variant="default" refetch={refetch} collectionIds={[]} />
+        <Button variant="ghost" size="icon-lg" className="rounded-full ml-auto" onClick={() => refetch()}>
+          <RefreshCcw />
+        </Button>
+      </div>
+      <div className="flex-[1_1_0] overflow-auto p-4 pr-2">
+        <Card className="mb-4 gap-0">
+          <CardContent className="grid grid-cols-[auto_1fr] gap-y-2 gap-x-4">
+            <FieldSet>
+              <FieldLegend id="collection-full-match">{t('collection_whether_full_match')}</FieldLegend>
+              <Controller
+                control={control}
+                name="collectionMatch.fullMatch"
+                render={({ field: { onChange, value, ...field } }) => (
+                  <Switch {...field} checked={value} onCheckedChange={onChange} />
+                )}
+              />
+            </FieldSet>
 
-          <FormControl component="fieldset" variant="standard">
-            <FormLabel component="legend">{t('match_collections')} </FormLabel>
-            <Controller
-              control={control}
-              name="collectionMatch.matchSet"
-              render={({ field }) => <CollectionMultiSelect {...field} />}
-            />
-          </FormControl>
-        </Paper>
-        <CustomTable
-          sx={{
-            overflowY: 'hidden',
-            flex: undefined,
-            maxHeight: undefined,
-          }}
-          tableInstance={tableInstance}
-          page={page}
-        />
-      </Box>
-    </Box>
+            <FieldSet>
+              <FieldLegend>{t('match_collections')}</FieldLegend>
+              <Controller
+                control={control}
+                name="collectionMatch.matchSet"
+                render={({ field }) => <CollectionMultiSelect {...field} />}
+              />
+            </FieldSet>
+          </CardContent>
+        </Card>
+        <CustomTable className="overflow-hidden flex-none max-h-none" tableInstance={tableInstance} page={page} />
+      </div>
+    </div>
   );
 }

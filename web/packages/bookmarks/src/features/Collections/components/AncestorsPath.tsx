@@ -1,8 +1,18 @@
-import { Breadcrumbs, LinearProgress, Link } from '@mui/material';
-import { createSearchParams, Link as RouterLink } from 'react-router-dom';
+import { createSearchParams, Link } from 'react-router-dom';
 import useParentId from './useParentId';
 import { graphql } from '@bookmarks/gql';
 import { useQuery } from '@apollo/client/react';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@portal/components/ui/breadcrumb';
+import { useI18n } from 'i18n';
+import { Fragment } from 'react/jsx-runtime';
+import { Spinner } from '@portal/components/ui/spinner';
 
 const GetCollectionAncestors = graphql(`
   query getCollectionAncestors($id: Int!) {
@@ -23,35 +33,41 @@ export default function AncestorsPath() {
     variables: { id: parentId ?? 0 },
     skip: parentId === null,
   });
+  const t = useI18n();
   return (
     <>
       {getCollection && (
-        <Breadcrumbs sx={{ marginBottom: 2 }}>
-          <Link
-            component={RouterLink}
-            to={{
-              search: createSearchParams({}).toString(),
-            }}
-            underline="hover"
-          >
-            根目录
-          </Link>
-          {getCollection.ancestors.map(({ name, id }) => (
-            <Link
-              component={RouterLink}
-              underline="hover"
-              to={{ search: createSearchParams({ parentId: id.toString() }).toString() }}
-              key={id}
-            >
-              {name}
-            </Link>
-          ))}
-          <Link underline="hover" color="text.primary">
-            {getCollection.name}
-          </Link>
-        </Breadcrumbs>
+        <Breadcrumb className="mb-2">
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Link
+                  to={{
+                    search: createSearchParams({}).toString(),
+                  }}
+                >
+                  {t('root')}
+                </Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            {getCollection.ancestors.map(({ name, id }) => (
+              <Fragment key={id}>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbLink asChild>
+                    <Link to={{ search: createSearchParams({ parentId: id.toString() }).toString() }}>{name}</Link>
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+              </Fragment>
+            ))}
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>{getCollection.name}</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
       )}
-      {loading && <LinearProgress sx={{ marginBottom: 2 }} />}
+      {loading && <Spinner className="mb-2" />}
     </>
   );
 }

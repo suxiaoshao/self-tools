@@ -1,5 +1,4 @@
-import { Box, IconButton, Link } from '@mui/material';
-import { Search } from '@mui/icons-material';
+import { Search } from 'lucide-react';
 import { useCallback, useEffect, useMemo } from 'react';
 import {
   createCustomColumnHelper,
@@ -20,6 +19,7 @@ import useTitle from '@bookmarks/hooks/useTitle';
 import { graphql } from '@bookmarks/gql';
 import { useLazyQuery, useMutation } from '@apollo/client/react';
 import type { GetTagsQuery } from '@bookmarks/gql/graphql';
+import { Button } from '@portal/components/ui/button';
 
 const GetTags = graphql(`
   query getTags($pagination: Pagination!) {
@@ -76,15 +76,15 @@ export default function Tags() {
       [
         columnHelper.accessor(
           ({ url, name }) => (
-            <Link
-              underline="hover"
+            <Button
+              variant="link"
+              className="text-foreground w-fit px-0 text-left cursor-pointer"
               onClick={() => {
                 window.open(url, '_blank');
               }}
-              sx={{ cursor: 'pointer' }}
             >
               {name}
-            </Link>
+            </Button>
           ),
           {
             header: t('name'),
@@ -110,12 +110,11 @@ export default function Tags() {
         columnHelper.accessor(
           ({ id }) => (
             <TableActions>
-              {(onClose) => [
+              {() => [
                 {
                   text: t('delete'),
                   onClick: async () => {
                     await deleteTag({ variables: { id } });
-                    onClose();
                     await refetch();
                   },
                 },
@@ -139,25 +138,19 @@ export default function Tags() {
 
   const input = useMemo(() => {
     return (
-      <Box
-        sx={{
-          flex: '0 0 auto',
-          marginBottom: 2,
-          display: 'flex',
-        }}
-      >
+      <div className="flex-0 mt-4 flex">
         <CreateTagButton refetch={refetch} />
-        <IconButton sx={{ marginLeft: 'auto' }} onClick={onSearch}>
+        <Button variant="ghost" size="icon" className="ml-auto" onClick={onSearch}>
           <Search />
-        </IconButton>
-      </Box>
+        </Button>
+      </div>
     );
   }, [onSearch, refetch]);
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', p: 2 }}>
+    <div className="flex flex-col size-full p-4">
       {input}
       <CustomTable tableInstance={tableInstance} page={page} />
-    </Box>
+    </div>
   );
 }

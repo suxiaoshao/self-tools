@@ -1,33 +1,45 @@
 import type React from 'react';
-import { ListItemButton, type ListItemButtonProps, ListItemIcon, ListItemText } from '@mui/material';
-import { type To, useLocation, useNavigate } from 'react-router-dom';
+import { type To, useLocation, Link } from 'react-router-dom';
+import { SidebarMenuButton, SidebarMenuItem, SidebarMenuSubButton, SidebarMenuSubItem } from '../ui/sidebar';
 
-export interface RouterItem extends ListItemButtonProps {
+export interface RouterItem extends React.ComponentProps<'li'> {
   matchPaths: (string | RegExp)[];
   toPath: To;
   text: React.ReactNode;
   icon: React.ReactNode;
   children?: React.ReactNode;
+  subItem: boolean;
 }
-export default function RouterItem({ matchPaths, toPath, text, icon, children, ...props }: RouterItem) {
+export default function RouterItem({ matchPaths, toPath, text, icon, children, subItem, ...props }: RouterItem) {
   const { pathname } = useLocation();
-  const navigate = useNavigate();
+  const selected = matchPaths.some((value) => {
+    if (typeof value === 'string') {
+      return value === pathname;
+    }
+    return value.test(pathname);
+  });
+  if (subItem) {
+    return (
+      <SidebarMenuSubItem {...props}>
+        <SidebarMenuSubButton asChild isActive={selected}>
+          <Link to={toPath}>
+            {icon}
+            <span>{text}</span>
+            {children}
+          </Link>
+        </SidebarMenuSubButton>
+      </SidebarMenuSubItem>
+    );
+  }
   return (
-    <ListItemButton
-      {...props}
-      selected={matchPaths.some((value) => {
-        if (typeof value === 'string') {
-          return value === pathname;
-        }
-        return value.test(pathname);
-      })}
-      onClick={() => {
-        navigate(toPath);
-      }}
-    >
-      <ListItemIcon>{icon}</ListItemIcon>
-      <ListItemText primary={text} />
-      {children}
-    </ListItemButton>
+    <SidebarMenuItem {...props}>
+      <SidebarMenuButton isActive={selected} asChild>
+        <Link to={toPath}>
+          {icon}
+          <span>{text}</span>
+          {children}
+        </Link>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
   );
 }

@@ -1,7 +1,6 @@
 import { useMutation, useQuery } from '@apollo/client/react';
 import { graphql } from '@collections/gql';
-import { Delete, Edit, KeyboardArrowLeft, Refresh } from '@mui/icons-material';
-import { Box, Card, CardContent, CardHeader, IconButton, Skeleton } from '@mui/material';
+import { Delete, Edit, RefreshCcw, ChevronLeft } from 'lucide-react';
 import { useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Details } from 'details';
@@ -11,6 +10,10 @@ import useTitle from '@bookmarks/hooks/useTitle';
 import useDialog from '@collections/hooks/useDialog';
 import ItemForm, { type ItemFormData } from '../Components/ItemForm';
 import { DeleteItem, UpdateItem } from '@collections/features/Collection/components/Actions';
+import { Dialog } from '@portal/components/ui/dialog';
+import { Card, CardAction, CardContent, CardHeader, CardTitle } from '@portal/components/ui/card';
+import { Skeleton } from '@portal/components/ui/skeleton';
+import { Button } from '@portal/components/ui/button';
 
 const GetItem = graphql(`
   query getItem($id: Int!) {
@@ -43,7 +46,7 @@ export default function ItemDetails() {
     refetch();
   }, [refetch]);
   const items = useItemDetailItems(data, handleRefresh);
-  const { open, handleClose, handleOpen } = useDialog();
+  const { open, handleClose, handleOpen, handleOpenChange } = useDialog();
   const [updateItem] = useMutation(UpdateItem);
   const itemAfterSubmit = async ({ name, content }: ItemFormData) => {
     await updateItem({ variables: { id: Number(itemId), name, content } });
@@ -55,27 +58,27 @@ export default function ItemDetails() {
     navigate(-1);
   };
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
-      <Box sx={{ display: 'flex', width: '100%', pl: 2, pr: 2 }}>
-        <IconButton onClick={() => navigate(-1)}>
-          <KeyboardArrowLeft />
-        </IconButton>
-        <Box sx={{ flexGrow: 1 }} />
-        <IconButton onClick={handleRefresh}>
-          <Refresh />
-        </IconButton>
-      </Box>
-      <Box sx={{ flex: '1 1 0', overflow: 'auto', p: 2 }}>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+    <div className="flex flex-col size-full overflow-hidden pb-2">
+      <div className="flex w-full pl-2 pr-2">
+        <Button variant="ghost" size="icon-lg" className="rounded-full" onClick={() => navigate(-1)}>
+          <ChevronLeft />
+        </Button>
+        <div className="grow" />
+        <Button variant="ghost" size="icon-lg" className="rounded-full" onClick={handleRefresh}>
+          <RefreshCcw />
+        </Button>
+      </div>
+      <div className="flex-[1_1_0] overflow-y-auto pl-2 pr-2">
+        <div className="flex flex-col gap-2">
           {data?.getItem && (
             <Card>
-              <CardHeader
-                title={data.getItem.name}
-                action={
-                  <>
-                    <IconButton onClick={handleOpen}>
+              <CardHeader>
+                <CardTitle>{data.getItem.name}</CardTitle>
+                <CardAction>
+                  <Dialog open={open} onOpenChange={handleOpenChange}>
+                    <Button variant="ghost" size="icon-lg" className="rounded-full" onClick={handleOpen}>
                       <Edit />
-                    </IconButton>
+                    </Button>
                     <ItemForm
                       loading={loading}
                       initialValues={{
@@ -84,31 +87,33 @@ export default function ItemDetails() {
                         name: data.getItem.name,
                       }}
                       mode="edit"
-                      open={open}
                       handleClose={handleClose}
                       afterSubmit={itemAfterSubmit}
                     />
-                    <IconButton onClick={handleDelete}>
+                    <Button variant="ghost" size="icon-lg" className="rounded-full" onClick={handleDelete}>
                       <Delete />
-                    </IconButton>
-                  </>
-                }
-              />
+                    </Button>
+                  </Dialog>
+                </CardAction>
+              </CardHeader>
               <CardContent>
-                <Details items={items} sx={{ gap: 1 }} fullSpan={4} />
+                <Details items={items} className="gap-2" fullSpan={4} />
               </CardContent>
             </Card>
           )}
           {loading && (
             <Card>
-              <Skeleton variant="text" sx={{ fontSize: '1rem' }} />
-              <Skeleton variant="circular" width={40} height={40} />
-              <Skeleton variant="rectangular" width={210} height={60} />
-              <Skeleton variant="rounded" width={210} height={60} />
+              <CardContent className="flex items-center space-x-4">
+                <Skeleton className="h-12 w-12 rounded-full" />
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-[250px]" />
+                  <Skeleton className="h-4 w-[200px]" />
+                </div>
+              </CardContent>
             </Card>
           )}
-        </Box>
-      </Box>
-    </Box>
+        </div>
+      </div>
+    </div>
   );
 }

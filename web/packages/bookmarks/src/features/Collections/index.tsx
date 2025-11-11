@@ -1,5 +1,4 @@
-import { Refresh } from '@mui/icons-material';
-import { Box, IconButton, Link } from '@mui/material';
+import { RefreshCcw } from 'lucide-react';
 import {
   createCustomColumnHelper,
   type CustomColumnDefArray,
@@ -10,19 +9,20 @@ import {
   usePage,
   usePageWithTotal,
 } from 'custom-table';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useEffectEvent, useMemo } from 'react';
 import { useAllCollection } from './collectionSlice';
 import AncestorsPath from './components/AncestorsPath';
 import CreateCollectionButton from './components/CreateCollectionButton';
 import useParentId from './components/useParentId';
 import type { CollectionTableData } from './types';
 import { useI18n } from 'i18n';
-import { Link as RouterLink, createSearchParams } from 'react-router-dom';
+import { Link, createSearchParams } from 'react-router-dom';
 import { format } from 'time';
 import CollectionActions from './components/CollectionActions';
 import useTitle from '@bookmarks/hooks/useTitle';
 import { graphql } from '@bookmarks/gql';
 import { useQuery } from '@apollo/client/react';
+import { Button } from '@portal/components/ui/button';
 
 const GetCollections = graphql(`
   query getCollections($parentId: Int, $pagination: Pagination!) {
@@ -45,9 +45,11 @@ const columnHelper = createCustomColumnHelper<CollectionTableData>();
 export default function Collections() {
   const parentId = useParentId();
   const pageState = usePage();
-  useEffect(() => {
-    // oxlint-disable-next-line react/exhaustive-deps
+  const resetPage = useEffectEvent(() => {
     pageState.setPage(1);
+  });
+  useEffect(() => {
+    resetPage();
   }, [parentId]);
   const { data: { getCollections: { data, total } = {} } = {}, refetch } = useQuery(GetCollections, {
     variables: { parentId, pagination: { page: pageState.pageIndex, pageSize: pageState.pageSize } },
@@ -66,9 +68,9 @@ export default function Collections() {
       [
         columnHelper.accessor(
           ({ name, id }) => (
-            <Link component={RouterLink} to={{ search: createSearchParams({ parentId: id.toString() }).toString() }}>
-              {name}
-            </Link>
+            <Button variant="link" className="text-foreground w-fit px-0 text-left" asChild>
+              <Link to={{ search: createSearchParams({ parentId: id.toString() }).toString() }}>{name}</Link>
+            </Button>
           ),
           {
             header: t('name'),
@@ -98,7 +100,6 @@ export default function Collections() {
         columnHelper.accessor((data) => <CollectionActions {...data} refetch={allRefetch} />, {
           header: t('actions'),
           id: 'action',
-          cellProps: { padding: 'none' },
           cell: (context) => context.getValue(),
         }),
       ] as CustomColumnDefArray<CollectionTableData>,
@@ -111,21 +112,15 @@ export default function Collections() {
   const tableInstance = useCustomTable(tableOptions);
 
   return (
-    <Box sx={{ width: '100%', height: '100%', p: 2, display: 'flex', flexDirection: 'column' }}>
+    <div className="size-full p-4 flex flex-col">
       <AncestorsPath />
-      <Box
-        sx={{
-          flex: '0 0 auto',
-          marginBottom: 2,
-          display: 'flex',
-        }}
-      >
+      <div className="flex flex-[0_0_auto] mb-4">
         <CreateCollectionButton refetch={refetch} />
-        <IconButton sx={{ marginLeft: 'auto' }} onClick={() => refetch()}>
-          <Refresh />
-        </IconButton>
-      </Box>
+        <Button variant="ghost" size="icon" className="ml-auto" onClick={() => refetch()}>
+          <RefreshCcw />
+        </Button>
+      </div>
       <CustomTable tableInstance={tableInstance} page={page} />
-    </Box>
+    </div>
   );
 }

@@ -5,12 +5,19 @@
  * @LastEditTime: 2024-01-23 00:25:08
  * @FilePath: /self-tools/web/packages/bookmarks/src/components/CollectionSelect/index.tsx
  */
-import { Collapse, FormHelperText, IconButton, List, ListItem, ListItemButton, ListItemText } from '@mui/material';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import type { AllCollectionItem, CollectionTreeItem } from '@bookmarks/features/Collections/collectionSlice';
 import { getCollectionTreeFromCollectionList } from '@bookmarks/features/Collections/utils';
-import { ExpandLess, ExpandMore } from '@mui/icons-material';
-import { match } from 'ts-pattern';
+import { ChevronRight } from 'lucide-react';
+import {
+  SidebarContent,
+  SidebarGroup,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarMenuSub,
+} from '@portal/components/ui/sidebar';
+import { FieldError } from '@portal/components/ui/field';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@portal/components/ui/collapsible';
 
 export interface CollectionSelectProps {
   allCollections: Map<number, AllCollectionItem>;
@@ -23,14 +30,14 @@ export default function CollectionSelect({ allCollections, value, onChange, erro
   const treeData = useMemo(() => getCollectionTreeFromCollectionList(allCollections.values()), [allCollections]);
 
   return (
-    <List>
-      {treeData.map((item) => (
-        <CollectionItem value={item} key={item.id} selected={value} setSelected={onChange} />
-      ))}
-      <FormHelperText sx={{ ml: 2, mr: 2 }} error>
-        {errorMessage}
-      </FormHelperText>
-    </List>
+    <SidebarContent>
+      <SidebarGroup>
+        {treeData.map((item) => (
+          <CollectionItem value={item} key={item.id} selected={value} setSelected={onChange} />
+        ))}
+        <FieldError errors={[{ message: errorMessage }]} />
+      </SidebarGroup>
+    </SidebarContent>
   );
 }
 
@@ -40,12 +47,7 @@ interface CollectionItemProps {
   setSelected: (value: number | null) => void;
 }
 
-function CollectionItem({ value: { path, description, id, children }, selected, setSelected }: CollectionItemProps) {
-  const [open, setOpen] = useState(true);
-
-  const handleClick = () => {
-    setOpen(!open);
-  };
+function CollectionItem({ value: { path, id, children }, selected, setSelected }: CollectionItemProps) {
   const handleSelect = () => {
     if (selected === id) {
       setSelected(null);
@@ -56,35 +58,27 @@ function CollectionItem({ value: { path, description, id, children }, selected, 
   const hasChildren = children.length > 0;
   if (!hasChildren) {
     return (
-      <ListItem disablePadding>
-        <ListItemButton onClick={handleSelect} selected={id === selected}>
-          <ListItemText primary={path} secondary={description} />
-        </ListItemButton>
-      </ListItem>
+      <SidebarMenuItem>
+        <SidebarMenuButton onClick={handleSelect} isActive={id === selected}>
+          {path}
+        </SidebarMenuButton>
+      </SidebarMenuItem>
     );
   }
   return (
-    <>
-      <ListItem
-        disablePadding
-        secondaryAction={
-          <IconButton onClick={handleClick} edge="start">
-            {match(open)
-              .with(true, () => <ExpandLess />)
-              .with(false, () => <ExpandMore />)
-              .exhaustive()}
-          </IconButton>
-        }
-        dense
-      >
-        <ListItemButton dense onClick={handleSelect} selected={id === selected}>
-          <ListItemText primary={path} secondary={description} />
-        </ListItemButton>
-      </ListItem>
-      <CollectionList open={open} selected={selected} setSelected={setSelected}>
+    <Collapsible defaultOpen className="group/collapsible">
+      <SidebarMenuItem>
+        <CollapsibleTrigger asChild>
+          <SidebarMenuButton onClick={handleSelect} isActive={id === selected}>
+            {path}
+            <ChevronRight className="transition-transform ml-auto group-data-[state=open]/collapsible:rotate-90" />
+          </SidebarMenuButton>
+        </CollapsibleTrigger>
+      </SidebarMenuItem>
+      <CollectionList selected={selected} setSelected={setSelected}>
         {children}
       </CollectionList>
-    </>
+    </Collapsible>
   );
 }
 
@@ -92,17 +86,16 @@ interface CollectionListProps {
   children: CollectionTreeItem[];
   selected: number | null;
   setSelected: (value: number | null) => void;
-  open: boolean;
 }
 
-function CollectionList({ open, children, selected, setSelected }: CollectionListProps) {
+function CollectionList({ children, selected, setSelected }: CollectionListProps) {
   return (
-    <Collapse in={open} timeout="auto" unmountOnExit>
-      <List disablePadding dense sx={{ pl: 2 }}>
+    <CollapsibleContent>
+      <SidebarMenuSub>
         {children.map((item) => (
           <CollectionItem selected={selected} setSelected={setSelected} value={item} key={item.id} />
         ))}
-      </List>
-    </Collapse>
+      </SidebarMenuSub>
+    </CollapsibleContent>
   );
 }

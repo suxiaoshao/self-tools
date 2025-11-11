@@ -110,5 +110,20 @@
   "select_all": "Select All",
   "select_none": "Select None",
   "item_manage": "Item Manage",
-  "item_detail_title": "Detail of item {{itemName}}"
+  "item_detail_title": "Detail of item {{itemName}}",
+  "pages": "Pages",
+  "table_pagination_total": "A total of {{pageCount}} pages / {{total}} items",
+  "table_pagination_row_per_page": "Rows per page",
+  "table_pagination_page": "page of {{pageCount}}",
+  "go_to_first_page": "Go to First Page",
+  "go_to_previous_page": "Go to Previous Page",
+  "go_to_next_page": "Go to Next Page",
+  "go_to_last_page": "Go to Last Page",
+  "search_page": "Search Page",
+  "no_page_found": "No Page Found",
+  "no_tags_found": "No Tags Found",
+  "loading": "Loading...",
+  "select_author": "Select Author",
+  "search": "Search",
+  "no_author_found": "No Author Found"
 }

@@ -1,8 +1,20 @@
 import type { CreateCollectionMutationVariables } from '@bookmarks/gql/graphql';
-import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField } from '@mui/material';
 import { type SubmitHandler, useForm } from 'react-hook-form';
 import { useI18n } from 'i18n';
 import { match } from 'ts-pattern';
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@portal/components/ui/dialog';
+import { Button } from '@portal/components/ui/button';
+import { FieldError, FieldGroup, FieldLegend, FieldSet } from '@portal/components/ui/field';
+import { Input } from '@portal/components/ui/input';
+import { valibotResolver } from '@hookform/resolvers/valibot';
+import { nullish, object, string } from 'valibot';
 
 export enum CollectionFormType {
   create = 'create',
@@ -14,55 +26,69 @@ export type CollectionFormData = Omit<CreateCollectionMutationVariables, 'parent
 export interface CollectionFormProps {
   afterSubmit?: (data: CollectionFormData) => Promise<void>;
   open: boolean;
-  handleClose: () => void;
+  onOpenChange: (open: boolean) => void;
   mode?: CollectionFormType;
   initialValues?: CollectionFormData;
 }
 
 export default function CollectionForm({
   open,
-  handleClose,
+  onOpenChange,
   afterSubmit,
   initialValues,
   mode = CollectionFormType.create,
 }: CollectionFormProps) {
   // 表单控制
-  const { handleSubmit, register } = useForm<CollectionFormData>({ defaultValues: initialValues });
+  const {
+    handleSubmit,
+    register,
+    formState: { errors },
+  } = useForm<CollectionFormData>({
+    defaultValues: initialValues,
+    resolver: valibotResolver(object({ name: string(), description: nullish(string()) })),
+  });
   const onSubmit: SubmitHandler<CollectionFormData> = async (data) => {
     await afterSubmit?.(data);
   };
   const t = useI18n();
   return (
-    <Dialog slotProps={{ paper: { sx: { maxWidth: 700 } } }} open={open} onClose={handleClose}>
-      <Box sx={{ width: 500 }} onSubmit={handleSubmit(onSubmit)} component="form">
-        <DialogTitle>
-          {match(mode)
-            .with(CollectionFormType.create, () => t('create_collection'))
-            .with(CollectionFormType.edit, () => t('modify_collection'))
-            .exhaustive()}
-        </DialogTitle>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <form onSubmit={handleSubmit(onSubmit)}>
         <DialogContent>
-          <TextField
-            variant="standard"
-            required
-            fullWidth
-            label={t('collection_name')}
-            {...register('name', { required: true })}
-          />
-          <TextField
-            sx={{ mt: 1 }}
-            variant="standard"
-            fullWidth
-            label={t('description')}
-            {...register('description', { setValueAs: (value) => value || null })}
-          />
-        </DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {match(mode)
+                .with(CollectionFormType.create, () => t('create_collection'))
+                .with(CollectionFormType.edit, () => t('modify_collection'))
+                .exhaustive()}
+            </DialogTitle>
+          </DialogHeader>
+          <FieldGroup>
+            <FieldSet>
+              <FieldLegend>{t('collection_name')}</FieldLegend>
+              <Input required {...register('name', { required: true })} />
+              {errors.name?.message && <FieldError errors={[errors.name]} />}
+            </FieldSet>
+            <FieldSet>
+              <FieldLegend>{t('description')}</FieldLegend>
+              <Input {...register('description')} />
+            </FieldSet>
+          </FieldGroup>
 
-        <DialogActions>
-          <Button onClick={handleClose}>{t('cancel')}</Button>
-          <Button type="submit">{t('submit')}</Button>
-        </DialogActions>
-      </Box>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="secondary">{t('cancel')}</Button>
+            </DialogClose>
+            <Button
+              onClick={() => {
+                handleSubmit(onSubmit)();
+              }}
+            >
+              {t('submit')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </form>
     </Dialog>
   );
 }

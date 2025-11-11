@@ -1,4 +1,3 @@
-import type { TableCellProps } from '@mui/material';
 import {
   type AccessorFn,
   type ColumnDef,
@@ -13,10 +12,11 @@ import {
   type TableOptions,
   useReactTable,
 } from '@tanstack/react-table';
+import type { ComponentProps } from 'react';
 
 export interface CustomExtendsType {
-  cellProps?: TableCellProps;
-  headerCellProps?: TableCellProps;
+  cellProps?: ComponentProps<'td'>;
+  headerCellProps?: ComponentProps<'th'>;
 }
 export type CustomColumnDef<T extends RowData, TValue = unknown> = ColumnDef<T, TValue> & CustomExtendsType;
 

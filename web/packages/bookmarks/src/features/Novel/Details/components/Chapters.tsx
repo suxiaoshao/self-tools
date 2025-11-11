@@ -61,6 +61,8 @@ export default function Chapters({ chapters, refetch, novelId, ...props }: Chapt
       ] as CustomColumnDefArray<Data>,
     [t, refetch, chapters, novelId],
   );
-  const tableInstance = useCustomTable({ columns, data: chapters, getCoreRowModel: getCoreRowModel() });
-  return <CustomTable sx={{ height: '600px', flex: null, overflow: null }} tableInstance={tableInstance} {...props} />;
+  const tableInstance = useCustomTable(
+    useMemo(() => ({ columns, data: chapters, getCoreRowModel: getCoreRowModel() }), [columns, chapters]),
+  );
+  return <CustomTable className="h-[600px] flex-none overscroll-none" tableInstance={tableInstance} {...props} />;
 }

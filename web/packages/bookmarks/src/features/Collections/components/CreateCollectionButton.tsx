@@ -1,11 +1,11 @@
-import { Button } from '@mui/material';
 import { useI18n } from 'i18n';
-import { useState } from 'react';
 import { useAllCollection } from '../collectionSlice';
 import useParentId from './useParentId';
 import CollectionForm, { type CollectionFormData } from './CollectionForm';
 import { graphql } from '@bookmarks/gql';
 import { useMutation } from '@apollo/client/react';
+import useDialog from '@collections/hooks/useDialog';
+import { Button } from '@portal/components/ui/button';
 
 const CreateCollection = graphql(`
   mutation createCollection($parentId: Int, $name: String!, $description: String) {
@@ -33,24 +33,13 @@ export default function CreateCollectionButton({ refetch }: CreateCollectButtonP
     await fetchData();
   };
   // 控制 dialog
-  const [open, setOpen] = useState(false);
-  const handleClose = () => {
-    setOpen(false);
-  };
+  const { open, handleClose, handleOpen, handleOpenChange } = useDialog();
+
   const t = useI18n();
   return (
     <>
-      <Button
-        color="primary"
-        size="large"
-        variant="contained"
-        onClick={() => {
-          setOpen(true);
-        }}
-      >
-        {t('add_collection')}
-      </Button>
-      <CollectionForm afterSubmit={onSubmit} handleClose={handleClose} open={open} />
+      <Button onClick={handleOpen}>{t('add_collection')}</Button>
+      <CollectionForm afterSubmit={onSubmit} onOpenChange={handleOpenChange} open={open} />
     </>
   );
 }

@@ -1,3 +1,5 @@
 web/packages/*/apollo.config.js
 web/packages/*/src/gql/
 .prettierrc.js
+web/packages/portal/src/components/ui
+web/packages/portal/src/hooks/use-mobile.ts

@@ -1,7 +1,7 @@
 import type { Enum } from 'types';
 import type { LoginForm } from './authSlice';
 import { match } from 'ts-pattern';
-import { enqueueSnackbar } from 'notify';
+import { toast } from 'sonner';
 
 export type HttpResponse<T> =
   | Enum<'network'>
@@ -16,16 +16,16 @@ export function responseThen<T>(response: HttpResponse<T>, doThen: (data: T) => 
       doThen(value as T);
     })
     .with({ tag: 'json' }, () => {
-      enqueueSnackbar('json error', { variant: 'error' });
+      toast.error('json error');
     })
     .with({ tag: 'error' }, ({ value }) => {
-      enqueueSnackbar(value, { variant: 'error' });
+      toast.error(value);
     })
     .with({ tag: 'network' }, () => {
-      enqueueSnackbar('network error', { variant: 'error' });
+      toast.error('network error');
     })
     .with({ tag: 'unknown' }, () => {
-      enqueueSnackbar('unknown error', { variant: 'error' });
+      toast.error('unknown error');
     });
 }
 

@@ -1,26 +1,25 @@
 import { useMutation } from '@apollo/client/react';
 import type { GetNovelQuery } from '@bookmarks/gql/graphql';
 import useDialog from '@collections/hooks/useDialog';
-import { Edit } from '@mui/icons-material';
-import {
-  Box,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogTitle,
-  IconButton,
-  Tooltip,
-  Checkbox,
-  List,
-  ListItemText,
-  ListItemButton,
-  DialogContent,
-} from '@mui/material';
+import { Edit } from 'lucide-react';
 import { useI18n } from 'i18n';
 import { useCallback, useState } from 'react';
 import { format } from 'time';
 import { match } from 'ts-pattern';
 import { AddReadRecord, DeleteReadRecord } from './ChapterTableAction';
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@portal/components/ui/dialog';
+import { Button } from '@portal/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@portal/components/ui/tooltip';
+import { Label } from '@portal/components/ui/label';
+import { Checkbox } from '@portal/components/ui/checkbox';
 
 type Data = GetNovelQuery['getNovel']['chapters'][0];
 
@@ -32,7 +31,7 @@ export interface ChapterBatchUpdateProps {
 
 export default function ChapterBatchUpdate({ chapters, novelId, refetch }: ChapterBatchUpdateProps) {
   const t = useI18n();
-  const { open, handleClose, handleOpen } = useDialog();
+  const { open, handleClose, handleOpenChange } = useDialog();
   const [checked, setChecked] = useState<number[]>(chapters.filter(({ isRead }) => isRead).map(({ id }) => id));
   const handleToggle = (id: number) => {
     setChecked((prev) =>
@@ -62,59 +61,66 @@ export default function ChapterBatchUpdate({ chapters, novelId, refetch }: Chapt
         .exhaustive(),
     );
   }, [chapters]);
-  const indeterminate = checked.length > 0 && checked.length < chapters.length;
   return (
-    <Box>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       {t('is_read')}
-      <Tooltip title={t('batch_update')}>
-        <IconButton size="small" onClick={handleOpen}>
-          <Edit fontSize="small" />
-        </IconButton>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <DialogTrigger asChild>
+            <Button size="icon" variant="ghost">
+              <Edit fontSize="small" />
+            </Button>
+          </DialogTrigger>
+        </TooltipTrigger>
+        <TooltipContent>{t('batch_update')}</TooltipContent>
       </Tooltip>
-      <Dialog fullWidth maxWidth="sm" onClose={handleClose} open={open} scroll="paper">
-        <DialogTitle>
-          {t('batch_update')}
-          <Tooltip
-            title={match(indeterminate)
-              .with(true, () => t('select_none'))
-              .with(false, () => t('select_all'))
-              .exhaustive()}
-          >
-            <Checkbox
-              sx={(theme) => ({
-                position: 'absolute',
-                right: theme.spacing(2),
-                top: theme.spacing(2),
-              })}
-              edge="end"
-              checked={checked.length === chapters.length}
-              onChange={handleToggleAll}
-              indeterminate={indeterminate}
-            />
-          </Tooltip>
-        </DialogTitle>
-        <DialogContent>
-          <List dense sx={{ pt: 0 }}>
-            {chapters.map((chapter) => (
-              <ListItemButton
-                key={chapter.url}
-                onClick={() => {
+      <DialogContent className="px-0 sm:max-w-sm">
+        <DialogHeader className="px-6">
+          <DialogTitle className="gap-3 flex">
+            {t('batch_update')}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Checkbox checked={checked.length === chapters.length} onCheckedChange={handleToggleAll} />
+              </TooltipTrigger>
+              <TooltipContent>
+                {match(checked.length === chapters.length)
+                  .with(true, () => t('select_none'))
+                  .with(false, () => t('select_all'))
+                  .exhaustive()}
+              </TooltipContent>
+            </Tooltip>
+          </DialogTitle>
+        </DialogHeader>
+        <li className="max-h-[70vh] overflow-y-auto">
+          {chapters.map((chapter) => (
+            <Label
+              key={chapter.url}
+              className="hover:bg-accent/50 flex items-start gap-3 p-3 has-aria-checked:bg-accent"
+            >
+              <Checkbox
+                onCheckedChange={() => {
                   handleToggle(chapter.id);
                 }}
-              >
-                <Checkbox edge="start" checked={checked.includes(chapter.id)} tabIndex={-1} disableRipple />
-                <ListItemText primary={chapter.title} secondary={`${format(chapter.time)} - ${chapter.wordCount}`} />
-              </ListItemButton>
-            ))}
-          </List>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleClose}>{t('cancel')}</Button>
+                checked={checked.includes(chapter.id)}
+              />
+              <div className="grid gap-1.5 font-normal">
+                <p className="text-sm leading-none font-medium">{chapter.title}</p>
+                <p className="text-muted-foreground text-sm">
+                  {format(chapter.time)} - {chapter.wordCount}
+                </p>
+              </div>
+            </Label>
+          ))}
+        </li>
+        <DialogFooter className="px-6">
+          <DialogClose asChild>
+            <Button variant="secondary">{t('cancel')}</Button>
+          </DialogClose>
           <Button onClick={handleSubmit} disabled={addLoading || deleteLoading}>
             {t('submit')}
           </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

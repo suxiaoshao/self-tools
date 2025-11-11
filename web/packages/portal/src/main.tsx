@@ -8,6 +8,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
+import './styles/globals.css';
 
 ReactDOM.createRoot(document.querySelector('#root') as HTMLElement).render(
   // eslint-disable-next-line no-console label-has-associated-control

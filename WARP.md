@@ -171,7 +171,6 @@ PostgreSQL database shared across services:
 - `web/common/custom-graphql`: GraphQL components and hooks
 - `web/common/custom-table`: Reusable table components
 - `web/common/i18n`: Internationalization utilities
-- `web/common/notify`: Notification system
 - `web/common/time`: Time formatting utilities
 
 ## Environment Configuration

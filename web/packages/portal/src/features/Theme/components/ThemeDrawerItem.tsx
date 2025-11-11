@@ -1,36 +1,28 @@
-import { Palette } from '@mui/icons-material';
-import {
-  Box,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  FormControl,
-  FormControlLabel,
-  FormHelperText,
-  FormLabel,
-  InputBase,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
-  Radio,
-  RadioGroup,
-} from '@mui/material';
-import { useState } from 'react';
+import { Palette } from 'lucide-react';
 import { Controller, type SubmitHandler, useForm } from 'react-hook-form';
 import { ColorSetting, useThemeStore } from '../themeSlice';
 import { string, object, type InferInput, pipe, regex, enum_ } from 'valibot';
 import { valibotResolver } from '@hookform/resolvers/valibot';
 import { useI18n } from 'i18n';
 import { useShallow } from 'zustand/react/shallow';
+import { SidebarMenuButton, SidebarMenuItem } from '@portal/components/ui/sidebar';
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@portal/components/ui/dialog';
+import { Button } from '@portal/components/ui/button';
+import { Field, FieldError, FieldGroup, FieldLabel, FieldLegend, FieldSet } from '@portal/components/ui/field';
+import { RadioGroup, RadioGroupItem } from '@portal/components/ui/radio-group';
+import { Input } from '@portal/components/ui/input';
+import useDialog from '@collections/hooks/useDialog';
 
 export default function ThemeDrawerItem() {
-  // 控制 dialog
-  const [open, setOpen] = useState(false);
-  const handleClose = () => {
-    setOpen(false);
-  };
+  const { open, handleClose, handleOpenChange } = useDialog();
   const { updateColor, ...theme } = useThemeStore(useShallow((state) => state));
   const t = useI18n();
   const createColorSchema = object({
@@ -43,6 +35,7 @@ export default function ThemeDrawerItem() {
     handleSubmit,
     control,
     formState: { errors },
+    reset,
   } = useForm<FormData>({
     defaultValues: theme,
     resolver: valibotResolver(createColorSchema),
@@ -50,61 +43,81 @@ export default function ThemeDrawerItem() {
   const onSubmit: SubmitHandler<FormData> = ({ color, colorSetting }) => {
     updateColor(color, colorSetting);
     handleClose();
+    reset(theme);
+  };
+  const onOpenChange = (open: boolean) => {
+    handleOpenChange(open);
+    reset(theme);
   };
 
   return (
-    <>
-      <ListItemButton
-        onClick={() => {
-          setOpen(true);
-        }}
-      >
-        <ListItemIcon>
-          <Palette />
-        </ListItemIcon>
-        <ListItemText>{t('theme_setting')}</ListItemText>
-      </ListItemButton>
-      <Dialog PaperProps={{ sx: { maxWidth: 700 } }} open={open} onClose={handleClose}>
-        <Box sx={{ width: 500 }} onSubmit={handleSubmit(onSubmit)} component="form">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogTrigger asChild>
+        <SidebarMenuItem>
+          <SidebarMenuButton>
+            <Palette />
+            <span>{t('theme_setting')}</span>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      </DialogTrigger>
+
+      <DialogContent>
+        <DialogHeader>
           <DialogTitle>{t('theme_setting')}</DialogTitle>
-          <DialogContent>
-            <FormControl fullWidth error={errors.colorSetting && true}>
-              <FormLabel id="color-setting">{t('select_mode')}</FormLabel>
-              <Controller
-                name="colorSetting"
-                control={control}
-                rules={{ required: true }}
-                render={({ field }) => (
+        </DialogHeader>
+        <form id="theme-form" onSubmit={handleSubmit(onSubmit)}>
+          <FieldGroup>
+            <Controller
+              name="colorSetting"
+              control={control}
+              render={({ field, fieldState }) => (
+                <FieldSet>
+                  <FieldLegend>{t('select_mode')}</FieldLegend>
                   <RadioGroup
-                    row
-                    aria-labelledby="color-setting"
                     {...field}
-                    onChange={(event, newValue) => {
-                      field.onChange(newValue as 'dark' | 'light' | 'system');
-                    }}
+                    onValueChange={field.onChange}
+                    id={field.name}
+                    aria-invalid={fieldState.invalid}
                   >
-                    <FormControlLabel value={ColorSetting.light} control={<Radio />} label={t('light')} />
-                    <FormControlLabel value={ColorSetting.dark} control={<Radio />} label={t('dark')} />
-                    <FormControlLabel value={ColorSetting.system} control={<Radio />} label={t('system')} />
+                    <Field orientation="horizontal">
+                      <RadioGroupItem value={ColorSetting.light} id="theme-light" />
+                      <FieldLabel htmlFor="theme-light" className="font-normal">
+                        {t('light')}
+                      </FieldLabel>
+                    </Field>
+                    <Field orientation="horizontal">
+                      <RadioGroupItem value={ColorSetting.dark} id="theme-dark" />
+                      <FieldLabel htmlFor="theme-dark" className="font-normal">
+                        {t('dark')}
+                      </FieldLabel>
+                    </Field>
+                    <Field orientation="horizontal">
+                      <RadioGroupItem value={ColorSetting.system} id="theme-system" />
+                      <FieldLabel htmlFor="theme-system" className="font-normal">
+                        {t('system')}
+                      </FieldLabel>
+                    </Field>
                   </RadioGroup>
-                )}
-              />
+                </FieldSet>
+              )}
+            />
 
-              <FormHelperText id="color-setting">{errors.colorSetting?.message}</FormHelperText>
-            </FormControl>
-            <FormControl error={errors.colorSetting && true}>
-              <FormLabel id="color">{t('theme_color')}</FormLabel>
-              <InputBase type="color" {...register('color', { required: true })} />
-
-              <FormHelperText id="color">{errors.color?.message}</FormHelperText>
-            </FormControl>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleClose}>{t('cancel')}</Button>
-            <Button type="submit">{t('submit')}</Button>
-          </DialogActions>
-        </Box>
-      </Dialog>
-    </>
+            <FieldSet>
+              <FieldLegend>{t('theme_color')}</FieldLegend>
+              <Input type="color" {...register('color')} />
+              {errors.color?.message && <FieldError errors={[errors.color]} />}
+            </FieldSet>
+          </FieldGroup>
+        </form>
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button variant="secondary">{t('cancel')}</Button>
+          </DialogClose>
+          <Button type="submit" form="theme-form">
+            {t('submit')}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

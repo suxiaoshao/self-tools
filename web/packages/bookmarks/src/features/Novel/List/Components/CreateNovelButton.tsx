@@ -5,15 +5,26 @@
  * @LastEditTime: 2024-03-01 17:51:59
  * @FilePath: /self-tools/web/packages/bookmarks/src/features/Novel/Components/CreateNovelButton.tsx
  */
-import { Button, Dialog, Box, DialogTitle, DialogContent, TextField, DialogActions } from '@mui/material';
 import { useI18n } from 'i18n';
-import { useState } from 'react';
 import { useForm, type SubmitHandler, Controller } from 'react-hook-form';
 import AuthorSelect from '../../../../components/AuthorSelect';
 import TagsSelect from '../../../../components/TagsSelect';
 import { graphql } from '@bookmarks/gql';
 import { useMutation } from '@apollo/client/react';
 import type { CreateNovelMutationVariables } from '@bookmarks/gql/graphql';
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@portal/components/ui/dialog';
+import useDialog from '@collections/hooks/useDialog';
+import { Button } from '@portal/components/ui/button';
+import { FieldGroup, FieldLegend, FieldSet } from '@portal/components/ui/field';
+import { Input } from '@portal/components/ui/input';
 
 const CreateNovel = graphql(`
   mutation createNovel($data: CreateNovelInput!) {
@@ -41,68 +52,67 @@ export default function CreateNovelButton({ refetch }: CreateNovelButtonProps) {
     handleClose();
   };
   // 控制 dialog
-  const [open, setOpen] = useState(false);
-  const handleClose = () => {
-    setOpen(false);
-  };
+  const { open, handleClose, handleOpenChange } = useDialog();
   const t = useI18n();
   return (
-    <>
-      <Button
-        color="primary"
-        size="large"
-        variant="contained"
-        onClick={() => {
-          setOpen(true);
-        }}
-      >
-        {t('add_novel')}
-      </Button>
-      <Dialog slotProps={{ paper: { sx: { maxWidth: 700 } } }} open={open} onClose={handleClose}>
-        <Box sx={{ width: 500 }} onSubmit={handleSubmit(onSubmit)} component="form">
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogTrigger asChild>
+        <Button>{t('add_novel')}</Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
           <DialogTitle>{t('create_novel')}</DialogTitle>
-          <DialogContent>
-            <TextField
-              required
-              sx={{ mt: 1 }}
-              fullWidth
-              label={t('novel_name')}
-              {...register('name', { required: true })}
-            />
-            <TextField
-              sx={{ mt: 1 }}
-              required
-              fullWidth
-              label={t('avatar')}
-              {...register('avatar', { required: true })}
-            />
-            <TextField
-              required
-              sx={{ mt: 1 }}
-              fullWidth
-              label={t('description')}
-              {...register('description', { required: true })}
-            />
-            <TextField required sx={{ mt: 1 }} fullWidth label={t('link')} {...register('site', { required: true })} />
+        </DialogHeader>
+        <form className="flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)}>
+          <FieldGroup>
+            <FieldSet>
+              <FieldLegend>{t('novel_name')}</FieldLegend>
+              <Input required {...register('name', { required: true })} />
+            </FieldSet>
+            <FieldSet>
+              <FieldLegend>{t('avatar')}</FieldLegend>
+              <Input required {...register('avatar', { required: true })} />
+            </FieldSet>
+            <FieldSet>
+              <FieldLegend>{t('description')}</FieldLegend>
+              <Input {...register('description')} />
+            </FieldSet>
+            <FieldSet>
+              <FieldLegend>{t('link')}</FieldLegend>
+              <Input required {...register('site', { required: true })} />
+            </FieldSet>
             <Controller
               control={control}
               name="tags"
-              render={({ field }) => <TagsSelect sx={{ mt: 1 }} fullWidth {...field} />}
+              render={({ field }) => (
+                <FieldSet className="w-full">
+                  <FieldLegend>{t('tags')}</FieldLegend>
+                  <TagsSelect {...field} />
+                </FieldSet>
+              )}
             />
             <Controller
               rules={{ required: true }}
               control={control}
               name="authorId"
-              render={({ field }) => <AuthorSelect sx={{ mt: 1 }} fullWidth {...field} />}
+              render={({ field }) => (
+                <FieldSet className="w-full">
+                  <FieldLegend>{t('tags')}</FieldLegend>
+                  <AuthorSelect className="w-full" {...field} />
+                </FieldSet>
+              )}
             />
-          </DialogContent>
-
-          <DialogActions>
-            <Button onClick={handleClose}>{t('cancel')}</Button>
+          </FieldGroup>
+          <DialogFooter>
+            <DialogClose>
+              <Button type="button" variant="secondary">
+                {t('cancel')}
+              </Button>
+            </DialogClose>
             <Button type="submit">{t('submit')}</Button>
-          </DialogActions>
-        </Box>
-      </Dialog>
-    </>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

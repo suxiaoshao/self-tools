@@ -1,9 +1,16 @@
-import { MoreHoriz } from '@mui/icons-material';
-import { IconButton, Menu, MenuItem } from '@mui/material';
-import { type ReactNode, useState, type JSX } from 'react';
+import { Button } from '@portal/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@portal/components/ui/dropdown-menu';
+import { MoreHorizontal } from 'lucide-react';
+import type { ReactNode, JSX } from 'react';
+import { match, P } from 'ts-pattern';
 
 export interface TableActionsProps {
-  children: (handleClose: () => void) => Actions[];
+  children: () => Actions[];
 }
 
 export type Actions =
@@ -14,44 +21,25 @@ export type Actions =
   | JSX.Element;
 
 export function TableActions({ children }: TableActionsProps) {
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const open = Boolean(anchorEl);
-  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
   return (
-    <>
-      <IconButton onClick={handleClick} size="small">
-        <MoreHoriz />
-      </IconButton>
-      <Menu
-        id="basic-menu"
-        anchorEl={anchorEl}
-        open={open}
-        onClose={handleClose}
-        MenuListProps={{
-          'aria-labelledby': 'basic-button',
-        }}
-      >
-        {children(handleClose).map((Item, index) => {
-          if ('text' in Item) {
-            return (
-              <MenuItem
-                onClick={() => {
-                  Item.onClick?.();
-                }}
-                key={index}
-              >
-                {Item.text}
-              </MenuItem>
-            );
-          }
-          return Item;
-        })}
-      </Menu>
-    </>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="data-[state=open]:bg-muted size-8">
+          <MoreHorizontal />
+          <span className="sr-only">Open menu</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-40">
+        {children().map((item) =>
+          match(item)
+            .with({ text: P._ }, ({ text, onClick }) => (
+              <DropdownMenuItem key={JSON.stringify(text)} onClick={onClick}>
+                {text}
+              </DropdownMenuItem>
+            ))
+            .otherwise((element) => element),
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

@@ -6,7 +6,7 @@
   "lsp": {
     "graphql": {
       "settings": {
-        "config_dir": "./web/packages/collections/graphql.config.yml"
+        "config_dir": "./web/packages/bookmarks/graphql.config.yml"
       }
     }
   }

@@ -5,17 +5,19 @@
  * @LastEditTime: 2024-02-26 05:17:45
  * @FilePath: /self-tools/web/packages/portal/src/features/Auth/index.tsx
  */
-import { Avatar, Box, Button, Container, TextField, Typography } from '@mui/material';
 import { type SubmitHandler, useForm } from 'react-hook-form';
-import { LockOutlined } from '@mui/icons-material';
 import { useCallback, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { type LoginForm, useAuthStore } from './authSlice';
 import { useI18n } from 'i18n';
 import { useShallow } from 'zustand/react/shallow';
 import { finishAuthentication, finishRegister, responseThen, startAuthentication, startRegister } from './service';
-import { enqueueSnackbar } from 'notify';
 import useTitle from '@bookmarks/hooks/useTitle';
+import { Card, CardContent, CardHeader, CardTitle } from '@portal/components/ui/card';
+import { Input } from '@portal/components/ui/input';
+import { FieldGroup, FieldLegend, FieldSet } from '@portal/components/ui/field';
+import { Button } from '@portal/components/ui/button';
+import { toast } from 'sonner';
 
 export { default as useLogin } from './useLogin';
 
@@ -56,7 +58,7 @@ export default function Login() {
           responseThen(auth, setAuth);
           await navigator.credentials.store(res);
         } else {
-          enqueueSnackbar('webauthn error', { variant: 'error' });
+          toast.error('webauthn error');
         }
       });
     },
@@ -71,68 +73,54 @@ export default function Login() {
         const auth = await finishAuthentication(data);
         responseThen(auth, setAuth);
       } else {
-        enqueueSnackbar('webauthn error', { variant: 'error' });
+        toast.error('webauthn error');
       }
     });
   }, [getValues, setAuth]);
   return (
-    <Box
-      sx={{
-        width: '100vw',
-        height: '100vh',
-        position: 'fixed',
-        left: 0,
-        background: (theme) => theme.palette.background.default,
-      }}
-    >
-      <Container component="main" maxWidth="xs">
-        <Box
-          sx={{
-            marginTop: 8,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-          }}
-        >
-          <Avatar sx={{ m: 1, bgcolor: 'secondary.main' }}>
-            <LockOutlined />
-          </Avatar>
-          <Typography component="h1" variant="h5">
-            {t('login')}
-          </Typography>
-          <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate sx={{ mt: 1 }}>
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              id="username"
-              label={t('username')}
-              autoComplete="username"
-              {...register('username', { required: true })}
-            />
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              label={t('password')}
-              type="password"
-              id="password"
-              autoComplete="current-password"
-              {...register('password', { required: true })}
-            />
-            <Button type="submit" fullWidth variant="contained" sx={{ mt: 3 }} color="secondary">
-              {t('login')}
-            </Button>
-            <Button fullWidth variant="contained" sx={{ mt: 3 }} onClick={handleSubmit(onClickWebauthn)}>
-              {t('login_and_register_webauthn')}
-            </Button>
-            <Button fullWidth variant="contained" sx={{ mt: 3 }} onClick={onClickWebauthn2}>
-              {t('login_with_webauthn')}
-            </Button>
-          </Box>
-        </Box>
-      </Container>
-    </Box>
+    <div className="size-full fixed left-0 flex items-center justify-center">
+      <Card className="w-full max-w-sm">
+        <CardHeader>
+          <CardTitle>{t('login')}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit(onSubmit)} noValidate>
+            <FieldGroup>
+              <FieldSet>
+                <FieldLegend>{t('username')}</FieldLegend>
+                <Input required id="username" autoComplete="username" {...register('username', { required: true })} />
+              </FieldSet>
+              <FieldSet>
+                <FieldLegend>{t('password')}</FieldLegend>
+                <Input
+                  required
+                  id="password"
+                  type="password"
+                  autoComplete="current-password"
+                  {...register('password', { required: true })}
+                />
+              </FieldSet>
+            </FieldGroup>
+
+            <FieldGroup className="gap-4 mt-4">
+              <FieldSet>
+                <Button type="submit">{t('login')}</Button>
+              </FieldSet>
+              <FieldSet>
+                <Button variant="secondary" onClick={handleSubmit(onClickWebauthn)}>
+                  {t('login_and_register_webauthn')}
+                </Button>
+              </FieldSet>
+              <FieldSet>
+                <Button variant="secondary" onClick={onClickWebauthn2}>
+                  {t('login_with_webauthn')}
+                </Button>
+              </FieldSet>
+            </FieldGroup>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 

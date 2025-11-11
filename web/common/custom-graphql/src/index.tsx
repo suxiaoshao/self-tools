@@ -9,7 +9,7 @@ import { ApolloClient, InMemoryCache, ApolloLink, CombinedGraphQLErrors, Combine
 import { HttpLink } from '@apollo/client/link/http';
 import { SetContextLink } from '@apollo/client/link/context';
 import { ErrorLink } from '@apollo/client/link/error';
-import { enqueueSnackbar } from 'notify';
+import { toast } from 'sonner';
 
 const getHttpLink = (url: string) =>
   new HttpLink({
@@ -21,7 +21,7 @@ const getHttpLink = (url: string) =>
 const errorLink = new ErrorLink(({ error }) => {
   if (CombinedGraphQLErrors.is(error)) {
     error.errors.forEach(({ message, locations, path, extensions }) => {
-      enqueueSnackbar(message);
+      toast(message);
       // oxlint-disable-next-line no-console
       console.log(
         `[GraphQL error]: Message: ${message}, Location: ${locations}, Path: ${path} source: ${extensions?.['source']}`,
@@ -29,12 +29,12 @@ const errorLink = new ErrorLink(({ error }) => {
     });
   } else if (CombinedProtocolErrors.is(error)) {
     error.errors.forEach(({ message, extensions }) => {
-      enqueueSnackbar(message);
+      toast(message);
       // eslint-disable-next-line no-console
       console.log(`[Protocol error]: Message: ${message}, Extensions: ${JSON.stringify(extensions)}`);
     });
   } else {
-    enqueueSnackbar(`网络错误:${error.message}`);
+    toast(`网络错误:${error.message}`);
     // eslint-disable-next-line no-console
     console.log(`[Network error]: ${error}`);
   }

@@ -3,14 +3,17 @@ import { graphql } from '@bookmarks/gql';
 import type { GetNovelQuery } from '@bookmarks/gql/graphql';
 import { getLabelKeyBySite } from '@bookmarks/utils/novelSite';
 import { getLabelKeyByNovelStatus } from '@bookmarks/utils/novelStatus';
-import { Box, Chip, Link, Tooltip } from '@mui/material';
 import type { DetailsItem } from 'details';
 import { useI18n } from 'i18n';
 import { useMemo } from 'react';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { format } from 'time';
 import { match, P } from 'ts-pattern';
 import AddCollection from './components/AddCollection';
+import { Button } from '@portal/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@portal/components/ui/tooltip';
+import { Badge } from '@portal/components/ui/badge';
+import { X } from 'lucide-react';
 
 const DeleteCollectionForNovel = graphql(`
   mutation deleteCollectionForNovel($novelId: Int!, $collectionId: Int!) {
@@ -21,7 +24,6 @@ const DeleteCollectionForNovel = graphql(`
 `);
 export default function useNovelDetailItems(data: GetNovelQuery | undefined, refetch: () => void) {
   const [deleteCollectionForNovel] = useMutation(DeleteCollectionForNovel);
-  const navigate = useNavigate();
 
   const t = useI18n();
   const items = useMemo<DetailsItem[]>(
@@ -34,9 +36,9 @@ export default function useNovelDetailItems(data: GetNovelQuery | undefined, ref
               {
                 label: t('author'),
                 value: (
-                  <Link to={`/bookmarks/authors/${data.author.id}`} component={RouterLink}>
-                    {data.author.name}
-                  </Link>
+                  <Button variant="link" className="text-foreground w-fit px-0 text-left" asChild>
+                    <Link to={`/bookmarks/authors/${data.author.id}`}>{data.author.name}</Link>
+                  </Button>
                 ),
               },
               {
@@ -69,44 +71,51 @@ export default function useNovelDetailItems(data: GetNovelQuery | undefined, ref
                   .with(P.nullish, () => '-')
                   .with(0, () => '-')
                   .otherwise(() => (
-                    <Box sx={{ gap: 1, display: 'flex' }}>
+                    <div className="flex gap-2">
                       {data.tags.map((tag) => (
-                        <Chip
-                          color="primary"
-                          variant="outlined"
-                          label={tag.name}
+                        <Badge
+                          className="cursor-pointer"
+                          variant="secondary"
                           onClick={() => {
                             window.open(tag.url, '_blank');
                           }}
                           key={tag.id}
-                        />
+                        >
+                          {tag.name}
+                        </Badge>
                       ))}
-                    </Box>
+                    </div>
                   )),
                 span: 2,
               },
               {
                 label: t('collections'),
                 value: (
-                  <Box sx={{ gap: 1, display: 'flex' }}>
+                  <div className="flex gap-2">
                     {data.collections.map(({ id, name, path }) => (
-                      <Tooltip key={id} title={path}>
-                        <Chip
-                          color="primary"
-                          variant="outlined"
-                          label={name}
-                          onClick={() => {
-                            navigate(`/bookmarks/collections?parentId=${id}`);
-                          }}
-                          onDelete={async () => {
-                            await deleteCollectionForNovel({ variables: { collectionId: id, novelId: data.id } });
-                            refetch();
-                          }}
-                        />
+                      <Tooltip key={id}>
+                        <TooltipTrigger asChild>
+                          <Badge variant="secondary">
+                            <Link to={`/bookmarks/collections?parentId=${id}`}>{name}</Link>
+                            <Button
+                              variant="ghost"
+                              size="icon-sm"
+                              className="data-[state=open]:bg-muted size-6 rounded-full"
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                await deleteCollectionForNovel({ variables: { collectionId: id, novelId: data.id } });
+                                refetch();
+                              }}
+                            >
+                              <X />
+                            </Button>
+                          </Badge>
+                        </TooltipTrigger>
+                        <TooltipContent>{path}</TooltipContent>
                       </Tooltip>
                     ))}
                     <AddCollection novelId={data.id} refetch={refetch} />
-                  </Box>
+                  </div>
                 ),
                 span: 4,
               },
@@ -118,7 +127,7 @@ export default function useNovelDetailItems(data: GetNovelQuery | undefined, ref
             ] satisfies DetailsItem[],
         )
         .otherwise(() => []),
-    [data, t, deleteCollectionForNovel, navigate, refetch],
+    [data, t, deleteCollectionForNovel, refetch],
   );
   return items;
 }

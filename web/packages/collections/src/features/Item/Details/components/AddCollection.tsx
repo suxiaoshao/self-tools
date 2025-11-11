@@ -1,8 +1,7 @@
 import CollectionSelect from '@collections/components/CollectionSelect';
 import { CollectionLoadingState, useAllCollection } from '@collections/features/Collection/collectionSlice';
 import useDialog from '@collections/hooks/useDialog';
-import { Add } from '@mui/icons-material';
-import { Box, Button, CircularProgress, Dialog, DialogActions, DialogTitle, IconButton } from '@mui/material';
+import { Plus } from 'lucide-react';
 import { Controller, useForm } from 'react-hook-form';
 import { match } from 'ts-pattern';
 import { useI18n } from 'i18n';
@@ -10,6 +9,17 @@ import { graphql } from '@collections/gql';
 import { type InferInput, number, object } from 'valibot';
 import { useMutation } from '@apollo/client/react';
 import { valibotResolver } from '@hookform/resolvers/valibot';
+import { Button } from '@portal/components/ui/button';
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@portal/components/ui/dialog';
+import { Spinner } from '@portal/components/ui/spinner';
 
 const AddCollectionForItem = graphql(`
   mutation addCollectionForItem($itemId: Int!, $collectionId: Int!) {
@@ -31,7 +41,7 @@ const selectCollectionSchema = object({
 type SelectCollectionType = InferInput<typeof selectCollectionSchema>;
 
 export default function AddCollection({ itemId, refetch }: AddCollectionProps) {
-  const { open, handleClose, handleOpen } = useDialog();
+  const { open, handleClose, handleOpen, handleOpenChange } = useDialog();
   const t = useI18n();
   const { value: allCollection, fetchData } = useAllCollection();
   const [fn] = useMutation(AddCollectionForItem);
@@ -45,21 +55,25 @@ export default function AddCollection({ itemId, refetch }: AddCollectionProps) {
     refetch();
   });
   return (
-    <>
-      <IconButton onClick={handleOpen}>
-        <Add />
-      </IconButton>
-      <Dialog slotProps={{ paper: { sx: { maxWidth: 700 } } }} open={open} onClose={handleClose}>
-        <Box sx={{ width: 500 }} component="form" onSubmit={onSubmit}>
-          <DialogTitle>{t('select_collection')}</DialogTitle>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="icon-lg" className="rounded-full" onClick={handleOpen}>
+          <Plus />
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <form onSubmit={onSubmit}>
+          <DialogHeader>
+            <DialogTitle>{t('select_collection')}</DialogTitle>
+          </DialogHeader>
           {match(allCollection)
             .with({ tag: CollectionLoadingState.init }, () => null)
             .with({ tag: CollectionLoadingState.error }, ({ value }) => (
-              <Box>
+              <div>
                 {value.toString()} <Button onClick={fetchData}>{t('refresh')}</Button>
-              </Box>
+              </div>
             ))
-            .with({ tag: CollectionLoadingState.loading }, () => <CircularProgress />)
+            .with({ tag: CollectionLoadingState.loading }, () => <Spinner />)
             .with({ tag: CollectionLoadingState.state }, ({ value: allCollections }) => (
               <Controller
                 control={control}
@@ -75,12 +89,16 @@ export default function AddCollection({ itemId, refetch }: AddCollectionProps) {
             ))
             .otherwise(() => null)}
 
-          <DialogActions>
-            <Button onClick={handleClose}>{t('cancel')}</Button>
-            <Button type="submit">{t('submit')}</Button>
-          </DialogActions>
-        </Box>
-      </Dialog>
-    </>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="secondary">{t('cancel')}</Button>
+            </DialogClose>
+            <Button variant="default" type="submit">
+              {t('submit')}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

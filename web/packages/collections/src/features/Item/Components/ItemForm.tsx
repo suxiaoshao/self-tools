@@ -1,20 +1,4 @@
-import { Close, Edit as EditIcon, Preview } from '@mui/icons-material';
-import {
-  AppBar,
-  Backdrop,
-  Box,
-  Button,
-  CircularProgress,
-  Dialog,
-  FormControl,
-  FormLabel,
-  IconButton,
-  TextField,
-  ToggleButton,
-  ToggleButtonGroup,
-  Toolbar,
-  Typography,
-} from '@mui/material';
+import { Edit as EditIcon, View } from 'lucide-react';
 import { useI18n } from 'i18n';
 import { useEffect, useState } from 'react';
 import { Controller, type SubmitHandler, useForm } from 'react-hook-form';
@@ -23,6 +7,11 @@ import CustomEdit from '../../../components/CustomEdit';
 import Markdown from '../../../components/Markdown';
 import CollectionMultiSelect from '@collections/components/CollectionMultiSelect';
 import { array, type InferInput, integer, number, object, pipe, string } from 'valibot';
+import { DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@portal/components/ui/dialog';
+import { Button } from '@portal/components/ui/button';
+import { FieldGroup, FieldLegend, FieldSet } from '@portal/components/ui/field';
+import { Input } from '@portal/components/ui/input';
+import { ToggleGroup, ToggleGroupItem } from '@portal/components/ui/toggle-group';
 
 const itemFormSchema = object({
   collectionIds: array(pipe(number(), integer())),
@@ -35,20 +24,12 @@ export type ItemFormData = InferInput<typeof itemFormSchema>;
 export interface ItemFormProps {
   afterSubmit?: (data: ItemFormData) => Promise<void>;
   handleClose: () => void;
-  open: boolean;
   mode?: 'create' | 'edit';
   initialValues?: ItemFormData;
   loading?: boolean;
 }
 
-export default function ItemForm({
-  afterSubmit,
-  handleClose,
-  open,
-  mode,
-  initialValues,
-  loading = false,
-}: ItemFormProps) {
+export default function ItemForm({ afterSubmit, handleClose, mode, initialValues }: ItemFormProps) {
   // 表单控制
   const { handleSubmit, register, control, setValue } = useForm<ItemFormData>({ defaultValues: initialValues });
   useEffect(() => {
@@ -61,99 +42,80 @@ export default function ItemForm({
     await afterSubmit?.(data);
     handleClose();
   };
-  const [alignment, setAlignment] = useState<'edit' | 'preview' | null>('edit');
-  const handleAlignment = (event: React.MouseEvent<HTMLElement>, newAlignment: 'edit' | 'preview' | null) => {
-    setAlignment(newAlignment);
+  const [alignment, setAlignment] = useState<'edit' | 'preview'>('edit');
+  const handleAlignment = (newAlignment: string) => {
+    match(newAlignment)
+      .with('edit', () => setAlignment('edit'))
+      .with('preview', () => setAlignment('preview'))
+      .otherwise(() => setAlignment('edit'));
   };
   const t = useI18n();
   return (
-    <Dialog fullScreen open={open} onClose={handleClose}>
-      <Box sx={{ height: '100%' }} onSubmit={handleSubmit(onSubmit)} component="form">
-        <AppBar sx={{ position: 'relative' }}>
-          <Toolbar>
-            <IconButton edge="start" color="secondary" onClick={handleClose} aria-label="close">
-              <Close />
-            </IconButton>
-            <Typography sx={{ ml: 2, flex: 1 }} variant="h6" component="div">
-              {match(mode)
-                .with('create', () => t('create_item'))
-                .otherwise(() => t('modify_item'))}
-            </Typography>
-            <Button type="submit" color="inherit">
-              {t('submit')}
-            </Button>
-          </Toolbar>
-        </AppBar>
-        <Box
-          sx={{
-            overflow: 'hidden',
-            height: 'calc(100% - 64px)',
-            display: 'flex',
-            flexDirection: 'column',
-            padding: 2,
-          }}
-        >
-          <TextField
-            variant="standard"
-            required
-            fullWidth
-            label={t('item_name')}
-            {...register('name', { required: true })}
-          />
-          <FormControl component="fieldset" variant="standard">
-            <FormLabel component="legend">{t('match_collections')} </FormLabel>
-            <Controller
-              control={control}
-              name="collectionIds"
-              render={({ field }) => <CollectionMultiSelect {...field} />}
-            />
-          </FormControl>
-
+    <DialogContent className="sm:max-w-5xl">
+      <DialogHeader>
+        <DialogTitle>
+          {match(mode)
+            .with('create', () => t('create_item'))
+            .otherwise(() => t('modify_item'))}
+        </DialogTitle>
+      </DialogHeader>
+      <FieldGroup className="w-full">
+        <FieldSet>
+          <FieldLegend>{t('item_name')}</FieldLegend>
+          <Input required {...register('name', { required: true })} />
+        </FieldSet>
+        <FieldSet>
+          <FieldLegend>{t('match_collections')}</FieldLegend>
           <Controller
             control={control}
-            name="content"
-            rules={{ required: true }}
-            render={({ field }) => (
-              <>
-                <Box sx={{ display: 'flex', alignItems: 'center', mt: 2 }}>
-                  <FormLabel sx={{ flex: 1 }} required>
-                    {t('content')}
-                  </FormLabel>
-                  <ToggleButtonGroup
-                    color="primary"
-                    size="small"
-                    value={alignment}
-                    exclusive
-                    onChange={handleAlignment}
-                  >
-                    <ToggleButton value="edit">
-                      <EditIcon />
-                    </ToggleButton>
-                    <ToggleButton value="preview">
-                      <Preview />
-                    </ToggleButton>
-                  </ToggleButtonGroup>
-                </Box>
-                {match(alignment)
-                  .with('edit', () => (
-                    <CustomEdit
-                      wordWrap="on"
-                      sx={{ width: '100%', flex: '1 1 0', borderRadius: 2, overflow: 'hidden', mt: 1 }}
-                      language="markdown"
-                      {...field}
-                    />
-                  ))
-                  .otherwise(() => (
-                    <Markdown sx={{ overflowY: 'auto', mt: 1 }} value={field.value ?? ''} />
-                  ))}
-              </>
-            )}
+            name="collectionIds"
+            render={({ field }) => <CollectionMultiSelect {...field} />}
           />
-        </Box>
-      </Box>
-      <Backdrop sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }} open={loading}>
-        <CircularProgress />
-      </Backdrop>
-    </Dialog>
+        </FieldSet>
+
+        <Controller
+          control={control}
+          name="content"
+          rules={{ required: true }}
+          render={({ field }) => (
+            <FieldSet>
+              <FieldLegend className="w-full flex items-center justify-between">
+                <span>{t('content')}</span>
+                <ToggleGroup type="single" variant="outline" value={alignment} onValueChange={handleAlignment}>
+                  <ToggleGroupItem value="edit">
+                    <EditIcon />
+                  </ToggleGroupItem>
+                  <ToggleGroupItem value="preview">
+                    <View />
+                  </ToggleGroupItem>
+                </ToggleGroup>
+              </FieldLegend>
+              {match(alignment)
+                .with('edit', () => (
+                  <CustomEdit wordWrap="on" className="w-full h-[500px] rounded-lg" language="markdown" {...field} />
+                ))
+                .otherwise(() => (
+                  <Markdown
+                    className="w-[calc(var(--container-5xl)-(--spacing(12)))] overflow-y-auto h-[500px]"
+                    value={field.value ?? ''}
+                  />
+                ))}
+            </FieldSet>
+          )}
+        />
+      </FieldGroup>
+      <DialogFooter>
+        <DialogClose asChild>
+          <Button variant="secondary">{t('cancel')}</Button>
+        </DialogClose>
+        <Button
+          onClick={() => {
+            handleSubmit(onSubmit)();
+          }}
+        >
+          {t('submit')}
+        </Button>
+      </DialogFooter>
+    </DialogContent>
   );
 }

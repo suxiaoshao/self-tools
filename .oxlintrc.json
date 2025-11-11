@@ -316,7 +316,6 @@
     "typescript",
     "unicorn",
     "react",
-    "nextjs",
     "oxc",
     "import",
     "jsdoc",
@@ -326,5 +325,5 @@
     "jest",
     "vitest"
   ],
-  "ignorePatterns": ["changelog.config.js", "*.d.ts"]
+  "ignorePatterns": ["changelog.config.js", "*.d.ts", "**/components/ui/**/*"]
 }

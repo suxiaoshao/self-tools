@@ -6,31 +6,42 @@
  * @FilePath: /self-tools/web/packages/bookmarks/src/features/Author/Fetch/index.tsx
  */
 import { type FetchAuthorQueryVariables, NovelSite } from '@bookmarks/gql/graphql';
-import {
-  Avatar,
-  Backdrop,
-  Box,
-  Card,
-  CardContent,
-  CardHeader,
-  CircularProgress,
-  IconButton,
-  MenuItem,
-  Skeleton,
-  TextField,
-  Tooltip,
-  Typography,
-} from '@mui/material';
 import { Controller, useForm } from 'react-hook-form';
 import { useI18n } from 'i18n';
-import { Save, Search } from '@mui/icons-material';
 import { getImageUrl } from '@bookmarks/utils/image';
 import ChapterModal from '@bookmarks/components/ChapterModal';
 import { convertFetchToDraftAuthor } from './utils';
-import { enqueueSnackbar } from 'notify';
 import useTitle from '@bookmarks/hooks/useTitle';
 import { graphql } from '@bookmarks/gql';
 import { useLazyQuery, useMutation } from '@apollo/client/react';
+import { toast } from 'sonner';
+import { Button } from '@portal/components/ui/button';
+import { Card, CardAction, CardContent, CardHeader, CardTitle } from '@portal/components/ui/card';
+import { FieldError, FieldGroup, FieldLegend, FieldSet } from '@portal/components/ui/field';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@portal/components/ui/select';
+import { Save, Search } from 'lucide-react';
+import { Input } from '@portal/components/ui/input';
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemGroup,
+  ItemMedia,
+  ItemTitle,
+} from '@portal/components/ui/item';
+import { Avatar, AvatarFallback, AvatarImage } from '@portal/components/ui/avatar';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@portal/components/ui/tooltip';
+import { Skeleton } from '@portal/components/ui/skeleton';
+import { Spinner } from '@portal/components/ui/spinner';
+import { match } from 'ts-pattern';
 
 const FetchAuthor = graphql(`
   query fetchAuthor($id: String!, $novelSite: NovelSite!) {
@@ -94,94 +105,117 @@ export default function AuthorFetch() {
   // save
   const [saveDraftAuthor, { loading: saveLoading }] = useMutation(SaveDraftAuthor);
   return (
-    <Box
-      onSubmit={onSubmit}
-      sx={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', p: 2, gap: 2 }}
-      component="form"
-    >
-      <Card>
-        <CardHeader
-          title={t('filter')}
-          action={
-            <Box sx={{ display: 'flex', gap: 1 }}>
-              <Tooltip title={t('fetch')}>
-                <IconButton type="submit">
+    <form className="flex flex-col size-full p-4 gap-4" onSubmit={onSubmit}>
+      <Card className="gap-0">
+        <CardHeader>
+          <CardTitle>{t('filter')}</CardTitle>
+          <CardAction>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" type="submit">
                   <Search />
-                </IconButton>
-              </Tooltip>
-              <Tooltip title={t('save_draft')}>
-                <IconButton
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{t('fetch')}</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
                   disabled={!author || saveLoading}
                   onClick={async () => {
                     if (author) {
                       await saveDraftAuthor({ variables: { author: convertFetchToDraftAuthor(author) } });
-                      enqueueSnackbar(t('save_draft_success'), { variant: 'success' });
+                      toast.success(t('save_draft_success'));
                     }
                   }}
                 >
-                  <Save />
-                </IconButton>
-              </Tooltip>
-              <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={saveLoading}>
-                <CircularProgress color="inherit" />
-              </Backdrop>
-            </Box>
-          }
-        />
-        <CardContent sx={{ display: 'flex', gap: 1 }}>
-          <Controller
-            control={control}
-            name="novelSite"
-            rules={{ required: true }}
-            render={({ field, fieldState }) => (
-              <TextField
-                error={!!fieldState?.error?.message}
-                helperText={fieldState?.error?.message}
-                select
-                label={t('novel_site')}
-                required
-                fullWidth
-                {...field}
-              >
-                <MenuItem value={NovelSite.Jjwxc}>{t('jjwxc')}</MenuItem>
-                <MenuItem value={NovelSite.Qidian}>{t('qidian')}</MenuItem>
-              </TextField>
-            )}
-          />
-          <TextField required fullWidth label={t('author_id')} {...register('id', { required: true })} />
+                  {match(saveLoading)
+                    .with(true, () => <Spinner />)
+                    .otherwise(() => (
+                      <Save />
+                    ))}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{t('save_draft')}</TooltipContent>
+            </Tooltip>
+          </CardAction>
+        </CardHeader>
+        <CardContent>
+          <FieldGroup className="flex flex-row">
+            <Controller
+              control={control}
+              name="novelSite"
+              rules={{ required: true }}
+              render={({ field: { onChange, ...field }, fieldState }) => (
+                <FieldSet className="flex-1">
+                  <FieldLegend>{t('novel_site')}</FieldLegend>
+                  <Select required {...field} onValueChange={onChange}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectItem value={NovelSite.Jjwxc}>{t('jjwxc')}</SelectItem>
+                        <SelectItem value={NovelSite.Qidian}>{t('qidian')}</SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </FieldSet>
+              )}
+            />
+            <FieldSet className="flex-1">
+              <FieldLegend>{t('author_id')}</FieldLegend>
+              <Input required {...register('id', { required: true })} />
+            </FieldSet>
+          </FieldGroup>
         </CardContent>
       </Card>
       {loading && (
         <Card>
-          <Skeleton variant="text" sx={{ fontSize: '1rem' }} />
-          <Skeleton variant="circular" width={40} height={40} />
-          <Skeleton variant="rectangular" width={210} height={60} />
-          <Skeleton variant="rounded" width={210} height={60} />
-        </Card>
-      )}
-      {author && !loading && (
-        <Card sx={{ flex: '1 1 0', overflowY: 'auto' }}>
-          <CardHeader
-            avatar={<Avatar src={getImageUrl(author.image)} />}
-            title={author.name}
-            subheader={author.description}
-          />
-          <CardContent sx={{ gap: 2, display: 'flex', flexDirection: 'column' }}>
-            {author.novels.map((novel) => (
-              <Box key={novel.url} sx={{ display: 'flex', gap: 1 }}>
-                <Box src={getImageUrl(novel.image)} sx={{ display: 'inline-block', width: '100px' }} component="img" />
-                <Box sx={{ flex: '1 1 0' }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <Typography variant="h6">{novel.name}</Typography>
-                    <ChapterModal chapters={novel.chapters} />
-                  </Box>
-                  <Typography variant="body2">{novel.description}</Typography>
-                </Box>
-              </Box>
-            ))}
+          <CardContent className="flex items-center space-x-4">
+            <Skeleton className="h-12 w-12 rounded-full" />
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-[250px]" />
+              <Skeleton className="h-4 w-[200px]" />
+            </div>
           </CardContent>
         </Card>
       )}
-    </Box>
+      {author && !loading && (
+        <Card className="flex-[1_1_0] overflow-y-auto">
+          <Item className="pt-0 px-6">
+            <ItemMedia>
+              <Avatar className="size-10">
+                <AvatarImage src={getImageUrl(author.image)} />
+                <AvatarFallback>{author.name[0]}</AvatarFallback>
+              </Avatar>
+            </ItemMedia>
+            <ItemContent>
+              <ItemTitle>{author.name}</ItemTitle>
+              <ItemDescription>{author.description}</ItemDescription>
+            </ItemContent>
+          </Item>
+          <ItemGroup>
+            {author.novels.map((novel) => (
+              <Item key={novel.url}>
+                <ItemMedia variant="image">
+                  <img className="size-8 object-cover grayscale" src={getImageUrl(novel.image)} alt={novel.name} />
+                </ItemMedia>
+                <ItemContent>
+                  <ItemTitle>{novel.name}</ItemTitle>
+                  <ItemDescription>{novel.description}</ItemDescription>
+                </ItemContent>
+                <ItemActions>
+                  <ChapterModal chapters={novel.chapters} />
+                </ItemActions>
+              </Item>
+            ))}
+          </ItemGroup>
+        </Card>
+      )}
+    </form>
   );
 }
