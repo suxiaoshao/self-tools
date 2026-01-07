@@ -8,13 +8,13 @@
 import type { DetailsItem } from './types';
 import { match, P } from 'ts-pattern';
 import { cn } from '@portal/lib/utils';
-import { FieldDescription, FieldLegend } from '@portal/components/ui/field';
+import { FieldDescription, FieldLabel } from '@portal/components/ui/field';
 
 export default function Item({ label, value, span }: Omit<DetailsItem, 'key'>) {
   return (
     //  @ts-expect-error css variable property
     <div className={cn('flex flex-col col-span-(--span)')} style={{ '--span': span }}>
-      <FieldLegend>{label}</FieldLegend>
+      <FieldLabel>{label}</FieldLabel>
       {match(value)
         .with(P.string.or(P.nullish), (value) => <FieldDescription>{value ?? '-'}</FieldDescription>)
         .otherwise((value) => value)}

@@ -21,7 +21,7 @@ import {
 } from '@portal/components/ui/dialog';
 import { Button } from '@portal/components/ui/button';
 import useDialog from '@collections/hooks/useDialog';
-import { FieldGroup, FieldLegend, FieldSet } from '@portal/components/ui/field';
+import { FieldGroup, FieldLabel, Field } from '@portal/components/ui/field';
 import { Input } from '@portal/components/ui/input';
 
 const CreateAuthor = graphql(`
@@ -63,22 +63,22 @@ export default function CreateAuthorButton({ refetch }: CreateAuthorButtonProps)
         </DialogHeader>
         <form id="create-author-form" onSubmit={handleSubmit(onSubmit)}>
           <FieldGroup>
-            <FieldSet>
-              <FieldLegend>{t('author_name')}</FieldLegend>
+            <Field>
+              <FieldLabel>{t('author_name')}</FieldLabel>
               <Input required {...register('name', { required: true })} />
-            </FieldSet>
-            <FieldSet>
-              <FieldLegend>{t('avatar')}</FieldLegend>
+            </Field>
+            <Field>
+              <FieldLabel>{t('avatar')}</FieldLabel>
               <Input required {...register('avatar', { required: true })} />
-            </FieldSet>
-            <FieldSet>
-              <FieldLegend>{t('link')}</FieldLegend>
+            </Field>
+            <Field>
+              <FieldLabel>{t('link')}</FieldLabel>
               <Input required {...register('site', { required: true })} />
-            </FieldSet>
-            <FieldSet>
-              <FieldLegend>{t('description')}</FieldLegend>
+            </Field>
+            <Field>
+              <FieldLabel>{t('description')}</FieldLabel>
               <Input {...register('description', { required: true })} />
-            </FieldSet>
+            </Field>
           </FieldGroup>
         </form>
         <DialogFooter>

@@ -29,7 +29,7 @@ import type { GetNovelsQuery, GetNovelsQueryVariables } from '@bookmarks/gql/gra
 import { Button } from '@portal/components/ui/button';
 import { Card, CardContent } from '@portal/components/ui/card';
 import { Switch } from '@portal/components/ui/switch';
-import { FieldLegend, FieldSet } from '@portal/components/ui/field';
+import { FieldLabel, Field } from '@portal/components/ui/field';
 import { Avatar, AvatarImage } from '@portal/components/ui/avatar';
 
 const GetNovels = graphql(`
@@ -194,8 +194,8 @@ export default function NovelList() {
       <div className="flex-[1_1_0] overflow-y-auto p-4 pr-1 w-full">
         <Card className="mb-4 gap-0">
           <CardContent className="grid grid-cols-[auto_1fr] gap-y-2 gap-x-4">
-            <FieldSet>
-              <FieldLegend>{t('collection_whether_full_match')}</FieldLegend>
+            <Field>
+              <FieldLabel>{t('collection_whether_full_match')}</FieldLabel>
               <Controller
                 control={control}
                 name="collectionMatch.fullMatch"
@@ -203,19 +203,19 @@ export default function NovelList() {
                   <Switch checked={value} onCheckedChange={onChange} {...field} />
                 )}
               />
-            </FieldSet>
+            </Field>
 
-            <FieldSet>
-              <FieldLegend>{t('match_collections')}</FieldLegend>
+            <Field className="*:w-auto">
+              <FieldLabel>{t('match_collections')}</FieldLabel>
               <Controller
                 control={control}
                 name="collectionMatch.matchSet"
                 render={({ field }) => <CollectionMultiSelect {...field} />}
               />
-            </FieldSet>
+            </Field>
 
-            <FieldSet>
-              <FieldLegend>{t('tag_whether_full_match')}</FieldLegend>
+            <Field>
+              <FieldLabel>{t('tag_whether_full_match')}</FieldLabel>
               <Controller
                 control={control}
                 name="tagMatch.fullMatch"
@@ -223,16 +223,16 @@ export default function NovelList() {
                   <Switch checked={value} onCheckedChange={onChange} {...field} />
                 )}
               />
-            </FieldSet>
+            </Field>
 
-            <FieldSet>
-              <FieldLegend>{t('match_tags')}</FieldLegend>
+            <Field className="*:w-auto">
+              <FieldLabel>{t('match_tags')}</FieldLabel>
               <Controller
                 control={control}
                 name="tagMatch.matchSet"
                 render={({ field }) => <TagsSelect className="w-[400px]" {...field} />}
               />
-            </FieldSet>
+            </Field>
           </CardContent>
         </Card>
         <CustomTable className="w-full" tableInstance={tableInstance} page={page} />

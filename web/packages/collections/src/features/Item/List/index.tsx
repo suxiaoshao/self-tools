@@ -24,7 +24,7 @@ import CreateItemButton from '@collections/features/Collection/components/Create
 import { Button } from '@portal/components/ui/button';
 import { RefreshCcw } from 'lucide-react';
 import { Card, CardContent } from '@portal/components/ui/card';
-import { FieldLegend, FieldSet } from '@portal/components/ui/field';
+import { FieldLabel, Field } from '@portal/components/ui/field';
 import { Switch } from '@portal/components/ui/switch';
 
 const GetItems = graphql(`
@@ -127,8 +127,8 @@ export default function ItemList() {
       <div className="flex-[1_1_0] overflow-auto p-4 pr-2">
         <Card className="mb-4 gap-0">
           <CardContent className="grid grid-cols-[auto_1fr] gap-y-2 gap-x-4">
-            <FieldSet>
-              <FieldLegend id="collection-full-match">{t('collection_whether_full_match')}</FieldLegend>
+            <Field>
+              <FieldLabel id="collection-full-match">{t('collection_whether_full_match')}</FieldLabel>
               <Controller
                 control={control}
                 name="collectionMatch.fullMatch"
@@ -136,16 +136,16 @@ export default function ItemList() {
                   <Switch {...field} checked={value} onCheckedChange={onChange} />
                 )}
               />
-            </FieldSet>
+            </Field>
 
-            <FieldSet>
-              <FieldLegend>{t('match_collections')}</FieldLegend>
+            <Field>
+              <FieldLabel>{t('match_collections')}</FieldLabel>
               <Controller
                 control={control}
                 name="collectionMatch.matchSet"
                 render={({ field }) => <CollectionMultiSelect {...field} />}
               />
-            </FieldSet>
+            </Field>
           </CardContent>
         </Card>
         <CustomTable className="overflow-hidden flex-none max-h-none" tableInstance={tableInstance} page={page} />

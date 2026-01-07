@@ -16,7 +16,7 @@ import {
   DialogTrigger,
 } from '@portal/components/ui/dialog';
 import { Button } from '@portal/components/ui/button';
-import { Field, FieldError, FieldGroup, FieldLabel, FieldLegend, FieldSet } from '@portal/components/ui/field';
+import { FieldError, FieldGroup, FieldLabel, Field } from '@portal/components/ui/field';
 import { RadioGroup, RadioGroupItem } from '@portal/components/ui/radio-group';
 import { Input } from '@portal/components/ui/input';
 import useDialog from '@collections/hooks/useDialog';
@@ -71,8 +71,8 @@ export default function ThemeDrawerItem() {
               name="colorSetting"
               control={control}
               render={({ field, fieldState }) => (
-                <FieldSet>
-                  <FieldLegend>{t('select_mode')}</FieldLegend>
+                <Field>
+                  <FieldLabel>{t('select_mode')}</FieldLabel>
                   <RadioGroup
                     {...field}
                     onValueChange={field.onChange}
@@ -98,15 +98,15 @@ export default function ThemeDrawerItem() {
                       </FieldLabel>
                     </Field>
                   </RadioGroup>
-                </FieldSet>
+                </Field>
               )}
             />
 
-            <FieldSet>
-              <FieldLegend>{t('theme_color')}</FieldLegend>
+            <Field>
+              <FieldLabel>{t('theme_color')}</FieldLabel>
               <Input type="color" {...register('color')} />
               {errors.color?.message && <FieldError errors={[errors.color]} />}
-            </FieldSet>
+            </Field>
           </FieldGroup>
         </form>
         <DialogFooter>

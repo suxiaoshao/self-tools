@@ -15,7 +15,7 @@ use scraper::{ElementRef, Html, Selector};
 use std::{collections::HashSet, sync::LazyLock};
 
 static SELECTOR_AUTHOR_NAME: LazyLock<Selector> = LazyLock::new(|| {
-    Selector::parse("#appContentWrap > div > div > div > div[class*=authorName] > h1").unwrap()
+    Selector::parse("#appContentWrap > div > div > div > div[class*=authorName] > h2").unwrap()
 });
 static SELECTOR_AUTHOR_DESCRIPTION: LazyLock<Selector> =
     LazyLock::new(|| Selector::parse("p[class*=\"authorDesc\"]").unwrap());

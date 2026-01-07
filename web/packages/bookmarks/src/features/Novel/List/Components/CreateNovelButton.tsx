@@ -23,7 +23,7 @@ import {
 } from '@portal/components/ui/dialog';
 import useDialog from '@collections/hooks/useDialog';
 import { Button } from '@portal/components/ui/button';
-import { FieldGroup, FieldLegend, FieldSet } from '@portal/components/ui/field';
+import { FieldGroup, FieldLabel, Field } from '@portal/components/ui/field';
 import { Input } from '@portal/components/ui/input';
 
 const CreateNovel = graphql(`
@@ -65,30 +65,30 @@ export default function CreateNovelButton({ refetch }: CreateNovelButtonProps) {
         </DialogHeader>
         <form className="flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)}>
           <FieldGroup>
-            <FieldSet>
-              <FieldLegend>{t('novel_name')}</FieldLegend>
+            <Field>
+              <FieldLabel>{t('novel_name')}</FieldLabel>
               <Input required {...register('name', { required: true })} />
-            </FieldSet>
-            <FieldSet>
-              <FieldLegend>{t('avatar')}</FieldLegend>
+            </Field>
+            <Field>
+              <FieldLabel>{t('avatar')}</FieldLabel>
               <Input required {...register('avatar', { required: true })} />
-            </FieldSet>
-            <FieldSet>
-              <FieldLegend>{t('description')}</FieldLegend>
+            </Field>
+            <Field>
+              <FieldLabel>{t('description')}</FieldLabel>
               <Input {...register('description')} />
-            </FieldSet>
-            <FieldSet>
-              <FieldLegend>{t('link')}</FieldLegend>
+            </Field>
+            <Field>
+              <FieldLabel>{t('link')}</FieldLabel>
               <Input required {...register('site', { required: true })} />
-            </FieldSet>
+            </Field>
             <Controller
               control={control}
               name="tags"
               render={({ field }) => (
-                <FieldSet className="w-full">
-                  <FieldLegend>{t('tags')}</FieldLegend>
+                <Field className="w-full">
+                  <FieldLabel>{t('tags')}</FieldLabel>
                   <TagsSelect {...field} />
-                </FieldSet>
+                </Field>
               )}
             />
             <Controller
@@ -96,10 +96,10 @@ export default function CreateNovelButton({ refetch }: CreateNovelButtonProps) {
               control={control}
               name="authorId"
               render={({ field }) => (
-                <FieldSet className="w-full">
-                  <FieldLegend>{t('tags')}</FieldLegend>
+                <Field className="w-full">
+                  <FieldLabel>{t('tags')}</FieldLabel>
                   <AuthorSelect className="w-full" {...field} />
-                </FieldSet>
+                </Field>
               )}
             />
           </FieldGroup>

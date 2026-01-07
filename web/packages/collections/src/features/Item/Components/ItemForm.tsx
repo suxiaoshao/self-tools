@@ -9,7 +9,7 @@ import CollectionMultiSelect from '@collections/components/CollectionMultiSelect
 import { array, type InferInput, integer, number, object, pipe, string } from 'valibot';
 import { DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@portal/components/ui/dialog';
 import { Button } from '@portal/components/ui/button';
-import { FieldGroup, FieldLegend, FieldSet } from '@portal/components/ui/field';
+import { FieldGroup, FieldLabel, Field } from '@portal/components/ui/field';
 import { Input } from '@portal/components/ui/input';
 import { ToggleGroup, ToggleGroupItem } from '@portal/components/ui/toggle-group';
 
@@ -60,26 +60,26 @@ export default function ItemForm({ afterSubmit, handleClose, mode, initialValues
         </DialogTitle>
       </DialogHeader>
       <FieldGroup className="w-full">
-        <FieldSet>
-          <FieldLegend>{t('item_name')}</FieldLegend>
+        <Field>
+          <FieldLabel>{t('item_name')}</FieldLabel>
           <Input required {...register('name', { required: true })} />
-        </FieldSet>
-        <FieldSet>
-          <FieldLegend>{t('match_collections')}</FieldLegend>
+        </Field>
+        <Field>
+          <FieldLabel>{t('match_collections')}</FieldLabel>
           <Controller
             control={control}
             name="collectionIds"
             render={({ field }) => <CollectionMultiSelect {...field} />}
           />
-        </FieldSet>
+        </Field>
 
         <Controller
           control={control}
           name="content"
           rules={{ required: true }}
           render={({ field }) => (
-            <FieldSet>
-              <FieldLegend className="w-full flex items-center justify-between">
+            <Field>
+              <FieldLabel className="w-full flex items-center justify-between">
                 <span>{t('content')}</span>
                 <ToggleGroup type="single" variant="outline" value={alignment} onValueChange={handleAlignment}>
                   <ToggleGroupItem value="edit">
@@ -89,7 +89,7 @@ export default function ItemForm({ afterSubmit, handleClose, mode, initialValues
                     <View />
                   </ToggleGroupItem>
                 </ToggleGroup>
-              </FieldLegend>
+              </FieldLabel>
               {match(alignment)
                 .with('edit', () => (
                   <CustomEdit wordWrap="on" className="w-full h-[500px] rounded-lg" language="markdown" {...field} />
@@ -100,7 +100,7 @@ export default function ItemForm({ afterSubmit, handleClose, mode, initialValues
                     value={field.value ?? ''}
                   />
                 ))}
-            </FieldSet>
+            </Field>
           )}
         />
       </FieldGroup>
