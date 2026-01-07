@@ -15,7 +15,7 @@ import { finishAuthentication, finishRegister, responseThen, startAuthentication
 import useTitle from '@bookmarks/hooks/useTitle';
 import { Card, CardContent, CardHeader, CardTitle } from '@portal/components/ui/card';
 import { Input } from '@portal/components/ui/input';
-import { FieldGroup, FieldLegend, FieldSet } from '@portal/components/ui/field';
+import { FieldGroup, FieldLabel, Field } from '@portal/components/ui/field';
 import { Button } from '@portal/components/ui/button';
 import { toast } from 'sonner';
 
@@ -86,12 +86,12 @@ export default function Login() {
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} noValidate>
             <FieldGroup>
-              <FieldSet>
-                <FieldLegend>{t('username')}</FieldLegend>
+              <Field>
+                <FieldLabel>{t('username')}</FieldLabel>
                 <Input required id="username" autoComplete="username" {...register('username', { required: true })} />
-              </FieldSet>
-              <FieldSet>
-                <FieldLegend>{t('password')}</FieldLegend>
+              </Field>
+              <Field>
+                <FieldLabel>{t('password')}</FieldLabel>
                 <Input
                   required
                   id="password"
@@ -99,23 +99,23 @@ export default function Login() {
                   autoComplete="current-password"
                   {...register('password', { required: true })}
                 />
-              </FieldSet>
+              </Field>
             </FieldGroup>
 
             <FieldGroup className="gap-4 mt-4">
-              <FieldSet>
+              <Field>
                 <Button type="submit">{t('login')}</Button>
-              </FieldSet>
-              <FieldSet>
+              </Field>
+              <Field>
                 <Button variant="secondary" onClick={handleSubmit(onClickWebauthn)}>
                   {t('login_and_register_webauthn')}
                 </Button>
-              </FieldSet>
-              <FieldSet>
+              </Field>
+              <Field>
                 <Button variant="secondary" onClick={onClickWebauthn2}>
                   {t('login_with_webauthn')}
                 </Button>
-              </FieldSet>
+              </Field>
             </FieldGroup>
           </form>
         </CardContent>

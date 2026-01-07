@@ -20,7 +20,7 @@ import {
 } from '@portal/components/ui/dialog';
 import { Button } from '@portal/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@portal/components/ui/tooltip';
-import { FieldError, FieldGroup, FieldLabel, FieldSet } from '@portal/components/ui/field';
+import { FieldError, FieldGroup, FieldLabel, Field } from '@portal/components/ui/field';
 import { Spinner } from '@portal/components/ui/spinner';
 
 const CreateCommentSchema = object({
@@ -99,11 +99,11 @@ export default function CommentEdit({ novelId, refetch, mode, initContent }: Com
               name="content"
               control={control}
               render={({ field, fieldState }) => (
-                <FieldSet>
+                <Field>
                   <FieldLabel>{t('content')}</FieldLabel>
                   <CustomEdit wordWrap="on" className="h-[500px] rounded-lg" language="markdown" {...field} />
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                </FieldSet>
+                </Field>
               )}
             />
           </FieldGroup>

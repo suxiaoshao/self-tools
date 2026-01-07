@@ -17,7 +17,7 @@ import {
   DialogTrigger,
 } from '@portal/components/ui/dialog';
 import { Button } from '@portal/components/ui/button';
-import { Field, FieldError, FieldGroup, FieldLabel, FieldLegend, FieldSet } from '@portal/components/ui/field';
+import { FieldError, FieldGroup, FieldLabel, Field } from '@portal/components/ui/field';
 import { RadioGroup, RadioGroupItem } from '@portal/components/ui/radio-group';
 
 const createColorSchema = object({
@@ -75,8 +75,8 @@ export default function I18nDrawerItem() {
               control={control}
               rules={{ required: true }}
               render={({ field, fieldState }) => (
-                <FieldSet>
-                  <FieldLegend>{t('select_mode')}</FieldLegend>
+                <Field>
+                  <FieldLabel>{t('select_mode')}</FieldLabel>
                   <RadioGroup
                     aria-labelledby="color-setting"
                     {...field}
@@ -98,7 +98,7 @@ export default function I18nDrawerItem() {
                     </Field>
                   </RadioGroup>
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                </FieldSet>
+                </Field>
               )}
             />
 
@@ -108,8 +108,8 @@ export default function I18nDrawerItem() {
                 control={control}
                 rules={{ required: true }}
                 render={({ field, fieldState }) => (
-                  <FieldSet>
-                    <FieldLegend id="color-setting">{t('select_language')}</FieldLegend>
+                  <Field>
+                    <FieldLabel id="color-setting">{t('select_language')}</FieldLabel>
                     <RadioGroup
                       aria-labelledby="color-setting"
                       {...field}
@@ -131,7 +131,7 @@ export default function I18nDrawerItem() {
                       </Field>
                     </RadioGroup>
                     {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                  </FieldSet>
+                  </Field>
                 )}
               />
             )}

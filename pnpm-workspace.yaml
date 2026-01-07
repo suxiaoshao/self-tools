@@ -1,4 +1,7 @@
 packages:
-  # 所有在 packages/ 和 components/ 子目录下的 package
-  - 'web/packages/**'
-  - 'web/common/**'
+  - web/packages/**
+  - web/common/**
+
+onlyBuiltDependencies:
+  - '@swc/core'
+  - core-js

@@ -13,7 +13,7 @@
     "details": "workspace:^",
     "edit": "workspace:^",
     "i18n": "workspace:^",
-    "markdown-to-jsx": "^8.0.0",
+    "markdown-to-jsx": "^9.5.0",
     "prism-themes": "^1.9.0",
     "prismjs": "^1.30.0",
     "time": "workspace:^",

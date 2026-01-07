@@ -11,7 +11,7 @@ import {
   DialogTitle,
 } from '@portal/components/ui/dialog';
 import { Button } from '@portal/components/ui/button';
-import { FieldError, FieldGroup, FieldLegend, FieldSet } from '@portal/components/ui/field';
+import { FieldError, FieldGroup, FieldLabel, Field } from '@portal/components/ui/field';
 import { Input } from '@portal/components/ui/input';
 import { valibotResolver } from '@hookform/resolvers/valibot';
 import { nullish, object, string } from 'valibot';
@@ -64,15 +64,15 @@ export default function CollectionForm({
             </DialogTitle>
           </DialogHeader>
           <FieldGroup>
-            <FieldSet>
-              <FieldLegend>{t('collection_name')}</FieldLegend>
+            <Field>
+              <FieldLabel>{t('collection_name')}</FieldLabel>
               <Input required {...register('name', { required: true })} />
               {errors.name?.message && <FieldError errors={[errors.name]} />}
-            </FieldSet>
-            <FieldSet>
-              <FieldLegend>{t('description')}</FieldLegend>
+            </Field>
+            <Field>
+              <FieldLabel>{t('description')}</FieldLabel>
               <Input {...register('description')} />
-            </FieldSet>
+            </Field>
           </FieldGroup>
 
           <DialogFooter>

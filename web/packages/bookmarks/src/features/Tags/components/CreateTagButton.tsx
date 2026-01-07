@@ -13,7 +13,7 @@ import {
 } from '@portal/components/ui/dialog';
 import useDialog from '@collections/hooks/useDialog';
 import { Button } from '@portal/components/ui/button';
-import { FieldError, FieldGroup, FieldLegend, FieldSet } from '@portal/components/ui/field';
+import { FieldError, FieldGroup, FieldLabel, Field } from '@portal/components/ui/field';
 import { Input } from '@portal/components/ui/input';
 import {
   Select,
@@ -75,18 +75,18 @@ export default function CreateTagButton({ refetch }: CreateTagButtonProps) {
         <DialogTitle>{t('create_tag')}</DialogTitle>
         <form className="flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)}>
           <FieldGroup>
-            <FieldSet>
-              <FieldLegend>{t('tag_name')}</FieldLegend>
+            <Field>
+              <FieldLabel>{t('tag_name')}</FieldLabel>
               <Input {...register('name', { required: true })} />
               <FieldError errors={[errors.name]} />
-            </FieldSet>
+            </Field>
             <Controller
               control={control}
               name="site"
               rules={{ required: true }}
               render={({ field: { onChange, ...field }, fieldState }) => (
-                <FieldSet className="flex-1">
-                  <FieldLegend>{t('novel_site')}</FieldLegend>
+                <Field className="flex-1">
+                  <FieldLabel>{t('novel_site')}</FieldLabel>
                   <Select required {...field} onValueChange={onChange}>
                     <SelectTrigger className="w-full">
                       <SelectValue />
@@ -99,14 +99,14 @@ export default function CreateTagButton({ refetch }: CreateTagButtonProps) {
                     </SelectContent>
                   </Select>
                   <FieldError errors={[fieldState.error]} />
-                </FieldSet>
+                </Field>
               )}
             />
-            <FieldSet>
-              <FieldLegend>{t('tag_site_id')}</FieldLegend>
+            <Field>
+              <FieldLabel>{t('tag_site_id')}</FieldLabel>
               <Input {...register('siteId', { required: true })} />
               <FieldError errors={[errors.siteId]} />
-            </FieldSet>
+            </Field>
           </FieldGroup>
 
           <DialogFooter>

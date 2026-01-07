@@ -4,7 +4,7 @@ import type { CreateCollectionMutationVariables } from '../../../gql/graphql';
 import { match } from 'ts-pattern';
 import { DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@portal/components/ui/dialog';
 import { Button } from '@portal/components/ui/button';
-import { FieldGroup, FieldLegend, FieldSet } from '@portal/components/ui/field';
+import { FieldGroup, FieldLabel, Field } from '@portal/components/ui/field';
 import { Input } from '@portal/components/ui/input';
 export type CollectionFormData = Omit<CreateCollectionMutationVariables, 'parentId'>;
 export interface CollectFormProps {
@@ -36,14 +36,14 @@ export default function CollectionForm({ afterSubmit, handleClose, mode = 'creat
       </DialogHeader>
       <form onSubmit={handleSubmit(onSubmit)}>
         <FieldGroup>
-          <FieldSet>
-            <FieldLegend>{t('collection_name')}</FieldLegend>
+          <Field>
+            <FieldLabel>{t('collection_name')}</FieldLabel>
             <Input required {...register('name', { required: true })} />
-          </FieldSet>
-          <FieldSet>
-            <FieldLegend>{t('description')}</FieldLegend>
+          </Field>
+          <Field>
+            <FieldLabel>{t('description')}</FieldLabel>
             <Input {...register('description', { setValueAs: (value) => value || null })} />
-          </FieldSet>
+          </Field>
         </FieldGroup>
       </form>
 

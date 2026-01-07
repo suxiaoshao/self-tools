@@ -33,7 +33,7 @@ import { Button } from '@portal/components/ui/button';
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from '@portal/components/ui/card';
 import { Skeleton } from '@portal/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@portal/components/ui/tooltip';
-import { FieldError, FieldGroup, FieldLegend, FieldSet } from '@portal/components/ui/field';
+import { FieldError, FieldGroup, FieldLabel, Field } from '@portal/components/ui/field';
 import {
   Select,
   SelectContent,
@@ -238,8 +238,8 @@ export default function NovelFetch() {
               name="novelSite"
               rules={{ required: true }}
               render={({ field: { onChange, ...field }, fieldState }) => (
-                <FieldSet className="flex-1">
-                  <FieldLegend>{t('novel_site')}</FieldLegend>
+                <Field className="flex-1">
+                  <FieldLabel>{t('novel_site')}</FieldLabel>
                   <Select required {...field} onValueChange={onChange}>
                     <SelectTrigger className="w-full">
                       <SelectValue />
@@ -252,13 +252,13 @@ export default function NovelFetch() {
                     </SelectContent>
                   </Select>
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                </FieldSet>
+                </Field>
               )}
             />
-            <FieldSet className="flex-1">
-              <FieldLegend>{t('author_id')}</FieldLegend>
+            <Field className="flex-1">
+              <FieldLabel>{t('author_id')}</FieldLabel>
               <Input required {...register('id', { required: true })} />
-            </FieldSet>
+            </Field>
           </FieldGroup>
         </CardContent>
       </Card>
