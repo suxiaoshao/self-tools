@@ -1,0 +1,48 @@
+use bollard::{
+    body_full,
+    query_parameters::BuildImageOptionsBuilder,
+    Docker,
+};
+use futures_util::TryStreamExt;
+use tracing::{event, Level};
+
+use crate::{
+    TaskResult,
+    context::{build_context_tar, workspace_root},
+};
+
+pub async fn run() -> TaskResult {
+    let root = workspace_root();
+    let docker = Docker::connect_with_local_defaults()?;
+    let context = build_context_tar(&root)?;
+
+    let builds = [
+        (
+            "./docker/server/collections.Dockerfile",
+            "suxiaoshao/collections",
+        ),
+        ("./docker/server/auth.Dockerfile", "suxiaoshao/auth"),
+        ("./docker/server/login.Dockerfile", "suxiaoshao/login"),
+        (
+            "./docker/server/bookmarks.Dockerfile",
+            "suxiaoshao/bookmarks",
+        ),
+    ];
+
+    for (dockerfile, image) in builds {
+        event!(Level::INFO, dockerfile, image, "building image");
+
+        let options = BuildImageOptionsBuilder::new()
+            .dockerfile(dockerfile.trim_start_matches("./"))
+            .t(image)
+            .rm(true)
+            .build();
+
+        docker
+            .build_image(options, None, Some(body_full(context.clone().into())))
+            .try_collect::<Vec<_>>()
+            .await?;
+    }
+
+    Ok(())
+}
