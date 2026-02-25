@@ -1,3 +1,4 @@
+use std::path::PathBuf;
 use std::{thread, time::Duration};
 
 use tokio::runtime::Builder as RuntimeBuilder;
@@ -12,11 +13,15 @@ pub use error::XtaskError;
 
 pub type TaskResult = Result<(), XtaskError>;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub enum Task {
     Build,
     Compose,
     Lint,
+    Cert {
+        output_dir: PathBuf,
+        domains: Vec<String>,
+    },
 }
 
 pub fn run(task: Task) -> TaskResult {
@@ -24,6 +29,10 @@ pub fn run(task: Task) -> TaskResult {
         Task::Build => block_on(tasks::build::run()),
         Task::Compose => run_compose_with_retry(),
         Task::Lint => tasks::lint::run(),
+        Task::Cert {
+            output_dir,
+            domains,
+        } => tasks::cert::run(output_dir, domains),
     }
 }
 

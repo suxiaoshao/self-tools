@@ -1,3 +1,4 @@
+use std::path::PathBuf;
 use std::process;
 
 use clap::{Parser, Subcommand};
@@ -19,6 +20,12 @@ enum Commands {
     Build,
     Compose,
     Lint,
+    Cert {
+        #[arg(long = "out-dir", default_value = "docker/compose/certs")]
+        out_dir: PathBuf,
+        #[arg(long = "domain", value_name = "DOMAIN")]
+        domains: Vec<String>,
+    },
 }
 
 fn main() {
@@ -31,11 +38,15 @@ fn main() {
         Commands::Build => Task::Build,
         Commands::Compose => Task::Compose,
         Commands::Lint => Task::Lint,
+        Commands::Cert { out_dir, domains } => Task::Cert {
+            output_dir: out_dir,
+            domains,
+        },
     };
 
     event!(Level::INFO, ?task, "xtask start");
 
-    if let Err(err) = run(task) {
+    if let Err(err) = run(task.clone()) {
         event!(Level::ERROR, error = %err, "xtask failed");
         process::exit(1);
     }
