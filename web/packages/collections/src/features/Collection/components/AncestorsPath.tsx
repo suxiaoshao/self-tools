@@ -41,22 +41,26 @@ export default function AncestorsPath() {
         <Breadcrumb className="mb-2">
           <BreadcrumbList>
             <BreadcrumbItem>
-              <BreadcrumbLink asChild>
-                <Link
-                  to={{
-                    search: createSearchParams({}).toString(),
-                  }}
-                >
-                  {t('root')}
-                </Link>
+              <BreadcrumbLink
+                render={
+                  <Link
+                    to={{
+                      search: createSearchParams({}).toString(),
+                    }}
+                  />
+                }
+              >
+                {t('root')}
               </BreadcrumbLink>
             </BreadcrumbItem>
             {getCollection.ancestors.map(({ id, name }) => (
               <Fragment key={id}>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
-                  <BreadcrumbLink asChild>
-                    <Link to={{ search: createSearchParams({ parentId: id.toString() }).toString() }}>{name}</Link>
+                  <BreadcrumbLink
+                    render={<Link to={{ search: createSearchParams({ parentId: id.toString() }).toString() }} />}
+                  >
+                    {name}
                   </BreadcrumbLink>
                 </BreadcrumbItem>
               </Fragment>

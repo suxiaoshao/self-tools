@@ -48,9 +48,7 @@ export default function CollectionForm({ afterSubmit, handleClose, mode = 'creat
       </form>
 
       <DialogFooter>
-        <DialogClose asChild>
-          <Button>{t('cancel')}</Button>
-        </DialogClose>
+        <DialogClose render={<Button />}>{t('cancel')}</DialogClose>
         <Button
           onClick={() => {
             handleSubmit(onSubmit)();

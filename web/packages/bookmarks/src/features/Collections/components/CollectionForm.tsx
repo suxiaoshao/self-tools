@@ -76,9 +76,7 @@ export default function CollectionForm({
           </FieldGroup>
 
           <DialogFooter>
-            <DialogClose asChild>
-              <Button variant="secondary">{t('cancel')}</Button>
-            </DialogClose>
+            <DialogClose render={<Button variant="secondary" />}>{t('cancel')}</DialogClose>
             <Button
               onClick={() => {
                 handleSubmit(onSubmit)();

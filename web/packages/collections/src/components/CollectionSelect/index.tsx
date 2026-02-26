@@ -64,11 +64,9 @@ function CollectionItem({ value: { path, id, children }, selected, setSelected }
   return (
     <Collapsible defaultOpen className="group/collapsible">
       <SidebarMenuItem>
-        <CollapsibleTrigger asChild>
-          <SidebarMenuButton onClick={handleSelect} isActive={id === selected}>
-            {path}
-            <ChevronRight className="transition-transform ml-auto group-data-[state=open]/collapsible:rotate-90" />
-          </SidebarMenuButton>
+        <CollapsibleTrigger render={<SidebarMenuButton onClick={handleSelect} isActive={id === selected} />}>
+          {path}
+          <ChevronRight className="transition-transform ml-auto group-data-[state=open]/collapsible:rotate-90" />
         </CollapsibleTrigger>
       </SidebarMenuItem>
       <CollectionList selected={selected} setSelected={setSelected}>

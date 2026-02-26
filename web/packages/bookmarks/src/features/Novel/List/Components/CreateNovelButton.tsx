@@ -56,9 +56,7 @@ export default function CreateNovelButton({ refetch }: CreateNovelButtonProps) {
   const t = useI18n();
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        <Button>{t('add_novel')}</Button>
-      </DialogTrigger>
+      <DialogTrigger render={<Button />}>{t('add_novel')}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t('create_novel')}</DialogTitle>
@@ -97,18 +95,14 @@ export default function CreateNovelButton({ refetch }: CreateNovelButtonProps) {
               name="authorId"
               render={({ field }) => (
                 <Field className="w-full">
-                  <FieldLabel>{t('tags')}</FieldLabel>
+                  <FieldLabel>{t('author')}</FieldLabel>
                   <AuthorSelect className="w-full" {...field} />
                 </Field>
               )}
             />
           </FieldGroup>
           <DialogFooter>
-            <DialogClose>
-              <Button type="button" variant="secondary">
-                {t('cancel')}
-              </Button>
-            </DialogClose>
+            <DialogClose render={<Button type="button" variant="secondary" />}>{t('cancel')}</DialogClose>
             <Button type="submit">{t('submit')}</Button>
           </DialogFooter>
         </form>

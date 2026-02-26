@@ -57,11 +57,8 @@ export default function TablePagination({
         </div>
         <div className="flex w-fit items-center justify-center text-sm font-medium gap-2">
           <Popover open={open} onOpenChange={handleOpenChange}>
-            <PopoverTrigger asChild>
-              {/* oxlint-disable-next-line role-has-required-aria-props */}
-              <Button variant="outline" className="h-8 px-3" role="combobox">
-                {pageIndex}
-              </Button>
+            <PopoverTrigger render={<Button variant="outline" className="h-8 px-3" role="combobox" />}>
+              {pageIndex}
             </PopoverTrigger>
             <PopoverContent className="w-[150px] p-0">
               <Command>

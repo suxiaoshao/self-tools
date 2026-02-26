@@ -23,11 +23,11 @@ export type Actions =
 export function TableActions({ children }: TableActionsProps) {
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="data-[state=open]:bg-muted size-8">
-          <MoreHorizontal />
-          <span className="sr-only">Open menu</span>
-        </Button>
+      <DropdownMenuTrigger
+        render={<Button variant="ghost" size="icon" className="data-[state=open]:bg-muted size-8" />}
+      >
+        <MoreHorizontal />
+        <span className="sr-only">Open menu</span>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-40">
         {children().map((item) =>

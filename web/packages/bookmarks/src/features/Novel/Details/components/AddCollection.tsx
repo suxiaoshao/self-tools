@@ -57,10 +57,8 @@ export default function AddCollection({ novelId, refetch }: AddCollectionProps) 
   });
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        <Button variant="ghost" size="icon">
-          <Plus />
-        </Button>
+      <DialogTrigger render={<Button variant="ghost" size="icon" />}>
+        <Plus />
       </DialogTrigger>
       <DialogContent>
         <form onSubmit={onSubmit}>
@@ -91,9 +89,7 @@ export default function AddCollection({ novelId, refetch }: AddCollectionProps) 
             .otherwise(() => null)}
 
           <DialogFooter>
-            <DialogClose asChild>
-              <Button>{t('cancel')}</Button>
-            </DialogClose>
+            <DialogClose render={<Button />}>{t('cancel')}</DialogClose>
             <Button type="submit">{t('submit')}</Button>
           </DialogFooter>
         </form>

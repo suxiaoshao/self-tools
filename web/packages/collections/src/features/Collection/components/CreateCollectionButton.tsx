@@ -33,9 +33,7 @@ export default function CreateCollectionButton({ refetch }: CreateCollectButtonP
   const t = useI18n();
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        <Button color="primary">{t('add_collection')}</Button>
-      </DialogTrigger>
+      <DialogTrigger render={<Button />}>{t('add_collection')}</DialogTrigger>
       <CollectionForm handleClose={handleClose} afterSubmit={afterSubmit} />
     </Dialog>
   );

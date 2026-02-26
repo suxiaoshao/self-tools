@@ -137,10 +137,8 @@ function InnerCollectionSelect({ allCollections, onChange, value }: InnerCollect
         </Badge>
       ))}
       <Popover open={open} onOpenChange={handleOpenChange}>
-        <PopoverTrigger asChild>
-          <Button variant="ghost" size="icon-sm" className="rounded-full">
-            <Plus />
-          </Button>
+        <PopoverTrigger render={<Button variant="ghost" size="icon-sm" className="rounded-full" />}>
+          <Plus />
         </PopoverTrigger>
         <PopoverContent>
           <Controller

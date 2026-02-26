@@ -21,24 +21,20 @@ export default function RouterItem({ matchPaths, toPath, text, icon, children, s
   if (subItem) {
     return (
       <SidebarMenuSubItem {...props}>
-        <SidebarMenuSubButton asChild isActive={selected}>
-          <Link to={toPath}>
-            {icon}
-            <span>{text}</span>
-            {children}
-          </Link>
+        <SidebarMenuSubButton isActive={selected} render={<Link to={toPath} />}>
+          {icon}
+          <span>{text}</span>
+          {children}
         </SidebarMenuSubButton>
       </SidebarMenuSubItem>
     );
   }
   return (
     <SidebarMenuItem {...props}>
-      <SidebarMenuButton isActive={selected} asChild>
-        <Link to={toPath}>
-          {icon}
-          <span>{text}</span>
-          {children}
-        </Link>
+      <SidebarMenuButton isActive={selected} render={<Link to={toPath} />}>
+        {icon}
+        <span>{text}</span>
+        {children}
       </SidebarMenuButton>
     </SidebarMenuItem>
   );

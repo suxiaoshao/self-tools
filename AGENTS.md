@@ -21,6 +21,12 @@
 - `bookmarks` 依赖环境变量 `BOOKMARKS_PG`，`collections` 依赖 `COLLECTIONS_PG`。
 - 前端存在硬编码线上域名（`sushao.top` 相关）。
 
+## shadcn/ui 查询规则（必须遵循）
+
+- 遇到任何 `shadcn/ui` 相关问题（组件选型、API 用法、迁移、CLI、registry），先查：`https://ui.shadcn.com/llms.txt`。
+- `llms.txt` 作为 shadcn/ui 组件与文档入口索引；应先从其中定位目标组件文档，再进行实现或修改。
+- 若本地实现与文档不一致，优先按文档修正，并在说明中注明参考链接。
+
 ## 推荐工作流
 
 1. 先阅读目标包的入口与配置：

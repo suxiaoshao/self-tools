@@ -65,13 +65,11 @@ export default function ChapterBatchUpdate({ chapters, novelId, refetch }: Chapt
     <Dialog open={open} onOpenChange={handleOpenChange}>
       {t('is_read')}
       <Tooltip>
-        <TooltipTrigger asChild>
-          <DialogTrigger asChild>
-            <Button size="icon" variant="ghost">
-              <Edit fontSize="small" />
-            </Button>
-          </DialogTrigger>
-        </TooltipTrigger>
+        <DialogTrigger render={<Button size="icon" variant="ghost" />}>
+          <TooltipTrigger render={<span />}>
+            <Edit fontSize="small" />
+          </TooltipTrigger>
+        </DialogTrigger>
         <TooltipContent>{t('batch_update')}</TooltipContent>
       </Tooltip>
       <DialogContent className="px-0 sm:max-w-sm">
@@ -79,7 +77,7 @@ export default function ChapterBatchUpdate({ chapters, novelId, refetch }: Chapt
           <DialogTitle className="gap-3 flex">
             {t('batch_update')}
             <Tooltip>
-              <TooltipTrigger asChild>
+              <TooltipTrigger render={<span />}>
                 <Checkbox checked={checked.length === chapters.length} onCheckedChange={handleToggleAll} />
               </TooltipTrigger>
               <TooltipContent>
@@ -113,9 +111,7 @@ export default function ChapterBatchUpdate({ chapters, novelId, refetch }: Chapt
           ))}
         </li>
         <DialogFooter className="px-6">
-          <DialogClose asChild>
-            <Button variant="secondary">{t('cancel')}</Button>
-          </DialogClose>
+          <DialogClose render={<Button variant="secondary" />}>{t('cancel')}</DialogClose>
           <Button onClick={handleSubmit} disabled={addLoading || deleteLoading}>
             {t('submit')}
           </Button>

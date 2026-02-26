@@ -52,13 +52,11 @@ export default function ThemeDrawerItem() {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTrigger asChild>
-        <SidebarMenuItem>
-          <SidebarMenuButton>
-            <Palette />
-            <span>{t('theme_setting')}</span>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
+      <DialogTrigger render={<SidebarMenuItem />}>
+        <SidebarMenuButton>
+          <Palette />
+          <span>{t('theme_setting')}</span>
+        </SidebarMenuButton>
       </DialogTrigger>
 
       <DialogContent>
@@ -110,9 +108,7 @@ export default function ThemeDrawerItem() {
           </FieldGroup>
         </form>
         <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="secondary">{t('cancel')}</Button>
-          </DialogClose>
+          <DialogClose render={<Button variant="secondary" />}>{t('cancel')}</DialogClose>
           <Button type="submit" form="theme-form">
             {t('submit')}
           </Button>

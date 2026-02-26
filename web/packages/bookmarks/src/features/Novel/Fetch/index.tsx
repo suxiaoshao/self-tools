@@ -199,32 +199,32 @@ export default function NovelFetch() {
           <CardAction>
             <div className="flex gap-2">
               <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" type="submit">
-                    <Search />
-                  </Button>
+                <TooltipTrigger render={<Button variant="ghost" size="icon" type="submit" />}>
+                  <Search />
                 </TooltipTrigger>
                 <TooltipContent>{t('fetch')}</TooltipContent>
               </Tooltip>
               <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    disabled={!novel || saveLoading}
-                    onClick={async () => {
-                      if (novel) {
-                        await saveDraftNovel({ variables: { novel: convertFetchToDraftNovel(novel) } });
-                        toast.success(t('save_draft_success'));
-                      }
-                    }}
-                  >
-                    {match(saveLoading)
-                      .with(true, () => <Spinner />)
-                      .otherwise(() => (
-                        <Save />
-                      ))}
-                  </Button>
+                <TooltipTrigger
+                  render={
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      disabled={!novel || saveLoading}
+                      onClick={async () => {
+                        if (novel) {
+                          await saveDraftNovel({ variables: { novel: convertFetchToDraftNovel(novel) } });
+                          toast.success(t('save_draft_success'));
+                        }
+                      }}
+                    />
+                  }
+                >
+                  {match(saveLoading)
+                    .with(true, () => <Spinner />)
+                    .otherwise(() => (
+                      <Save />
+                    ))}
                 </TooltipTrigger>
                 <TooltipContent>{t('save_draft')}</TooltipContent>
               </Tooltip>
@@ -267,8 +267,8 @@ export default function NovelFetch() {
           <CardContent className="flex items-center space-x-4">
             <Skeleton className="h-12 w-12 rounded-full" />
             <div className="space-y-2">
-              <Skeleton className="h-4 w-[250px]" />
-              <Skeleton className="h-4 w-[200px]" />
+              <Skeleton className="h-4 w-62.5" />
+              <Skeleton className="h-4 w-50" />
             </div>
           </CardContent>
         </Card>

@@ -7,7 +7,7 @@
  */
 import { editor } from 'monaco-editor';
 import './index.css';
-import monankai from 'monaco-themes/themes/Dracula.json';
+import monankai from '../node_modules/monaco-themes/themes/Dracula.json';
 
 editor.defineTheme('monankai', monankai as editor.IStandaloneThemeData);
 

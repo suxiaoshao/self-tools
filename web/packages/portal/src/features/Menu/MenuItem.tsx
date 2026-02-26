@@ -24,12 +24,10 @@ export default function MenuItem({ menu, subItem, ...props }: MenuItemProps) {
     .with({ path: { tag: 'menu' } }, ({ path: { value } }) => (
       <Collapsible defaultOpen className="group/collapsible">
         <SidebarMenuItem {...props}>
-          <CollapsibleTrigger asChild>
-            <SidebarMenuButton>
-              {menu.icon}
-              <span>{t(menu.name as I18nKey)}</span>
-              <ChevronRight className="transition-transform ml-auto group-data-[state=open]/collapsible:rotate-90" />
-            </SidebarMenuButton>
+          <CollapsibleTrigger render={<SidebarMenuButton />}>
+            {menu.icon}
+            <span>{t(menu.name as I18nKey)}</span>
+            <ChevronRight className="transition-transform ml-auto group-data-[state=open]/collapsible:rotate-90" />
           </CollapsibleTrigger>
         </SidebarMenuItem>
         <CollapsibleContent>

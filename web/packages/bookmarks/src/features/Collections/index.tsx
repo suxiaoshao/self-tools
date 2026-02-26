@@ -68,7 +68,7 @@ export default function Collections() {
       [
         columnHelper.accessor(
           ({ name, id }) => (
-            <Button variant="link" className="text-foreground w-fit px-0 text-left" asChild>
+            <Button variant="link" className="text-foreground w-fit px-0 text-left">
               <Link to={{ search: createSearchParams({ parentId: id.toString() }).toString() }}>{name}</Link>
             </Button>
           ),

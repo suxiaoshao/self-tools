@@ -52,11 +52,7 @@ export default function CreateAuthorButton({ refetch }: CreateAuthorButtonProps)
   const t = useI18n();
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        <Button className="ml-2" color="primary">
-          {t('add_author')}
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger render={<Button className="ml-2" />}>{t('add_author')}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t('create_author')}</DialogTitle>
@@ -82,9 +78,7 @@ export default function CreateAuthorButton({ refetch }: CreateAuthorButtonProps)
           </FieldGroup>
         </form>
         <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="secondary">{t('cancel')}</Button>
-          </DialogClose>
+          <DialogClose render={<Button variant="secondary" />}>{t('cancel')}</DialogClose>
           <Button type="submit" form="create-author-form">
             {t('submit')}
           </Button>

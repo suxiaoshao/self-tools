@@ -111,32 +111,32 @@ export default function AuthorFetch() {
           <CardTitle>{t('filter')}</CardTitle>
           <CardAction>
             <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" type="submit">
-                  <Search />
-                </Button>
+              <TooltipTrigger render={<Button variant="ghost" size="icon" type="submit" />}>
+                <Search />
               </TooltipTrigger>
               <TooltipContent>{t('fetch')}</TooltipContent>
             </Tooltip>
             <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  disabled={!author || saveLoading}
-                  onClick={async () => {
-                    if (author) {
-                      await saveDraftAuthor({ variables: { author: convertFetchToDraftAuthor(author) } });
-                      toast.success(t('save_draft_success'));
-                    }
-                  }}
-                >
-                  {match(saveLoading)
-                    .with(true, () => <Spinner />)
-                    .otherwise(() => (
-                      <Save />
-                    ))}
-                </Button>
+              <TooltipTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    disabled={!author || saveLoading}
+                    onClick={async () => {
+                      if (author) {
+                        await saveDraftAuthor({ variables: { author: convertFetchToDraftAuthor(author) } });
+                        toast.success(t('save_draft_success'));
+                      }
+                    }}
+                  />
+                }
+              >
+                {match(saveLoading)
+                  .with(true, () => <Spinner />)
+                  .otherwise(() => (
+                    <Save />
+                  ))}
               </TooltipTrigger>
               <TooltipContent>{t('save_draft')}</TooltipContent>
             </Tooltip>
