@@ -21,7 +21,7 @@ const itemFormSchema = object({
 
 export type ItemFormData = InferInput<typeof itemFormSchema>;
 
-export interface ItemFormProps {
+interface ItemFormProps {
   afterSubmit?: (data: ItemFormData) => Promise<void>;
   handleClose: () => void;
   mode?: 'create' | 'edit';
@@ -81,7 +81,11 @@ export default function ItemForm({ afterSubmit, handleClose, mode, initialValues
             <Field>
               <FieldLabel className="w-full flex items-center justify-between">
                 <span>{t('content')}</span>
-                <ToggleGroup type="single" variant="outline" value={alignment} onValueChange={handleAlignment}>
+                <ToggleGroup
+                  variant="outline"
+                  value={[alignment]}
+                  onValueChange={(newAlignment) => handleAlignment(newAlignment[0] ?? 'edit')}
+                >
                   <ToggleGroupItem value="edit">
                     <EditIcon />
                   </ToggleGroupItem>
@@ -105,9 +109,7 @@ export default function ItemForm({ afterSubmit, handleClose, mode, initialValues
         />
       </FieldGroup>
       <DialogFooter>
-        <DialogClose asChild>
-          <Button variant="secondary">{t('cancel')}</Button>
-        </DialogClose>
+        <DialogClose render={<Button variant="secondary" />}>{t('cancel')}</DialogClose>
         <Button
           onClick={() => {
             handleSubmit(onSubmit)();

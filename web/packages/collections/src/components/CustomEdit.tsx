@@ -2,12 +2,12 @@ import { proxy } from '@bookmarks/utils/proxy';
 import Edit, { type EditProps, type MonacoEditorRef } from 'edit';
 import { useImperativeHandle, useState, type Ref } from 'react';
 
-export interface CustomEditRef {
+interface CustomEditRef {
   focus: () => void;
   value: string;
 }
 
-export interface CustomEditProps extends Omit<EditProps, 'code' | 'onChangeCode' | 'ref'> {
+interface CustomEditProps extends Omit<EditProps, 'code' | 'onChangeCode' | 'ref'> {
   onChange: (newValue: string) => void;
   value: string;
   ref?: Ref<CustomEditRef>;

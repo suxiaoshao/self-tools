@@ -6,26 +6,20 @@
  * @FilePath: /self-tools/web/packages/bookmarks/src/components/AuthorSelect/index.tsx
  */
 import { useI18n } from 'i18n';
-import { type ComponentProps, useEffect, useMemo, useState } from 'react';
-import { debounceTime, Subject } from 'rxjs';
+import { type ComponentProps, useMemo } from 'react';
 import { getImageUrl } from '@bookmarks/utils/image';
 import { graphql } from '@bookmarks/gql';
 import { useQuery } from '@apollo/client/react';
-import { Popover, PopoverContent, PopoverTrigger } from '@portal/components/ui/popover';
-import { cn } from '@portal/lib/utils';
-import { Button } from '@portal/components/ui/button';
-import { Check, ChevronsUpDown } from 'lucide-react';
-import { match, P } from 'ts-pattern';
+import { match } from 'ts-pattern';
 import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-  CommandSeparator,
-} from '@portal/components/ui/command';
-import useDialog from '@collections/hooks/useDialog';
+  Combobox,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+  useComboboxAnchor,
+} from '@portal/components/ui/combobox';
 import { Avatar, AvatarImage } from '@portal/components/ui/avatar';
 
 const SearchAuthor = graphql(`
@@ -40,93 +34,50 @@ const SearchAuthor = graphql(`
   }
 `);
 
-export interface TagsSelectProps extends Omit<ComponentProps<'button'>, 'name' | 'onChange' | 'value'> {
+interface TagsSelectProps extends Omit<ComponentProps<'input'>, 'onChange' | 'value'> {
   onChange: (value: number) => void;
   value: number | null | undefined;
 }
 
 export default function AuthorSelect({ onChange, className, value, ...props }: TagsSelectProps) {
-  const [searchName, setSearchName] = useState('');
-
-  const { loading, data: { allAuthors } = {} } = useQuery(SearchAuthor, {
-    variables: { searchName },
-  });
-  const event = useMemo(() => new Subject<string>(), []);
-  useEffect(() => {
-    const key = event.pipe(debounceTime(300)).subscribe((value) => {
-      setSearchName(value);
-    });
-    return () => {
-      key.unsubscribe();
-    };
-  }, [event]);
+  const { loading, data: { allAuthors } = {} } = useQuery(SearchAuthor);
+  const authors = allAuthors ?? [];
   const t = useI18n();
   const selectedAuthor = useMemo(() => {
-    if (!value) return null;
-    return allAuthors?.find((author) => author.id === value);
+    if (!value || !allAuthors) return null;
+    return allAuthors.find((author) => author.id === value) ?? null;
   }, [value, allAuthors]);
-  const { open, handleClose, handleOpenChange } = useDialog();
+  const anchor = useComboboxAnchor();
+
   return (
-    <Popover open={open} onOpenChange={handleOpenChange}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          // oxlint-disable-next-line role-has-required-aria-props
-          role="combobox"
-          className={cn('justify-between items-center', className)}
-          {...props}
-        >
-          {match(selectedAuthor)
-            .with(P.nonNullable, ({ name }) => name)
-            .otherwise(() => t('select_author'))}
-          <ChevronsUpDown className="opacity-50" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="p-0">
-        <Command>
-          <CommandInput
-            onValueChange={(newValue) => {
-              event.next(newValue);
-            }}
-            placeholder={t('search')}
-            className="h-9"
-          />
-          <CommandList>
-            <CommandEmpty>
-              {match(loading)
-                .with(true, () => t('loading'))
-                .otherwise(() => t('no_author_found'))}
-            </CommandEmpty>
-            <CommandSeparator />
-            <CommandGroup className="px-2">
-              {allAuthors?.map((type) => (
-                <CommandItem
-                  className="px-2 py-3"
-                  keywords={[type.description, type.name]}
-                  key={type.id}
-                  value={String(type.id)}
-                  onSelect={(currentValue) => {
-                    const selectedId = Number(currentValue);
-                    onChange(selectedId);
-                    handleClose();
-                  }}
-                >
-                  <Avatar className="size-5">
-                    <AvatarImage src={getImageUrl(type.avatar)} />
-                  </Avatar>
-                  {type.name}
-                  <Check
-                    visibility={match(value)
-                      .with(type.id, () => 'visible')
-                      .otherwise(() => 'hidden')}
-                    className={cn('ml-auto')}
-                  />
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
+    <Combobox<(typeof authors)[number]>
+      items={authors}
+      itemToStringLabel={(item) => item.name}
+      value={selectedAuthor ?? null}
+      onValueChange={(selectedAuthorItem) => {
+        if (selectedAuthorItem) {
+          onChange(selectedAuthorItem.id);
+        }
+      }}
+    >
+      <ComboboxInput placeholder={t('search')} className={className} {...props} />
+      <ComboboxContent anchor={anchor}>
+        <ComboboxEmpty>
+          {match(loading)
+            .with(true, () => t('loading'))
+            .otherwise(() => t('no_author_found'))}
+        </ComboboxEmpty>
+        <ComboboxList>
+          {(item) => (
+            <ComboboxItem key={item.id} value={item}>
+              <Avatar className="size-5">
+                <AvatarImage src={getImageUrl(item.avatar)} />
+              </Avatar>
+              {item.name}
+            </ComboboxItem>
+          )}
+        </ComboboxList>
+      </ComboboxContent>
+    </Combobox>
   );
 }

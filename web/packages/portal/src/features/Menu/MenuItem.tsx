@@ -13,7 +13,7 @@ import { SidebarMenuButton, SidebarMenuItem, SidebarMenuSub } from '@portal/comp
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@portal/components/ui/collapsible';
 import { ChevronRight } from 'lucide-react';
 
-export interface MenuItemProps extends React.ComponentProps<'li'> {
+interface MenuItemProps extends React.ComponentProps<'li'> {
   menu: Menu;
   subItem: boolean;
 }
@@ -24,12 +24,10 @@ export default function MenuItem({ menu, subItem, ...props }: MenuItemProps) {
     .with({ path: { tag: 'menu' } }, ({ path: { value } }) => (
       <Collapsible defaultOpen className="group/collapsible">
         <SidebarMenuItem {...props}>
-          <CollapsibleTrigger asChild>
-            <SidebarMenuButton>
-              {menu.icon}
-              <span>{t(menu.name as I18nKey)}</span>
-              <ChevronRight className="transition-transform ml-auto group-data-[state=open]/collapsible:rotate-90" />
-            </SidebarMenuButton>
+          <CollapsibleTrigger render={<SidebarMenuButton />}>
+            {menu.icon}
+            <span>{t(menu.name as I18nKey)}</span>
+            <ChevronRight className="transition-transform ml-auto group-data-[state=open]/collapsible:rotate-90" />
           </CollapsibleTrigger>
         </SidebarMenuItem>
         <CollapsibleContent>

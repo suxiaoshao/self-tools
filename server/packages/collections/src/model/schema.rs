@@ -32,8 +32,4 @@ diesel::table! {
 diesel::joinable!(collection_item -> collection (collection_id));
 diesel::joinable!(collection_item -> item (item_id));
 
-diesel::allow_tables_to_appear_in_same_query!(
-    collection,
-    collection_item,
-    item,
-);
+diesel::allow_tables_to_appear_in_same_query!(collection, collection_item, item,);

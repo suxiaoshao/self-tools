@@ -15,7 +15,7 @@ import ChapterBatchUpdate from './ChapterBatchUpdate';
 
 type Data = GetNovelQuery['getNovel']['chapters'][0];
 
-export interface ChaptersProps extends Omit<CustomTableProps<Data>, 'tableInstance'> {
+interface ChaptersProps extends Omit<CustomTableProps<Data>, 'tableInstance'> {
   chapters: Data[];
   refetch: () => void;
   novelId: number;

@@ -19,7 +19,7 @@ import {
 import { FieldError } from '@portal/components/ui/field';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@portal/components/ui/collapsible';
 
-export interface CollectionSelectProps {
+interface CollectionSelectProps {
   allCollections: Map<number, AllCollectionItem>;
   value: number | null;
   onChange: (value: number | null) => void;
@@ -68,11 +68,9 @@ function CollectionItem({ value: { path, id, children }, selected, setSelected }
   return (
     <Collapsible defaultOpen className="group/collapsible">
       <SidebarMenuItem>
-        <CollapsibleTrigger asChild>
-          <SidebarMenuButton onClick={handleSelect} isActive={id === selected}>
-            {path}
-            <ChevronRight className="transition-transform ml-auto group-data-[state=open]/collapsible:rotate-90" />
-          </SidebarMenuButton>
+        <CollapsibleTrigger render={<SidebarMenuButton onClick={handleSelect} isActive={id === selected} />}>
+          {path}
+          <ChevronRight className="transition-transform ml-auto group-data-[state=open]/collapsible:rotate-90" />
         </CollapsibleTrigger>
       </SidebarMenuItem>
       <CollectionList selected={selected} setSelected={setSelected}>

@@ -69,7 +69,7 @@ export default function AuthorList() {
       [
         columnHelper.accessor(
           ({ name, id }) => (
-            <Button variant="link" className="text-foreground w-fit px-0 text-left" asChild>
+            <Button variant="link" className="text-foreground w-fit px-0 text-left">
               <Link to={`/bookmarks/authors/${id}`}>{name}</Link>
             </Button>
           ),
@@ -154,7 +154,7 @@ export default function AuthorList() {
     <div className="flex flex-col size-full p-4">
       <div className="flex-[0_0_auto] mb-4 flex">
         <CreateAuthorButton refetch={refetch} />
-        <Button className="ml-2" asChild>
+        <Button className="ml-2">
           <Link to="/bookmarks/authors/fetch">{t('crawler')}</Link>
         </Button>
         <Button className="ml-auto" variant="ghost" size="icon" onClick={() => refetch()}>

@@ -41,22 +41,20 @@ export default function useItemDetailItems(data: GetItemQuery | undefined, refet
                   <div className="gap-1 flex items-center ">
                     {data.collections.map(({ id, name, path }) => (
                       <Tooltip key={id}>
-                        <TooltipTrigger asChild>
-                          <Badge variant="secondary">
-                            <Link to={`/collections/collections?parentId=${id}`}>{name}</Link>
-                            <Button
-                              variant="ghost"
-                              size="icon-sm"
-                              className="data-[state=open]:bg-muted size-6 rounded-full"
-                              onClick={async (e) => {
-                                e.stopPropagation();
-                                await deleteCollectionForItem({ variables: { collectionId: id, itemId: data.id } });
-                                refetch();
-                              }}
-                            >
-                              <X />
-                            </Button>
-                          </Badge>
+                        <TooltipTrigger render={<Badge variant="secondary" />}>
+                          <Link to={`/collections/collections?parentId=${id}`}>{name}</Link>
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            className="data-[state=open]:bg-muted size-6 rounded-full"
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              await deleteCollectionForItem({ variables: { collectionId: id, itemId: data.id } });
+                              refetch();
+                            }}
+                          >
+                            <X />
+                          </Button>
                         </TooltipTrigger>
                         <TooltipContent>{path}</TooltipContent>
                       </Tooltip>

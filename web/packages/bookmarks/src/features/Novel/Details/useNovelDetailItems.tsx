@@ -36,7 +36,7 @@ export default function useNovelDetailItems(data: GetNovelQuery | undefined, ref
               {
                 label: t('author'),
                 value: (
-                  <Button variant="link" className="text-foreground w-fit px-0 text-left" asChild>
+                  <Button variant="link" className="text-foreground w-fit px-0 text-left">
                     <Link to={`/bookmarks/authors/${data.author.id}`}>{data.author.name}</Link>
                   </Button>
                 ),
@@ -94,22 +94,20 @@ export default function useNovelDetailItems(data: GetNovelQuery | undefined, ref
                   <div className="flex gap-2">
                     {data.collections.map(({ id, name, path }) => (
                       <Tooltip key={id}>
-                        <TooltipTrigger asChild>
-                          <Badge variant="secondary">
-                            <Link to={`/bookmarks/collections?parentId=${id}`}>{name}</Link>
-                            <Button
-                              variant="ghost"
-                              size="icon-sm"
-                              className="data-[state=open]:bg-muted size-6 rounded-full"
-                              onClick={async (e) => {
-                                e.stopPropagation();
-                                await deleteCollectionForNovel({ variables: { collectionId: id, novelId: data.id } });
-                                refetch();
-                              }}
-                            >
-                              <X />
-                            </Button>
-                          </Badge>
+                        <TooltipTrigger render={<Badge variant="secondary" />}>
+                          <Link to={`/bookmarks/collections?parentId=${id}`}>{name}</Link>
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            className="data-[state=open]:bg-muted size-6 rounded-full"
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              await deleteCollectionForNovel({ variables: { collectionId: id, novelId: data.id } });
+                              refetch();
+                            }}
+                          >
+                            <X />
+                          </Button>
                         </TooltipTrigger>
                         <TooltipContent>{path}</TooltipContent>
                       </Tooltip>

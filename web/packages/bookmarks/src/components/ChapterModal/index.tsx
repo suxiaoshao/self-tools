@@ -14,7 +14,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@portal/components/ui/t
 import { Button } from '@portal/components/ui/button';
 import { Item, ItemContent, ItemDescription, ItemTitle } from '@portal/components/ui/item';
 
-export interface ChapterModalProps {
+interface ChapterModalProps {
   chapters: FetchAuthorQuery['fetchAuthor']['novels'][0]['chapters'];
 }
 
@@ -23,13 +23,11 @@ export default function ChapterModal({ chapters }: ChapterModalProps) {
   return (
     <Dialog>
       <Tooltip>
-        <TooltipTrigger asChild>
-          <DialogTrigger asChild>
-            <Button type="button" variant="ghost" size="icon">
-              <TableOfContents />
-            </Button>
-          </DialogTrigger>
-        </TooltipTrigger>
+        <DialogTrigger render={<Button type="button" variant="ghost" size="icon" />}>
+          <TooltipTrigger render={<span />}>
+            <TableOfContents />
+          </TooltipTrigger>
+        </DialogTrigger>
         <TooltipContent>{t('view_novel_chapters')}</TooltipContent>
       </Tooltip>
       <DialogContent className="px-0 pb-0 sm:max-w-sm">

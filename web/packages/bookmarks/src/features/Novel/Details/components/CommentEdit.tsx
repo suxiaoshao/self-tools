@@ -43,7 +43,7 @@ const UpdateComment = graphql(`
   }
 `);
 
-export interface CommentEditProps {
+interface CommentEditProps {
   novelId: number;
   refetch: () => void;
   mode: 'create' | 'update';
@@ -74,13 +74,11 @@ export default function CommentEdit({ novelId, refetch, mode, initContent }: Com
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <Tooltip>
-        <TooltipTrigger asChild>
-          <DialogTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <Edit />
-            </Button>
-          </DialogTrigger>
-        </TooltipTrigger>
+        <DialogTrigger render={<Button variant="ghost" size="icon" />}>
+          <TooltipTrigger render={<span />}>
+            <Edit />
+          </TooltipTrigger>
+        </DialogTrigger>
         <TooltipContent>{t('edit')}</TooltipContent>
       </Tooltip>
 
@@ -108,9 +106,7 @@ export default function CommentEdit({ novelId, refetch, mode, initContent }: Com
             />
           </FieldGroup>
           <DialogFooter>
-            <DialogClose asChild>
-              <Button variant="secondary">{t('cancel')}</Button>
-            </DialogClose>
+            <DialogClose render={<Button variant="secondary" />}>{t('cancel')}</DialogClose>
             <Button type="submit" disabled={loading || updateLoading}>
               {(loading || updateLoading) && <Spinner />}
               {t('submit')}

@@ -37,10 +37,7 @@ const selectCollectionSchema = object({
 
 type SelectCollectionType = InferInput<typeof selectCollectionSchema>;
 
-export interface CollectionMultiSelectProps extends Omit<
-  ComponentProps<'div'>,
-  'name' | 'onChange' | 'onBlur' | 'value'
-> {
+interface CollectionMultiSelectProps extends Omit<ComponentProps<'div'>, 'name' | 'onChange' | 'onBlur' | 'value'> {
   onChange: (newValue: number[] | null | undefined) => void;
   onBlur: FocusEventHandler<HTMLInputElement> | undefined;
   value: number[] | null | undefined;
@@ -137,10 +134,8 @@ function InnerCollectionSelect({ allCollections, onChange, value }: InnerCollect
         </Badge>
       ))}
       <Popover open={open} onOpenChange={handleOpenChange}>
-        <PopoverTrigger asChild>
-          <Button variant="ghost" size="icon-sm" className="rounded-full">
-            <Plus />
-          </Button>
+        <PopoverTrigger render={<Button variant="ghost" size="icon-sm" className="rounded-full" />}>
+          <Plus />
         </PopoverTrigger>
         <PopoverContent>
           <Controller

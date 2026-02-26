@@ -155,18 +155,18 @@ export default function NovelDetails() {
                   </ItemContent>
                   <ItemActions>
                     <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" disabled={updateLoading} onClick={handleUpdateNovel}>
-                          <Download />
-                        </Button>
+                      <TooltipTrigger
+                        render={
+                          <Button variant="ghost" size="icon" disabled={updateLoading} onClick={handleUpdateNovel} />
+                        }
+                      >
+                        <Download />
                       </TooltipTrigger>
                       <TooltipContent>{t('update_by_crawler')}</TooltipContent>
                     </Tooltip>
                     <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" onClick={goToSourceSite}>
-                          <SquareArrowOutUpRight />
-                        </Button>
+                      <TooltipTrigger render={<Button variant="ghost" size="icon" onClick={goToSourceSite} />}>
+                        <SquareArrowOutUpRight />
                       </TooltipTrigger>
                       <TooltipContent>{t('go_to_source_site')}</TooltipContent>
                     </Tooltip>
@@ -190,10 +190,8 @@ export default function NovelDetails() {
                     />
                     {data.getNovel.comments?.content && (
                       <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button variant="ghost" size="icon" onClick={handleDeleteComment}>
-                            <Delete />
-                          </Button>
+                        <TooltipTrigger render={<Button variant="ghost" size="icon" onClick={handleDeleteComment} />}>
+                          <Delete />
                         </TooltipTrigger>
                         <TooltipContent>{t('delete')}</TooltipContent>
                       </Tooltip>

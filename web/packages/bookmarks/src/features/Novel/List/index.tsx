@@ -99,7 +99,7 @@ export default function NovelList() {
       [
         columnHelper.accessor(
           ({ id, name }) => (
-            <Button variant="link" className="text-foreground w-fit px-0 text-left" asChild>
+            <Button variant="link" className="text-foreground w-fit px-0 text-left">
               <Link to={`/bookmarks/novel/${id}`}>{name}</Link>
             </Button>
           ),
@@ -183,9 +183,7 @@ export default function NovelList() {
     <div className="flex flex-col size-full">
       <div className="basis-auto flex p-4 pb-0 gap-4">
         <CreateNovelButton refetch={refetch} />
-        <Button color="primary" onClick={() => navigate('/bookmarks/novel/fetch')}>
-          {t('crawler')}
-        </Button>
+        <Button onClick={() => navigate('/bookmarks/novel/fetch')}>{t('crawler')}</Button>
         <div className="grow" />
         <Button variant="ghost" size="icon" onClick={() => refetch()}>
           <RefreshCcw />

@@ -16,14 +16,14 @@ import { Input } from '@portal/components/ui/input';
 import { valibotResolver } from '@hookform/resolvers/valibot';
 import { nullish, object, string } from 'valibot';
 
-export enum CollectionFormType {
+enum CollectionFormType {
   create = 'create',
   edit = 'edit',
 }
 
 export type CollectionFormData = Omit<CreateCollectionMutationVariables, 'parentId'>;
 
-export interface CollectionFormProps {
+interface CollectionFormProps {
   afterSubmit?: (data: CollectionFormData) => Promise<void>;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -76,9 +76,7 @@ export default function CollectionForm({
           </FieldGroup>
 
           <DialogFooter>
-            <DialogClose asChild>
-              <Button variant="secondary">{t('cancel')}</Button>
-            </DialogClose>
+            <DialogClose render={<Button variant="secondary" />}>{t('cancel')}</DialogClose>
             <Button
               onClick={() => {
                 handleSubmit(onSubmit)();

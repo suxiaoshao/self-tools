@@ -2,7 +2,7 @@ import type React from 'react';
 import { type To, useLocation, Link } from 'react-router-dom';
 import { SidebarMenuButton, SidebarMenuItem, SidebarMenuSubButton, SidebarMenuSubItem } from '../ui/sidebar';
 
-export interface RouterItem extends React.ComponentProps<'li'> {
+interface RouterItem extends React.ComponentProps<'li'> {
   matchPaths: (string | RegExp)[];
   toPath: To;
   text: React.ReactNode;
@@ -21,24 +21,20 @@ export default function RouterItem({ matchPaths, toPath, text, icon, children, s
   if (subItem) {
     return (
       <SidebarMenuSubItem {...props}>
-        <SidebarMenuSubButton asChild isActive={selected}>
-          <Link to={toPath}>
-            {icon}
-            <span>{text}</span>
-            {children}
-          </Link>
+        <SidebarMenuSubButton isActive={selected} render={<Link to={toPath} />}>
+          {icon}
+          <span>{text}</span>
+          {children}
         </SidebarMenuSubButton>
       </SidebarMenuSubItem>
     );
   }
   return (
     <SidebarMenuItem {...props}>
-      <SidebarMenuButton isActive={selected} asChild>
-        <Link to={toPath}>
-          {icon}
-          <span>{text}</span>
-          {children}
-        </Link>
+      <SidebarMenuButton isActive={selected} render={<Link to={toPath} />}>
+        {icon}
+        <span>{text}</span>
+        {children}
       </SidebarMenuButton>
     </SidebarMenuItem>
   );

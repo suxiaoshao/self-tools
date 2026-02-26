@@ -121,18 +121,18 @@ export default function AuthorDetails() {
               </ItemContent>
               <ItemActions>
                 <Tooltip>
-                  <TooltipTrigger>
-                    <Button variant="ghost" size="icon" disabled={updateLoading} onClick={handleUpdateAuthor}>
-                      <Download />
-                    </Button>
+                  <TooltipTrigger
+                    render={
+                      <Button variant="ghost" size="icon" disabled={updateLoading} onClick={handleUpdateAuthor} />
+                    }
+                  >
+                    <Download />
                   </TooltipTrigger>
                   <TooltipContent>{t('update_by_crawler')}</TooltipContent>
                 </Tooltip>
                 <Tooltip>
-                  <TooltipTrigger>
-                    <Button variant="ghost" size="icon" onClick={goToSourceSite}>
-                      <SquareArrowOutUpRight />
-                    </Button>
+                  <TooltipTrigger render={<Button variant="ghost" size="icon" onClick={goToSourceSite} />}>
+                    <SquareArrowOutUpRight />
                   </TooltipTrigger>
                   <TooltipContent>{t('go_to_source_site')}</TooltipContent>
                 </Tooltip>
@@ -182,10 +182,10 @@ export default function AuthorDetails() {
                     </ItemContent>
                     <ItemActions>
                       <Tooltip>
-                        <TooltipTrigger>
-                          <Button variant="ghost" size="icon" onClick={() => window.open(url, '_blank')}>
-                            <SquareArrowOutUpRight />
-                          </Button>
+                        <TooltipTrigger
+                          render={<Button variant="ghost" size="icon" onClick={() => window.open(url, '_blank')} />}
+                        >
+                          <SquareArrowOutUpRight />
                         </TooltipTrigger>
                         <TooltipContent>{t('go_to_source_site')}</TooltipContent>
                       </Tooltip>

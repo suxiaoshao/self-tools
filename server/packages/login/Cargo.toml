@@ -11,8 +11,8 @@ tokio = { version = "1.49.0", features = ["macros", "rt-multi-thread"] }
 axum = { version = "0.8.8", features = ["json"] }
 
 # error
-anyhow = "1.0.100"
-thiserror = "2.0.17"
+anyhow = "1.0.102"
+thiserror = "2.0.18"
 
 # json
 serde = { version = "1.0.228", features = ["derive"] }
@@ -27,14 +27,14 @@ tracing-subscriber = "0.3.22"
 
 # thrift
 thrift = { path = "../../common/thrift" }
-volo-thrift = "0.12.0"
+volo-thrift = "0.12.2"
 
 # webauthn
 webauthn-rs = { version = "0.5.4", features = [
     "danger-allow-state-serialisation",
 ] }
 url = "2.5.8"
-tower-sessions = { version = "0.14.0" }
+tower-sessions = { version = "0.15.0" }
 
 [dev-dependencies]
 axum = { version = "0.8.8", features = ["json", "macros"] }

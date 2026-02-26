@@ -15,7 +15,7 @@ const CreateCollection = graphql(`
   }
 `);
 
-export interface CreateCollectButtonProps {
+interface CreateCollectButtonProps {
   /** 表格重新刷新 */
   refetch: () => void;
 }

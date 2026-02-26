@@ -34,7 +34,7 @@ const CreateTag = graphql(`
     }
   }
 `);
-export interface CreateTagButtonProps {
+interface CreateTagButtonProps {
   refetch: () => void;
 }
 
@@ -68,9 +68,7 @@ export default function CreateTagButton({ refetch }: CreateTagButtonProps) {
   const t = useI18n();
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        <Button>{t('add_tag')}</Button>
-      </DialogTrigger>
+      <DialogTrigger render={<Button />}>{t('add_tag')}</DialogTrigger>
       <DialogContent>
         <DialogTitle>{t('create_tag')}</DialogTitle>
         <form className="flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)}>
@@ -110,9 +108,7 @@ export default function CreateTagButton({ refetch }: CreateTagButtonProps) {
           </FieldGroup>
 
           <DialogFooter>
-            <DialogClose asChild>
-              <Button variant="secondary">{t('cancel')}</Button>
-            </DialogClose>
+            <DialogClose render={<Button variant="secondary" />}>{t('cancel')}</DialogClose>
             <Button type="submit">{t('submit')}</Button>
           </DialogFooter>
         </form>

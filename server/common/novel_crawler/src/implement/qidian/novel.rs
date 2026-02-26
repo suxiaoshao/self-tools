@@ -180,8 +180,11 @@ fn parse_chapters(html: &str, novel_id: &str) -> NovelResult<Vec<QDChapter>> {
         Chapter { name, id, cnt, u_t }: Chapter,
         novel_id: &str,
     ) -> NovelResult<QDChapter> {
-        let format = format_description!("[year]-[month]-[day] [hour]:[minute]");
-        let time = PrimitiveDateTime::parse(&u_t, &format)?;
+        let format_with_second =
+            format_description!("[year]-[month]-[day] [hour]:[minute]:[second]");
+        let format_without_second = format_description!("[year]-[month]-[day] [hour]:[minute]");
+        let time = PrimitiveDateTime::parse(&u_t, &format_with_second)
+            .or_else(|_| PrimitiveDateTime::parse(&u_t, &format_without_second))?;
         let time = time.assume_offset(offset!(+8));
         Ok(QDChapter::new(
             novel_id.to_string(),

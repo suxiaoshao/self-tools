@@ -3,12 +3,7 @@ import type { LoginForm } from './authSlice';
 import { match } from 'ts-pattern';
 import { toast } from 'sonner';
 
-export type HttpResponse<T> =
-  | Enum<'network'>
-  | Enum<'response', T>
-  | Enum<'unknown'>
-  | Enum<'json'>
-  | Enum<'error', string>;
+type HttpResponse<T> = Enum<'network'> | Enum<'response', T> | Enum<'unknown'> | Enum<'json'> | Enum<'error', string>;
 
 export function responseThen<T>(response: HttpResponse<T>, doThen: (data: T) => void): void {
   match(response as HttpResponse<unknown>)
@@ -64,7 +59,7 @@ export async function login(data: LoginForm): Promise<HttpResponse<string>> {
   return await fetchBase('https://auth.sushao.top/api/login', data);
 }
 
-export interface RegistrationRequest {
+interface RegistrationRequest {
   publicKey: Omit<PublicKeyCredentialCreationOptions, 'user' | 'challenge'> & {
     challenge: string;
     user: Omit<PublicKeyCredentialUserEntity, 'id'> & {
@@ -121,7 +116,7 @@ export async function finishRegister(data: Credential): Promise<HttpResponse<str
   return response;
 }
 
-export interface StartAuthenticationRequest {
+interface StartAuthenticationRequest {
   username: string;
 }
 

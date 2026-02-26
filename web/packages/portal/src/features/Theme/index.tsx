@@ -4,7 +4,7 @@ import { colorSchemaMatch, selectColorMode, useThemeStore } from './themeSlice';
 import { match } from 'ts-pattern';
 import { useShallow } from 'zustand/react/shallow';
 
-export interface CustomThemeProps {
+interface CustomThemeProps {
   children?: ReactNode;
 }
 

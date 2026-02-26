@@ -56,13 +56,11 @@ export default function I18nDrawerItem() {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTrigger asChild>
-        <SidebarMenuItem>
-          <SidebarMenuButton>
-            <Languages />
-            <span>{t('language_setting')}</span>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
+      <DialogTrigger render={<SidebarMenuItem />}>
+        <SidebarMenuButton>
+          <Languages />
+          <span>{t('language_setting')}</span>
+        </SidebarMenuButton>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -138,9 +136,7 @@ export default function I18nDrawerItem() {
           </FieldGroup>
         </form>
         <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="secondary">{t('cancel')}</Button>
-          </DialogClose>
+          <DialogClose render={<Button variant="secondary" />}>{t('cancel')}</DialogClose>
           <Button type="submit" form="language-form">
             {t('submit')}
           </Button>

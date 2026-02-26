@@ -21,7 +21,7 @@ const UpdateCollection = graphql(`
   }
 `);
 
-export type CollectionActionsProps = CollectionTableData & {
+type CollectionActionsProps = CollectionTableData & {
   refetch: () => Promise<void>;
 };
 

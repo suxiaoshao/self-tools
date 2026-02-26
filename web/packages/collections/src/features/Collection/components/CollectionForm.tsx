@@ -7,7 +7,7 @@ import { Button } from '@portal/components/ui/button';
 import { FieldGroup, FieldLabel, Field } from '@portal/components/ui/field';
 import { Input } from '@portal/components/ui/input';
 export type CollectionFormData = Omit<CreateCollectionMutationVariables, 'parentId'>;
-export interface CollectFormProps {
+interface CollectFormProps {
   afterSubmit?: (data: CollectionFormData) => Promise<void>;
   handleClose: () => void;
   mode?: 'create' | 'edit';
@@ -48,9 +48,7 @@ export default function CollectionForm({ afterSubmit, handleClose, mode = 'creat
       </form>
 
       <DialogFooter>
-        <DialogClose asChild>
-          <Button>{t('cancel')}</Button>
-        </DialogClose>
+        <DialogClose render={<Button />}>{t('cancel')}</DialogClose>
         <Button
           onClick={() => {
             handleSubmit(onSubmit)();

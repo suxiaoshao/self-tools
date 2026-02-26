@@ -7,7 +7,7 @@ export enum ColorSetting {
   system = 'system',
 }
 
-export interface ThemeSliceType {
+interface ThemeSliceType {
   color: string;
   colorSetting: ColorSetting;
   systemColorScheme: 'light' | 'dark';

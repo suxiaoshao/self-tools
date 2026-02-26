@@ -15,7 +15,7 @@ const CreateItem = graphql(`
   }
 `);
 
-export interface CreateItemButtonProps extends ComponentProps<typeof Button> {
+interface CreateItemButtonProps extends ComponentProps<typeof Button> {
   /** 表格重新刷新 */
   refetch: () => void;
   collectionIds: number[];
