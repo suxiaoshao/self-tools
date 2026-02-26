@@ -27,6 +27,7 @@ export default function TablePagination({
   const { open, handleOpenChange, handleClose } = useDialog();
   const t = useI18n();
   const pageCount = Math.ceil(total / pageSize);
+  const pagePickerId = 'table-pagination-page-picker';
   return (
     <div className="flex items-center justify-between px-4">
       <div className="text-muted-foreground hidden flex-1 text-sm lg:flex">
@@ -57,10 +58,20 @@ export default function TablePagination({
         </div>
         <div className="flex w-fit items-center justify-center text-sm font-medium gap-2">
           <Popover open={open} onOpenChange={handleOpenChange}>
-            <PopoverTrigger render={<Button variant="outline" className="h-8 px-3" role="combobox" />}>
+            <PopoverTrigger
+              render={
+                <Button
+                  variant="outline"
+                  className="h-8 px-3"
+                  role="combobox"
+                  aria-controls={pagePickerId}
+                  aria-expanded={open}
+                />
+              }
+            >
               {pageIndex}
             </PopoverTrigger>
-            <PopoverContent className="w-[150px] p-0">
+            <PopoverContent id={pagePickerId} className="w-[150px] p-0">
               <Command>
                 <CommandInput placeholder={t('search_page')} />
                 <CommandList>

@@ -23,7 +23,8 @@ const resources = {
   },
 } satisfies Resource;
 
-// eslint-disable-next-line no-named-as-default-member
+// eslint-disable-next-line import/no-named-as-default-member
+// oxlint-disable-next-line eslint-plugin-jest(require-hook), eslint-plugin-import(no-named-as-default-member)
 i18n.use(initReactI18next).init<typeof resources>({
   resources,
   lng: 'en',

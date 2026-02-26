@@ -9,6 +9,7 @@ import { editor } from 'monaco-editor';
 import './index.css';
 import monankai from '../node_modules/monaco-themes/themes/Dracula.json';
 
+// oxlint-disable-next-line eslint-plugin-jest(require-hook)
 editor.defineTheme('monankai', monankai as editor.IStandaloneThemeData);
 
 self.MonacoEnvironment = {

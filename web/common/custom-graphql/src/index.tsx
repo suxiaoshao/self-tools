@@ -22,9 +22,15 @@ const errorLink = new ErrorLink(({ error }) => {
   if (CombinedGraphQLErrors.is(error)) {
     error.errors.forEach(({ message, locations, path, extensions }) => {
       toast(message);
+      let source = '';
+      if (typeof extensions?.['source'] === 'string') {
+        source = extensions['source'];
+      } else {
+        source = JSON.stringify(extensions?.['source'] ?? null);
+      }
       // oxlint-disable-next-line no-console
       console.log(
-        `[GraphQL error]: Message: ${message}, Location: ${locations}, Path: ${path} source: ${extensions?.['source']}`,
+        `[GraphQL error]: Message: ${message}, Location: ${JSON.stringify(locations)}, Path: ${JSON.stringify(path)} source: ${source}`,
       );
     });
   } else if (CombinedProtocolErrors.is(error)) {
@@ -36,7 +42,7 @@ const errorLink = new ErrorLink(({ error }) => {
   } else {
     toast(`网络错误:${error.message}`);
     // eslint-disable-next-line no-console
-    console.log(`[Network error]: ${error}`);
+    console.log(`[Network error]: ${error.message}`);
   }
 });
 
