@@ -25,7 +25,7 @@ const AllTags = graphql(`
   }
 `);
 
-export interface TagsSelectProps extends Omit<ComponentProps<'input'>, 'onChange' | 'value'> {
+interface TagsSelectProps extends Omit<ComponentProps<'input'>, 'onChange' | 'value'> {
   onChange: (event: number[]) => void;
   value: number[] | null | undefined;
 }

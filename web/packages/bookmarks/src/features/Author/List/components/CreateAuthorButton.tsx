@@ -32,7 +32,7 @@ const CreateAuthor = graphql(`
   }
 `);
 
-export interface CreateAuthorButtonProps {
+interface CreateAuthorButtonProps {
   refetch: () => void;
 }
 

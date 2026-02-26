@@ -34,7 +34,7 @@ const SearchAuthor = graphql(`
   }
 `);
 
-export interface TagsSelectProps extends Omit<ComponentProps<'input'>, 'onChange' | 'value'> {
+interface TagsSelectProps extends Omit<ComponentProps<'input'>, 'onChange' | 'value'> {
   onChange: (value: number) => void;
   value: number | null | undefined;
 }

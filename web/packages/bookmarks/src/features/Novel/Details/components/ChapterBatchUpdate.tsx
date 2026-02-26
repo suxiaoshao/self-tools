@@ -23,7 +23,7 @@ import { Checkbox } from '@portal/components/ui/checkbox';
 
 type Data = GetNovelQuery['getNovel']['chapters'][0];
 
-export interface ChapterBatchUpdateProps {
+interface ChapterBatchUpdateProps {
   chapters: Data[];
   novelId: number;
   refetch: () => void;

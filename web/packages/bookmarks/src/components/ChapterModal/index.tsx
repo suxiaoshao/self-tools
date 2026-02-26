@@ -14,7 +14,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@portal/components/ui/t
 import { Button } from '@portal/components/ui/button';
 import { Item, ItemContent, ItemDescription, ItemTitle } from '@portal/components/ui/item';
 
-export interface ChapterModalProps {
+interface ChapterModalProps {
   chapters: FetchAuthorQuery['fetchAuthor']['novels'][0]['chapters'];
 }
 

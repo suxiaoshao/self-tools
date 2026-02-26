@@ -2,7 +2,7 @@ use futures::Future;
 use futures_util::ready;
 use http::{header::HeaderName, HeaderValue, Request, Response};
 use pin_project_lite::pin_project;
-use rand::{distr::Alphanumeric, Rng};
+use rand::{distr::Alphanumeric, RngExt};
 use std::pin::Pin;
 use std::task::{Context, Poll};
 use tower::{Layer, Service};

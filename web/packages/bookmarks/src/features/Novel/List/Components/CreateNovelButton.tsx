@@ -34,7 +34,7 @@ const CreateNovel = graphql(`
   }
 `);
 
-export interface CreateNovelButtonProps {
+interface CreateNovelButtonProps {
   /** 表格重新刷新 */
   refetch: () => void;
 }

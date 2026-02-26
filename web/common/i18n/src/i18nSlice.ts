@@ -10,13 +10,13 @@ export enum CustomLang {
   zh = 'zh',
 }
 
-export interface I18nType {
+interface I18nType {
   langMode: LangMode;
   customLang: CustomLang;
   systemLang: string;
 }
 
-export interface I18nSliceType {
+interface I18nSliceType {
   value: I18nType;
   setLangSetting: (settings: Pick<I18nType, 'customLang' | 'langMode'>) => void;
 }

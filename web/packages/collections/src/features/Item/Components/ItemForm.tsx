@@ -21,7 +21,7 @@ const itemFormSchema = object({
 
 export type ItemFormData = InferInput<typeof itemFormSchema>;
 
-export interface ItemFormProps {
+interface ItemFormProps {
   afterSubmit?: (data: ItemFormData) => Promise<void>;
   handleClose: () => void;
   mode?: 'create' | 'edit';

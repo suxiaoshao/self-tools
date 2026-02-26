@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { login, responseThen } from './service';
 
-export interface AuthSliceType {
+interface AuthSliceType {
   value: string | null;
 }
 

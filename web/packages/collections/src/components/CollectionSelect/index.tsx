@@ -19,7 +19,7 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@portal/components/ui/collapsible';
 import { FieldError } from '@portal/components/ui/field';
 
-export interface CollectionSelectProps {
+interface CollectionSelectProps {
   allCollections: Map<number, AllCollectionItem>;
   value: number | null;
   onChange: (value: number | null) => void;

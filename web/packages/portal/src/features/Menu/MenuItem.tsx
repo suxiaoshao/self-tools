@@ -13,7 +13,7 @@ import { SidebarMenuButton, SidebarMenuItem, SidebarMenuSub } from '@portal/comp
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@portal/components/ui/collapsible';
 import { ChevronRight } from 'lucide-react';
 
-export interface MenuItemProps extends React.ComponentProps<'li'> {
+interface MenuItemProps extends React.ComponentProps<'li'> {
   menu: Menu;
   subItem: boolean;
 }

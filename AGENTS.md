@@ -45,6 +45,7 @@
 ```bash
 pnpm install
 pnpm lint
+pnpm run knip
 pnpm test
 pnpm build
 
@@ -70,6 +71,15 @@ cargo run -p login
 cargo run -p bookmarks
 cargo run -p collections
 ```
+
+## Knip 规则
+
+- 本仓库使用根目录 `knip.json` 作为唯一 Knip 配置入口。
+- `pnpm lint` 已串联执行 `pnpm run knip`，默认命令为 `knip --config knip.json`。
+- 以下目录中的 `unused exports/types` 作为生成代码或基础 UI 噪音处理，统一忽略：
+  - `**/src/gql/**`
+  - `**/src/components/ui/**`
+- 对仅用于打包、代码生成、语言服务或命令行的依赖，优先通过 `knip.json` 的忽略配置维护，不要直接删除依赖。
 
 ## 完成后验证（必须执行）
 

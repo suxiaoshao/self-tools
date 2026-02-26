@@ -43,7 +43,7 @@ const UpdateComment = graphql(`
   }
 `);
 
-export interface CommentEditProps {
+interface CommentEditProps {
   novelId: number;
   refetch: () => void;
   mode: 'create' | 'update';

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-export interface UseDialogOptions {
+interface UseDialogOptions {
   initOpen?: boolean;
 }
 

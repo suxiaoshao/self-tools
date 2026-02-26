@@ -34,7 +34,7 @@ const CreateTag = graphql(`
     }
   }
 `);
-export interface CreateTagButtonProps {
+interface CreateTagButtonProps {
   refetch: () => void;
 }
 

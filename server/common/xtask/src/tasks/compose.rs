@@ -4,23 +4,23 @@ use std::{
 };
 
 use bollard::{
-    Docker,
     models::{
         ContainerCreateBody, ContainerInspectResponse, HostConfig, PortBinding, RestartPolicy,
-        RestartPolicyNameEnum, VolumeCreateOptions,
+        RestartPolicyNameEnum, VolumeCreateRequest,
     },
     query_parameters::{
         CreateContainerOptionsBuilder, InspectContainerOptionsBuilder, ListVolumesOptionsBuilder,
         StartContainerOptions,
     },
+    Docker,
 };
 use tracing::{event, Level};
 
 use crate::{
-    TaskResult,
     compose_types::{ComposeFile, ComposeService},
     context::{load_env_file, workspace_root},
     error::XtaskError,
+    TaskResult,
 };
 
 pub async fn run_once() -> TaskResult {
@@ -77,7 +77,7 @@ async fn ensure_named_volumes(docker: &Docker, compose: &ComposeFile) -> TaskRes
 
         event!(Level::INFO, volume = %name, "creating volume");
         docker
-            .create_volume(VolumeCreateOptions {
+            .create_volume(VolumeCreateRequest {
                 name: Some(name),
                 driver: Some("local".to_string()),
                 driver_opts: Some(HashMap::new()),
@@ -168,13 +168,13 @@ async fn create_and_start_container(
         .map(|(k, v)| format!("{k}={v}"))
         .collect::<Vec<_>>();
 
-    let mut exposed_ports = HashMap::new();
+    let mut exposed_ports = Vec::new();
     let mut port_bindings: HashMap<String, Option<Vec<PortBinding>>> = HashMap::new();
 
     for port in &service.ports {
         let (host_port, container_port) = parse_port_binding(port);
         let key = format!("{container_port}/tcp");
-        exposed_ports.insert(key.clone(), HashMap::new());
+        exposed_ports.push(key.clone());
         port_bindings.insert(
             key,
             Some(vec![PortBinding {
@@ -270,9 +270,7 @@ fn is_running(details: &ContainerInspectResponse) -> bool {
         .unwrap_or(false)
 }
 
-fn resolve_order(
-    services: &HashMap<String, ComposeService>,
-) -> Result<Vec<String>, XtaskError> {
+fn resolve_order(services: &HashMap<String, ComposeService>) -> Result<Vec<String>, XtaskError> {
     let mut resolved = Vec::new();
     let mut visiting = HashSet::new();
     let mut visited = HashSet::new();

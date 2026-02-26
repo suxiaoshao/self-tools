@@ -2,7 +2,7 @@ import type React from 'react';
 import { type To, useLocation, Link } from 'react-router-dom';
 import { SidebarMenuButton, SidebarMenuItem, SidebarMenuSubButton, SidebarMenuSubItem } from '../ui/sidebar';
 
-export interface RouterItem extends React.ComponentProps<'li'> {
+interface RouterItem extends React.ComponentProps<'li'> {
   matchPaths: (string | RegExp)[];
   toPath: To;
   text: React.ReactNode;

@@ -56,7 +56,7 @@ export const UpdateItem = graphql(`
   }
 `);
 
-export type TableActionsProps = CollectionAndItem & {
+type TableActionsProps = CollectionAndItem & {
   refetch: () => void;
 };
 

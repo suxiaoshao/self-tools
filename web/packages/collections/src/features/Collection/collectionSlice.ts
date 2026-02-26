@@ -46,13 +46,13 @@ export interface CollectionTreeItem {
   children: CollectionTreeItem[];
 }
 
-export type CollectionData =
+type CollectionData =
   | Enum<CollectionLoadingState.init>
   | Enum<CollectionLoadingState.loading>
   | Enum<CollectionLoadingState.state, Map<number, AllCollectionItem>>
   | Enum<CollectionLoadingState.error, Error>;
 
-export interface CollectionSliceType {
+interface CollectionSliceType {
   value: CollectionData;
 
   setAllCollections: (allCollection: AllCollectionItem[]) => void;

@@ -29,7 +29,7 @@ const AddCollectionForNovel = graphql(`
   }
 `);
 
-export interface AddCollectionProps {
+interface AddCollectionProps {
   novelId: number;
   refetch: () => void;
 }

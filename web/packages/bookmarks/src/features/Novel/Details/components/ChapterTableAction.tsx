@@ -15,7 +15,7 @@ export const DeleteReadRecord = graphql(`
   }
 `);
 
-export interface ChapterTableActionProps {
+interface ChapterTableActionProps {
   isRead: boolean;
   novelId: number;
   chapterId: number;

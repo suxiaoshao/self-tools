@@ -2,7 +2,7 @@ use std::{fs, path::PathBuf};
 
 use rcgen::{
     BasicConstraints, CertificateParams, DistinguishedName, DnType, ExtendedKeyUsagePurpose, IsCa,
-    KeyPair, KeyUsagePurpose,
+    Issuer, KeyPair, KeyUsagePurpose,
 };
 use tracing::{event, Level};
 
@@ -52,7 +52,8 @@ pub fn run(output_dir: PathBuf, domains: Vec<String>) -> TaskResult {
     leaf_params.use_authority_key_identifier_extension = true;
 
     let leaf_key = KeyPair::generate()?;
-    let leaf_cert = leaf_params.signed_by(&leaf_key, &ca_cert, &ca_key)?;
+    let ca_issuer = Issuer::from_params(&ca_params, &ca_key);
+    let leaf_cert = leaf_params.signed_by(&leaf_key, &ca_issuer)?;
 
     let cert_path = output_dir.join("fullchain.pem");
     let key_path = output_dir.join("privkey.pem");

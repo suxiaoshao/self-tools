@@ -9,11 +9,11 @@ import { MoreHorizontal } from 'lucide-react';
 import type { ReactNode, JSX } from 'react';
 import { match, P } from 'ts-pattern';
 
-export interface TableActionsProps {
+interface TableActionsProps {
   children: () => Actions[];
 }
 
-export type Actions =
+type Actions =
   | {
       text: ReactNode;
       onClick?: () => void;

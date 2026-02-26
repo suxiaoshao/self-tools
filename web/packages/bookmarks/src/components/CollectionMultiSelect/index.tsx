@@ -37,10 +37,7 @@ const selectCollectionSchema = object({
 
 type SelectCollectionType = InferInput<typeof selectCollectionSchema>;
 
-export interface CollectionMultiSelectProps extends Omit<
-  ComponentProps<'div'>,
-  'name' | 'onChange' | 'onBlur' | 'value'
-> {
+interface CollectionMultiSelectProps extends Omit<ComponentProps<'div'>, 'name' | 'onChange' | 'onBlur' | 'value'> {
   onChange: (newValue: number[] | null | undefined) => void;
   onBlur: FocusEventHandler<HTMLInputElement> | undefined;
   value: number[] | null | undefined;

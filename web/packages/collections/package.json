@@ -13,13 +13,13 @@
     "details": "workspace:^",
     "edit": "workspace:^",
     "i18n": "workspace:^",
-    "markdown-to-jsx": "^9.5.0",
+    "markdown-to-jsx": "^9.7.6",
     "prism-themes": "^1.9.0",
     "prismjs": "^1.30.0",
     "time": "workspace:^",
     "types": "workspace:^"
   },
   "devDependencies": {
-    "@types/prismjs": "^1.26.5"
+    "@types/prismjs": "^1.26.6"
   }
 }
