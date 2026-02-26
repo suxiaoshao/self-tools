@@ -1,16 +1,14 @@
 version: '3.9'
 services:
   web:
-    image: suxiaoshao/web:latest
+    image: suxiaoshao/gateway:latest
     ports:
       - '80:80'
       - '443:443'
     restart: always
     container_name: web
     volumes:
-      - /private/etc/nginx/nginx.conf:/etc/nginx/nginx.conf
       - /private/etc/letsencrypt:/etc/letsencrypt
-      - /var/www/certbot:/var/www/certbot
     depends_on:
       - login
       - bookmarks

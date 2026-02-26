@@ -5,14 +5,14 @@
  * @LastEditTime: 2024-01-22 23:56:45
  * @FilePath: /self-tools/server/common/thrift/src/lib.rs
  */
-mod gen {
+mod gen_thrift {
     include!(concat!(env!("OUT_DIR"), "/volo_gen.rs"));
 }
 
 use std::{net::SocketAddr, sync::LazyLock};
 
 use dns_lookup::lookup_host;
-pub use gen::volo_gen::*;
+pub use gen_thrift::volo_gen::*;
 
 #[derive(Debug, thiserror::Error, serde::Serialize, Clone)]
 pub enum ClientError {

@@ -1,14 +1,10 @@
-use bollard::{
-    body_full,
-    query_parameters::BuildImageOptionsBuilder,
-    Docker,
-};
+use bollard::{body_full, query_parameters::BuildImageOptionsBuilder, Docker};
 use futures_util::TryStreamExt;
 use tracing::{event, Level};
 
 use crate::{
-    TaskResult,
     context::{build_context_tar, workspace_root},
+    TaskResult,
 };
 
 pub async fn run() -> TaskResult {
@@ -27,6 +23,7 @@ pub async fn run() -> TaskResult {
             "./docker/server/bookmarks.Dockerfile",
             "suxiaoshao/bookmarks",
         ),
+        ("./docker/server/gateway.Dockerfile", "suxiaoshao/gateway"),
     ];
 
     for (dockerfile, image) in builds {

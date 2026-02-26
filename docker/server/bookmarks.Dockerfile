@@ -1,4 +1,4 @@
-# syntax = docker/dockerfile:experimental
+# syntax=docker/dockerfile:1
 FROM suxiaoshao/rust as builder
 COPY ./ /app
 RUN --mount=type=cache,target=/usr/local/cargo/registry,id=rust_registry \
@@ -8,7 +8,7 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry,id=rust_registry \
     && cp /app/target/release/bookmarks /app/
 
 FROM ubuntu as prod
-RUN apt update && apt upgrade -y \ 
+RUN apt update && apt upgrade -y \
     && apt install libpq5 -y
 COPY --from=builder ./app/bookmarks /
 EXPOSE 80

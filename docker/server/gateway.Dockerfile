@@ -4,10 +4,10 @@ COPY ./ /app
 RUN --mount=type=cache,target=/usr/local/cargo/registry,id=rust_registry \
     --mount=type=cache,target=/app/target,id=rust_target \
     cd /app \
-    && cargo build --release -p auth \
-    && cp /app/target/release/auth /app/
+    && cargo build --release -p gateway \
+    && cp /app/target/release/gateway /app/
 
 FROM ubuntu as prod
-COPY --from=builder ./app/auth /
+COPY --from=builder ./app/gateway /
 EXPOSE 80
-CMD [ "/auth" ]
+CMD ["/gateway"]

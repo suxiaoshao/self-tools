@@ -1,4 +1,4 @@
-# syntax = docker/dockerfile:experimental
+# syntax=docker/dockerfile:1
 FROM suxiaoshao/rust as builder
 COPY ./ /app
 RUN --mount=type=cache,target=/usr/local/cargo/registry,id=rust_registry \
