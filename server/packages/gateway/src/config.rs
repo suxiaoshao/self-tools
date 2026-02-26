@@ -8,7 +8,6 @@ pub struct GatewayConfig {
     pub login_upstream: String,
     pub bookmarks_upstream: String,
     pub collections_upstream: String,
-    pub bookmarks_web_upstream: String,
     pub collections_web_upstream: String,
     pub main_web_upstream: String,
     pub listen_http: String,
@@ -27,10 +26,6 @@ impl GatewayConfig {
             login_upstream: env_or("GATEWAY_LOGIN_UPSTREAM", "login:8000"),
             bookmarks_upstream: env_or("GATEWAY_BOOKMARKS_UPSTREAM", "bookmarks:8080"),
             collections_upstream: env_or("GATEWAY_COLLECTIONS_UPSTREAM", "collections:8080"),
-            bookmarks_web_upstream: env_or(
-                "GATEWAY_BOOKMARKS_WEB_UPSTREAM",
-                "host.docker.internal:3002",
-            ),
             collections_web_upstream: env_or(
                 "GATEWAY_COLLECTIONS_WEB_UPSTREAM",
                 "host.docker.internal:3001",

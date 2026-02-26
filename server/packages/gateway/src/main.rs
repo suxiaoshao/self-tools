@@ -22,7 +22,7 @@ fn main() -> Result<()> {
     let mut server = Server::new(None)?;
     server.bootstrap();
 
-    let mut service = http_proxy_service(&server.configuration, GatewayProxy::new(routes));
+    let mut service = http_proxy_service(&server.configuration, GatewayProxy::new(routes, &config));
     service.add_tcp(&config.listen_http);
     service.add_tls(&config.listen_https, &config.tls_cert, &config.tls_key)?;
     server.add_service(service);

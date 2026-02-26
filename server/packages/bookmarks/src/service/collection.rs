@@ -151,11 +151,9 @@ impl Collection {
         conn: &mut PgConnection,
     ) -> GraphqlResult<Vec<Self>> {
         //  判断父目录是否存在
-        if let Some(id) = parent_id {
-            if !CollectionModel::exists(id, conn)? {
-                event!(Level::WARN, "父目录不存在: {}", id);
-                return Err(GraphqlError::NotFound("目录", id));
-            }
+        if let Some(id) = parent_id && !CollectionModel::exists(id, conn)? {
+            event!(Level::WARN, "父目录不存在: {}", id);
+            return Err(GraphqlError::NotFound("目录", id));
         }
         let collections = CollectionModel::get_list_by_parent(parent_id, conn)?;
         Ok(collections.into_iter().map(|d| d.into()).collect())
@@ -202,11 +200,9 @@ impl Collection {
             return Err(GraphqlError::NotFound("目录", id));
         }
         //  判断父目录是否存在
-        if let Some(id) = parent_id {
-            if !CollectionModel::exists(id, conn)? {
-                event!(Level::WARN, "父目录不存在: {}", id);
-                return Err(GraphqlError::NotFound("目录", id));
-            }
+        if let Some(id) = parent_id && !CollectionModel::exists(id, conn)? {
+            event!(Level::WARN, "父目录不存在: {}", id);
+            return Err(GraphqlError::NotFound("目录", id));
         }
         let collection = CollectionModel::update(id, name, parent_id, description, conn)?;
         Ok(collection.into())
@@ -261,11 +257,9 @@ impl Queryable for CollectionRunner {
         let limit = pagination.limit();
         let conn = &mut self.conn.get()?;
         //  判断父目录是否存在
-        if let Some(id) = self.parent_id {
-            if !CollectionModel::exists(id, conn)? {
-                event!(Level::WARN, "父目录不存在: {}", id);
-                return Err(GraphqlError::NotFound("目录", id));
-            }
+        if let Some(id) = self.parent_id && !CollectionModel::exists(id, conn)? {
+            event!(Level::WARN, "父目录不存在: {}", id);
+            return Err(GraphqlError::NotFound("目录", id));
         }
         let collections =
             CollectionModel::list_by_parent_with_page(self.parent_id, offset, limit, conn)?;

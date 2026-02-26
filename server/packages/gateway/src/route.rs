@@ -20,17 +20,10 @@ pub fn build_routes(config: &GatewayConfig) -> Vec<Route> {
         },
         Route {
             host: config.bookmarks_host.clone(),
-            path_prefix: Some("/graphql".to_string()),
+            path_prefix: None,
             upstream: config.bookmarks_upstream.clone(),
             tls: false,
             sni: "bookmarks".to_string(),
-        },
-        Route {
-            host: config.bookmarks_host.clone(),
-            path_prefix: None,
-            upstream: config.bookmarks_web_upstream.clone(),
-            tls: false,
-            sni: "bookmarks-web".to_string(),
         },
         Route {
             host: config.collections_host.clone(),

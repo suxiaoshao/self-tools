@@ -27,7 +27,7 @@ pub(super) async fn ensure_service_running(
         .container_name
         .clone()
         .unwrap_or_else(|| format!("self-tools-{service_name}"));
-    let config_signature = build_config_signature(runtime, service_name, service)?;
+    let config_signature = build_config_signature(runtime, service_name, service).await?;
 
     let inspect = runtime
         .docker
@@ -246,7 +246,7 @@ fn container_matches_signature(details: &ContainerInspectResponse, expected: &st
         .is_some_and(|actual| actual == expected)
 }
 
-fn build_config_signature(
+async fn build_config_signature(
     runtime: &ComposeRuntime<'_>,
     service_name: &str,
     service: &ComposeService,
@@ -257,6 +257,12 @@ fn build_config_signature(
         .ok_or_else(|| XtaskError::MissingImage {
             service: service_name.to_string(),
         })?;
+    let image_id = runtime
+        .docker
+        .inspect_image(image)
+        .await?
+        .id
+        .unwrap_or_default();
 
     let mut env = runtime.env_from_file.clone();
     for env_file in service.env_file.as_slice() {
@@ -292,7 +298,7 @@ fn build_config_signature(
     let restart = service.restart.clone().unwrap_or_default();
 
     Ok(format!(
-        "project={}|image={image}|restart={restart}|network={}|env={}|ports={}|binds={}",
+        "project={}|image={image}|image_id={image_id}|restart={restart}|network={}|env={}|ports={}|binds={}",
         runtime.project_name,
         runtime.network_name,
         env_pairs.join(","),
