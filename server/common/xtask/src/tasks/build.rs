@@ -1,14 +1,14 @@
 use bollard::{
     body_full,
-    query_parameters::BuildImageOptionsBuilder,
+    query_parameters::{BuildImageOptionsBuilder, BuilderVersion},
     Docker,
 };
 use futures_util::TryStreamExt;
 use tracing::{event, Level};
 
 use crate::{
-    TaskResult,
     context::{build_context_tar, workspace_root},
+    TaskResult,
 };
 
 pub async fn run() -> TaskResult {
@@ -27,15 +27,19 @@ pub async fn run() -> TaskResult {
             "./docker/server/bookmarks.Dockerfile",
             "suxiaoshao/bookmarks",
         ),
+        ("./docker/server/gateway.Dockerfile", "suxiaoshao/gateway"),
     ];
 
-    for (dockerfile, image) in builds {
+    for (index, (dockerfile, image)) in builds.into_iter().enumerate() {
         event!(Level::INFO, dockerfile, image, "building image");
 
+        let session = format!("xtask-build-{index}");
         let options = BuildImageOptionsBuilder::new()
             .dockerfile(dockerfile.trim_start_matches("./"))
             .t(image)
             .rm(true)
+            .version(BuilderVersion::BuilderBuildKit)
+            .session(&session)
             .build();
 
         docker

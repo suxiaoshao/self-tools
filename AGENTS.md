@@ -18,6 +18,7 @@
 - `bookmarks` 与 `collections` 前端包是被 `portal` 引入的 workspace 包。
 - `auth` 是 Thrift 服务（端口 80），由 `thrift` 公共库中的客户端按主机名 `auth:80` 发现。
 - `login` 在 `8000`，`bookmarks`/`collections` 在 `8080`。
+- 当前入口网关是 `gateway` 服务（`server/packages/gateway` + `suxiaoshao/gateway` 镜像），不是 Nginx。
 - `bookmarks` 依赖环境变量 `BOOKMARKS_PG`，`collections` 依赖 `COLLECTIONS_PG`。
 - 前端存在硬编码线上域名（`sushao.top` 相关）。
 
@@ -61,7 +62,14 @@ cargo run -p xtask -- cert --out-dir docker/compose/certs
 证书相关补充（本地联调）：
 
 - `xtask cert` 会生成本地 CA 与站点证书文件：`ca.pem`、`fullchain.pem`、`privkey.pem`。
-- 需将 `ca.pem` 导入系统信任后，再重启浏览器与 Nginx 容器。
+- 需将 `ca.pem` 导入系统信任后，再重启浏览器与 `gateway` 容器（当前网关为 Rust `gateway` 服务，不再使用 Nginx 转发）。
+
+`xtask` 子命令说明：
+
+- `cargo run -p xtask -- build`：按固定顺序构建服务镜像（`collections`、`auth`、`login`、`bookmarks`、`gateway`）。
+- `cargo run -p xtask -- compose`：读取 `docker/compose/docker-compose.yml`，按依赖顺序确保 network/volume/container 就绪并启动。
+- `cargo run -p xtask -- lint`：执行 Rust 侧 lint 任务。
+- `cargo run -p xtask -- cert --out-dir docker/compose/certs`：生成本地 CA 与站点证书。
 
 单服务调试：
 
@@ -94,6 +102,8 @@ cargo run -p collections
 
 - 修改或新增代码文件时，统一使用 `UTF-8` 编码。
 - 修改或新增代码文件时，统一使用 Linux 换行符（`LF`，`\n`）。
+- Rust 模块文件禁止使用 `mod.rs`；统一使用同名文件模块（例如 `foo.rs`）与目录并存结构（例如 `foo/`）。
+- 遇到大文件时，必须按职责进行合理的模块与文件拆分，避免单文件持续膨胀；拆分后保持清晰的公开接口与目录边界。
 - 不要凭空添加仓库中不存在的脚本命令（例如 `scripts/*.sh`）。
 - 不要把线上域名硬编码扩散到新文件；若需要新接口地址，优先引入可配置项。
 - 不要改变 `thrift` 服务发现机制（`auth` 主机名）除非任务明确要求。

@@ -234,8 +234,7 @@ fn parse_status(html: &Html) -> NovelResult<NovelStatus> {
 }
 
 fn parse_tags(html: &Html) -> NovelResult<Vec<JJTag>> {
-    let tags = html.select(&SELECTOR_TAGS).map(map_tag).collect();
-    tags
+    html.select(&SELECTOR_TAGS).map(map_tag).collect()
 }
 
 fn map_tag(element_ref: ElementRef) -> NovelResult<JJTag> {

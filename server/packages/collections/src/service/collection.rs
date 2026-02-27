@@ -222,11 +222,9 @@ impl CollectionQueryRunner {
             ..
         } = query;
         //  判断父目录是否存在
-        if let Some(id) = id {
-            if !CollectionModel::exists(id, conn_temp)? {
-                event!(Level::WARN, "目录不存在: {}", id);
-                return Err(GraphqlError::NotFound("目录", id));
-            }
+        if let Some(id) = id && !CollectionModel::exists(id, conn_temp)? {
+            event!(Level::WARN, "目录不存在: {}", id);
+            return Err(GraphqlError::NotFound("目录", id));
         }
         let count = CollectionModel::get_count_by_parent(id, create_time, update_time, conn_temp)?;
         Ok(Self { query, count, conn })
@@ -266,11 +264,9 @@ impl Queryable for CollectionQueryRunner {
         let limit = pagination.limit();
         let conn = &mut self.conn.get()?;
         //  判断父目录是否存在
-        if let Some(id) = id {
-            if !CollectionModel::exists(id, conn)? {
-                event!(Level::WARN, "目录不存在: {}", id);
-                return Err(GraphqlError::NotFound("目录", id));
-            }
+        if let Some(id) = id && !CollectionModel::exists(id, conn)? {
+            event!(Level::WARN, "目录不存在: {}", id);
+            return Err(GraphqlError::NotFound("目录", id));
         }
         let collections = CollectionModel::list_parent_with_page(
             id,

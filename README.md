@@ -29,7 +29,7 @@
 └── docker/
     ├── compose/            # docker-compose 与 .env
     ├── server/             # 各后端服务 Dockerfile
-    └── web/                # nginx 与前端镜像构建
+    └── web/                # 历史 nginx 相关文件（当前网关使用 gateway 服务）
 ```
 
 ## 环境要求
@@ -105,6 +105,8 @@ cargo run -p collections
 
 ## Docker 运行
 
+说明：当前入口网关是 `gateway` Rust 服务（镜像 `suxiaoshao/gateway`），不是 Nginx。
+
 ### 方式 1：使用 Docker Compose
 
 ```bash
@@ -117,6 +119,13 @@ docker compose up -d
 ```bash
 cargo run -p xtask -- build
 cargo run -p xtask -- compose
+```
+
+`xtask` 其他常用命令：
+
+```bash
+cargo run -p xtask -- lint
+cargo run -p xtask -- cert --out-dir docker/compose/certs
 ```
 
 ## GraphQL 代码生成
