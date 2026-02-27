@@ -10,14 +10,14 @@ use std::{
     fmt::{self, Display, Formatter},
     io::Write,
 };
-use tracing::{event, Level};
+use tracing::{Level, event};
 
 use diesel::{
+    QueryId,
     deserialize::{self, FromSql, FromSqlRow},
     expression::AsExpression,
     pg::{Pg, PgValue},
     serialize::{self, IsNull, Output, ToSql},
-    QueryId,
 };
 
 #[derive(Debug, FromSqlRow, AsExpression, QueryId, Enum, Copy, Clone, Eq, PartialEq)]

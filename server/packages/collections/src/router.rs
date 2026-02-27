@@ -1,7 +1,7 @@
 mod graphql;
 use self::graphql::{graphql_handler, graphql_playground};
 use crate::{errors::GraphqlResult, graphql::get_schema};
-use axum::{routing::post, Router};
+use axum::{Router, routing::post};
 
 pub(crate) fn get_router() -> GraphqlResult<Router> {
     let schema = get_schema()?;

@@ -8,11 +8,11 @@ use async_graphql::{ComplexObject, SimpleObject};
 use diesel::PgConnection;
 use novel_crawler::{JJTag, QDTag, TagFn};
 use time::OffsetDateTime;
-use tracing::{event, Level};
+use tracing::{Level, event};
 
 use crate::{
     errors::{GraphqlError, GraphqlResult},
-    model::{schema::custom_type::NovelSite, tag::TagModel, PgPool},
+    model::{PgPool, schema::custom_type::NovelSite, tag::TagModel},
 };
 
 #[derive(SimpleObject, Eq, PartialEq)]

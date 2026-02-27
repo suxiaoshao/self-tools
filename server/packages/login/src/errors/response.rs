@@ -1,12 +1,12 @@
 use std::fmt::Debug;
 
 use axum::{
-    response::{IntoResponse, Response},
     Json,
+    response::{IntoResponse, Response},
 };
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use tracing::{event, Level};
+use tracing::{Level, event};
 
 use super::OpenError;
 

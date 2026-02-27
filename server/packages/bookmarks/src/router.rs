@@ -10,8 +10,8 @@ mod graphql;
 use self::graphql::{graphql_handler, graphql_playground};
 use crate::{errors::GraphqlResult, graphql::get_schema};
 use axum::{
-    routing::{get, post},
     Router,
+    routing::{get, post},
 };
 
 pub(crate) fn get_router() -> GraphqlResult<Router> {

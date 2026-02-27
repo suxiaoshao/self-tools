@@ -5,7 +5,7 @@
  * @LastEditTime: 2024-03-28 09:34:17
  * @FilePath: /self-tools/server/common/novel_crawler/src/novel.rs
  */
-use crate::{chapter::ChapterFn, errors::NovelResult, tag::TagFn, AuthorFn};
+use crate::{AuthorFn, chapter::ChapterFn, errors::NovelResult, tag::TagFn};
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum NovelStatus {
     Ongoing,
@@ -24,7 +24,7 @@ pub trait NovelFn: Sized + Send + Sync + Sized {
     fn description(&self) -> &str;
     fn image(&self) -> &str;
     fn chapters(&self)
-        -> impl std::future::Future<Output = NovelResult<Vec<Self::Chapter>>> + Send;
+    -> impl std::future::Future<Output = NovelResult<Vec<Self::Chapter>>> + Send;
     fn author_id(&self) -> &str;
     fn author(&self) -> impl std::future::Future<Output = NovelResult<Self::Author>> + Send {
         async { Self::Author::get_author_data(self.author_id()).await }

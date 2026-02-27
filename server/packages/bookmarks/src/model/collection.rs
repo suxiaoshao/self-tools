@@ -3,7 +3,7 @@ use crate::errors::{GraphqlError, GraphqlResult};
 use diesel::prelude::*;
 use std::collections::{HashMap, HashSet};
 use time::OffsetDateTime;
-use tracing::{event, Level};
+use tracing::{Level, event};
 
 #[derive(Queryable)]
 #[cfg_attr(test, derive(Debug))]

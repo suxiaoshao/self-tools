@@ -2,8 +2,8 @@ use std::collections::{HashMap, HashSet};
 
 use crate::{errors::GraphqlResult, model::schema::collection_item};
 use diesel::{
-    prelude::{Insertable, Queryable},
     ExpressionMethods, PgConnection, QueryDsl, RunQueryDsl,
+    prelude::{Insertable, Queryable},
 };
 
 #[derive(Queryable, Insertable)]

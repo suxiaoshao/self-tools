@@ -1,4 +1,4 @@
-use async_graphql::http::{playground_source, GraphQLPlaygroundConfig};
+use async_graphql::http::{GraphQLPlaygroundConfig, playground_source};
 use axum::response::{self, IntoResponse};
 
 pub(crate) async fn graphql_playground() -> impl IntoResponse {

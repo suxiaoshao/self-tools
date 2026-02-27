@@ -1,24 +1,24 @@
 use std::sync::LazyLock;
 
 use nom::{
+    IResult, Parser,
     bytes::{
         complete::{is_not, tag, take_while},
         streaming::take_until,
     },
     combinator::{all_consuming, eof},
-    IResult, Parser,
 };
 use scraper::{ElementRef, Html, Selector};
 use time::{
-    macros::{format_description, offset},
     OffsetDateTime, PrimitiveDateTime,
+    macros::{format_description, offset},
 };
 
 use crate::{
+    JJAuthor,
     errors::{NovelError, NovelResult},
     implement::{get_doc, parse_image_src, parse_inner_html, parse_text},
     novel::{NovelFn, NovelStatus},
-    JJAuthor,
 };
 
 use super::{chapter::JJChapter, tag::JJTag};

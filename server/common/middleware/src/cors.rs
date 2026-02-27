@@ -1,12 +1,12 @@
 use http::{
-    header::{AUTHORIZATION, CONTENT_TYPE},
     HeaderValue, Method,
+    header::{AUTHORIZATION, CONTENT_TYPE},
 };
 use nom::{
+    IResult, Parser,
     branch::alt,
     bytes::complete::{tag, take_till},
     combinator::{all_consuming, complete, map, opt, verify},
-    IResult, Parser,
 };
 use tower_http::cors::{AllowOrigin, CorsLayer};
 

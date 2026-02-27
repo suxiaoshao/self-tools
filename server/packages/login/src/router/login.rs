@@ -6,8 +6,8 @@
  * @FilePath: /self-tools/server/packages/login/src/router/login.rs
  */
 use axum::{
-    extract::rejection::{ExtensionRejection, JsonRejection},
     Extension, Json,
+    extract::rejection::{ExtensionRejection, JsonRejection},
 };
 use middleware::TraceIdExt;
 use serde::Deserialize;
@@ -15,9 +15,9 @@ use thrift::{
     auth::{LoginReply, LoginRequest},
     get_client,
 };
-use tracing::{event, Level};
+use tracing::{Level, event};
 
-use crate::errors::{response::OpenResponse, OpenResult};
+use crate::errors::{OpenResult, response::OpenResponse};
 #[derive(Deserialize, Debug)]
 pub struct LoginInput {
     pub(super) username: String,

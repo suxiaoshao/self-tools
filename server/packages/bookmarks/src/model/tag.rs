@@ -5,7 +5,7 @@ use crate::errors::{GraphqlError, GraphqlResult};
 use super::schema::{custom_type::NovelSite, tag};
 use diesel::{connection::DefaultLoadingMode, prelude::*};
 use time::OffsetDateTime;
-use tracing::{event, Level};
+use tracing::{Level, event};
 
 #[derive(Queryable)]
 pub(crate) struct TagModel {

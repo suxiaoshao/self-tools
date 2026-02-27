@@ -8,7 +8,7 @@
 use thrift::auth::{
     CheckRequest, ItemServiceCheckException, ItemServiceLoginException, LoginReply, LoginRequest,
 };
-use tracing::{event, Level};
+use tracing::{Level, event};
 use volo_thrift::MaybeException;
 
 use crate::utils::Claims;

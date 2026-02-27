@@ -2,9 +2,9 @@ use std::{collections::HashSet, sync::LazyLock};
 
 use futures::future::try_join_all;
 use nom::{
+    IResult, Parser,
     bytes::complete::{tag, take_while},
     combinator::{all_consuming, eof},
-    IResult, Parser,
 };
 
 use scraper::{ElementRef, Html, Selector};

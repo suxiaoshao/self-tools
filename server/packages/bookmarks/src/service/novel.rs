@@ -8,11 +8,11 @@ use crate::model::collection_novel::CollectionNovelModel;
 use crate::model::novel::UpdateNovelModel;
 use crate::model::novel_comment::NovelCommentModel;
 use crate::model::read_record::{NewReadRecord, ReadRecordModel};
-use crate::model::{collection::CollectionModel, schema::custom_type::NovelSite, tag::TagModel};
 use crate::model::{
-    novel::{NewNovel, NovelModel},
     PgPool,
+    novel::{NewNovel, NovelModel},
 };
+use crate::model::{collection::CollectionModel, schema::custom_type::NovelSite, tag::TagModel};
 use crate::service::novel_comment::NovelComment;
 use crate::{
     errors::{GraphqlError, GraphqlResult},
@@ -24,7 +24,7 @@ use graphql_common::{Queryable, TagMatch};
 use novel_crawler::{JJNovel, NovelFn, QDNovel};
 use std::collections::HashSet;
 use time::OffsetDateTime;
-use tracing::{event, Level};
+use tracing::{Level, event};
 
 #[derive(SimpleObject, Clone)]
 #[graphql(complex)]

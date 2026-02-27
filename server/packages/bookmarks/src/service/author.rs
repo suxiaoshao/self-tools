@@ -10,17 +10,17 @@ use diesel::PgConnection;
 use graphql_common::Queryable;
 use novel_crawler::{AuthorFn, JJAuthor, NovelFn, QDAuthor};
 use time::OffsetDateTime;
-use tracing::{event, Level};
+use tracing::{Level, event};
 
 use crate::{
     errors::{GraphqlError, GraphqlResult},
     model::{
+        PgPool,
         author::{AuthorModel, UpdateAuthorModel},
         chapter::{ChapterModel, NewChapter, UpdateChapterModel},
         collection_novel::CollectionNovelModel,
         novel::{NewNovel, NovelModel, UpdateNovelModel},
         schema::custom_type::NovelSite,
-        PgPool,
     },
 };
 

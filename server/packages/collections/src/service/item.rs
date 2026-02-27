@@ -1,7 +1,7 @@
 use super::collection::Collection;
 use crate::{
     errors::{GraphqlError, GraphqlResult},
-    model::{collection_item::CollectionItemModel, PgPool},
+    model::{PgPool, collection_item::CollectionItemModel},
     service::utils::{find_all_children, find_all_item_by_collection},
 };
 use crate::{graphql::types::CollectionItemQuery, model::collection::CollectionModel};
@@ -11,7 +11,7 @@ use diesel::{Connection, PgConnection};
 use graphql_common::{Paginate, Queryable, TagMatch};
 use std::collections::HashSet;
 use time::OffsetDateTime;
-use tracing::{event, Level};
+use tracing::{Level, event};
 
 #[derive(SimpleObject, Clone)]
 #[graphql(complex)]

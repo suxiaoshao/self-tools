@@ -7,8 +7,8 @@
  */
 use anyhow::anyhow;
 use std::net::SocketAddr;
-use tracing::{event, level_filters::LevelFilter, Level};
-use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt, Layer};
+use tracing::{Level, event, level_filters::LevelFilter};
+use tracing_subscriber::{Layer, fmt, layer::SubscriberExt, util::SubscriberInitExt};
 
 use service::AuthImpl;
 

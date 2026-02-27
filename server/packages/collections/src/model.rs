@@ -1,8 +1,8 @@
 use std::env;
 
 use diesel::{
-    r2d2::{ConnectionManager, Pool},
     PgConnection,
+    r2d2::{ConnectionManager, Pool},
 };
 
 use crate::errors::GraphqlResult;

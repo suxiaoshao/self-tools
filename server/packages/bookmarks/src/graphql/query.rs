@@ -12,8 +12,8 @@ use super::{
 use crate::{
     errors::{GraphqlError, GraphqlResult},
     model::{
-        schema::custom_type::{NovelSite, NovelStatus},
         PgPool,
+        schema::custom_type::{NovelSite, NovelStatus},
     },
     service::{
         author::{Author, AuthorList, AuthorRunner},
@@ -24,7 +24,7 @@ use crate::{
 };
 use async_graphql::{Context, Object};
 use graphql_common::{Pagination, Queryable, TagMatch, TagMatchValidator};
-use tracing::{event, Level};
+use tracing::{Level, event};
 
 pub(crate) struct QueryRoot;
 

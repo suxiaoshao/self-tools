@@ -2,12 +2,12 @@ use async_graphql::*;
 use diesel::{Connection, PgConnection};
 use graphql_common::{Paginate, Queryable};
 use time::OffsetDateTime;
-use tracing::{event, Level};
+use tracing::{Level, event};
 
 use crate::{
     errors::{GraphqlError, GraphqlResult},
     graphql::types::{CollectionItemQuery, ItemAndCollection},
-    model::{collection::CollectionModel, collection_item::CollectionItemModel, PgPool},
+    model::{PgPool, collection::CollectionModel, collection_item::CollectionItemModel},
 };
 
 #[derive(SimpleObject)]
@@ -222,7 +222,9 @@ impl CollectionQueryRunner {
             ..
         } = query;
         //  判断父目录是否存在
-        if let Some(id) = id && !CollectionModel::exists(id, conn_temp)? {
+        if let Some(id) = id
+            && !CollectionModel::exists(id, conn_temp)?
+        {
             event!(Level::WARN, "目录不存在: {}", id);
             return Err(GraphqlError::NotFound("目录", id));
         }
@@ -264,7 +266,9 @@ impl Queryable for CollectionQueryRunner {
         let limit = pagination.limit();
         let conn = &mut self.conn.get()?;
         //  判断父目录是否存在
-        if let Some(id) = id && !CollectionModel::exists(id, conn)? {
+        if let Some(id) = id
+            && !CollectionModel::exists(id, conn)?
+        {
             event!(Level::WARN, "目录不存在: {}", id);
             return Err(GraphqlError::NotFound("目录", id));
         }

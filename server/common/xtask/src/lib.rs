@@ -2,7 +2,7 @@ use std::path::PathBuf;
 use std::{thread, time::Duration};
 
 use tokio::runtime::Builder as RuntimeBuilder;
-use tracing::{event, Level};
+use tracing::{Level, event};
 
 mod compose_types;
 mod context;
@@ -13,10 +13,20 @@ pub use error::XtaskError;
 
 pub type TaskResult = Result<(), XtaskError>;
 
+#[derive(Debug, Clone, Default)]
+pub struct BuildOptions {
+    pub http_proxy: Option<String>,
+    pub https_proxy: Option<String>,
+    pub no_proxy: Option<String>,
+    pub debian_mirror_url: Option<String>,
+}
+
 #[derive(Debug, Clone)]
 pub enum Task {
-    Build,
-    Compose,
+    Build(BuildOptions),
+    Compose {
+        retries: usize,
+    },
     Lint,
     Cert {
         output_dir: PathBuf,
@@ -26,8 +36,8 @@ pub enum Task {
 
 pub fn run(task: Task) -> TaskResult {
     match task {
-        Task::Build => block_on(tasks::build::run()),
-        Task::Compose => run_compose_with_retry(),
+        Task::Build(options) => block_on(tasks::build::run(options)),
+        Task::Compose { retries } => run_compose_with_retry(retries),
         Task::Lint => tasks::lint::run(),
         Task::Cert {
             output_dir,
@@ -36,8 +46,8 @@ pub fn run(task: Task) -> TaskResult {
     }
 }
 
-fn run_compose_with_retry() -> TaskResult {
-    let max_attempts = 100;
+fn run_compose_with_retry(retries: usize) -> TaskResult {
+    let max_attempts = retries.saturating_add(1);
 
     for attempt in 1..=max_attempts {
         let result = block_on(tasks::compose::run_once());

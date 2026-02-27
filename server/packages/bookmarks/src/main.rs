@@ -15,9 +15,9 @@ use std::net::SocketAddr;
 
 use middleware::{get_cors, trace_layer};
 use tokio::net::TcpListener;
-use tracing::{event, metadata::LevelFilter, Level};
+use tracing::{Level, event, metadata::LevelFilter};
 use tracing_subscriber::{
-    fmt, prelude::__tracing_subscriber_SubscriberExt, util::SubscriberInitExt, Layer,
+    Layer, fmt, prelude::__tracing_subscriber_SubscriberExt, util::SubscriberInitExt,
 };
 
 use crate::router::get_router;

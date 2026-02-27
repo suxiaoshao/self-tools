@@ -7,12 +7,12 @@
  */
 use async_graphql_axum::{GraphQLRequest, GraphQLResponse};
 use axum::{
-    extract::{rejection::ExtensionRejection, State},
-    http::{
-        header::{AsHeaderName, AUTHORIZATION},
-        HeaderMap,
-    },
     Extension,
+    extract::{State, rejection::ExtensionRejection},
+    http::{
+        HeaderMap,
+        header::{AUTHORIZATION, AsHeaderName},
+    },
 };
 use middleware::TraceIdExt;
 

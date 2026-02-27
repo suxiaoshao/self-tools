@@ -1,15 +1,14 @@
 use std::{fmt::Write, sync::Arc};
 
 use async_graphql::{
-    async_trait,
+    PathSegment, Response, ServerError, ServerResult, ValidationResult, Variables, async_trait,
     extensions::{
         Extension, ExtensionContext, ExtensionFactory, NextExecute, NextParseQuery, NextRequest,
         NextValidation,
     },
     parser::types::{ExecutableDocument, OperationType, Selection},
-    PathSegment, Response, ServerError, ServerResult, ValidationResult, Variables,
 };
-use tracing::{event, Instrument, Level};
+use tracing::{Instrument, Level, event};
 
 pub struct Logger;
 

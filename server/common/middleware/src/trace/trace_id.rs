@@ -1,11 +1,11 @@
 use futures::Future;
 use futures_util::ready;
-use http::{header::HeaderName, HeaderValue, Request, Response};
+use http::{HeaderValue, Request, Response, header::HeaderName};
 use pin_project_lite::pin_project;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 use tower::{Layer, Service};
-use tracing::{event, instrument::Instrumented, Instrument, Level};
+use tracing::{Instrument, Level, event, instrument::Instrumented};
 
 #[derive(Clone)]
 pub struct TraceIdExt(pub String);
@@ -97,12 +97,13 @@ fn resolve_trace_context(headers: &http::HeaderMap) -> TraceContext {
     let traceparent = header_to_string(headers, HEADER_TRACE_PARENT)
         .and_then(|value| validate_traceparent(&value))
         .unwrap_or_else(generate_traceparent);
-    let trace_id = parse_trace_id_from_traceparent(&traceparent)
-        .unwrap_or_else(|| random_hex(16));
+    let trace_id = parse_trace_id_from_traceparent(&traceparent).unwrap_or_else(|| random_hex(16));
 
     let request_id = header_to_string(headers, HEADER_X_REQUEST_ID)
         .filter(|value| valid_request_id(value))
-        .or_else(|| header_to_string(headers, HEADER_TRACE_ID).filter(|value| valid_request_id(value)))
+        .or_else(|| {
+            header_to_string(headers, HEADER_TRACE_ID).filter(|value| valid_request_id(value))
+        })
         .unwrap_or_else(|| trace_id.clone());
 
     TraceContext {

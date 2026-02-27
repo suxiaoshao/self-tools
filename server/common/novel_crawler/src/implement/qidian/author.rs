@@ -7,9 +7,9 @@ use crate::{
 };
 use futures::future::try_join_all;
 use nom::{
+    IResult, Parser,
     bytes::complete::{tag, take_until},
     combinator::{all_consuming, eof},
-    IResult, Parser,
 };
 use scraper::{ElementRef, Html, Selector};
 use std::{collections::HashSet, sync::LazyLock};

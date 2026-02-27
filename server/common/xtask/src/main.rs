@@ -2,11 +2,11 @@ use std::path::PathBuf;
 use std::process;
 
 use clap::{Parser, Subcommand};
-use tracing::{event, metadata::LevelFilter, Level};
+use tracing::{Level, event, metadata::LevelFilter};
 use tracing_subscriber::{
-    fmt, prelude::__tracing_subscriber_SubscriberExt, util::SubscriberInitExt, Layer,
+    Layer, fmt, prelude::__tracing_subscriber_SubscriberExt, util::SubscriberInitExt,
 };
-use xtask::{run, Task};
+use xtask::{BuildOptions, Task, run};
 
 #[derive(Debug, Parser)]
 #[command(name = "xtask")]
@@ -17,8 +17,20 @@ struct Cli {
 
 #[derive(Debug, Subcommand)]
 enum Commands {
-    Build,
-    Compose,
+    Build {
+        #[arg(long = "http-proxy", value_name = "URL")]
+        http_proxy: Option<String>,
+        #[arg(long = "https-proxy", value_name = "URL")]
+        https_proxy: Option<String>,
+        #[arg(long = "no-proxy", value_name = "VALUE")]
+        no_proxy: Option<String>,
+        #[arg(long = "debian-mirror-url", value_name = "URL")]
+        debian_mirror_url: Option<String>,
+    },
+    Compose {
+        #[arg(long = "retries", default_value_t = 0, value_name = "N")]
+        retries: usize,
+    },
     Lint,
     Cert {
         #[arg(long = "out-dir", default_value = "docker/compose/certs")]
@@ -35,8 +47,18 @@ fn main() {
 
     let cli = Cli::parse();
     let task = match cli.command {
-        Commands::Build => Task::Build,
-        Commands::Compose => Task::Compose,
+        Commands::Build {
+            http_proxy,
+            https_proxy,
+            no_proxy,
+            debian_mirror_url,
+        } => Task::Build(BuildOptions {
+            http_proxy,
+            https_proxy,
+            no_proxy,
+            debian_mirror_url,
+        }),
+        Commands::Compose { retries } => Task::Compose { retries },
         Commands::Lint => Task::Lint,
         Commands::Cert { out_dir, domains } => Task::Cert {
             output_dir: out_dir,

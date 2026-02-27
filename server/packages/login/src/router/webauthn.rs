@@ -1,11 +1,11 @@
 use super::login::LoginInput;
-use crate::errors::{response::OpenResponse, OpenError, OpenResult};
+use crate::errors::{OpenError, OpenResult, response::OpenResponse};
 use axum::{
-    extract::{
-        rejection::{ExtensionRejection, JsonRejection},
-        State,
-    },
     Extension, Json,
+    extract::{
+        State,
+        rejection::{ExtensionRejection, JsonRejection},
+    },
 };
 use middleware::TraceIdExt;
 use std::{collections::HashMap, ops::Deref, sync::Arc};
@@ -15,7 +15,7 @@ use thrift::{
 };
 use tokio::sync::Mutex;
 use tower_sessions::Session;
-use tracing::{event, Level};
+use tracing::{Level, event};
 use webauthn_rs::prelude::*;
 
 #[derive(Debug, Clone, Default)]
