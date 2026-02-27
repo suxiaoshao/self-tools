@@ -1,4 +1,8 @@
-use bollard::{body_full, query_parameters::BuildImageOptionsBuilder, Docker};
+use bollard::{
+    body_full,
+    query_parameters::{BuildImageOptionsBuilder, BuilderVersion},
+    Docker,
+};
 use futures_util::TryStreamExt;
 use tracing::{event, Level};
 
@@ -26,13 +30,16 @@ pub async fn run() -> TaskResult {
         ("./docker/server/gateway.Dockerfile", "suxiaoshao/gateway"),
     ];
 
-    for (dockerfile, image) in builds {
+    for (index, (dockerfile, image)) in builds.into_iter().enumerate() {
         event!(Level::INFO, dockerfile, image, "building image");
 
+        let session = format!("xtask-build-{index}");
         let options = BuildImageOptionsBuilder::new()
             .dockerfile(dockerfile.trim_start_matches("./"))
             .t(image)
             .rm(true)
+            .version(BuilderVersion::BuilderBuildKit)
+            .session(&session)
             .build();
 
         docker
