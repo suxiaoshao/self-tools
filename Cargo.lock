@@ -7227,6 +7227,7 @@ dependencies = [
  "bollard",
  "clap",
  "futures-util",
+ "nom 8.0.0",
  "rcgen",
  "serde",
  "serde_yaml",
@@ -7235,6 +7236,7 @@ dependencies = [
  "tokio",
  "tracing",
  "tracing-subscriber",
+ "url",
  "walkdir",
 ]
 
