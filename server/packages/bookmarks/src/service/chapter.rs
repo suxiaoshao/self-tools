@@ -9,11 +9,11 @@ use async_graphql::{ComplexObject, Context, SimpleObject};
 use diesel::PgConnection;
 use novel_crawler::{ChapterFn, JJChapter, QDChapter};
 use time::OffsetDateTime;
-use tracing::{event, Level};
+use tracing::{Level, event};
 
 use crate::{
     errors::{GraphqlError, GraphqlResult},
-    model::{schema::custom_type::NovelSite, PgPool},
+    model::{PgPool, schema::custom_type::NovelSite},
 };
 
 use super::{author::Author, novel::Novel};

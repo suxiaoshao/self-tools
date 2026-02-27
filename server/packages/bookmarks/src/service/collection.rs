@@ -2,13 +2,13 @@ use std::collections::HashSet;
 
 use async_graphql::*;
 use diesel::PgConnection;
-use graphql_common::{list, Queryable};
+use graphql_common::{Queryable, list};
 use time::OffsetDateTime;
-use tracing::{event, Level};
+use tracing::{Level, event};
 
 use crate::{
     errors::{GraphqlError, GraphqlResult},
-    model::{collection::CollectionModel, collection_novel::CollectionNovelModel, PgPool},
+    model::{PgPool, collection::CollectionModel, collection_novel::CollectionNovelModel},
 };
 
 use super::utils::find_all_children;
@@ -151,7 +151,9 @@ impl Collection {
         conn: &mut PgConnection,
     ) -> GraphqlResult<Vec<Self>> {
         //  判断父目录是否存在
-        if let Some(id) = parent_id && !CollectionModel::exists(id, conn)? {
+        if let Some(id) = parent_id
+            && !CollectionModel::exists(id, conn)?
+        {
             event!(Level::WARN, "父目录不存在: {}", id);
             return Err(GraphqlError::NotFound("目录", id));
         }
@@ -200,7 +202,9 @@ impl Collection {
             return Err(GraphqlError::NotFound("目录", id));
         }
         //  判断父目录是否存在
-        if let Some(id) = parent_id && !CollectionModel::exists(id, conn)? {
+        if let Some(id) = parent_id
+            && !CollectionModel::exists(id, conn)?
+        {
             event!(Level::WARN, "父目录不存在: {}", id);
             return Err(GraphqlError::NotFound("目录", id));
         }
@@ -257,7 +261,9 @@ impl Queryable for CollectionRunner {
         let limit = pagination.limit();
         let conn = &mut self.conn.get()?;
         //  判断父目录是否存在
-        if let Some(id) = self.parent_id && !CollectionModel::exists(id, conn)? {
+        if let Some(id) = self.parent_id
+            && !CollectionModel::exists(id, conn)?
+        {
             event!(Level::WARN, "父目录不存在: {}", id);
             return Err(GraphqlError::NotFound("目录", id));
         }

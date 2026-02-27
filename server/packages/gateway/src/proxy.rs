@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 use pingora::prelude::*;
-use tracing::{event, Level};
+use tracing::{Level, event};
 
 use crate::config::GatewayConfig;
 use crate::route::Route;
@@ -178,11 +178,14 @@ impl ProxyHttp for GatewayProxy {
         let traceparent = header_to_string(&req.headers, HEADER_TRACE_PARENT)
             .and_then(|value| validate_traceparent(&value))
             .unwrap_or_else(generate_traceparent);
-        let trace_id = parse_trace_id_from_traceparent(&traceparent)
-            .unwrap_or_else(|| random_hex(16));
+        let trace_id =
+            parse_trace_id_from_traceparent(&traceparent).unwrap_or_else(|| random_hex(16));
         let request_id = header_to_string(&req.headers, HEADER_X_REQUEST_ID)
             .filter(|value| valid_request_id(value))
-            .or_else(|| header_to_string(&req.headers, HEADER_TRACE_ID).filter(|value| valid_request_id(value)))
+            .or_else(|| {
+                header_to_string(&req.headers, HEADER_TRACE_ID)
+                    .filter(|value| valid_request_id(value))
+            })
             .unwrap_or_else(|| trace_id.clone());
         ctx.trace_id = trace_id;
         ctx.request_id = request_id;
@@ -205,7 +208,9 @@ impl ProxyHttp for GatewayProxy {
             let location = format!("https://{host}{path_and_query}");
             let mut header = ResponseHeader::build(301, None)?;
             header.insert_header("Location", location)?;
-            session.write_response_header(Box::new(header), true).await?;
+            session
+                .write_response_header(Box::new(header), true)
+                .await?;
             return Ok(true);
         }
 

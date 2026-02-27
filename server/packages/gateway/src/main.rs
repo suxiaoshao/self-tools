@@ -1,16 +1,28 @@
+#![cfg_attr(windows, allow(clippy::print_stderr))]
+
+#[cfg(not(windows))]
 mod config;
+#[cfg(not(windows))]
 mod proxy;
+#[cfg(not(windows))]
 mod route;
 
+#[cfg(not(windows))]
 use config::GatewayConfig;
+#[cfg(not(windows))]
 use pingora::prelude::*;
+#[cfg(not(windows))]
 use proxy::GatewayProxy;
+#[cfg(not(windows))]
 use route::build_routes;
-use tracing::{event, metadata::LevelFilter, Level};
+#[cfg(not(windows))]
+use tracing::{Level, event, metadata::LevelFilter};
+#[cfg(not(windows))]
 use tracing_subscriber::{
-    fmt, prelude::__tracing_subscriber_SubscriberExt, util::SubscriberInitExt, Layer,
+    Layer, fmt, prelude::__tracing_subscriber_SubscriberExt, util::SubscriberInitExt,
 };
 
+#[cfg(not(windows))]
 fn main() -> Result<()> {
     tracing_subscriber::registry()
         .with(fmt::layer().with_filter(LevelFilter::INFO))
@@ -37,4 +49,9 @@ fn main() -> Result<()> {
     );
 
     server.run_forever();
+}
+
+#[cfg(windows)]
+fn main() {
+    eprintln!("gateway is not supported on Windows; build/run on Linux");
 }

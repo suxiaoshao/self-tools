@@ -1,7 +1,7 @@
 use crate::errors::OpenResult;
 use crate::router::webauthn::WebauthnContainer;
-use axum::routing::post;
 use axum::Router;
+use axum::routing::post;
 mod login;
 mod webauthn;
 pub(crate) fn get_router() -> OpenResult<Router> {

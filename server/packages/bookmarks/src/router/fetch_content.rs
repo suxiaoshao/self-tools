@@ -8,7 +8,7 @@
 
 use axum::{
     body::Body,
-    extract::{rejection::QueryRejection, Query},
+    extract::{Query, rejection::QueryRejection},
     http::{HeaderMap, StatusCode},
 };
 use serde::Deserialize;

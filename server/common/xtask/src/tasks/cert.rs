@@ -4,7 +4,7 @@ use rcgen::{
     BasicConstraints, CertificateParams, DistinguishedName, DnType, ExtendedKeyUsagePurpose, IsCa,
     Issuer, KeyPair, KeyUsagePurpose,
 };
-use tracing::{event, Level};
+use tracing::{Level, event};
 
 use crate::TaskResult;
 

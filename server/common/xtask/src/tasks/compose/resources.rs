@@ -1,13 +1,13 @@
 use std::collections::{HashMap, HashSet};
 use std::path::Path;
 
+use bollard::Docker;
 use bollard::models::{NetworkCreateRequest, VolumeCreateRequest};
 use bollard::query_parameters::ListVolumesOptionsBuilder;
-use bollard::Docker;
-use tracing::{event, Level};
+use tracing::{Level, event};
 
-use crate::compose_types::ComposeFile;
 use crate::TaskResult;
+use crate::compose_types::ComposeFile;
 
 use super::{COMPOSE_NETWORK_LABEL, COMPOSE_PROJECT_LABEL, COMPOSE_VOLUME_LABEL};
 

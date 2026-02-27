@@ -6,7 +6,7 @@
  * @FilePath: /self-tools/server/packages/collections/src/graphql/mutation.rs
  */
 use async_graphql::{Context, Object};
-use tracing::{event, Level};
+use tracing::{Level, event};
 
 use super::{guard::AuthGuard, validator::DirNameValidator};
 use crate::{

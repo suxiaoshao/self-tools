@@ -5,7 +5,7 @@ use pin_project_lite::pin_project;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 use tower::{Layer, Service};
-use tracing::{event, Level};
+use tracing::{Level, event};
 
 pub struct TraceLog<S> {
     inner: S,

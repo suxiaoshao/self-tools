@@ -8,7 +8,7 @@
 use async_graphql::{Context, Guard, Result};
 use middleware::TraceIdExt;
 use thrift::{auth::CheckRequest, get_client};
-use tracing::{event, Level};
+use tracing::{Level, event};
 
 use crate::{
     errors::{GraphqlError, GraphqlResult},

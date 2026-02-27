@@ -8,8 +8,8 @@
 use std::env;
 pub(crate) mod schema;
 use diesel::{
-    r2d2::{ConnectionManager, Pool},
     PgConnection,
+    r2d2::{ConnectionManager, Pool},
 };
 
 use crate::errors::GraphqlResult;

@@ -8,15 +8,15 @@ use bollard::query_parameters::{
     CreateContainerOptionsBuilder, InspectContainerOptionsBuilder, RemoveContainerOptionsBuilder,
     StartContainerOptions, StopContainerOptionsBuilder,
 };
-use tracing::{event, Level};
+use tracing::{Level, event};
 
+use crate::TaskResult;
 use crate::compose_types::ComposeService;
 use crate::context::load_env_file;
 use crate::error::XtaskError;
-use crate::TaskResult;
 
 use super::helpers::{is_running, parse_port_binding, parse_restart_policy, resolve_volume_bind};
-use super::{ComposeRuntime, COMPOSE_PROJECT_LABEL, COMPOSE_SERVICE_LABEL, CONFIG_SIGNATURE_LABEL};
+use super::{COMPOSE_PROJECT_LABEL, COMPOSE_SERVICE_LABEL, CONFIG_SIGNATURE_LABEL, ComposeRuntime};
 
 pub(super) async fn ensure_service_running(
     runtime: &ComposeRuntime<'_>,
@@ -219,11 +219,7 @@ async fn recreate_container(
         .docker
         .remove_container(
             container_name,
-            Some(
-                RemoveContainerOptionsBuilder::new()
-                    .force(true)
-                    .build(),
-            ),
+            Some(RemoveContainerOptionsBuilder::new().force(true).build()),
         )
         .await?;
 

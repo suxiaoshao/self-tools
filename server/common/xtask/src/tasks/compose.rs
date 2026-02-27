@@ -3,9 +3,9 @@ use std::{collections::HashMap, path::Path};
 use bollard::Docker;
 
 use crate::{
+    TaskResult,
     compose_types::{ComposeFile, ComposeService},
     context::{load_env_file, workspace_root},
-    TaskResult,
 };
 
 mod container;

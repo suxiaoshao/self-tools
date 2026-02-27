@@ -6,8 +6,8 @@
  * @FilePath: /self-tools/server/packages/login/src/errors/mod.rs
  */
 use axum::{
-    extract::rejection::{ExtensionRejection, JsonRejection},
     Json,
+    extract::rejection::{ExtensionRejection, JsonRejection},
 };
 use axum::{
     http::header::InvalidHeaderValue,
@@ -18,7 +18,7 @@ use serde_json::json;
 use std::convert::From;
 use thiserror::Error;
 use thrift::auth::{AuthError, ItemServiceLoginException};
-use tracing::{event, Level};
+use tracing::{Level, event};
 use webauthn_rs::prelude::WebauthnError;
 
 use self::response::OpenErrorResponse;

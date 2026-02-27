@@ -1,5 +1,5 @@
 use async_graphql::{CustomValidator, InputValueError};
-use tracing::{event, Level};
+use tracing::{Level, event};
 
 pub(crate) struct DirNameValidator;
 

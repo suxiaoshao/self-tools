@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use async_graphql::InputObject;
 use diesel::PgConnection;
 use time::OffsetDateTime;
-use tracing::{event, Level};
+use tracing::{Level, event};
 
 use crate::{
     errors::{GraphqlError, GraphqlResult},

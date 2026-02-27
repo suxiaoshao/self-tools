@@ -5,10 +5,10 @@
  * @LastEditTime: 2024-04-14 10:07:56
  * @FilePath: /self-tools/server/packages/new_auth/src/utils/mod.rs
  */
-use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation, decode, encode};
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use thrift::auth::AuthErrorCode;
-use tracing::{event, Level};
+use tracing::{Level, event};
 
 use self::env::{env_password, env_secret_key, env_username};
 

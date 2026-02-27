@@ -9,11 +9,11 @@
 use super::{guard::AuthGuard, validator::DirNameValidator};
 use async_graphql::{Context, Object};
 use novel_crawler::{JJAuthor, JJNovel, QDAuthor, QDNovel};
-use tracing::{event, Level};
+use tracing::{Level, event};
 
 use crate::{
     errors::{GraphqlError, GraphqlResult},
-    model::{schema::custom_type::NovelSite, PgPool},
+    model::{PgPool, schema::custom_type::NovelSite},
     service::{
         author::Author,
         collection::Collection,
