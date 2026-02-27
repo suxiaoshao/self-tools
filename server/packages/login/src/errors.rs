@@ -47,7 +47,7 @@ pub enum OpenError {
     #[error("username未设置")]
     UsernameNotSet,
     #[error("thrift client 错误:{}",.0)]
-    ClientError(#[from] &'static thrift::ClientError),
+    ClientError(String),
     #[error("webauthn 错误:{}",.0)]
     WebauthnError(String),
     #[error("url parse:{}",.0)]
@@ -83,6 +83,12 @@ impl From<ExtensionRejection> for OpenError {
 impl From<volo_thrift::error::ClientError> for OpenError {
     fn from(_: volo_thrift::error::ClientError) -> Self {
         Self::UnknownError
+    }
+}
+
+impl From<thrift::ClientError> for OpenError {
+    fn from(value: thrift::ClientError) -> Self {
+        Self::ClientError(value.to_string())
     }
 }
 

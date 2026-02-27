@@ -1,13 +1,16 @@
 # syntax=docker/dockerfile:1
-FROM suxiaoshao/rust as builder
+FROM suxiaoshao/rust AS builder
 COPY ./ /app
 RUN --mount=type=cache,target=/usr/local/cargo/registry,id=rust_registry \
     --mount=type=cache,target=/app/target,id=rust_target \
     cd /app \
-    && cargo build --release -p login\
+    && cargo build --release -p login \
     && cp /app/target/release/login /app/
 
-FROM ubuntu as prod
+FROM debian:trixie-slim AS prod
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates openssl \
+    && rm -rf /var/lib/apt/lists/*
 COPY --from=builder ./app/login /
-EXPOSE 80
+EXPOSE 8000
 CMD [ "/login" ]

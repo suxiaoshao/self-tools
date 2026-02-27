@@ -28,7 +28,7 @@ pub(crate) enum GraphqlError {
     UsernameNotSet,
     /// thrift 错误
     Thrift(String),
-    ClientError(&'static thrift::ClientError),
+    ClientError(String),
     VarError(VarError),
     NotGraphqlContextData(&'static str),
 }
@@ -114,7 +114,7 @@ impl Clone for GraphqlError {
             GraphqlError::SecretKeyNotSet => Self::SecretKeyNotSet,
             GraphqlError::UsernameNotSet => Self::UsernameNotSet,
             GraphqlError::Thrift(data) => Self::Thrift(data.clone()),
-            GraphqlError::ClientError(data) => Self::ClientError(data),
+            GraphqlError::ClientError(data) => Self::ClientError(data.clone()),
             GraphqlError::VarError(data) => Self::VarError(data.clone()),
             GraphqlError::NotGraphqlContextData(data) => Self::NotGraphqlContextData(data),
             GraphqlError::NotFoundMany(tag, data) => Self::NotFoundMany(tag, data.clone()),
@@ -162,9 +162,9 @@ impl From<ItemServiceCheckException> for GraphqlError {
     }
 }
 
-impl From<&'static thrift::ClientError> for GraphqlError {
-    fn from(value: &'static thrift::ClientError) -> Self {
-        Self::ClientError(value)
+impl From<thrift::ClientError> for GraphqlError {
+    fn from(value: thrift::ClientError) -> Self {
+        Self::ClientError(value.to_string())
     }
 }
 
