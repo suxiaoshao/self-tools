@@ -128,6 +128,8 @@ cargo run -p xtask -- lint
 cargo run -p xtask -- cert --out-dir docker/compose/certs
 ```
 
+`xtask cert` 会生成 `ca.pem`、`ca.crt`、`fullchain.pem`、`fullchain.crt`、`privkey.pem`。
+
 ## GraphQL 代码生成
 
 ```bash
