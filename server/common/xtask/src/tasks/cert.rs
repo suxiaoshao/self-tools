@@ -56,18 +56,27 @@ pub fn run(output_dir: PathBuf, domains: Vec<String>) -> TaskResult {
     let leaf_cert = leaf_params.signed_by(&leaf_key, &ca_issuer)?;
 
     let cert_path = output_dir.join("fullchain.pem");
+    let cert_crt_path = output_dir.join("fullchain.crt");
     let key_path = output_dir.join("privkey.pem");
     let ca_path = output_dir.join("ca.pem");
+    let ca_crt_path = output_dir.join("ca.crt");
 
-    fs::write(&ca_path, ca_cert.pem())?;
-    fs::write(&cert_path, format!("{}{}", leaf_cert.pem(), ca_cert.pem()))?;
+    let ca_pem = ca_cert.pem();
+    let fullchain_pem = format!("{}{}", leaf_cert.pem(), ca_pem);
+
+    fs::write(&ca_path, &ca_pem)?;
+    fs::write(&ca_crt_path, &ca_pem)?;
+    fs::write(&cert_path, &fullchain_pem)?;
+    fs::write(&cert_crt_path, &fullchain_pem)?;
     fs::write(&key_path, leaf_key.serialize_pem())?;
 
     event!(
         Level::INFO,
         cert = %cert_path.display(),
+        cert_crt = %cert_crt_path.display(),
         key = %key_path.display(),
         ca = %ca_path.display(),
+        ca_crt = %ca_crt_path.display(),
         ?domains,
         "certificate generated"
     );

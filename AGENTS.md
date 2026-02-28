@@ -61,7 +61,7 @@ cargo run -p xtask -- cert --out-dir docker/compose/certs
 
 证书相关补充（本地联调）：
 
-- `xtask cert` 会生成本地 CA 与站点证书文件：`ca.pem`、`fullchain.pem`、`privkey.pem`。
+- `xtask cert` 会生成本地 CA 与站点证书文件：`ca.pem`、`ca.crt`、`fullchain.pem`、`fullchain.crt`、`privkey.pem`。
 - 需将 `ca.pem` 导入系统信任后，再重启浏览器与 `gateway` 容器（当前网关为 Rust `gateway` 服务，不再使用 Nginx 转发）。
 
 `xtask` 子命令说明：
@@ -115,6 +115,12 @@ cargo run -p collections
 - 文档应优先写“可直接执行”的命令。
 - 若某条命令依赖外部条件（Docker、证书、域名），必须显式标注。
 - 提交说明应包含影响范围：前端/后端/部署。
+
+## GitHub 协作规则
+
+- 当用户要求进行 GitHub 相关操作（如 issue、PR、release、workflow、评论、查看状态）时，统一优先使用 `gh` 命令行。
+- 若执行 `gh` 时遇到权限不足、未登录或认证失败，优先判断为沙盒限制导致；不要自行绕过，应向用户申请权限后再继续。
+- 当用户要求编写 issue 内容时，必须先查看 `.github` 目录下的相关文档与模板，优先参考 `.github/ISSUE_TEMPLATE/*.yml`，并按仓库现有模板结构与字段组织内容。
 
 ## 故障排查提示
 
