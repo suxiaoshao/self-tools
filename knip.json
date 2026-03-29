@@ -1,11 +1,5 @@
 {
-  "ignoreDependencies": [
-    "@tailwindcss/postcss",
-    "@testing-library/react",
-    "babel-plugin-react-compiler",
-    "jsdom",
-    "ts-node"
-  ],
+  "ignoreDependencies": ["@testing-library/react", "jsdom", "ts-node"],
   "ignoreIssues": {
     "**/src/gql/**": ["exports", "types"],
     "**/src/components/ui/**": ["exports", "types"],
@@ -15,7 +9,6 @@
   "ignoreFiles": [
     "changelog.config.js",
     "web/packages/bookmarks/apollo.config.js",
-    "web/packages/collections/apollo.config.js",
-    "web/packages/portal/postcss.config.ts"
+    "web/packages/collections/apollo.config.js"
   ]
 }
