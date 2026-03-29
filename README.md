@@ -4,7 +4,7 @@
 
 ## 技术栈
 
-- 前端：React 19、TypeScript、RSBuild、Apollo Client、pnpm workspace
+- 前端：React 19、TypeScript、Vite、Vitest、Apollo Client、pnpm workspace
 - 后端：Rust、Axum、async-graphql、Volo Thrift、Diesel
 - 数据库：PostgreSQL
 - 部署：Docker / Docker Compose
@@ -15,7 +15,7 @@
 .
 ├── web/
 │   ├── packages/
-│   │   ├── portal/         # 主应用（RSBuild）
+│   │   ├── portal/         # 主应用（Vite）
 │   │   ├── bookmarks/      # 书签/小说管理前端模块
 │   │   └── collections/    # 集合管理前端模块
 │   └── common/             # 前端公共包（i18n、table、graphql、time 等）
@@ -59,7 +59,7 @@ pnpm dev
 
 ```bash
 pnpm lint        # format + oxlint + tsc --build
-pnpm test        # jest
+pnpm test        # vitest
 pnpm build       # 构建 web/packages/*
 ```
 

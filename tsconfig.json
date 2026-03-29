@@ -15,7 +15,7 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
-    "types": ["node"],
+    "types": ["node", "vitest/globals", "@testing-library/jest-dom"],
     "paths": {
       "@portal/*": ["./web/packages/portal/src/*"],
       "@bookmarks/*": ["./web/packages/bookmarks/src/*"],
@@ -26,7 +26,7 @@
     "./web/packages/*/src",
     "./web/common/*/src",
     "./web/config",
-    "./jest.config.ts",
+    "./vitest.config.ts",
     "./web/packages/*/codegen.ts"
   ],
   "exclude": ["./**/node_modules"]

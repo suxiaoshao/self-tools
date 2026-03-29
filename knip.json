@@ -1,5 +1,5 @@
 {
-  "ignoreDependencies": ["@testing-library/react", "jsdom", "ts-node"],
+  "ignoreDependencies": ["@testing-library/react", "ts-node"],
   "ignoreIssues": {
     "**/src/gql/**": ["exports", "types"],
     "**/src/components/ui/**": ["exports", "types"],
