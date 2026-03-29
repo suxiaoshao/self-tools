@@ -7,7 +7,7 @@ edition = "2024"
 
 [dependencies]
 # runtime
-tokio = { version = "1.49.0", features = ["macros", "rt-multi-thread"] }
+tokio = { version = "1.50.0", features = ["macros", "rt-multi-thread"] }
 
 # graphql
 async-graphql = { version = "7.2.1", features = ["time"] }
@@ -17,7 +17,7 @@ serde_json = "1.0.149"
 graphql-common = { path = "../../common/graphql-common" }
 
 # database
-diesel = { version = "2.3.6", features = ["postgres", "time", "r2d2"] }
+diesel = { version = "2.3.7", features = ["postgres", "time", "r2d2"] }
 time = "0.3.47"
 
 # error
@@ -29,11 +29,11 @@ middleware = { path = "../../common/middleware", features = ["cors", "trace", "g
 
 # log
 tracing = "0.1.44"
-tracing-subscriber = "0.3.22"
+tracing-subscriber = "0.3.23"
 
 # thrift
 thrift = { path = "../../common/thrift" }
-volo-thrift = "0.12.2"
+volo-thrift = "0.12.4"
 
 [dev-dependencies]
 # env

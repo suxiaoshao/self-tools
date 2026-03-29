@@ -7,8 +7,8 @@ edition = "2024"
 
 [dependencies]
 # volo
-volo = "0.12.2"
-volo-thrift = "0.12.2"
+volo = "0.12.3"
+volo-thrift = "0.12.4"
 pilota = "0.13.0"
 serde = { version = "1.0.228", features = ["derive"] }
 # ip

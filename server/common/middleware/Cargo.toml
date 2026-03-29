@@ -12,7 +12,7 @@ tower = { version = "0.5.3", optional = true }
 tracing = { version = "0.1.44", optional = true }
 futures = { version = "0.3.32", optional = true }
 http-body = { version = "1.0.1", optional = true }
-pin-project-lite = { version = "0.2.16", optional = true }
+pin-project-lite = { version = "0.2.17", optional = true }
 futures-util = { version = "0.3.32", optional = true }
 
 # cors
