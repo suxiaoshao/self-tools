@@ -62,6 +62,25 @@ const HEADER_TRACE_PARENT: &str = "traceparent";
 const HEADER_X_REQUEST_ID: &str = "x-request-id";
 const HEADER_TRACE_ID: &str = "trace-id";
 
+fn normalize_host(value: &str) -> Option<String> {
+    let value = value.trim();
+    if value.is_empty() {
+        return None;
+    }
+
+    let value = value
+        .strip_prefix('[')
+        .and_then(|value| value.split_once(']').map(|(host, _rest)| host))
+        .unwrap_or_else(|| value.split(':').next().unwrap_or_default());
+    let value = value.trim();
+
+    if value.is_empty() {
+        return None;
+    }
+
+    Some(value.to_ascii_lowercase())
+}
+
 fn header_to_string(headers: &http::HeaderMap, name: &'static str) -> Option<String> {
     headers
         .get(name)
@@ -69,6 +88,16 @@ fn header_to_string(headers: &http::HeaderMap, name: &'static str) -> Option<Str
         .map(str::trim)
         .filter(|value| !value.is_empty())
         .map(ToString::to_string)
+}
+
+fn request_host(req: &RequestHeader) -> String {
+    req.uri
+        .host()
+        .map(ToString::to_string)
+        .or_else(|| header_to_string(&req.headers, "host"))
+        .or_else(|| req.uri.authority().map(|authority| authority.as_str().to_string()))
+        .and_then(|value| normalize_host(&value))
+        .unwrap_or_default()
 }
 
 fn is_hex(value: &str) -> bool {
@@ -159,15 +188,7 @@ impl ProxyHttp for GatewayProxy {
 
     async fn request_filter(&self, session: &mut Session, ctx: &mut Self::CTX) -> Result<bool> {
         let req = session.req_header();
-        let host = req
-            .headers
-            .get("host")
-            .and_then(|value| value.to_str().ok())
-            .unwrap_or_default()
-            .split(':')
-            .next()
-            .unwrap_or_default()
-            .to_ascii_lowercase();
+        let host = request_host(req);
 
         let path = req.uri.path().to_string();
         let path_and_query = req
@@ -255,16 +276,7 @@ impl ProxyHttp for GatewayProxy {
     where
         Self::CTX: Send + Sync,
     {
-        let host = session
-            .req_header()
-            .headers
-            .get("host")
-            .and_then(|value| value.to_str().ok())
-            .unwrap_or_default()
-            .split(':')
-            .next()
-            .unwrap_or_default()
-            .to_ascii_lowercase();
+        let host = request_host(session.req_header());
 
         if !host.is_empty() {
             upstream_request.remove_header("Host");
@@ -324,15 +336,7 @@ impl ProxyHttp for GatewayProxy {
     {
         let req = session.req_header();
         let method = req.method.as_str();
-        let host = req
-            .headers
-            .get("host")
-            .and_then(|value| value.to_str().ok())
-            .unwrap_or_default()
-            .split(':')
-            .next()
-            .unwrap_or_default()
-            .to_ascii_lowercase();
+        let host = request_host(req);
         let path = req
             .uri
             .path_and_query()
@@ -377,5 +381,33 @@ impl ProxyHttp for GatewayProxy {
                 );
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{normalize_host, request_host};
+    use pingora::http::RequestHeader;
+
+    #[test]
+    fn request_host_prefers_host_header() {
+        let mut req = RequestHeader::build("GET", b"/", None).expect("request");
+        req.insert_header("host", "sushao.top:443").expect("host");
+        assert_eq!(request_host(&req), "sushao.top");
+    }
+
+    #[test]
+    fn request_host_falls_back_to_uri_authority() {
+        let mut req = RequestHeader::build("GET", b"/graphql", None).expect("request");
+        req.set_uri("https://collections.sushao.top/graphql".parse().expect("uri"));
+        assert_eq!(request_host(&req), "collections.sushao.top");
+    }
+
+    #[test]
+    fn normalize_host_supports_ipv6_authority() {
+        assert_eq!(
+            normalize_host("[2001:db8::1]:443"),
+            Some("2001:db8::1".to_string())
+        );
     }
 }

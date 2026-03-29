@@ -71,6 +71,11 @@ cargo run -p xtask -- cert --out-dir docker/compose/certs
 - `cargo run -p xtask -- lint`：执行 Rust 侧 lint 任务。
 - `cargo run -p xtask -- cert --out-dir docker/compose/certs`：生成本地 CA 与站点证书。
 
+开发过程中的容器管理约定：
+
+- 开发过程中如需启动、重建或同步 Docker 服务，优先使用 `cargo run -p xtask -- compose`。
+- 不要默认直接使用 `docker compose up` 替代 `xtask compose`，除非任务明确要求；`xtask compose` 会按仓库约定处理 network、volume、container 的就绪顺序，更符合当前项目工作流。
+
 单服务调试：
 
 ```bash
@@ -121,6 +126,7 @@ cargo run -p collections
 - 当用户要求进行 GitHub 相关操作（如 issue、PR、release、workflow、评论、查看状态）时，统一优先使用 `gh` 命令行。
 - 若执行 `gh` 时遇到权限不足、未登录或认证失败，优先判断为沙盒限制导致；不要自行绕过，应向用户申请权限后再继续。
 - 当用户要求编写 issue 内容时，必须先查看 `.github` 目录下的相关文档与模板，优先参考 `.github/ISSUE_TEMPLATE/*.yml`，并按仓库现有模板结构与字段组织内容。
+- 执行 `git commit`、`git push` 等可能触发 git hooks 的命令时，必须等待 hook 完整执行结束，不要因为等待时间较长就改用 `--no-verify` 或跳过；若怀疑卡住，应先确认具体卡在哪个检查步骤，再与用户同步。
 
 ## 故障排查提示
 
