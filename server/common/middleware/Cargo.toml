@@ -27,15 +27,6 @@ async-graphql = { version = "7.2.1", optional = true }
 anyhow = "1.0.102"
 
 [features]
-trace = [
-  "rand",
-  "tower",
-  "http",
-  "tracing",
-  "futures",
-  "http-body",
-  "pin-project-lite",
-  "futures-util",
-]
+trace = ["rand", "tower", "http", "tracing", "futures", "http-body", "pin-project-lite", "futures-util"]
 cors = ["http", "tower-http", "nom"]
 graphql-trace = ["tracing", "async-graphql"]

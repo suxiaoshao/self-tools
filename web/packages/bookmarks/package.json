@@ -1,7 +1,7 @@
 {
   "name": "bookmarks",
-  "private": true,
   "version": "1.0.0",
+  "private": true,
   "main": "src/main.tsx",
   "types": "src/main.tsx",
   "scripts": {
@@ -10,9 +10,9 @@
   "dependencies": {
     "custom-graphql": "workspace:^",
     "custom-table": "workspace:^",
+    "details": "workspace:^",
     "i18n": "workspace:^",
     "time": "workspace:^",
-    "types": "workspace:^",
-    "details": "workspace:^"
+    "types": "workspace:^"
   }
 }

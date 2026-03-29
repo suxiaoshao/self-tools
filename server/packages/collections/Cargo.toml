@@ -25,11 +25,7 @@ anyhow = "1.0.102"
 thiserror = "2.0.18"
 
 # cors
-middleware = { path = "../../common/middleware", features = [
-    "cors",
-    "trace",
-    "graphql-trace",
-] }
+middleware = { path = "../../common/middleware", features = ["cors", "trace", "graphql-trace"] }
 
 # log
 tracing = "0.1.44"

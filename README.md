@@ -58,7 +58,8 @@ pnpm dev
 常用命令（仓库根目录）：
 
 ```bash
-pnpm lint        # format + oxlint + tsc --build
+pnpm format      # oxfmt 写盘格式化
+pnpm lint        # format:check + oxlint + knip + tsc --build
 pnpm test        # vitest
 pnpm build       # 构建 web/packages/*
 ```

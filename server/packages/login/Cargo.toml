@@ -30,9 +30,7 @@ thrift = { path = "../../common/thrift" }
 volo-thrift = "0.12.2"
 
 # webauthn
-webauthn-rs = { version = "0.5.4", features = [
-    "danger-allow-state-serialisation",
-] }
+webauthn-rs = { version = "0.5.4", features = ["danger-allow-state-serialisation"] }
 url = "2.5.8"
 tower-sessions = { version = "0.15.0" }
 
