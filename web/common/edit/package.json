@@ -2,11 +2,11 @@
   "name": "edit",
   "version": "1.0.0",
   "description": "",
+  "keywords": [],
+  "license": "ISC",
+  "author": "",
   "main": "src/index.tsx",
   "types": "src/index.tsx",
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
     "monaco-editor": "^0.55.1",
     "monaco-themes": "^0.4.8"

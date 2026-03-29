@@ -2,12 +2,12 @@
   "name": "i18n",
   "version": "1.0.0",
   "description": "",
-  "main": "src/index.tsx",
   "keywords": [],
-  "author": "",
   "license": "ISC",
+  "author": "",
+  "main": "src/index.tsx",
   "dependencies": {
-    "i18next": "^25.8.13",
-    "react-i18next": "^16.5.4"
+    "i18next": "^26.0.1",
+    "react-i18next": "^17.0.1"
   }
 }

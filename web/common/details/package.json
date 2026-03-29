@@ -2,8 +2,8 @@
   "name": "details",
   "version": "1.0.0",
   "description": "",
-  "main": "src/index.ts",
   "keywords": [],
+  "license": "ISC",
   "author": "",
-  "license": "ISC"
+  "main": "src/index.ts"
 }

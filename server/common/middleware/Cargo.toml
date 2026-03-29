@@ -12,7 +12,7 @@ tower = { version = "0.5.3", optional = true }
 tracing = { version = "0.1.44", optional = true }
 futures = { version = "0.3.32", optional = true }
 http-body = { version = "1.0.1", optional = true }
-pin-project-lite = { version = "0.2.16", optional = true }
+pin-project-lite = { version = "0.2.17", optional = true }
 futures-util = { version = "0.3.32", optional = true }
 
 # cors
@@ -27,15 +27,6 @@ async-graphql = { version = "7.2.1", optional = true }
 anyhow = "1.0.102"
 
 [features]
-trace = [
-  "rand",
-  "tower",
-  "http",
-  "tracing",
-  "futures",
-  "http-body",
-  "pin-project-lite",
-  "futures-util",
-]
+trace = ["rand", "tower", "http", "tracing", "futures", "http-body", "pin-project-lite", "futures-util"]
 cors = ["http", "tower-http", "nom"]
 graphql-trace = ["tracing", "async-graphql"]

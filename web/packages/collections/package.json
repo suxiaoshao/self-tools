@@ -1,7 +1,7 @@
 {
   "name": "collections",
-  "private": true,
   "version": "1.0.0",
+  "private": true,
   "main": "src/main.tsx",
   "types": "src/main.tsx",
   "scripts": {
@@ -13,7 +13,7 @@
     "details": "workspace:^",
     "edit": "workspace:^",
     "i18n": "workspace:^",
-    "markdown-to-jsx": "^9.7.6",
+    "markdown-to-jsx": "^9.7.13",
     "prism-themes": "^1.9.0",
     "prismjs": "^1.30.0",
     "time": "workspace:^",

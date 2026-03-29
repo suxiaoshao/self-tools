@@ -10,12 +10,12 @@
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "module": "ESNext",
-    "moduleResolution": "Node",
+    "moduleResolution": "Bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
-    "types": ["node"],
+    "types": ["node", "vite/client", "vitest/globals", "@testing-library/jest-dom"],
     "paths": {
       "@portal/*": ["./web/packages/portal/src/*"],
       "@bookmarks/*": ["./web/packages/bookmarks/src/*"],
@@ -26,8 +26,7 @@
     "./web/packages/*/src",
     "./web/common/*/src",
     "./web/config",
-    "./jest.config.ts",
-    "./web/packages/*/rsbuild.config.ts",
+    "./vitest.config.ts",
     "./web/packages/*/codegen.ts"
   ],
   "exclude": ["./**/node_modules"]

@@ -8,12 +8,14 @@
 import { editor } from 'monaco-editor';
 import './index.css';
 import monankai from '../node_modules/monaco-themes/themes/Dracula.json';
+// oxlint-disable-next-line import/default
+import EditorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
 
 // oxlint-disable-next-line eslint-plugin-jest(require-hook)
 editor.defineTheme('monankai', monankai as editor.IStandaloneThemeData);
 
 self.MonacoEnvironment = {
   getWorker: function getWorker() {
-    return new Worker(new URL('monaco-editor/esm/vs/editor/editor.worker', import.meta.url));
+    return new EditorWorker();
   },
 };
