@@ -10,6 +10,8 @@ mod route;
 #[cfg(not(windows))]
 use config::GatewayConfig;
 #[cfg(not(windows))]
+use pingora::listeners::tls::TlsSettings;
+#[cfg(not(windows))]
 use pingora::prelude::*;
 #[cfg(not(windows))]
 use proxy::GatewayProxy;
@@ -36,7 +38,9 @@ fn main() -> Result<()> {
 
     let mut service = http_proxy_service(&server.configuration, GatewayProxy::new(routes, &config));
     service.add_tcp(&config.listen_http);
-    service.add_tls(&config.listen_https, &config.tls_cert, &config.tls_key)?;
+    let mut tls_settings = TlsSettings::intermediate(&config.tls_cert, &config.tls_key)?;
+    tls_settings.enable_h2();
+    service.add_tls_with_settings(&config.listen_https, None, tls_settings);
     server.add_service(service);
 
     event!(
@@ -45,6 +49,7 @@ fn main() -> Result<()> {
         listen_https = config.listen_https,
         tls_cert = config.tls_cert,
         tls_key = config.tls_key,
+        http2_enabled = true,
         "gateway started"
     );
 
