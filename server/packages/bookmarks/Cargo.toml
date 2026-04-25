@@ -7,11 +7,11 @@ edition = "2024"
 
 [dependencies]
 # runtime
-tokio = { version = "1.50.0", features = ["macros", "rt-multi-thread"] }
+tokio = { version = "1.52.1", features = ["macros", "rt-multi-thread"] }
 
 # graphql
 async-graphql = { version = "7.2.1", features = ["time", "bigdecimal"] }
-axum = { version = "0.8.8", features = ["query"] }
+axum = { version = "0.8.9", features = ["query"] }
 async-graphql-axum = "7.2.1"
 serde_json = "1.0.149"
 
@@ -20,7 +20,7 @@ serde = { version = "1.0.228", features = ["derive"] }
 reqwest = { version = "0.13.2", features = ["gzip", "stream"], default-features = false }
 
 # database
-diesel = { version = "2.3.7", features = ["postgres", "time", "r2d2", "numeric"] }
+diesel = { version = "2.3.8", features = ["postgres", "time", "r2d2", "numeric"] }
 time = { version = "0.3.47" }
 bigdecimal = "0.4.10"
 graphql-common = { path = "../../common/graphql-common" }
