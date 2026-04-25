@@ -9,7 +9,7 @@ edition = "2024"
 # volo
 volo = "0.12.3"
 volo-thrift = "0.12.4"
-pilota = "0.13.0"
+pilota = "0.13.1"
 serde = { version = "1.0.228", features = ["derive"] }
 # ip
 dns-lookup = "3.0.1"
