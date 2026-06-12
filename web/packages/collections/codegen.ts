@@ -6,6 +6,11 @@ const config: CodegenConfig = {
   generates: {
     './src/gql/': {
       preset: 'client',
+      config: {
+        scalars: {
+          DateTime: 'string',
+        },
+      },
     },
   },
 } satisfies CodegenConfig;

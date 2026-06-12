@@ -1,6 +1,8 @@
 packages:
   - web/packages/**
   - web/common/**
+allowBuilds:
+  '@swc/core': true
 
 onlyBuiltDependencies:
   - '@swc/core'

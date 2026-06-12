@@ -5,7 +5,7 @@
  * @LastEditTime: 2024-03-28 19:56:56
  * @FilePath: /self-tools/web/packages/bookmarks/src/features/Author/Fetch/index.tsx
  */
-import { type FetchAuthorQueryVariables, NovelSite } from '@bookmarks/gql/graphql';
+import type { FetchAuthorQueryVariables } from '@bookmarks/gql/graphql';
 import { Controller, useForm } from 'react-hook-form';
 import { useI18n } from 'i18n';
 import { getImageUrl } from '@bookmarks/utils/image';
@@ -157,8 +157,8 @@ export default function AuthorFetch() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
-                        <SelectItem value={NovelSite.Jjwxc}>{t('jjwxc')}</SelectItem>
-                        <SelectItem value={NovelSite.Qidian}>{t('qidian')}</SelectItem>
+                        <SelectItem value="JJWXC">{t('jjwxc')}</SelectItem>
+                        <SelectItem value="QIDIAN">{t('qidian')}</SelectItem>
                       </SelectGroup>
                     </SelectContent>
                   </Select>

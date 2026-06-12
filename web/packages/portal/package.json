@@ -10,7 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@base-ui/react": "^1.4.1",
+    "@base-ui/react": "^1.5.0",
     "bookmarks": "workspace:^",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -19,12 +19,12 @@
     "i18n": "workspace:^",
     "next-themes": "^0.4.6",
     "sonner": "^2.0.7",
-    "tailwind-merge": "^3.5.0",
+    "tailwind-merge": "^3.6.0",
     "tw-animate-css": "^1.4.0",
     "types": "workspace:^"
   },
   "devDependencies": {
-    "@tailwindcss/vite": "^4.2.4",
-    "tailwindcss": "^4.2.4"
+    "@tailwindcss/vite": "^4.3.0",
+    "tailwindcss": "^4.3.0"
   }
 }
