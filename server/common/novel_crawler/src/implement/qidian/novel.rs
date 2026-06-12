@@ -28,7 +28,7 @@ static SELECTOR_NOVEL_IMAGE: LazyLock<Selector> =
 static SELECTOR_NOVEL_CHAPTERS: LazyLock<Selector> =
     LazyLock::new(|| Selector::parse("#vite-plugin-ssr_pageContext").unwrap());
 static SELECTOR_AUTHOR: LazyLock<Selector> =
-    LazyLock::new(|| Selector::parse("a.detail__header-detail__author-link").unwrap());
+    LazyLock::new(|| Selector::parse("meta[property=\"og:novel:author_link\"]").unwrap());
 static SELECTOR_STATUS: LazyLock<Selector> =
     LazyLock::new(|| Selector::parse("head > meta[property=\"og:novel:status\"]").unwrap());
 static SELECTOR_TAGS: LazyLock<Selector> =
@@ -209,7 +209,7 @@ fn parse_chapters(html: &str, novel_id: &str) -> NovelResult<Vec<QDChapter>> {
 fn parse_author(element_ref: ElementRef) -> NovelResult<String> {
     let href = element_ref
         .value()
-        .attr("href")
+        .attr("content")
         .ok_or(NovelError::ParseError)?;
 
     let (_, id) = parse_author_id(href)?;

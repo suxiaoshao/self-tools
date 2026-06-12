@@ -22,7 +22,7 @@ async fn get_doc(url: &str, charset: &str) -> NovelResult<Html> {
 }
 
 async fn text_from_url(url: &str, charset: &str) -> NovelResult<String> {
-    let client = reqwest::Client::new().get(url).header("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36");
+    let client = reqwest::Client::new().get(url).header("User-Agent", "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1");
     let body = client.send().await?.text_with_charset(charset).await?;
     Ok(body)
 }
