@@ -7,7 +7,7 @@
  */
 use async_graphql::{ComplexObject, Context, SimpleObject};
 use diesel::PgConnection;
-use graphql_common::Queryable;
+use graphql_common::{DateTime, Queryable};
 use novel_crawler::{AuthorFn, JJAuthor, NovelFn, QDAuthor};
 use time::OffsetDateTime;
 use tracing::{Level, event};
@@ -35,8 +35,8 @@ pub(crate) struct Author {
     pub(crate) site: NovelSite,
     pub(crate) site_id: String,
     pub(crate) description: String,
-    pub(crate) create_time: OffsetDateTime,
-    pub(crate) update_time: OffsetDateTime,
+    pub(crate) create_time: DateTime,
+    pub(crate) update_time: DateTime,
 }
 
 #[ComplexObject]
@@ -68,8 +68,8 @@ impl From<AuthorModel> for Author {
             name: value.name,
             avatar: value.avatar,
             description: value.description,
-            create_time: value.create_time,
-            update_time: value.update_time,
+            create_time: value.create_time.into(),
+            update_time: value.update_time.into(),
             site_id: value.site_id,
         }
     }

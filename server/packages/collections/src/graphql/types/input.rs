@@ -6,13 +6,23 @@
  * @FilePath: /self-tools/server/packages/collections/src/graphql/types/input.rs
  */
 use async_graphql::InputObject;
-use graphql_common::Pagination;
+use graphql_common::{DateTime, Pagination};
 use time::OffsetDateTime;
 
 #[derive(InputObject, Debug, Clone, Copy)]
 pub(crate) struct TimeRange {
-    pub(crate) start: OffsetDateTime,
-    pub(crate) end: OffsetDateTime,
+    start: DateTime,
+    end: DateTime,
+}
+
+impl TimeRange {
+    pub(crate) fn start(&self) -> OffsetDateTime {
+        self.start.into()
+    }
+
+    pub(crate) fn end(&self) -> OffsetDateTime {
+        self.end.into()
+    }
 }
 
 #[derive(InputObject, Debug, Clone, Copy)]

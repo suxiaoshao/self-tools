@@ -7,8 +7,8 @@
  */
 use async_graphql::{ComplexObject, Context, SimpleObject};
 use diesel::PgConnection;
+use graphql_common::DateTime;
 use novel_crawler::{ChapterFn, JJChapter, QDChapter};
-use time::OffsetDateTime;
 use tracing::{Level, event};
 
 use crate::{
@@ -26,13 +26,13 @@ pub(crate) struct Chapter {
     pub(crate) site: NovelSite,
     pub(crate) site_id: String,
     pub(crate) content: Option<String>,
-    pub(crate) time: OffsetDateTime,
+    pub(crate) time: DateTime,
     pub(crate) word_count: i64,
     pub(crate) novel_id: i64,
     #[graphql(skip)]
     pub(crate) author_id: i64,
-    pub(crate) create_time: OffsetDateTime,
-    pub(crate) update_time: OffsetDateTime,
+    pub(crate) create_time: DateTime,
+    pub(crate) update_time: DateTime,
     pub(crate) site_novel_id: String,
     is_read: bool,
 }
@@ -77,12 +77,12 @@ impl Chapter {
             site: value.site,
             site_id: value.site_id,
             content: value.content,
-            time: value.time,
+            time: value.time.into(),
             word_count: value.word_count,
             novel_id: value.novel_id,
             author_id: value.author_id,
-            create_time: value.create_time,
-            update_time: value.update_time,
+            create_time: value.create_time.into(),
+            update_time: value.update_time.into(),
             site_novel_id,
             is_read: value.is_read,
         }

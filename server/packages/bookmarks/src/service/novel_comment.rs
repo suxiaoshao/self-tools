@@ -1,5 +1,6 @@
 use async_graphql::SimpleObject;
 use diesel::PgConnection;
+use graphql_common::DateTime;
 use time::OffsetDateTime;
 use tracing::{Level, event};
 
@@ -14,8 +15,8 @@ use crate::{
 #[derive(SimpleObject, Clone)]
 pub(crate) struct NovelComment {
     content: String,
-    pub(crate) create_time: OffsetDateTime,
-    pub(crate) update_time: OffsetDateTime,
+    pub(crate) create_time: DateTime,
+    pub(crate) update_time: DateTime,
 }
 
 impl From<NovelCommentModel> for NovelComment {
@@ -29,8 +30,8 @@ impl From<NovelCommentModel> for NovelComment {
     ) -> Self {
         Self {
             content,
-            create_time,
-            update_time,
+            create_time: create_time.into(),
+            update_time: update_time.into(),
         }
     }
 }

@@ -8,9 +8,8 @@ use crate::{graphql::types::CollectionItemQuery, model::collection::CollectionMo
 use crate::{graphql::types::ItemAndCollection, model::item::ItemModel};
 use async_graphql::{ComplexObject, Context, SimpleObject};
 use diesel::{Connection, PgConnection};
-use graphql_common::{Paginate, Queryable, TagMatch};
+use graphql_common::{DateTime, Paginate, Queryable, TagMatch};
 use std::collections::HashSet;
-use time::OffsetDateTime;
 use tracing::{Level, event};
 
 #[derive(SimpleObject, Clone)]
@@ -19,8 +18,8 @@ pub(crate) struct Item {
     pub(crate) id: i64,
     pub(crate) name: String,
     pub(crate) content: String,
-    pub(crate) create_time: OffsetDateTime,
-    pub(crate) update_time: OffsetDateTime,
+    pub(crate) create_time: DateTime,
+    pub(crate) update_time: DateTime,
 }
 
 #[ComplexObject]
@@ -44,8 +43,8 @@ impl From<ItemModel> for Item {
             id: value.id,
             name: value.name,
             content: value.content,
-            create_time: value.create_time,
-            update_time: value.update_time,
+            create_time: value.create_time.into(),
+            update_time: value.update_time.into(),
         }
     }
 }

@@ -6,8 +6,8 @@
  */
 use async_graphql::{ComplexObject, SimpleObject};
 use diesel::PgConnection;
+use graphql_common::DateTime;
 use novel_crawler::{JJTag, QDTag, TagFn};
-use time::OffsetDateTime;
 use tracing::{Level, event};
 
 use crate::{
@@ -22,8 +22,8 @@ pub(crate) struct Tag {
     pub(crate) name: String,
     pub(crate) site: NovelSite,
     pub(crate) site_id: String,
-    pub(crate) create_time: OffsetDateTime,
-    pub(crate) update_time: OffsetDateTime,
+    pub(crate) create_time: DateTime,
+    pub(crate) update_time: DateTime,
 }
 
 #[ComplexObject]
@@ -43,8 +43,8 @@ impl From<TagModel> for Tag {
             name: value.name,
             site: value.site,
             site_id: value.site_id,
-            create_time: value.create_time,
-            update_time: value.update_time,
+            create_time: value.create_time.into(),
+            update_time: value.update_time.into(),
         }
     }
 }

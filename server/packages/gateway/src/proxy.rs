@@ -95,7 +95,11 @@ fn request_host(req: &RequestHeader) -> String {
         .host()
         .map(ToString::to_string)
         .or_else(|| header_to_string(&req.headers, "host"))
-        .or_else(|| req.uri.authority().map(|authority| authority.as_str().to_string()))
+        .or_else(|| {
+            req.uri
+                .authority()
+                .map(|authority| authority.as_str().to_string())
+        })
         .and_then(|value| normalize_host(&value))
         .unwrap_or_default()
 }
@@ -399,7 +403,11 @@ mod tests {
     #[test]
     fn request_host_falls_back_to_uri_authority() {
         let mut req = RequestHeader::build("GET", b"/graphql", None).expect("request");
-        req.set_uri("https://collections.sushao.top/graphql".parse().expect("uri"));
+        req.set_uri(
+            "https://collections.sushao.top/graphql"
+                .parse()
+                .expect("uri"),
+        );
         assert_eq!(request_host(&req), "collections.sushao.top");
     }
 

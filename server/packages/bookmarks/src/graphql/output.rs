@@ -6,11 +6,11 @@
  * @FilePath: /self-tools/server/packages/bookmarks/src/graphql/output/mod.rs
  */
 use async_graphql::Object;
+use graphql_common::DateTime;
 use novel_crawler::{
     AuthorFn, ChapterFn, JJAuthor, JJChapter, JJNovel, JJTag, NovelFn, QDAuthor, QDChapter,
     QDNovel, QDTag, TagFn,
 };
-use time::OffsetDateTime;
 
 use crate::{
     errors::GraphqlResult,
@@ -205,10 +205,10 @@ impl DraftChapterInfo {
             DraftChapterInfo::Jjwxc(inner) => inner.title().to_owned(),
         }
     }
-    async fn time(&self) -> OffsetDateTime {
+    async fn time(&self) -> DateTime {
         match self {
-            DraftChapterInfo::Qidian(inner) => inner.time(),
-            DraftChapterInfo::Jjwxc(inner) => inner.time(),
+            DraftChapterInfo::Qidian(inner) => inner.time().into(),
+            DraftChapterInfo::Jjwxc(inner) => inner.time().into(),
         }
     }
     async fn word_count(&self) -> u32 {

@@ -6,23 +6,35 @@ use axum::{
         State,
         rejection::{ExtensionRejection, JsonRejection},
     },
+    http::{
+        HeaderMap, HeaderValue,
+        header::{COOKIE, SET_COOKIE},
+    },
+    response::{IntoResponse, Response},
 };
 use middleware::TraceIdExt;
-use std::{collections::HashMap, ops::Deref, sync::Arc};
+use std::{collections::HashMap, fmt::Debug, ops::Deref, sync::Arc};
 use thrift::{
     auth::{LoginReply, LoginRequest},
     get_client,
 };
 use tokio::sync::Mutex;
-use tower_sessions::Session;
 use tracing::{Level, event};
 use webauthn_rs::prelude::*;
 
-#[derive(Debug, Clone, Default)]
+const SESSION_COOKIE_NAME: &str = "webauthnrs";
+const SESSION_MAX_AGE_SECONDS: u64 = 360;
+
+type RegistrationSessionState = (String, Uuid, PasskeyRegistration, String);
+type AuthenticationSessionState = (Uuid, PasskeyAuthentication);
+
+#[derive(Debug, Default)]
 struct UserStore {
     name_to_id: HashMap<String, Uuid>,
     keys: HashMap<Uuid, Vec<Passkey>>,
     auths: HashMap<Uuid, String>,
+    reg_states: HashMap<String, RegistrationSessionState>,
+    auth_states: HashMap<String, AuthenticationSessionState>,
 }
 
 impl UserStore {
@@ -64,6 +76,18 @@ impl UserStore {
                 sk.update_credential(auth_result);
             });
         }
+    }
+    fn set_reg_state(&mut self, session_id: String, state: RegistrationSessionState) {
+        self.reg_states.insert(session_id, state);
+    }
+    fn take_reg_state(&mut self, session_id: &str) -> Option<RegistrationSessionState> {
+        self.reg_states.remove(session_id)
+    }
+    fn set_auth_state(&mut self, session_id: String, state: AuthenticationSessionState) {
+        self.auth_states.insert(session_id, state);
+    }
+    fn take_auth_state(&mut self, session_id: &str) -> Option<AuthenticationSessionState> {
+        self.auth_states.remove(session_id)
     }
 }
 
@@ -125,6 +149,63 @@ impl WebauthnContainer {
             .await
             .update_by_auth_result(user_id, auth_result);
     }
+    async fn set_reg_state(&self, session_id: String, state: RegistrationSessionState) {
+        self.user_store
+            .lock()
+            .await
+            .set_reg_state(session_id, state);
+    }
+    async fn take_reg_state(&self, session_id: &str) -> Option<RegistrationSessionState> {
+        self.user_store.lock().await.take_reg_state(session_id)
+    }
+    async fn set_auth_state(&self, session_id: String, state: AuthenticationSessionState) {
+        self.user_store
+            .lock()
+            .await
+            .set_auth_state(session_id, state);
+    }
+    async fn take_auth_state(&self, session_id: &str) -> Option<AuthenticationSessionState> {
+        self.user_store.lock().await.take_auth_state(session_id)
+    }
+}
+
+fn session_id_from_headers(headers: &HeaderMap) -> Option<String> {
+    headers
+        .get(COOKIE)
+        .and_then(|value| value.to_str().ok())
+        .and_then(|cookies| {
+            cookies.split(';').find_map(|cookie| {
+                let (name, value) = cookie.trim().split_once('=')?;
+                if name == SESSION_COOKIE_NAME && Uuid::parse_str(value).is_ok() {
+                    Some(value.to_owned())
+                } else {
+                    None
+                }
+            })
+        })
+}
+
+fn get_or_create_session_id(headers: &HeaderMap) -> String {
+    session_id_from_headers(headers).unwrap_or_else(|| Uuid::new_v4().to_string())
+}
+
+fn required_session_id(headers: &HeaderMap) -> OpenResult<String> {
+    session_id_from_headers(headers)
+        .ok_or_else(|| OpenError::SessionError("No session found".to_string()))
+}
+
+fn response_with_session<T: serde::Serialize + Debug>(
+    session_id: &str,
+    response: OpenResponse<T>,
+) -> OpenResult<Response> {
+    let cookie = format!(
+        "{SESSION_COOKIE_NAME}={session_id}; Path=/; Max-Age={SESSION_MAX_AGE_SECONDS}; SameSite=Strict; HttpOnly"
+    );
+    let mut response = response.into_response();
+    response
+        .headers_mut()
+        .insert(SET_COOKIE, HeaderValue::from_str(&cookie)?);
+    Ok(response)
 }
 
 pub(super) fn get_webauthn() -> OpenResult<Webauthn> {
@@ -142,9 +223,9 @@ pub(super) fn get_webauthn() -> OpenResult<Webauthn> {
 pub async fn start_register(
     State(webauthn_container): State<WebauthnContainer>,
     trace_id: Result<Extension<TraceIdExt>, ExtensionRejection>,
-    session: Session,
+    headers: HeaderMap,
     json: Result<Json<LoginInput>, JsonRejection>,
-) -> OpenResult<OpenResponse<CreationChallengeResponse>> {
+) -> OpenResult<Response> {
     // 读取输入信息
     let span = tracing::info_span!("start register");
     let _enter = span.enter();
@@ -174,8 +255,6 @@ pub async fn start_register(
         .get_exclude_credentials(user_unique_id)
         .await;
 
-    let _ = session.remove_value("reg_state").await;
-
     let (ccr, reg_state) = webauthn_container.start_passkey_registration(
         user_unique_id,
         &username,
@@ -184,28 +263,30 @@ pub async fn start_register(
     )?;
     event!(Level::INFO, "webauthn registration started");
 
-    session
-        .insert(
-            "reg_state",
+    let session_id = get_or_create_session_id(&headers);
+    webauthn_container
+        .set_reg_state(
+            session_id.clone(),
             (username, user_unique_id, reg_state, auth.to_string()),
         )
-        .await?;
+        .await;
     event!(Level::INFO, "Registration Successful!");
-    Ok(OpenResponse::new(ccr))
+    response_with_session(&session_id, OpenResponse::new(ccr))
 }
 
 pub(crate) async fn finish_register(
     State(webauthn_container): State<WebauthnContainer>,
-    session: Session,
+    headers: HeaderMap,
     json: Result<Json<RegisterPublicKeyCredential>, JsonRejection>,
-) -> OpenResult<OpenResponse<String>> {
+) -> OpenResult<Response> {
     // 读取输入信息
     let span = tracing::info_span!("finish register");
     let _enter = span.enter();
     event!(Level::INFO, "finish register start");
     let Json(reg) = json?;
+    let session_id = required_session_id(&headers)?;
     let (username, user_unique_id, reg_state, auth): (_, _, _, String) =
-        match session.get("reg_state").await? {
+        match webauthn_container.take_reg_state(&session_id).await {
             Some((username, user_unique_id, reg_state, auth)) => {
                 (username, user_unique_id, reg_state, auth)
             }
@@ -218,8 +299,6 @@ pub(crate) async fn finish_register(
         };
     event!(Level::INFO, "finish register request: {}", &reg.id);
 
-    let _ = session.remove_value("reg_state").await;
-
     let sk = webauthn_container.finish_passkey_registration(&reg, &reg_state)?;
     event!(Level::INFO, "finish register success");
 
@@ -230,7 +309,7 @@ pub(crate) async fn finish_register(
     webauthn_container
         .add_user_auth(user_unique_id, auth.clone())
         .await;
-    Ok(OpenResponse::new(auth))
+    Ok(OpenResponse::new(auth).into_response())
 }
 
 #[derive(serde::Deserialize)]
@@ -240,17 +319,15 @@ pub(super) struct AuthenticationInput {
 
 pub(super) async fn start_authentication(
     State(webauthn_container): State<WebauthnContainer>,
-    session: Session,
+    headers: HeaderMap,
     json: Result<Json<AuthenticationInput>, JsonRejection>,
-) -> OpenResult<OpenResponse<RequestChallengeResponse>> {
+) -> OpenResult<Response> {
     // 读取输入信息
     let span = tracing::info_span!("start authentication");
     let _enter = span.enter();
     event!(Level::INFO, "start authentication start");
     let Json(auth) = json?;
     let username = auth.username;
-
-    let _ = session.remove_value("auth_state").await;
 
     let user_unique_id = webauthn_container
         .get_user_id(&username)
@@ -263,23 +340,25 @@ pub(super) async fn start_authentication(
 
     let (rcr, auth_state) = webauthn_container.start_passkey_authentication(&allow_credentials)?;
     event!(Level::INFO, "start authentication success");
-    session
-        .insert("auth_state", (user_unique_id, auth_state))
-        .await?;
-    Ok(OpenResponse::new(rcr))
+    let session_id = get_or_create_session_id(&headers);
+    webauthn_container
+        .set_auth_state(session_id.clone(), (user_unique_id, auth_state))
+        .await;
+    response_with_session(&session_id, OpenResponse::new(rcr))
 }
 
 pub(super) async fn finish_authentication(
     State(webauthn_container): State<WebauthnContainer>,
-    session: Session,
+    headers: HeaderMap,
     json: Result<Json<PublicKeyCredential>, JsonRejection>,
-) -> OpenResult<OpenResponse<String>> {
+) -> OpenResult<Response> {
     // 读取输入信息
     let span = tracing::info_span!("finish authentication");
     let _enter = span.enter();
     event!(Level::INFO, "finish authentication start");
+    let session_id = required_session_id(&headers)?;
     let (user_unique_id, auth_state): (Uuid, PasskeyAuthentication) =
-        match session.get("auth_state").await? {
+        match webauthn_container.take_auth_state(&session_id).await {
             Some((user_unique_id, auth_state)) => (user_unique_id, auth_state),
             None => {
                 event!(Level::ERROR, "No registration state found");
@@ -288,7 +367,6 @@ pub(super) async fn finish_authentication(
                 ));
             }
         };
-    let _ = session.remove_value("auth_state").await;
     let auth = json?.0;
 
     let auth_result = webauthn_container.finish_passkey_authentication(&auth, &auth_state)?;
@@ -301,5 +379,5 @@ pub(super) async fn finish_authentication(
         .await
         .ok_or(OpenError::WebauthnAuthNotSet)?;
 
-    Ok(OpenResponse::new(auth))
+    Ok(OpenResponse::new(auth).into_response())
 }

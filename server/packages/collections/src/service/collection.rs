@@ -1,7 +1,6 @@
 use async_graphql::*;
 use diesel::{Connection, PgConnection};
-use graphql_common::{Paginate, Queryable};
-use time::OffsetDateTime;
+use graphql_common::{DateTime, Paginate, Queryable};
 use tracing::{Level, event};
 
 use crate::{
@@ -18,8 +17,8 @@ pub(crate) struct Collection {
     pub(crate) path: String,
     pub(crate) parent_id: Option<i64>,
     pub(crate) description: Option<String>,
-    pub(crate) create_time: OffsetDateTime,
-    pub(crate) update_time: OffsetDateTime,
+    pub(crate) create_time: DateTime,
+    pub(crate) update_time: DateTime,
 }
 #[ComplexObject]
 impl Collection {
@@ -45,8 +44,8 @@ impl From<CollectionModel> for Collection {
             path: model.path,
             parent_id: model.parent_id,
             description: model.description,
-            create_time: model.create_time,
-            update_time: model.update_time,
+            create_time: model.create_time.into(),
+            update_time: model.update_time.into(),
         }
     }
 }
