@@ -20,7 +20,7 @@ use crate::{
 };
 use async_graphql::{ComplexObject, Context, InputObject, SimpleObject};
 use diesel::PgConnection;
-use graphql_common::{Queryable, TagMatch};
+use graphql_common::{DateTime, Queryable, TagMatch};
 use novel_crawler::{JJNovel, NovelFn, QDNovel};
 use std::collections::HashSet;
 use time::OffsetDateTime;
@@ -40,8 +40,8 @@ pub(crate) struct Novel {
     pub(crate) site_id: String,
     #[graphql(skip)]
     pub(crate) tags: Vec<i64>,
-    pub(crate) create_time: OffsetDateTime,
-    pub(crate) update_time: OffsetDateTime,
+    pub(crate) create_time: DateTime,
+    pub(crate) update_time: DateTime,
 }
 
 #[ComplexObject]
@@ -168,8 +168,8 @@ impl From<NovelModel> for Novel {
             avatar: value.avatar,
             description: value.description,
             tags: value.tags,
-            create_time: value.create_time,
-            update_time: value.update_time,
+            create_time: value.create_time.into(),
+            update_time: value.update_time.into(),
             novel_status: value.novel_status,
             site: value.site,
             site_id: value.site_id,

@@ -2,7 +2,7 @@ import { Controller, type SubmitHandler, useForm } from 'react-hook-form';
 import { useI18n } from 'i18n';
 import { graphql } from '@bookmarks/gql';
 import { useMutation } from '@apollo/client/react';
-import { NovelSite, type CreateTagMutationVariables } from '@bookmarks/gql/graphql';
+import type { CreateTagMutationVariables } from '@bookmarks/gql/graphql';
 import {
   Dialog,
   DialogClose,
@@ -24,7 +24,7 @@ import {
   SelectValue,
 } from '@portal/components/ui/select';
 import { valibotResolver } from '@hookform/resolvers/valibot';
-import { enum_, object, string } from 'valibot';
+import { object, picklist, string } from 'valibot';
 
 const CreateTag = graphql(`
   mutation createTag($name: String!, $site: NovelSite!, $siteId: String!) {
@@ -52,7 +52,7 @@ export default function CreateTagButton({ refetch }: CreateTagButtonProps) {
     resolver: valibotResolver(
       object({
         name: string(),
-        site: enum_(NovelSite),
+        site: picklist(['JJWXC', 'QIDIAN']),
         siteId: string(),
       }),
     ),
@@ -91,8 +91,8 @@ export default function CreateTagButton({ refetch }: CreateTagButtonProps) {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
-                        <SelectItem value={NovelSite.Jjwxc}>{t('jjwxc')}</SelectItem>
-                        <SelectItem value={NovelSite.Qidian}>{t('qidian')}</SelectItem>
+                        <SelectItem value="JJWXC">{t('jjwxc')}</SelectItem>
+                        <SelectItem value="QIDIAN">{t('qidian')}</SelectItem>
                       </SelectGroup>
                     </SelectContent>
                   </Select>

@@ -1,268 +1,109 @@
 /* eslint-disable */
-import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
-export type Maybe<T> = T | null;
-export type InputMaybe<T> = T | null | undefined;
-export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
-export type MakeOptional<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]?: Maybe<T[SubKey]> };
-export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]: Maybe<T[SubKey]> };
-export type MakeEmpty<T extends { [key: string]: unknown }, K extends keyof T> = { [_ in K]?: never };
+/** Internal type. DO NOT USE DIRECTLY. */
+type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
+/** Internal type. DO NOT USE DIRECTLY. */
 export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
-/** All built-in and custom scalars, mapped to their actual values */
-export type Scalars = {
-  ID: { input: string; output: string };
-  String: { input: string; output: string };
-  Boolean: { input: boolean; output: boolean };
-  Int: { input: number; output: number };
-  Float: { input: number; output: number };
-  DateTime: { input: any; output: any };
-};
-
-export type Collection = {
-  __typename?: 'Collection';
-  ancestors: Array<Collection>;
-  createTime: Scalars['DateTime']['output'];
-  description?: Maybe<Scalars['String']['output']>;
-  id: Scalars['Int']['output'];
-  name: Scalars['String']['output'];
-  parentId?: Maybe<Scalars['Int']['output']>;
-  path: Scalars['String']['output'];
-  updateTime: Scalars['DateTime']['output'];
-};
-
+import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 export type CollectionItemQuery = {
-  createTime?: InputMaybe<TimeRange>;
-  id?: InputMaybe<Scalars['Int']['input']>;
+  createTime?: TimeRange | null | undefined;
+  id?: number | null | undefined;
   pagination: Pagination;
-  updateTime?: InputMaybe<TimeRange>;
-};
-
-export type Item = {
-  __typename?: 'Item';
-  collections: Array<Collection>;
-  content: Scalars['String']['output'];
-  createTime: Scalars['DateTime']['output'];
-  id: Scalars['Int']['output'];
-  name: Scalars['String']['output'];
-  updateTime: Scalars['DateTime']['output'];
-};
-
-export type ItemAndCollection = Collection | Item;
-
-export type ItemAndCollectionList = {
-  __typename?: 'ItemAndCollectionList';
-  data: Array<ItemAndCollection>;
-  total: Scalars['Int']['output'];
-};
-
-export type ItemList = {
-  __typename?: 'ItemList';
-  data: Array<Item>;
-  total: Scalars['Int']['output'];
-};
-
-export type MutationRoot = {
-  __typename?: 'MutationRoot';
-  addCollectionForItem: Item;
-  createCollection: Collection;
-  createItem: Item;
-  deleteCollection: Collection;
-  deleteCollectionForItem: Item;
-  deleteItem: Item;
-  updateCollection: Collection;
-  updateItem: Item;
-};
-
-export type MutationRootAddCollectionForItemArgs = {
-  collectionId: Scalars['Int']['input'];
-  itemId: Scalars['Int']['input'];
-};
-
-export type MutationRootCreateCollectionArgs = {
-  description?: InputMaybe<Scalars['String']['input']>;
-  name: Scalars['String']['input'];
-  parentId?: InputMaybe<Scalars['Int']['input']>;
-};
-
-export type MutationRootCreateItemArgs = {
-  collectionIds: Array<Scalars['Int']['input']>;
-  content: Scalars['String']['input'];
-  name: Scalars['String']['input'];
-};
-
-export type MutationRootDeleteCollectionArgs = {
-  id: Scalars['Int']['input'];
-};
-
-export type MutationRootDeleteCollectionForItemArgs = {
-  collectionId: Scalars['Int']['input'];
-  itemId: Scalars['Int']['input'];
-};
-
-export type MutationRootDeleteItemArgs = {
-  id: Scalars['Int']['input'];
-};
-
-export type MutationRootUpdateCollectionArgs = {
-  description?: InputMaybe<Scalars['String']['input']>;
-  id: Scalars['Int']['input'];
-  name: Scalars['String']['input'];
-};
-
-export type MutationRootUpdateItemArgs = {
-  content: Scalars['String']['input'];
-  id: Scalars['Int']['input'];
-  name: Scalars['String']['input'];
+  updateTime?: TimeRange | null | undefined;
 };
 
 export type Pagination = {
-  page?: Scalars['Int']['input'];
-  pageSize?: Scalars['Int']['input'];
-};
-
-export type QueryRoot = {
-  __typename?: 'QueryRoot';
-  allCollections: Array<Collection>;
-  collectionAndItem: ItemAndCollectionList;
-  getCollection: Collection;
-  getItem: Item;
-  queryItems: ItemList;
-};
-
-export type QueryRootCollectionAndItemArgs = {
-  query: CollectionItemQuery;
-};
-
-export type QueryRootGetCollectionArgs = {
-  id: Scalars['Int']['input'];
-};
-
-export type QueryRootGetItemArgs = {
-  id: Scalars['Int']['input'];
-};
-
-export type QueryRootQueryItemsArgs = {
-  collectionMatch?: InputMaybe<TagMatch>;
-  pagination: Pagination;
+  page?: number;
+  pageSize?: number;
 };
 
 export type TagMatch = {
-  fullMatch: Scalars['Boolean']['input'];
-  matchSet: Array<Scalars['Int']['input']>;
+  fullMatch: boolean;
+  matchSet: Array<number>;
 };
 
 export type TimeRange = {
-  end: Scalars['DateTime']['input'];
-  start: Scalars['DateTime']['input'];
+  end: string;
+  start: string;
 };
 
 export type AllCollectionsQueryVariables = Exact<{ [key: string]: never }>;
 
 export type AllCollectionsQuery = {
-  __typename?: 'QueryRoot';
   allCollections: Array<{
-    __typename?: 'Collection';
     name: string;
     id: number;
     path: string;
-    createTime: any;
-    updateTime: any;
-    description?: string | null;
-    parentId?: number | null;
+    createTime: string;
+    updateTime: string;
+    description: string | null;
+    parentId: number | null;
   }>;
 };
 
 export type DeleteCollectionMutationVariables = Exact<{
-  id: Scalars['Int']['input'];
+  id: number;
 }>;
 
-export type DeleteCollectionMutation = {
-  __typename?: 'MutationRoot';
-  deleteCollection: { __typename?: 'Collection'; path: string };
-};
+export type DeleteCollectionMutation = { deleteCollection: { path: string } };
 
 export type DeleteItemMutationVariables = Exact<{
-  id: Scalars['Int']['input'];
+  id: number;
 }>;
 
-export type DeleteItemMutation = { __typename?: 'MutationRoot'; deleteItem: { __typename?: 'Item'; name: string } };
+export type DeleteItemMutation = { deleteItem: { name: string } };
 
 export type GetEditItemQueryVariables = Exact<{
-  id: Scalars['Int']['input'];
+  id: number;
 }>;
 
-export type GetEditItemQuery = {
-  __typename?: 'QueryRoot';
-  getItem: {
-    __typename?: 'Item';
-    name: string;
-    content: string;
-    collections: Array<{ __typename?: 'Collection'; id: number }>;
-  };
-};
+export type GetEditItemQuery = { getItem: { name: string; content: string; collections: Array<{ id: number }> } };
 
 export type UpdateCollectionMutationVariables = Exact<{
-  id: Scalars['Int']['input'];
-  name: Scalars['String']['input'];
-  description?: InputMaybe<Scalars['String']['input']>;
+  id: number;
+  name: string;
+  description?: string | null | undefined;
 }>;
 
-export type UpdateCollectionMutation = {
-  __typename?: 'MutationRoot';
-  updateCollection: { __typename?: 'Collection'; path: string };
-};
+export type UpdateCollectionMutation = { updateCollection: { path: string } };
 
 export type UpdateItemMutationVariables = Exact<{
-  id: Scalars['Int']['input'];
-  name: Scalars['String']['input'];
-  content: Scalars['String']['input'];
+  id: number;
+  name: string;
+  content: string;
 }>;
 
-export type UpdateItemMutation = {
-  __typename?: 'MutationRoot';
-  updateItem: { __typename?: 'Item'; id: number; name: string; content: string };
-};
+export type UpdateItemMutation = { updateItem: { id: number; name: string; content: string } };
 
 export type GetCollectionAncestorsQueryVariables = Exact<{
-  id: Scalars['Int']['input'];
+  id: number;
 }>;
 
 export type GetCollectionAncestorsQuery = {
-  __typename?: 'QueryRoot';
-  getCollection: {
-    __typename?: 'Collection';
-    id: number;
-    name: string;
-    ancestors: Array<{ __typename?: 'Collection'; id: number; name: string }>;
-  };
+  getCollection: { id: number; name: string; ancestors: Array<{ id: number; name: string }> };
 };
 
 export type CreateCollectionMutationVariables = Exact<{
-  parentId?: InputMaybe<Scalars['Int']['input']>;
-  name: Scalars['String']['input'];
-  description?: InputMaybe<Scalars['String']['input']>;
+  parentId?: number | null | undefined;
+  name: string;
+  description?: string | null | undefined;
 }>;
 
-export type CreateCollectionMutation = {
-  __typename?: 'MutationRoot';
-  createCollection: { __typename?: 'Collection'; path: string };
-};
+export type CreateCollectionMutation = { createCollection: { path: string } };
 
 export type CreateItemMutationVariables = Exact<{
-  collectionIds: Array<Scalars['Int']['input']> | Scalars['Int']['input'];
-  name: Scalars['String']['input'];
-  content: Scalars['String']['input'];
+  collectionIds: Array<number> | number;
+  name: string;
+  content: string;
 }>;
 
-export type CreateItemMutation = { __typename?: 'MutationRoot'; createItem: { __typename?: 'Item'; name: string } };
+export type CreateItemMutation = { createItem: { name: string } };
 
 export type CollectionAndItemsQueryVariables = Exact<{
   query: CollectionItemQuery;
 }>;
 
 export type CollectionAndItemsQuery = {
-  __typename?: 'QueryRoot';
   collectionAndItem: {
-    __typename?: 'ItemAndCollectionList';
     total: number;
     data: Array<
       | {
@@ -270,69 +111,53 @@ export type CollectionAndItemsQuery = {
           name: string;
           id: number;
           path: string;
-          createTime: any;
-          updateTime: any;
-          description?: string | null;
+          createTime: string;
+          updateTime: string;
+          description: string | null;
         }
-      | { __typename: 'Item'; name: string; id: number; updateTime: any; createTime: any }
+      | { __typename: 'Item'; name: string; id: number; updateTime: string; createTime: string }
     >;
   };
 };
 
 export type AddCollectionForItemMutationVariables = Exact<{
-  itemId: Scalars['Int']['input'];
-  collectionId: Scalars['Int']['input'];
+  itemId: number;
+  collectionId: number;
 }>;
 
-export type AddCollectionForItemMutation = {
-  __typename?: 'MutationRoot';
-  addCollectionForItem: { __typename?: 'Item'; id: number };
-};
+export type AddCollectionForItemMutation = { addCollectionForItem: { id: number } };
 
 export type GetItemQueryVariables = Exact<{
-  id: Scalars['Int']['input'];
+  id: number;
 }>;
 
 export type GetItemQuery = {
-  __typename?: 'QueryRoot';
   getItem: {
-    __typename?: 'Item';
     id: number;
     name: string;
     content: string;
-    createTime: any;
-    updateTime: any;
-    collections: Array<{
-      __typename?: 'Collection';
-      id: number;
-      name: string;
-      path: string;
-      description?: string | null;
-    }>;
+    createTime: string;
+    updateTime: string;
+    collections: Array<{ id: number; name: string; path: string; description: string | null }>;
   };
 };
 
 export type DeleteCollectionForItemMutationVariables = Exact<{
-  collectionId: Scalars['Int']['input'];
-  itemId: Scalars['Int']['input'];
+  collectionId: number;
+  itemId: number;
 }>;
 
-export type DeleteCollectionForItemMutation = {
-  __typename?: 'MutationRoot';
-  deleteCollectionForItem: { __typename?: 'Item'; id: number };
-};
+export type DeleteCollectionForItemMutation = { deleteCollectionForItem: { id: number } };
 
 export type GetItemsQueryVariables = Exact<{
-  collectionMatch?: InputMaybe<TagMatch>;
+  collectionMatch?: TagMatch | null | undefined;
   pagination: Pagination;
 }>;
 
 export type GetItemsQuery = {
-  __typename?: 'QueryRoot';
   queryItems: {
-    __typename?: 'ItemList';
     total: number;
-    data: Array<{ __typename?: 'Item'; id: number; name: string; content: string; createTime: any; updateTime: any }>;
+    data: Array<{ id: number; name: string; content: string; createTime: string; updateTime: string }>;
   };
 };
 

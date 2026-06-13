@@ -113,12 +113,6 @@ impl From<WebauthnError> for OpenError {
     }
 }
 
-impl From<tower_sessions::session::Error> for OpenError {
-    fn from(value: tower_sessions::session::Error) -> Self {
-        Self::SessionError(value.to_string())
-    }
-}
-
 pub type OpenResult<T> = Result<T, OpenError>;
 
 impl IntoResponse for OpenError {

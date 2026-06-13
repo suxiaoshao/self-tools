@@ -1,6 +1,8 @@
+mod date_time;
 mod paginate;
 mod tag_match;
 
+pub use date_time::DateTime;
 pub use paginate::{Paginate, Pagination, QueryStack, Queryable};
 pub use paste::paste;
 pub use tag_match::{TagMatch, TagMatchValidator};

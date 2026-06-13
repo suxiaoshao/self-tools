@@ -11,10 +11,10 @@ edition = "2024"
 thrift = { path = "../../common/thrift" }
 volo = "0.12.3"
 volo-thrift = "0.12.4"
-tokio = { version = "1.52.1", features = ["full"] }
+tokio = { version = "1.52.3", features = ["full"] }
 
 # jwt
-jsonwebtoken = { version = "10.3.0", features = ["rust_crypto"] }
+jsonwebtoken = { version = "10.4.0", default-features = false, features = ["rust_crypto"] }
 serde = { version = "1.0.228", features = ["derive"] }
 
 # log

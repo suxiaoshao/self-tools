@@ -121,7 +121,7 @@ impl ItemModel {
                 let data = item::table
                     .inner_join(collection_item::table)
                     .filter(collection_item::collection_id.eq(collection_id))
-                    .filter(item::update_time.between(update_time.start, update_time.end))
+                    .filter(item::update_time.between(update_time.start(), update_time.end()))
                     .offset(offset)
                     .limit(limit)
                     .load::<(ItemModel, (i64, i64))>(conn)?;
@@ -131,7 +131,7 @@ impl ItemModel {
                 let data = item::table
                     .inner_join(collection_item::table)
                     .filter(collection_item::collection_id.eq(collection_id))
-                    .filter(item::create_time.between(create_time.start, create_time.end))
+                    .filter(item::create_time.between(create_time.start(), create_time.end()))
                     .offset(offset)
                     .limit(limit)
                     .load::<(ItemModel, (i64, i64))>(conn)?;
@@ -141,8 +141,8 @@ impl ItemModel {
                 let data = item::table
                     .inner_join(collection_item::table)
                     .filter(collection_item::collection_id.eq(collection_id))
-                    .filter(item::create_time.between(create_time.start, create_time.end))
-                    .filter(item::update_time.between(update_time.start, update_time.end))
+                    .filter(item::create_time.between(create_time.start(), create_time.end()))
+                    .filter(item::update_time.between(update_time.start(), update_time.end()))
                     .offset(offset)
                     .limit(limit)
                     .load::<(ItemModel, (i64, i64))>(conn)?;
@@ -170,7 +170,7 @@ impl ItemModel {
                 let count = item::table
                     .inner_join(collection_item::table)
                     .filter(collection_item::collection_id.eq(collection_id))
-                    .filter(item::update_time.between(update_time.start, update_time.end))
+                    .filter(item::update_time.between(update_time.start(), update_time.end()))
                     .count()
                     .get_result(conn)?;
                 Ok(count)
@@ -179,7 +179,7 @@ impl ItemModel {
                 let count = item::table
                     .inner_join(collection_item::table)
                     .filter(collection_item::collection_id.eq(collection_id))
-                    .filter(item::create_time.between(create_time.start, create_time.end))
+                    .filter(item::create_time.between(create_time.start(), create_time.end()))
                     .count()
                     .get_result(conn)?;
                 Ok(count)
@@ -188,8 +188,8 @@ impl ItemModel {
                 let count = item::table
                     .inner_join(collection_item::table)
                     .filter(collection_item::collection_id.eq(collection_id))
-                    .filter(item::create_time.between(create_time.start, create_time.end))
-                    .filter(item::update_time.between(update_time.start, update_time.end))
+                    .filter(item::create_time.between(create_time.start(), create_time.end()))
+                    .filter(item::update_time.between(update_time.start(), update_time.end()))
                     .count()
                     .get_result(conn)?;
                 Ok(count)

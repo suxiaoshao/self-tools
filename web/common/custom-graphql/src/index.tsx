@@ -11,6 +11,20 @@ import { SetContextLink } from '@apollo/client/link/context';
 import { ErrorLink } from '@apollo/client/link/error';
 import { toast } from 'sonner';
 
+declare module '@apollo/client' {
+  namespace ApolloClient {
+    namespace DeclareDefaultOptions {
+      interface WatchQuery {
+        errorPolicy: 'ignore';
+      }
+
+      interface Query {
+        errorPolicy: 'all';
+      }
+    }
+  }
+}
+
 const getHttpLink = (url: string) =>
   new HttpLink({
     uri: String(url),
@@ -57,7 +71,7 @@ const authLink = new SetContextLink((prevContext) => {
   };
 });
 
-const defaultOptions: ApolloClient.DefaultOptions = {
+const defaultOptions = {
   watchQuery: {
     fetchPolicy: 'no-cache',
     errorPolicy: 'ignore',
@@ -66,7 +80,7 @@ const defaultOptions: ApolloClient.DefaultOptions = {
     fetchPolicy: 'no-cache',
     errorPolicy: 'all',
   },
-};
+} as const;
 
 export const getClient = (url: string) =>
   new ApolloClient({

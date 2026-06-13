@@ -7,7 +7,7 @@ edition = "2024"
 
 [dependencies]
 # http
-tokio = { version = "1.52.1", features = ["macros", "rt-multi-thread"] }
+tokio = { version = "1.52.3", features = ["macros", "rt-multi-thread"] }
 axum = { version = "0.8.9", features = ["json"] }
 
 # error
@@ -16,7 +16,7 @@ thiserror = "2.0.18"
 
 # json
 serde = { version = "1.0.228", features = ["derive"] }
-serde_json = "1.0.149"
+serde_json = "1.0.150"
 
 # cors
 middleware = { path = "../../common/middleware", features = ["cors", "trace"] }
@@ -30,9 +30,8 @@ thrift = { path = "../../common/thrift" }
 volo-thrift = "0.12.4"
 
 # webauthn
-webauthn-rs = { version = "0.5.4", features = ["danger-allow-state-serialisation"] }
+webauthn-rs = { version = "0.5.5", features = ["danger-allow-state-serialisation"] }
 url = "2.5.8"
-tower-sessions = { version = "0.15.0" }
 
 [dev-dependencies]
 axum = { version = "0.8.9", features = ["json", "macros"] }

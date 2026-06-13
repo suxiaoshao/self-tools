@@ -7,7 +7,6 @@
  */
 import { useMutation, useQuery } from '@apollo/client/react';
 import { graphql } from '@bookmarks/gql';
-import { NovelStatus } from '@bookmarks/gql/graphql';
 import useTitle from '@bookmarks/hooks/useTitle';
 import { getImageUrl } from '@bookmarks/utils/image';
 import { getLabelKeyByNovelStatus } from '@bookmarks/utils/novelStatus';
@@ -159,19 +158,19 @@ export default function AuthorDetails() {
                       </ItemTitle>
                       <ItemDescription>
                         {match(novelStatus)
-                          .with(NovelStatus.Ongoing, () => (
+                          .with('ONGOING', () => (
                             <Badge variant="outline" className="text-muted-foreground px-1.5">
                               <Loader className="fill-yellow-500 dark:fill-yellow-400" />
                               {t('ongoing')}
                             </Badge>
                           ))
-                          .with(NovelStatus.Completed, () => (
+                          .with('COMPLETED', () => (
                             <Badge variant="outline" className="text-muted-foreground px-1.5">
                               <CircleCheck className="fill-green-500 dark:fill-green-400" />
                               {t('completed')}
                             </Badge>
                           ))
-                          .with(NovelStatus.Paused, () => (
+                          .with('PAUSED', () => (
                             <Badge variant="outline" className="text-muted-foreground px-1.5">
                               <CirclePause className="fill-red-500 dark:fill-red-400" />
                               {t('paused')}

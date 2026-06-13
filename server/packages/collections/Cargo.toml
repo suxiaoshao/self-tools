@@ -7,18 +7,18 @@ edition = "2024"
 
 [dependencies]
 # runtime
-tokio = { version = "1.52.1", features = ["macros", "rt-multi-thread"] }
+tokio = { version = "1.52.3", features = ["macros", "rt-multi-thread"] }
 
 # graphql
-async-graphql = { version = "7.2.1", features = ["time"] }
+async-graphql = "7.2.1"
 axum = { version = "0.8.9", features = [] }
 async-graphql-axum = "7.2.1"
-serde_json = "1.0.149"
+serde_json = "1.0.150"
 graphql-common = { path = "../../common/graphql-common" }
 
 # database
-diesel = { version = "2.3.8", features = ["postgres", "time", "r2d2"] }
-time = "0.3.47"
+diesel = { version = "2.3.10", features = ["postgres", "time", "r2d2"] }
+time = "0.3.48"
 
 # error
 anyhow = "1.0.102"

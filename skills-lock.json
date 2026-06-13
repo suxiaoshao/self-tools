@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "skills": {
+    "apollo-client": {
+      "source": "apollographql/skills",
+      "sourceType": "github",
+      "skillPath": "skills/apollo-client/SKILL.md",
+      "computedHash": "008c067a3d480ab905aa37aab113b8dc54028e29e593610866b7ea8131377ce1"
+    },
+    "graphql-operations": {
+      "source": "apollographql/skills",
+      "sourceType": "github",
+      "skillPath": "skills/graphql-operations/SKILL.md",
+      "computedHash": "d0532171706cbba72112a6f3ffdc49d5d15b22fdd092de7324099e767bf1cbf1"
+    },
+    "graphql-schema": {
+      "source": "apollographql/skills",
+      "sourceType": "github",
+      "skillPath": "skills/graphql-schema/SKILL.md",
+      "computedHash": "95f5384cc907635fc31121648dffffed0bb6f773ee594cbfe9be9e5e4a0e6aba"
+    },
+    "react-router-declarative-mode": {
+      "source": "remix-run/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/react-router-declarative-mode/SKILL.md",
+      "computedHash": "d7ebbf1ede90809618f02cb3b3d37b9871cdd6c88a81cf338e63de50a0df6a42"
+    },
+    "shadcn": {
+      "source": "shadcn/ui",
+      "sourceType": "github",
+      "skillPath": "skills/shadcn/SKILL.md",
+      "computedHash": "ac9d0d69caac7de1d1e5647f3db3bcd2f13af355d6b3a78780fbf7fc80e8dca0"
+    }
+  }
+}

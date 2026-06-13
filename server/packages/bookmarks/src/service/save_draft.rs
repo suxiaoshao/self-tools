@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use async_graphql::InputObject;
 use diesel::PgConnection;
+use graphql_common::DateTime;
 use time::OffsetDateTime;
 use tracing::{Level, event};
 
@@ -144,7 +145,7 @@ impl SaveDraftAuthor {
                             site,
                             site_id: id,
                             content: None,
-                            time: *time,
+                            time: (*time).into(),
                             word_count: *word_count as i64,
                             novel_id: *novel_id,
                             author_id: author.id,
@@ -177,7 +178,7 @@ pub(crate) struct SaveNovelInfo {
 pub(crate) struct SaveChapterInfo {
     id: String,
     name: String,
-    time: OffsetDateTime,
+    time: DateTime,
     word_count: u32,
 }
 
@@ -306,7 +307,7 @@ impl SaveDraftNovel {
                             update_time: now,
                             site,
                             site_id: id,
-                            time: *time,
+                            time: (*time).into(),
                             word_count: *word_count as i64,
                             author_id: author.id,
                             title: name,

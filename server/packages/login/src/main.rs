@@ -10,10 +10,6 @@ use ::middleware::{get_cors, trace_layer};
 use anyhow::Result;
 use std::net::SocketAddr;
 use tokio::net::TcpListener;
-use tower_sessions::{
-    Expiry, MemoryStore, SessionManagerLayer,
-    cookie::{SameSite, time::Duration},
-};
 use tracing::{Level, event, metadata::LevelFilter};
 use tracing_subscriber::{
     Layer, fmt, prelude::__tracing_subscriber_SubscriberExt, util::SubscriberInitExt,
@@ -30,16 +26,8 @@ async fn main() -> Result<()> {
     // 设置跨域
     let cors = get_cors();
 
-    let session_store = MemoryStore::default();
-
     // 获取路由
-    let app = get_router()?.layer(cors).layer(trace_layer()).layer(
-        SessionManagerLayer::new(session_store)
-            .with_name("webauthnrs")
-            .with_same_site(SameSite::Strict)
-            .with_secure(false) // TODO: change this to true when running on an HTTPS/production server instead of locally
-            .with_expiry(Expiry::OnInactivity(Duration::seconds(360))),
-    );
+    let app = get_router()?.layer(cors).layer(trace_layer());
 
     // run our app with hyper
     // `axum::Server` is a re-export of `hyper::Server`

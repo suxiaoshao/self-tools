@@ -27,7 +27,7 @@ import { getLabelKeyByNovelStatus } from '@bookmarks/utils/novelStatus';
 import { getLabelKeyBySite } from '@bookmarks/utils/novelSite';
 import { graphql } from '@bookmarks/gql';
 import { useLazyQuery, useMutation } from '@apollo/client/react';
-import { type FetchNovelQuery, type FetchNovelQueryVariables, NovelSite } from '@bookmarks/gql/graphql';
+import type { FetchNovelQuery, FetchNovelQueryVariables } from '@bookmarks/gql/graphql';
 import { toast } from 'sonner';
 import { Button } from '@portal/components/ui/button';
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from '@portal/components/ui/card';
@@ -246,8 +246,8 @@ export default function NovelFetch() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
-                        <SelectItem value={NovelSite.Jjwxc}>{t('jjwxc')}</SelectItem>
-                        <SelectItem value={NovelSite.Qidian}>{t('qidian')}</SelectItem>
+                        <SelectItem value="JJWXC">{t('jjwxc')}</SelectItem>
+                        <SelectItem value="QIDIAN">{t('qidian')}</SelectItem>
                       </SelectGroup>
                     </SelectContent>
                   </Select>

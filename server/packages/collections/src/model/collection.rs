@@ -175,7 +175,7 @@ impl CollectionModel {
             (None, None, Some(update_time)) => {
                 let collections = collection::table
                     .filter(collection::parent_id.is_null())
-                    .filter(collection::update_time.between(update_time.start, update_time.end))
+                    .filter(collection::update_time.between(update_time.start(), update_time.end()))
                     .offset(offset)
                     .limit(limit)
                     .load(conn)?;
@@ -184,7 +184,7 @@ impl CollectionModel {
             (None, Some(create_time), None) => {
                 let collections = collection::table
                     .filter(collection::parent_id.is_null())
-                    .filter(collection::create_time.between(create_time.start, create_time.end))
+                    .filter(collection::create_time.between(create_time.start(), create_time.end()))
                     .offset(offset)
                     .limit(limit)
                     .load(conn)?;
@@ -193,8 +193,8 @@ impl CollectionModel {
             (None, Some(create_time), Some(update_time)) => {
                 let collections = collection::table
                     .filter(collection::parent_id.is_null())
-                    .filter(collection::create_time.between(create_time.start, create_time.end))
-                    .filter(collection::update_time.between(update_time.start, update_time.end))
+                    .filter(collection::create_time.between(create_time.start(), create_time.end()))
+                    .filter(collection::update_time.between(update_time.start(), update_time.end()))
                     .offset(offset)
                     .limit(limit)
                     .load(conn)?;
@@ -211,7 +211,7 @@ impl CollectionModel {
             (Some(id), None, Some(update_time)) => {
                 let collections = collection::table
                     .filter(collection::parent_id.eq(id))
-                    .filter(collection::update_time.between(update_time.start, update_time.end))
+                    .filter(collection::update_time.between(update_time.start(), update_time.end()))
                     .offset(offset)
                     .limit(limit)
                     .load(conn)?;
@@ -220,7 +220,7 @@ impl CollectionModel {
             (Some(id), Some(create_time), None) => {
                 let collections = collection::table
                     .filter(collection::parent_id.eq(id))
-                    .filter(collection::create_time.between(create_time.start, create_time.end))
+                    .filter(collection::create_time.between(create_time.start(), create_time.end()))
                     .offset(offset)
                     .limit(limit)
                     .load(conn)?;
@@ -229,8 +229,8 @@ impl CollectionModel {
             (Some(id), Some(create_time), Some(update_time)) => {
                 let collections = collection::table
                     .filter(collection::parent_id.eq(id))
-                    .filter(collection::create_time.between(create_time.start, create_time.end))
-                    .filter(collection::update_time.between(update_time.start, update_time.end))
+                    .filter(collection::create_time.between(create_time.start(), create_time.end()))
+                    .filter(collection::update_time.between(update_time.start(), update_time.end()))
                     .offset(offset)
                     .limit(limit)
                     .load(conn)?;
@@ -256,7 +256,7 @@ impl CollectionModel {
             (None, None, Some(update_time)) => {
                 let count = collection::table
                     .filter(collection::parent_id.is_null())
-                    .filter(collection::update_time.between(update_time.start, update_time.end))
+                    .filter(collection::update_time.between(update_time.start(), update_time.end()))
                     .count()
                     .get_result(conn)?;
                 Ok(count)
@@ -264,7 +264,7 @@ impl CollectionModel {
             (None, Some(create_time), None) => {
                 let count = collection::table
                     .filter(collection::parent_id.is_null())
-                    .filter(collection::create_time.between(create_time.start, create_time.end))
+                    .filter(collection::create_time.between(create_time.start(), create_time.end()))
                     .count()
                     .get_result(conn)?;
                 Ok(count)
@@ -272,8 +272,8 @@ impl CollectionModel {
             (None, Some(create_time), Some(update_time)) => {
                 let count = collection::table
                     .filter(collection::parent_id.is_null())
-                    .filter(collection::create_time.between(create_time.start, create_time.end))
-                    .filter(collection::update_time.between(update_time.start, update_time.end))
+                    .filter(collection::create_time.between(create_time.start(), create_time.end()))
+                    .filter(collection::update_time.between(update_time.start(), update_time.end()))
                     .count()
                     .get_result(conn)?;
                 Ok(count)
@@ -288,7 +288,7 @@ impl CollectionModel {
             (Some(id), None, Some(update_time)) => {
                 let count = collection::table
                     .filter(collection::parent_id.eq(id))
-                    .filter(collection::update_time.between(update_time.start, update_time.end))
+                    .filter(collection::update_time.between(update_time.start(), update_time.end()))
                     .count()
                     .get_result(conn)?;
                 Ok(count)
@@ -296,7 +296,7 @@ impl CollectionModel {
             (Some(id), Some(create_time), None) => {
                 let count = collection::table
                     .filter(collection::parent_id.eq(id))
-                    .filter(collection::create_time.between(create_time.start, create_time.end))
+                    .filter(collection::create_time.between(create_time.start(), create_time.end()))
                     .count()
                     .get_result(conn)?;
                 Ok(count)
@@ -304,8 +304,8 @@ impl CollectionModel {
             (Some(id), Some(create_time), Some(update_time)) => {
                 let count = collection::table
                     .filter(collection::parent_id.eq(id))
-                    .filter(collection::create_time.between(create_time.start, create_time.end))
-                    .filter(collection::update_time.between(update_time.start, update_time.end))
+                    .filter(collection::create_time.between(create_time.start(), create_time.end()))
+                    .filter(collection::update_time.between(update_time.start(), update_time.end()))
                     .count()
                     .get_result(conn)?;
                 Ok(count)
