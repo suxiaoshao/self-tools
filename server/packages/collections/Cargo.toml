@@ -18,7 +18,7 @@ graphql-common = { path = "../../common/graphql-common" }
 
 # database
 diesel = { version = "2.3.10", features = ["postgres", "time", "r2d2"] }
-time = "0.3.48"
+time = "=0.3.47"
 
 # error
 anyhow = "1.0.102"

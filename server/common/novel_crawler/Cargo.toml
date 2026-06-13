@@ -19,7 +19,7 @@ futures = "0.3.32"
 # 错误处理
 thiserror = "2.0.18"
 # 时间
-time = { version = "0.3.48", features = ["parsing", "macros"] }
+time = { version = "=0.3.47", features = ["parsing", "macros"] }
 
 [dev-dependencies]
 anyhow = "1.0.102"
