@@ -5,7 +5,7 @@
  * @LastEditTime: 2024-02-28 00:34:34
  * @FilePath: /self-tools/web/packages/portal/src/components/AppRouter.tsx
  */
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route } from 'react-router';
 import AppDrawer from './AppDrawer';
 import Home from '../features/Home';
 import Login, { useLogin } from '../features/Auth';

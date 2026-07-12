@@ -1,4 +1,4 @@
-import { BrowserRouter } from 'react-router-dom';
+import { BrowserRouter } from 'react-router';
 import AppRouter from './components/AppRouter';
 import { TooltipProvider } from './components/ui/tooltip';
 import I18next from 'i18n';

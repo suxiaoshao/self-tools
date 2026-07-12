@@ -12,7 +12,7 @@ import NovelList from './features/Novel/List';
 import Tags from './features/Tags';
 import AuthorList from './features/Author/List';
 import Collections from './features/Collections';
-import { Route } from 'react-router-dom';
+import { Route } from 'react-router';
 import NovelDetails from './features/Novel/Details';
 import AuthorDetails from './features/Author/Details';
 import NovelFetch from './features/Novel/Fetch';

@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useNavigate, useLocation, createSearchParams } from 'react-router-dom';
+import { useNavigate, useLocation, createSearchParams } from 'react-router';
 import { useAuthStore } from './authSlice';
 import { useShallow } from 'zustand/react/shallow';
 

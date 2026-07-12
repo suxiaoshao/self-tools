@@ -16,7 +16,7 @@ import CreateCollectionButton from './components/CreateCollectionButton';
 import useParentId from './components/useParentId';
 import type { CollectionTableData } from './types';
 import { useI18n } from 'i18n';
-import { Link, createSearchParams } from 'react-router-dom';
+import { Link, createSearchParams } from 'react-router';
 import { format } from 'time';
 import CollectionActions from './components/CollectionActions';
 import useTitle from '@bookmarks/hooks/useTitle';

@@ -14,7 +14,7 @@ import CreateAuthorButton from './components/CreateAuthorButton';
 import { useMemo } from 'react';
 import { format } from 'time';
 import { useI18n } from 'i18n';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { getImageUrl } from '@bookmarks/utils/image';
 import { getLabelKeyBySite } from '@bookmarks/utils/novelSite';
 import useTitle from '@bookmarks/hooks/useTitle';

@@ -1,5 +1,5 @@
 import { useI18n } from 'i18n';
-import { createSearchParams, Link } from 'react-router-dom';
+import { createSearchParams, Link } from 'react-router';
 import useParentId from '../hooks/useParentId';
 import { graphql } from '@collections/gql';
 import { useQuery } from '@apollo/client/react';

@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Update Repository Dependencies'
+  short_description: 'Upgrade repository dependencies and apply migrations'
+  default_prompt: 'Use $update-repository-dependencies to update this repository’s dependencies and migrate it to recommended APIs.'
