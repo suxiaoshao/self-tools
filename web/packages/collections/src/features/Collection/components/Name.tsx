@@ -1,6 +1,6 @@
 import type { CollectionAndItem } from '../types';
 import { Button } from '@portal/components/ui/button';
-import { Link, createSearchParams } from 'react-router-dom';
+import { Link, createSearchParams } from 'react-router';
 
 export default function Name({ name, id, __typename }: CollectionAndItem) {
   if (__typename === 'Item') {

@@ -3,7 +3,7 @@ import { useI18n } from 'i18n';
 import type { DetailsItem } from 'details';
 import { useMemo } from 'react';
 import { match, P } from 'ts-pattern';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { graphql } from '@collections/gql';
 import { useMutation } from '@apollo/client/react';
 import AddCollection from './components/AddCollection';

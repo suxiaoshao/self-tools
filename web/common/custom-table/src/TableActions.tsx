@@ -2,6 +2,7 @@ import { Button } from '@portal/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@portal/components/ui/dropdown-menu';
@@ -30,15 +31,17 @@ export function TableActions({ children }: TableActionsProps) {
         <span className="sr-only">Open menu</span>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-40">
-        {children().map((item) =>
-          match(item)
-            .with({ text: P._ }, ({ text, onClick }) => (
-              <DropdownMenuItem key={JSON.stringify(text)} onClick={onClick}>
-                {text}
-              </DropdownMenuItem>
-            ))
-            .otherwise((element) => element),
-        )}
+        <DropdownMenuGroup>
+          {children().map((item) =>
+            match(item)
+              .with({ text: P._ }, ({ text, onClick }) => (
+                <DropdownMenuItem key={JSON.stringify(text)} onClick={onClick}>
+                  {text}
+                </DropdownMenuItem>
+              ))
+              .otherwise((element) => element),
+          )}
+        </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
   );

@@ -2,7 +2,7 @@ import { useMutation, useQuery } from '@apollo/client/react';
 import { graphql } from '@collections/gql';
 import { Delete, Edit, RefreshCcw, ChevronLeft } from 'lucide-react';
 import { useCallback } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router';
 import { Details } from 'details';
 import { useI18n } from 'i18n';
 import useItemDetailItems from './useItemDetailItems';
@@ -103,9 +103,9 @@ export default function ItemDetails() {
           )}
           {loading && (
             <Card>
-              <CardContent className="flex items-center space-x-4">
+              <CardContent className="flex items-center gap-4">
                 <Skeleton className="h-12 w-12 rounded-full" />
-                <div className="space-y-2">
+                <div className="flex flex-col gap-2">
                   <Skeleton className="h-4 w-[250px]" />
                   <Skeleton className="h-4 w-[200px]" />
                 </div>

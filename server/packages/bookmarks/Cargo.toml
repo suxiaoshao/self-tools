@@ -20,13 +20,13 @@ serde = { version = "1.0.228", features = ["derive"] }
 reqwest = { version = "0.13.4", features = ["gzip", "stream"], default-features = false }
 
 # database
-diesel = { version = "2.3.10", features = ["postgres", "time", "r2d2", "numeric"] }
+diesel = { version = "2.3.11", features = ["postgres", "time", "r2d2", "numeric"] }
 time = { version = "=0.3.47" }
 bigdecimal = "0.4.10"
 graphql-common = { path = "../../common/graphql-common" }
 
 # error
-anyhow = "1.0.102"
+anyhow = "1.0.103"
 thiserror = "2.0.18"
 
 # cors

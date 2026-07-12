@@ -6,7 +6,7 @@ import { getLabelKeyByNovelStatus } from '@bookmarks/utils/novelStatus';
 import type { DetailsItem } from 'details';
 import { useI18n } from 'i18n';
 import { useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { format } from 'time';
 import { match, P } from 'ts-pattern';
 import AddCollection from './components/AddCollection';

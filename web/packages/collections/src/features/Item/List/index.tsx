@@ -14,7 +14,7 @@ import {
 } from 'custom-table';
 import { Controller, useForm } from 'react-hook-form';
 import { useMutation, useQuery } from '@apollo/client/react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { useMemo } from 'react';
 import { DeleteItem } from '@collections/features/Collection/components/Actions';
 import { convertFormToVariables } from './utils';

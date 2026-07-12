@@ -13,7 +13,7 @@ import {
 import { useI18n } from 'i18n';
 import { useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router';
 import { format } from 'time';
 import CreateNovelButton from './Components/CreateNovelButton';
 import { convertFormToVariables } from './utils';

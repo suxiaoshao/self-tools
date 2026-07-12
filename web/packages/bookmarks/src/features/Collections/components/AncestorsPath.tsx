@@ -1,4 +1,4 @@
-import { createSearchParams, Link } from 'react-router-dom';
+import { createSearchParams, Link } from 'react-router';
 import useParentId from './useParentId';
 import { graphql } from '@bookmarks/gql';
 import { useQuery } from '@apollo/client/react';

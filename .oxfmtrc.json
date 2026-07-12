@@ -6,5 +6,18 @@
   "printWidth": 120,
   "tabWidth": 2,
   "endOfLine": "lf",
-  "ignorePatterns": [".idea", "*.local", "**/build/web", "**/target", "dist", "dist-ssr", "postgrestools.jsonc"]
+  "ignorePatterns": [
+    ".idea",
+    "*.local",
+    ".agents/skills/apollo-client",
+    ".agents/skills/graphql-operations",
+    ".agents/skills/graphql-schema",
+    ".agents/skills/react-router-declarative-mode",
+    ".agents/skills/shadcn",
+    "**/build/web",
+    "**/target",
+    "dist",
+    "dist-ssr",
+    "postgrestools.jsonc"
+  ]
 }
