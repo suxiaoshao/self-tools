@@ -10,7 +10,7 @@ import { codeInspectorPlugin } from 'code-inspector-plugin';
 const rootDir = fileURLToPath(new URL('.', import.meta.url));
 const isAnalyze = Boolean(process.env.RSDOCTOR);
 
-export default defineConfig(({ command }) => {
+export default defineConfig(({ command, mode }) => {
   let base = '/';
 
   if (command === 'build') {
@@ -30,7 +30,7 @@ export default defineConfig(({ command }) => {
     }),
   ];
 
-  if (command === 'serve') {
+  if (command === 'serve' && mode !== 'test') {
     plugins.push(codeInspectorPlugin({ bundler: 'vite' }));
   }
 
@@ -41,15 +41,11 @@ export default defineConfig(({ command }) => {
     }),
   );
 
-  return {
+  const config = {
     base,
     plugins,
     resolve: {
-      alias: {
-        '@portal': resolve(rootDir, './src'),
-        '@bookmarks': resolve(rootDir, '../bookmarks/src'),
-        '@collections': resolve(rootDir, '../collections/src'),
-      },
+      tsconfigPaths: true,
     },
     server: {
       host: '0.0.0.0',
@@ -68,5 +64,12 @@ export default defineConfig(({ command }) => {
       port: 3000,
       strictPort: true,
     },
+    test: {
+      environment: 'jsdom',
+      globals: false,
+      setupFiles: [resolve(rootDir, '../../config/test/testSetup.ts')],
+    },
   };
+
+  return config;
 });

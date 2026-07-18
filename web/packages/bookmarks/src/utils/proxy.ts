@@ -1,4 +1,3 @@
-/* eslint-disable no-console no-fallthrough */
 export function proxy<T>(source: T): T {
   switch (typeof source) {
     case 'object':
@@ -17,7 +16,6 @@ export function proxy<T>(source: T): T {
             console.log('new', target, argArray, newTarget);
             return Reflect.construct(target as () => void, argArray, newTarget);
           },
-          // eslint-disable-next-line max-params
           set(target, p, newValue, receiver) {
             console.log('set', target, p, newValue);
             return Reflect.set(target, p, newValue, receiver);

@@ -3,8 +3,5 @@ packages:
   - web/common/**
 allowBuilds:
   '@swc/core': true
-
-onlyBuiltDependencies:
-  - '@swc/core'
-  - core-js
-  - unrs-resolver
+  core-js: true
+  unrs-resolver: true

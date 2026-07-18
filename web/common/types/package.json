@@ -1,9 +1,13 @@
 {
   "name": "types",
   "version": "1.0.0",
+  "private": true,
   "description": "",
   "keywords": [],
   "license": "ISC",
   "author": "",
-  "main": "src/index.ts"
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  }
 }

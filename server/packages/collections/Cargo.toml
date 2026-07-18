@@ -1,40 +1,40 @@
 [package]
 name = "collections"
-version = "0.1.0"
-edition = "2024"
+version.workspace = true
+edition.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 # runtime
-tokio = { version = "1.52.3", features = ["macros", "rt-multi-thread"] }
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
 
 # graphql
-async-graphql = "7.2.1"
-axum = { version = "0.8.9", features = [] }
-async-graphql-axum = "7.2.1"
-serde_json = "1.0.150"
-graphql-common = { path = "../../common/graphql-common" }
+async-graphql.workspace = true
+axum.workspace = true
+async-graphql-axum.workspace = true
+serde_json.workspace = true
+graphql-common.workspace = true
 
 # database
-diesel = { version = "2.3.11", features = ["postgres", "time", "r2d2"] }
-time = "=0.3.47"
+diesel = { workspace = true, features = ["postgres", "time", "r2d2"] }
+time.workspace = true
 
 # error
-anyhow = "1.0.103"
-thiserror = "2.0.18"
+anyhow.workspace = true
+thiserror.workspace = true
 
 # cors
-middleware = { path = "../../common/middleware", features = ["cors", "trace", "graphql-trace"] }
+middleware = { workspace = true, features = ["cors", "trace", "graphql-trace"] }
 
 # log
-tracing = "0.1.44"
-tracing-subscriber = "0.3.23"
+tracing.workspace = true
+tracing-subscriber.workspace = true
 
 # thrift
-thrift = { path = "../../common/thrift" }
-volo-thrift = "0.12.4"
+thrift.workspace = true
+volo-thrift.workspace = true
 
 [dev-dependencies]
 # env
-dotenv = "0.15.0"
+dotenv.workspace = true

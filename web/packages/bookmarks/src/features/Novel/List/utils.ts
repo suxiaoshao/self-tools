@@ -22,7 +22,6 @@ export function convertFormToVariables(
         },
         ({ fullMatch, matchSet }) => ({ fullMatch, matchSet }),
       )
-      // eslint-disable-next-line no-useless-undefined
       .otherwise(() => undefined),
     novelStatus,
     tagMatch: match(tagMatch)
@@ -33,7 +32,6 @@ export function convertFormToVariables(
         },
         ({ fullMatch, matchSet }) => ({ fullMatch, matchSet }),
       )
-      // eslint-disable-next-line no-useless-undefined
       .otherwise(() => undefined),
     pagination: {
       page: pageState.pageIndex,

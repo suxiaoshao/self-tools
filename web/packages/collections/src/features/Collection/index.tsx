@@ -52,7 +52,6 @@ export default function Collection() {
   const id = useParentId();
   const pageState = usePage();
   useEffect(() => {
-    // oxlint-disable-next-line react/exhaustive-deps
     pageState.setPage(1);
     // oxlint-disable-next-line exhaustive-deps
   }, [id]);

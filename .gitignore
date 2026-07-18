@@ -14,6 +14,8 @@ dist
 dist-ssr
 *.local
 target
+*.tsbuildinfo
+**/build/web
 .env
 remote-schema.graphql
 

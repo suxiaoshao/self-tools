@@ -42,7 +42,6 @@ const errorLink = new ErrorLink(({ error }) => {
       } else {
         source = JSON.stringify(extensions?.['source'] ?? null);
       }
-      // oxlint-disable-next-line no-console
       console.log(
         `[GraphQL error]: Message: ${message}, Location: ${JSON.stringify(locations)}, Path: ${JSON.stringify(path)} source: ${source}`,
       );
@@ -50,12 +49,10 @@ const errorLink = new ErrorLink(({ error }) => {
   } else if (CombinedProtocolErrors.is(error)) {
     error.errors.forEach(({ message, extensions }) => {
       toast(message);
-      // eslint-disable-next-line no-console
       console.log(`[Protocol error]: Message: ${message}, Extensions: ${JSON.stringify(extensions)}`);
     });
   } else {
     toast(`网络错误:${error.message}`);
-    // eslint-disable-next-line no-console
     console.log(`[Network error]: ${error.message}`);
   }
 });
