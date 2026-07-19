@@ -58,7 +58,6 @@ export default function Edit({ onChangeCode, code, language, wordWrap, ref, ...p
     () =>
       match(theme)
         .with('dark', ColorSetting.dark, () => 'monankai')
-        // eslint-disable-next-line no-useless-undefined
         .otherwise(() => undefined),
     [theme],
   );

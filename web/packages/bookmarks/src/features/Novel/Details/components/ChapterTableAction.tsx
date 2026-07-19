@@ -36,7 +36,6 @@ export default function ChapterTableAction({ isRead, novelId, chapterId, refetch
         } else {
           await deleteReadRecord({ variables: { chapterIds: [chapterId] } });
         }
-        // oxlint-disable-next-line no-empty empty-brace-spaces
       } catch {
       } finally {
         refetch();

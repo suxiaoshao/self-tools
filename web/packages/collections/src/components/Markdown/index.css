@@ -1,4 +1,4 @@
-@import url('edit/src/index.css');
+@import url('edit/styles.css');
 pre[class*='language-'],
 code[class*='language-'] {
   font-family: 'JetBrains Mono', monospace;

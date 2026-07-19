@@ -1,21 +1,21 @@
 [package]
 name = "thrift"
-version = "0.1.0"
-edition = "2024"
+version.workspace = true
+edition.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 # volo
-volo = "0.12.3"
-volo-thrift = "0.12.4"
+volo.workspace = true
+volo-thrift.workspace = true
 pilota = "0.13.1"
-serde = { version = "1.0.228", features = ["derive"] }
+serde.workspace = true
 # ip
 dns-lookup = "3.0.1"
 
 # error
-thiserror = "2.0.18"
+thiserror.workspace = true
 
 [build-dependencies]
 volo-build = "0.12.3"

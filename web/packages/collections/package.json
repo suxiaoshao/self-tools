@@ -2,8 +2,10 @@
   "name": "collections",
   "version": "1.0.0",
   "private": true,
-  "main": "src/main.tsx",
-  "types": "src/main.tsx",
+  "type": "module",
+  "exports": {
+    ".": "./src/main.tsx"
+  },
   "scripts": {
     "generate": "graphql-codegen"
   },

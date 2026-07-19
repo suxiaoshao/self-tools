@@ -1,25 +1,25 @@
 [package]
 name = "novel_crawler"
-version = "0.1.0"
-edition = "2024"
+version.workspace = true
+edition.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 # http
-reqwest = { version = "0.13.4", features = ["gzip", "default-tls", "charset"], default-features = false }
+reqwest = { workspace = true, features = ["gzip", "default-tls", "charset"] }
 # html
 scraper = "0.27.0"
-nom = "8.0.0"
-serde = { version = "1.0.228", features = ["derive"] }
-serde_json = "1.0.150"
+nom.workspace = true
+serde.workspace = true
+serde_json.workspace = true
 # async trait support
-tokio = { version = "1.52.3", default-features = false, features = ["macros"] }
-futures = "0.3.32"
+tokio = { workspace = true, features = ["macros"] }
+futures.workspace = true
 # 错误处理
-thiserror = "2.0.18"
+thiserror.workspace = true
 # 时间
-time = { version = "=0.3.47", features = ["parsing", "macros"] }
+time = { workspace = true, features = ["parsing", "macros"] }
 
 [dev-dependencies]
-anyhow = "1.0.103"
+anyhow.workspace = true

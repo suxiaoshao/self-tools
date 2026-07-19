@@ -10,14 +10,12 @@ interface MarkdownProps extends ComponentProps<'div'> {
   value: string;
 }
 
-function CustomImage(props: React.ImgHTMLAttributes<HTMLImageElement>) {
-  // oxlint-disable-next-line alt-text no-img-element
-  return <img {...props} />;
+function CustomImage({ alt = '', ...props }: React.ImgHTMLAttributes<HTMLImageElement>) {
+  return <img alt={alt} {...props} />;
 }
 
 function CustomLink(props: { title: string; href: string; children: string }) {
   return (
-    // oxlint-disable-next-line no-html-link-for-pages
     <a title={props.title} href={props.href} target="_blank" className="inline-block ml-1 mr-1 underline text-blue-700">
       {props.children}
     </a>

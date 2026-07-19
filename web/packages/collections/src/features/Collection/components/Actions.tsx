@@ -125,7 +125,6 @@ export default function Actions({ id, refetch, __typename, ...data }: TableActio
                   content: content,
                   name: name,
                 }))
-                //oxlint-disable-next-line unicorn/no-useless-undefined
                 .otherwise(() => undefined)}
               mode="edit"
               handleClose={handleClose}

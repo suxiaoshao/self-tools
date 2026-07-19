@@ -1,4 +1,5 @@
 {
+  "$schema": "https://unpkg.com/knip@6/schema.json",
   "ignoreDependencies": ["@testing-library/react", "ts-node"],
   "ignoreIssues": {
     "**/src/gql/**": ["exports", "types"],
@@ -6,9 +7,5 @@
     "web/packages/bookmarks/codegen.ts": ["unlisted"],
     "web/packages/collections/codegen.ts": ["unlisted"]
   },
-  "ignoreFiles": [
-    "changelog.config.js",
-    "web/packages/bookmarks/apollo.config.js",
-    "web/packages/collections/apollo.config.js"
-  ]
+  "ignoreFiles": ["changelog.config.js"]
 }

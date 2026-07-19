@@ -60,13 +60,7 @@ export default function TablePagination({
           <Popover open={open} onOpenChange={handleOpenChange}>
             <PopoverTrigger
               render={
-                <Button
-                  variant="outline"
-                  className="h-8 px-3"
-                  role="combobox"
-                  aria-controls={pagePickerId}
-                  aria-expanded={open}
-                />
+                <Button variant="outline" className="h-8 px-3" aria-controls={pagePickerId} aria-expanded={open} />
               }
             >
               {pageIndex}
