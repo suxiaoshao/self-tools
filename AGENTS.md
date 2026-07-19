@@ -1,135 +1,79 @@
 # AGENTS.md
 
-本文件用于指导在本仓库内工作的 AI/Codex 代理。
+本文件只记录在本仓库工作的跨仓政策、稳定约束、验证门槛和文档路由。具体架构与运行说明由最接近代码所有者的 README 维护；动态命令与参数由 manifest、CLI help 和源码维护。
 
-## 目标
+## 目标与改动边界
 
-在不破坏现有架构的前提下，快速且可验证地完成代码修改、调试与文档维护。
+- 在完成用户明确目标的前提下，选择对正确性、架构一致性、可维护性和长期成本整体最优的方案。
+- 任务范围不由文件数量或 diff 大小界定。不要追求“最少文件改动”；应根据职责内聚、依赖方向、复用、可测试性和维护成本选择最优文件边界。
+- 如果大规模重构、模块拆分、公共抽象调整或目录重组是当前任务的更优解，可以直接采用，并同步处理受影响的调用方、配置、生成物、测试、部署边界和所有者文档。
+- 重构必须服务于当前目标，不得借机加入未请求的功能、迁移或旁支清理。相关但超出任务范围的改进应单独报告，等待用户决定。
+- 产品行为、公开 API、数据兼容、安全边界或长期架构存在无法从代码与权威资料确定的实质歧义时，先询问用户；普通实现细节按仓库约定选择低风险方案。
+- 开始前检查 Git 状态并保留用户已有及无关改动；不要通过覆盖、回退或无关格式化扩大变更。
 
-## 仓库速览
+## 文档路由
 
-- 前端 workspace：`web/packages/*`、`web/common/*`（pnpm）
-- 后端 workspace：`server/packages/*`、`server/common/*`（cargo workspace）
-- 部署相关：`docker/compose`、`docker/server`、`docker/web`
+修改某个范围前，必须先阅读对应 README、manifest、入口源码和直接相关配置；跨多个范围的任务取其并集。
 
-## 关键事实（写代码前先记住）
+| 改动范围                                          | 必须先读                            |
+| ------------------------------------------------- | ----------------------------------- |
+| 仓库入口、环境要求与快速开始                      | `README.md`                         |
+| 前端 workspace、模块接入、GraphQL client、共享 UI | `web/README.md`                     |
+| 后端 workspace、服务拓扑、Thrift、GraphQL、数据库 | `server/README.md`                  |
+| gateway 路由、配置、TLS                           | `server/packages/gateway/README.md` |
+| `xtask` CLI 与 Docker 编排行为                    | `server/common/xtask/README.md`     |
+| 镜像、Compose、volume、证书与部署资源             | `docker/README.md`                  |
+| 开发设计计划、跨包协调与完成记录                  | `docs/dev/README.md`                |
 
-- `portal` 是唯一有 `rsbuild.config.ts` 的前端入口应用。
-- `bookmarks` 与 `collections` 前端包是被 `portal` 引入的 workspace 包。
-- `auth` 是 Thrift 服务（端口 80），由 `thrift` 公共库中的客户端按主机名 `auth:80` 发现。
-- `login` 在 `8000`，`bookmarks`/`collections` 在 `8080`。
-- 当前入口网关是 `gateway` 服务（`server/packages/gateway` + `suxiaoshao/gateway` 镜像），不是 Nginx。
-- `bookmarks` 依赖环境变量 `BOOKMARKS_PG`，`collections` 依赖 `COLLECTIONS_PG`。
-- 前端存在硬编码线上域名（`sushao.top` 相关）。
+README 用于解释架构、所有权和工作流；可执行接口仍以 `package.json`、`Cargo.toml`、CLI help、配置和源码为准。发现冲突时，以可执行事实源为准，并在当前任务涉及该范围时同步修正文档漂移。
 
-## shadcn/ui 查询规则（必须遵循）
+## 文档先行
 
-- 遇到任何 `shadcn/ui` 相关问题（组件选型、API 用法、迁移、CLI、registry），先查：`https://ui.shadcn.com/llms.txt`。
-- `llms.txt` 作为 shadcn/ui 组件与文档入口索引；应先从其中定位目标组件文档，再进行实现或修改。
-- 若本地实现与文档不一致，优先按文档修正，并在说明中注明参考链接。
+- 新功能以及涉及公开契约、schema、数据库、安全边界、依赖或工具链、生成物、部署拓扑、多个 package/crate 的非平凡改动，必须在修改生产代码前使用 `.agents/skills/implementation-plan-design/` 创建或更新可实施的开发计划。
+- 计划按能够完整拥有改动的最小共同范围放入对应 `docs/dev/`；所有规范计划都必须由根 [`docs/dev/README.md`](docs/dev/README.md) 索引。跨范围计划负责共享契约和执行顺序，package/crate 子计划负责自身精确文件、接口与测试，父子计划互相链接。
+- 真正局部且不改变行为或契约的修正可以不创建持久计划。不要为了满足模板制造空目录、空子计划或重复章节。
+- 计划必须先完成仓库与上游调研，消除实质性产品和架构歧义，再标记为 `Ready`。实施过程中若事实或设计发生实质变化，应先同步计划；完成后记录实际验证、偏差和关联 PR/commit，并标记为 `Done`。
+- 创建 issue、分支、commit、push 或 PR 仍以用户明确要求和当前任务授权为前提；文档先行本身不扩大 GitHub 操作权限。
 
-## 推荐工作流
+## 命令与事实来源
 
-1. 先阅读目标包的入口与配置：
-   - 前端：`package.json`、`rsbuild.config.ts`、`src/main.tsx`
-   - 后端：`Cargo.toml`、`src/main.rs`、`router/`、`graphql/`
-2. 只改与任务相关的最小范围文件。
-3. 修改后至少执行与变更相关的检查：
-   - 前端：`pnpm lint`、`pnpm test`
-   - 后端：`cargo test -p <pkg>`，必要时 `cargo clippy --all`
-4. 输出结果时给出：改动文件、关键行为变化、验证命令。
+- JavaScript 脚本以根目录和目标包的 `package.json` 为准；使用 `pnpm run` 或 `pnpm --filter <package> run` 查看当前脚本，不在本文件维护完整命令清单。
+- Rust workspace、crate 和 target 以各级 `Cargo.toml` 与 `cargo metadata --no-deps --format-version 1` 为准。
+- CLI 子命令与参数先查 `--help`，再查对应实现；不要把 README 中的示例当作完整接口定义。
+- 不要把尚不存在的 script、Cargo alias 或子命令写成既有入口。确需新增时，应同时实现命令、接入 manifest 或 CLI，并更新所有者文档与验证。
 
-## 常用命令
+## 实现要求
 
-根目录执行：
+- 修改前沿入口、状态、请求、持久化、生成物与部署路径追踪相关生产者和消费者；不要只根据文件名或搜索命中点推断影响范围。
+- 区分手写事实源与生成物。先修改事实源，再使用所有者文档声明的现有生成入口刷新产物；不要直接编辑生成文件绕过上游定义。
+- 以职责和依赖方向决定模块边界。文件较大不自动要求拆分；当拆分能形成清晰职责、稳定接口或更合理所有权时，应一起完成。
+- 跨 package、crate 或服务的重构应一次性更新公开接口、所有调用点、构建配置、生成物、测试和文档，避免保留两套事实源或无退出计划的兼容层。
+- Rust 模块禁止新增 `mod.rs`；使用同名文件模块与目录并存结构。
+- 处理 shadcn/ui 的组件选型、API、迁移、CLI 或 registry 时，先从 `https://ui.shadcn.com/llms.txt` 定位官方文档，再结合 `.agents/skills/shadcn/` 和 `web/README.md`；更新前区分本地定制与过期实现。
 
-```bash
-pnpm install
-pnpm lint
-pnpm run knip
-pnpm test
-pnpm build
+## 验证要求
 
-cargo build --workspace
-cargo test --workspace
-cargo clippy --all
+验证范围由实际影响决定；先运行聚焦检查，再完成所有适用的仓库级检查。
 
-cargo run -p xtask -- build
-cargo run -p xtask -- compose
-cargo run -p xtask -- cert --out-dir docker/compose/certs
-```
+| 改动类型                                 | 必须执行的验证                                                          |
+| ---------------------------------------- | ----------------------------------------------------------------------- |
+| 前端源码或配置                           | `pnpm lint`                                                             |
+| 前端行为、测试或测试配置                 | 再运行 `pnpm test`                                                      |
+| Vite、生产 bundle 或 package export      | 再运行 `pnpm build`                                                     |
+| Rust 源码                                | `cargo clippy --all` 和至少 `cargo test -p <pkg>`                       |
+| 公共 crate、Cargo workspace 或跨服务改动 | `cargo test --workspace`                                                |
+| Cargo workspace 或依赖声明               | `cargo metadata --no-deps --format-version 1`，再执行适用的 clippy/test |
+| schema、operation 或其他生成输入         | 运行所有者文档声明的生成入口，检查生成 diff，再执行受影响层级的检查     |
+| `xtask`、Docker 或部署资源               | 按对应 README 验证静态配置；环境允许时运行受影响的实际任务              |
+| 文档或其他配置                           | 运行对应解析或格式检查；最终至少执行 `git diff --check`                 |
 
-证书相关补充（本地联调）：
+- 同时影响多个层级时取验证集合的并集；大规模重构不能只运行单个叶子包的检查。
+- 不要绕过失败的检查、Git hooks 或使用 `--no-verify`。依赖网络、Docker、证书、端口、域名或外部服务的验证无法执行时，说明未验证范围、失败命令和原因。
+- 汇报中只列实际执行及其结果；未执行的适用检查必须说明原因。
 
-- `xtask cert` 会生成本地 CA 与站点证书文件：`ca.pem`、`ca.crt`、`fullchain.pem`、`fullchain.crt`、`privkey.pem`。
-- 需将 `ca.pem` 导入系统信任后，再重启浏览器与 `gateway` 容器（当前网关为 Rust `gateway` 服务，不再使用 Nginx 转发）。
+## GitHub 与汇报
 
-`xtask` 子命令说明：
-
-- `cargo run -p xtask -- build`：按固定顺序构建服务镜像（`collections`、`auth`、`login`、`bookmarks`、`gateway`）。
-- `cargo run -p xtask -- compose`：读取 `docker/compose/docker-compose.yml`，按依赖顺序确保 network/volume/container 就绪并启动。
-- `cargo run -p xtask -- lint`：执行 Rust 侧 lint 任务。
-- `cargo run -p xtask -- cert --out-dir docker/compose/certs`：生成本地 CA 与站点证书。
-
-开发过程中的容器管理约定：
-
-- 开发过程中如需启动、重建或同步 Docker 服务，优先使用 `cargo run -p xtask -- compose`。
-- 不要默认直接使用 `docker compose up` 替代 `xtask compose`，除非任务明确要求；`xtask compose` 会按仓库约定处理 network、volume、container 的就绪顺序，更符合当前项目工作流。
-
-单服务调试：
-
-```bash
-cargo run -p auth
-cargo run -p login
-cargo run -p bookmarks
-cargo run -p collections
-```
-
-## Knip 规则
-
-- 本仓库使用根目录 `knip.json` 作为唯一 Knip 配置入口。
-- `pnpm lint` 已串联执行 `pnpm run knip`，默认命令为 `knip --config knip.json`。
-- 以下目录中的 `unused exports/types` 作为生成代码或基础 UI 噪音处理，统一忽略：
-  - `**/src/gql/**`
-  - `**/src/components/ui/**`
-- 对仅用于打包、代码生成、语言服务或命令行的依赖，优先通过 `knip.json` 的忽略配置维护，不要直接删除依赖。
-
-## 完成后验证（必须执行）
-
-- 完成任何代码修改后，必须运行对应验证命令，确认“初步通过”。
-- 修改了 Rust 代码：必须重新运行 `cargo clippy --all`。
-- 修改了 Rust 测试相关代码（测试文件、测试逻辑或影响测试行为的实现）：必须运行 `cargo test`（建议至少 `cargo test --workspace`，或最小相关包 `cargo test -p <pkg>`）。
-- 修改了前端代码：必须运行 `pnpm lint`。
-- 修改了前端测试相关代码（测试文件、测试配置或影响测试行为的实现）：必须运行 `pnpm test`。
-- 在任务汇报中需要注明实际执行过的验证命令与结果；若未执行，必须说明原因。
-
-## 修改约束
-
-- 修改或新增代码文件时，统一使用 `UTF-8` 编码。
-- 修改或新增代码文件时，统一使用 Linux 换行符（`LF`，`\n`）。
-- Rust 模块文件禁止使用 `mod.rs`；统一使用同名文件模块（例如 `foo.rs`）与目录并存结构（例如 `foo/`）。
-- 遇到大文件时，必须按职责进行合理的模块与文件拆分，避免单文件持续膨胀；拆分后保持清晰的公开接口与目录边界。
-- 不要凭空添加仓库中不存在的脚本命令（例如 `scripts/*.sh`）。
-- 不要把线上域名硬编码扩散到新文件；若需要新接口地址，优先引入可配置项。
-- 不要改变 `thrift` 服务发现机制（`auth` 主机名）除非任务明确要求。
-- 涉及 Diesel schema/migration 时，必须同步检查对应 `migrations/` 与 `model/schema.rs`。
-- 未经要求不要重构大范围目录结构。
-
-## 文档与提交要求
-
-- 文档应优先写“可直接执行”的命令。
-- 若某条命令依赖外部条件（Docker、证书、域名），必须显式标注。
-- 提交说明应包含影响范围：前端/后端/部署。
-
-## GitHub 协作规则
-
-- 当用户要求进行 GitHub 相关操作（如 issue、PR、release、workflow、评论、查看状态）时，若当前环境没有提供可用的 GitHub 操作相关工具，可以使用 `gh` 命令行。
-- 若执行 `gh` 时遇到权限不足、未登录或认证失败，优先判断为沙盒限制导致；不要自行绕过，应向用户申请权限后再继续。
-- 当用户要求编写 issue 内容时，必须先查看 `.github` 目录下的相关文档与模板，优先参考 `.github/ISSUE_TEMPLATE/*.yml`，并按仓库现有模板结构与字段组织内容。
-- 执行 `git commit`、`git push` 等可能触发 git hooks 的命令时，必须等待 hook 完整执行结束，不要因为等待时间较长就改用 `--no-verify` 或跳过；若怀疑卡住，应先确认具体卡在哪个检查步骤，再与用户同步。
-
-## 故障排查提示
-
-- 登录失败：先检查 `auth` 是否可在容器网络内以主机名 `auth` 访问。
-- GraphQL 连接失败：确认 `BOOKMARKS_PG`/`COLLECTIONS_PG` 与服务端口映射。
-- 前端本地联调异常：优先排查硬编码线上 URL 与本地环境不一致。
+- 编写 issue 前读取 `.github/ISSUE_TEMPLATE/*.yml` 并遵循匹配模板；创建分支前确认目标 issue 和仓库命名约定。
+- 执行 commit、push 等会触发 hooks 的命令时等待检查完整结束；先定位慢或失败的具体步骤，不要跳过 hook。
+- 汇报实际修改文件、关键行为变化、架构或重构取舍、数据或兼容影响，以及实际验证结果。
+- 若改动跨前端、后端、数据库或部署，分别说明影响；文档中的命令依赖外部条件时必须标明前置条件。

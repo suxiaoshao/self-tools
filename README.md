@@ -1,153 +1,77 @@
 # self-tools
 
-一个前后端分离的 monorepo，包含个人工具站点及其后端微服务。
+一个以 React/TypeScript 前端和 Rust 后端组成的 monorepo，用于维护个人工具站点、配套服务与部署编排。
 
-## 技术栈
+## 文档导航
 
-- 前端：React 19、TypeScript、Vite、Vitest、Apollo Client、pnpm workspace
-- 后端：Rust、Axum、async-graphql、Volo Thrift、Diesel
-- 数据库：PostgreSQL
-- 部署：Docker / Docker Compose
+文档按所有权分层维护，避免在根文档重复保存容易漂移的包级细节。
+
+| 范围                                               | 文档                                                                     |
+| -------------------------------------------------- | ------------------------------------------------------------------------ |
+| 前端 workspace、模块接入、GraphQL client 与共享 UI | [`web/README.md`](web/README.md)                                         |
+| 后端 workspace、服务拓扑、Thrift、GraphQL 与数据库 | [`server/README.md`](server/README.md)                                   |
+| Rust gateway 的路由、配置与 TLS                    | [`server/packages/gateway/README.md`](server/packages/gateway/README.md) |
+| `xtask` 的镜像构建、容器编排与证书生成             | [`server/common/xtask/README.md`](server/common/xtask/README.md)         |
+| Docker 镜像、Compose 资源与本地部署前置条件        | [`docker/README.md`](docker/README.md)                                   |
+| 开发设计计划、跨包协调与完成记录                   | [`docs/dev/README.md`](docs/dev/README.md)                               |
+| AI/Codex 在仓库中的工作政策                        | [`AGENTS.md`](AGENTS.md)                                                 |
 
 ## 仓库结构
 
 ```text
 .
-├── web/
-│   ├── packages/
-│   │   ├── portal/         # 主应用（Vite）
-│   │   ├── bookmarks/      # 书签/小说管理前端模块
-│   │   └── collections/    # 集合管理前端模块
-│   └── common/             # 前端公共包（i18n、table、graphql、time 等）
-├── server/
-│   ├── packages/
-│   │   ├── auth/           # 认证 Thrift 服务（80）
-│   │   ├── login/          # 登录/WebAuthn HTTP 服务（8000）
-│   │   ├── bookmarks/      # GraphQL 服务（8080）
-│   │   └── collections/    # GraphQL 服务（8080）
-│   └── common/             # Rust 公共库（thrift、middleware、xtask 等）
-└── docker/
-    ├── compose/            # docker-compose 与 .env
-    ├── server/             # 各后端服务 Dockerfile
-    └── web/                # 历史 nginx 相关文件（当前网关使用 gateway 服务）
+├── web/                    # pnpm workspace：入口应用、业务模块与公共包
+├── server/                 # Cargo workspace：服务、公共 crate 与 xtask
+├── docker/                 # 镜像、Compose 与部署资源
+├── docs/dev/               # 文档先行的开发计划索引与跨仓计划
+├── package.json            # 前端仓库级脚本事实源
+├── pnpm-workspace.yaml     # pnpm workspace 边界
+└── Cargo.toml              # Cargo workspace 边界
 ```
 
 ## 环境要求
 
-- Node.js LTS
-- pnpm
+- Node.js LTS 与根 `package.json` 声明版本的 pnpm
 - Rust stable（`cargo`）
-- Docker（可选，用于一键编排）
+- Docker daemon（仅镜像构建、容器编排与相关验证需要）
 
-## 安装依赖
+## 快速开始
+
+安装依赖：
 
 ```bash
 pnpm install
 cargo fetch
 ```
 
-## 前端开发
-
-启动 portal：
+启动前端入口：
 
 ```bash
-cd web/packages/portal
-pnpm dev
+pnpm --filter portal dev
 ```
 
-常用命令（仓库根目录）：
+启动单个后端服务时使用其 Cargo package 名称：
 
 ```bash
-pnpm format      # oxfmt 写盘格式化
-pnpm lint        # format:check + oxlint + knip + tsc --build
-pnpm test        # vitest
-pnpm build       # 构建 web/packages/*
+cargo run -p <package>
 ```
 
-## 后端开发
+服务依赖、端口、环境变量和本地联调条件见 [`server/README.md`](server/README.md)。
 
-在仓库根目录运行：
+## 开发命令
+
+不要在文档中维护 `package.json` 的完整副本。使用以下入口查看当前可执行命令：
 
 ```bash
-cargo build --workspace
-cargo test --workspace
-cargo clippy --all
+pnpm run
+cargo metadata --no-deps --format-version 1
+cargo run -p xtask -- --help
 ```
 
-单服务运行示例：
+仓库级常用验证入口是 `pnpm lint`、`pnpm test`、`pnpm build`、`cargo clippy --all` 和 `cargo test --workspace`；应按实际改动范围选择，而不是无条件执行全部命令。更细的生成与验证要求见对应子系统文档和 [`AGENTS.md`](AGENTS.md)。
 
-```bash
-cargo run -p auth
-cargo run -p login
-cargo run -p bookmarks
-cargo run -p collections
-```
+## CI 与部署
 
-说明：
-
-- `auth` 通过 Thrift 暴露在 `0.0.0.0:80`
-- `login` HTTP 服务端口 `8000`
-- `bookmarks` / `collections` GraphQL 服务端口 `8080`
-
-## 环境变量
-
-`docker/compose/.env` 中可见的变量名包括：
-
-- `USERNAME`
-- `PASSWORD`
-- `SECRET`
-- `POSTGRES_USER`
-- `POSTGRES_PASSWORD`
-- `BOOKMARKS_PG`
-- `COLLECTIONS_PG`
-- `POSTGRES_HOST_AUTH_METHOD`
-
-另外后端服务使用 Docker 服务名进行内部调用（如 `auth`）。
-
-## Docker 运行
-
-说明：当前入口网关是 `gateway` Rust 服务（镜像 `suxiaoshao/gateway`），不是 Nginx。
-
-### 方式 1：使用 Docker Compose
-
-```bash
-cd docker/compose
-docker compose up -d
-```
-
-### 方式 2：使用 Rust xtask（构建镜像 / 按 compose 启动）
-
-```bash
-cargo run -p xtask -- build
-cargo run -p xtask -- compose
-```
-
-`xtask` 其他常用命令：
-
-```bash
-cargo run -p xtask -- lint
-cargo run -p xtask -- cert --out-dir docker/compose/certs
-```
-
-`xtask cert` 会生成 `ca.pem`、`ca.crt`、`fullchain.pem`、`fullchain.crt`、`privkey.pem`。
-
-## GraphQL 代码生成
-
-```bash
-cd web/packages/bookmarks && pnpm generate
-cd web/packages/collections && pnpm generate
-```
-
-## CI 与发布
-
-- PR 到 `main` 触发：前端 lint/test + Rust clippy/test（`.github/workflows/ci.yaml`）
-- Push 到 `main` 且命中路径变更时，分别构建并推送后端镜像：
-  - `auth`
-  - `login`
-  - `bookmarks`
-  - `collections`
-
-## 备注
-
-当前前端请求地址和部分构建配置绑定了 `*.sushao.top` 域名（例如登录与 GraphQL 地址）。
-如需纯本地联调，建议先统一抽离 API 基址配置再运行。
+- GitHub Actions 的实际触发条件与步骤以 [`.github/workflows/`](.github/workflows/) 为准。
+- 镜像构建和 Compose 编排是两个独立阶段，详见 [`xtask` 文档](server/common/xtask/README.md)。
+- 容器、证书、volume、域名解析及外部服务等前置条件见 [`docker/README.md`](docker/README.md)。
