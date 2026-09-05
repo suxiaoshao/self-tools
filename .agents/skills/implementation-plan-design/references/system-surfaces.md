@@ -4,17 +4,17 @@ Use this reference only to decide what the canonical plan must assess. Put imple
 
 ## Applicability rules
 
-Give every row one status in the canonical plan:
+Record only surfaces changed by the task and material boundaries deliberately left unchanged. Keep canonical S-IDs so plans and references remain comparable.
 
-- `Applicable`: the task adds, modifies, deletes, migrates, or deliberately preserves behavior on this surface; expand it in the designated plan section and work packages.
-- `No change`: the surface exists in the traced flow but the design intentionally leaves it unchanged; cite exact inspected evidence and the reason.
-- `N/A`: the surface is absent from the traced flow; cite enough evidence to support that conclusion.
+- Changed surfaces link current evidence to target contracts and work packages.
+- A material no-change decision names the inspected boundary and reason.
+- Unrelated surfaces need no row or separate absence investigation.
 
-Use exact paths, symbols, configuration owners, and contract IDs. Record each negative decision once in the canonical matrix. Child plans reference assigned surface IDs and do not copy the matrix.
+Owner/child plans reference their assigned S-IDs without copying the canonical scope table.
 
 ## Canonical taxonomy
 
-This table is the sole source of applicability rows. Copy every row into the canonical plan; do not merge or invent competing categories in the template.
+This table is the sole S-ID taxonomy. Select applicable rows without renaming their IDs.
 
 | ID     | Surface                                                         | Apply when the task touches                                                                                                                  | Required target decision                                                                                  |
 | ------ | --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |

@@ -1,28 +1,21 @@
 ---
 name: implementation-plan-design
-description: Research, design, review, and maintain docs-first implementation plans for the self-tools frontend/backend monorepo. Use before implementing or reviewing non-trivial features, fixes, refactors, dependency or framework changes, GraphQL/HTTP/Thrift contracts, error behavior, database migrations, generated artifacts, UI flows, deployment work, or coordinated package/crate changes that need a durable executable specification.
+description: Create or revise implementation-ready plans for substantial self-tools changes requiring durable coordination; review existing plans read-only when requested. Excludes routine local fixes and ordinary code review.
 ---
 
 # Implementation Plan Design
 
-Produce the durable implementation specification before changing production code. Make it executable without rediscovering the repository, inventing contracts, or choosing unresolved architecture.
+Substantial changes need a durable specification of ownership, exact contracts, work packages and completion evidence. Routine local fixes without material contract, ownership or dependency changes do not need a plan. A plan-only request delivers the plan; a review delivers findings.
 
-## Workflow
+## Plan contract
 
-1. Read repository instructions, the nearest owner README files, manifests, entrypoints, relevant source and tests, generated-artifact configuration, existing plans, and current Git status.
-2. Require a durable plan for a new feature or a non-trivial change to public behavior, ownership boundaries, schemas, persistence, security, dependencies/toolchains, generated artifacts, deployment, or multiple coordinated files. Keep a truly local behavior-preserving correction lightweight.
-3. Choose the canonical owner and plan topology with [documentation-layout.md](references/documentation-layout.md). Register every canonical plan in root `docs/dev/README.md`.
-4. Trace the current flow end to end and classify every planning surface with [system-surfaces.md](references/system-surfaces.md).
-5. Define affected owner-local files, modules, types, functions, UI/state, persistence, lifecycle, security, i18n, and generated lineage with [implementation-contracts.md](references/implementation-contracts.md).
-6. Load each conditional reference below whose trigger applies. Keep its subject matter in that reference's designated plan section instead of redefining it elsewhere.
-7. Surface material product and architecture choices early. Use repository evidence and authoritative upstream sources to determine facts, constraints, and viable options, not to replace user decisions. Before continuing the design, proactively ask the user whenever intent is unclear, multiple reasonable options remain, or an assumption would affect behavior, public API, schema, ownership, security, compatibility, dependency policy, or long-term maintenance. Provide verified evidence, options, impacts, and a recommendation; do not treat the recommendation as approved. Decide independently only ordinary implementation details uniquely determined by code, repository policy, or authoritative sources.
-8. Instantiate the canonical or child structure in [plan-template.md](references/plan-template.md). Name exact files, symbols, contract IDs, work packages, tests, validation evidence, deletions, and completion conditions.
-9. Re-read the plan as an implementer. Remove vague verbs, repeated facts, speculative APIs, unresolved decisions disguised as steps, and details owned by another document.
-10. If implementation was requested, begin only after the canonical plan is `Ready`. Keep it synchronized with material discoveries, then record actual validation, deviations, implementation references, and final `Done` evidence. Stop after the plan or review when that is the requested scope.
+- Reuse the plan that already owns the change. Revisions affect changed work packages, decisions, dependencies and indexes while preserving settled structure and evidence.
+- Place the canonical plan at its smallest complete owner scope and register it in root `docs/dev/README.md`; use child plans for separate owners according to the layout reference. Implementation starts when the canonical plan is `Ready`.
+- Identify affected surfaces with the applicability reference. Specify affected files, symbols, stable IDs, interfaces, lifecycle, dependencies, tests, deletions and acceptance criteria; keep each fact in one canonical location.
+- Separate current facts, verified upstream facts, design decisions, user decisions, release-gated assumptions and implementation evidence. Verify proposed API names, versions, feature flags, configuration and generation/migration entrypoints before marking `Ready`.
+- `Ready` means work packages can be implemented without inventing missing contracts or resolving material product/architecture choices. Material discoveries update the plan; completion records actual validation, deviations, implementation references, owner-document updates, unverified boundaries and `Done` evidence.
 
-## Conditional references
-
-Read a selected reference completely before using it.
+## Reference routing
 
 | Trigger                                                                            | Reference                                                             | Sole responsibility                                                                  |
 | ---------------------------------------------------------------------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
@@ -35,13 +28,4 @@ Read a selected reference completely before using it.
 | Evaluating whether upstream can replace local code                                 | [upstream-reuse-audit.md](references/upstream-reuse-audit.md)         | Reuse/adapt/retain/defer decision                                                    |
 | Writing or handing off a plan                                                      | [plan-template.md](references/plan-template.md)                       | Canonical and child output skeletons plus aggregate readiness audit                  |
 
-## Rules
-
-- Prefer the optimal file and module boundaries for correctness, cohesion, dependency direction, testability, and long-term ownership; do not optimize for the fewest changed files.
-- Match the representation to the information shape using [plan-template.md](references/plan-template.md): annotated trees for hierarchy, native declarations for exact contracts, pseudocode for behavioral rules, Mermaid for topology/sequence/state, tables for comparison and mapping, and prose for rationale. Stable IDs do not require table rows.
-- Separate current facts, upstream facts, proposed design, user decisions, generated output, and release-gated assumptions. Cite stable current architecture from owner documentation or executable sources rather than copying it into this skill or multiple plans.
-- Verify exact upstream APIs, versions, feature flags, configuration keys, and migration behavior before marking a plan `Ready`.
-- Change handwritten sources first, use the repository's real synchronization or generation entrypoint, and inspect the resulting diff. Never invent a command or patch generated output around its source.
-- Create issues, branches, commits, pushes, or pull requests only when the user explicitly requests them or repository policy makes them part of the authorized workflow.
-
-Use the lifecycle definitions and readiness requirements in [documentation-layout.md](references/documentation-layout.md) and the final handoff audit in [plan-template.md](references/plan-template.md). If materially incompatible implementations still satisfy the document, the plan is not `Ready`.
+Representation and handoff consistency belong to `plan-template.md`; location, indexes and lifecycle belong to `documentation-layout.md`.

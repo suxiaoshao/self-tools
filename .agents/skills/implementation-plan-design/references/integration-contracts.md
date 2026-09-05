@@ -19,15 +19,7 @@ Assign one stable `C-<number>` ID to every affected boundary contract. Include t
 | ----------- | ------------------------------------------------------ | ----------------------------------- | ------------------------ | -------------- | ------------- | ------------------- | ------------- | ------------------- |
 | `C-01`      | `<frontend-backend/backend-backend/frontend-frontend>` | `<GraphQL/HTTP/Thrift/composition>` | `<path/symbol>`          | `<owner>`      | `<consumers>` | `<class>`           | `<Error IDs>` | `<section/WPs>`     |
 
-For every row record:
-
-- direction and mechanism;
-- authoritative handwritten definition;
-- producer/owner and every consumer;
-- serialization, generation, or composition chain;
-- compatibility class and rollout owner;
-- referenced Error IDs;
-- the canonical contract body and work packages.
+Record the serialization, generation, adapter or composition chain through its F/G/ST IDs. Name the rollout owner; table rows reference the authoritative contract body.
 
 Do not put local-only types in the integration registry. Do not define normal response shapes in the error catalog or duplicate error meaning in transport tables. Discover current paths, commands, ports, hosts, and topology from owner README files, manifests, configuration, source, tests, and CLI help.
 
@@ -112,13 +104,7 @@ Classify each changed contract as additive, behavior-compatible, deprecated, bre
 | ----------- | ------------------------- | ------------------------- | ------------- | ------------------------ | ----------------- | ------------- |
 | `<C-ID>`    | `<behavior>`              | `<behavior>`              | `<order>`     | `<owner/policy or None>` | `<condition>`     | `<procedure>` |
 
-Record:
-
-- old producer/new consumer behavior;
-- new producer/old consumer behavior;
-- deployment and migration order;
-- temporary compatibility and its single owner;
-- removal condition and rollback.
+Name the sole owner of any temporary compatibility layer.
 
 Keep the matrix limited to version-skew comparison. Put multi-step deployment, migration, gate, stop, rollback, and cleanup order in numbered steps or a sequence diagram referenced from the Contract ID; do not hide the executable rollout in one table cell.
 
@@ -126,6 +112,4 @@ Record deletions as explicitly as additions. Do not leave a compatibility layer 
 
 ## Validation
 
-Map each contract ID to producer tests, consumer tests, serialization or composition tests, generation/snapshot diffs when applicable, and mixed-version or rollout checks when compatibility requires them. Use repository policy and executable sources for exact commands.
-
-A plan is incomplete when implementation must infer the authoritative definition, discover an undocumented synchronization step, duplicate a wire type, invent a consumer, or choose compatibility behavior.
+Map changed C-IDs to sufficient evidence for the affected contract: existing producer/consumer coverage, serialization or composition checks, generated diffs, and lifecycle or mixed-version checks where relevant. One check may cover several layers; do not require a separate test at each layer. Use the canonical plan's validation table for commands and results.

@@ -22,12 +22,7 @@ Use one canonical error namespace and meaning across services and transports unl
 | --------------- | --------- | ---------------------- | -------------------- | ----------------- | ------------- |
 | `<ERR-ID/CODE>` | `<class>` | `<testable semantics>` | `<symbol/L-ID/None>` | `<policy>`        | `<policy>`    |
 
-For every Error ID/code, define:
-
-- exact stable spelling, category, meaning, and testable trigger;
-- typed user-safe details schema;
-- retryability, idempotency, and default recovery class;
-- compatibility behavior for old/new producers and clients.
+Keep code spelling exact and include the default recovery class with retry/idempotency policy.
 
 After the catalog, provide language-tagged declarations for the canonical code union/enum, each user-safe details type, and public encoder/parser signatures. Keep code spelling, field types, optionality, and unknown-field behavior exact. Do not compress a nested details schema into a table cell.
 
@@ -60,7 +55,7 @@ Include this producer-normalization table for every producer variant or conditio
 
 Cover applicable domain/service errors, guards, validators/scalars, Thrift exceptions, database/pool failures, external HTTP failures, middleware/context lookup, and framework validation paths.
 
-Map each producer to one canonical Error ID. Define typed details conversion, internal-cause logging, and an exhaustiveness test. Prefer structured upstream status, enum, or payload data; never classify by matching localized or debug messages.
+Map each producer to one canonical Error ID using structured upstream status, enum, or payload data; never classify by matching localized or debug messages.
 
 Preserve internal causes for server logs with correlation, but return only the public allowlist. A new producer variant must not silently inherit an unrelated fallback.
 
@@ -119,8 +114,6 @@ Use this operation/boundary occurrence matrix to record only occurrence-specific
 | --------------------------- | -------------------- | ------------------ | --------------------------- | ------------------------- | ---------------------- | -------------------- |
 | `<C-ID/symbol>`             | `<EM-IDs>`           | `<Error IDs>`      | `<effects or None>`         | `<behavior>`              | `<path/symbol or N/A>` | `<override or None>` |
 
-Record Contract ID or operation, producer Mapping IDs, possible Error IDs, side effects before failure, rollback/null/partial behavior, frontend call site, and any justified behavior override.
-
 Do not repeat code meaning, safe-details schemas, default i18n, or default UI action in the occurrence matrix.
 
 ## Compatibility, security, and observability
@@ -154,15 +147,4 @@ Use repository policy and executable sources for exact commands. Compilation alo
 
 ## Synchronization order
 
-When an error changes:
-
-1. Update the canonical catalog and compatibility decision.
-2. Update producer normalization and exhaustive tests.
-3. Update every affected transport adapter.
-4. Update occurrence rows and side-effect/partial behavior.
-5. Update frontend runtime code/type/parser and fallback.
-6. Update recovery state transitions, i18n, and UI action.
-7. Add cross-layer, security, and compatibility tests.
-8. Remove stale codes, aliases, mappings, translations, and consumers when their exit condition is met.
-
-A plan is incomplete if implementation must invent a code, infer safe details or UI behavior, parse message text, or discover an undocumented producer-to-client conversion.
+Order affected WPs from canonical error identity through producer normalization, boundary encoding and consumer recovery. Include stale code/alias/translation removal when applicable. Use the contracts above as the field definitions and the plan's validation table for sufficient regression evidence; do not recreate the same inventory as a handoff checklist.

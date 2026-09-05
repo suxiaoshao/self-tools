@@ -1,79 +1,38 @@
 # AGENTS.md
 
-本文件只记录在本仓库工作的跨仓政策、稳定约束、验证门槛和文档路由。具体架构与运行说明由最接近代码所有者的 README 维护；动态命令与参数由 manifest、CLI help 和源码维护。
+## 实现约束
 
-## 目标与改动边界
+- 在用户目标内，以正确性、架构一致性和长期维护成本选择最佳方案。模块拆分与重构由职责、依赖方向和所有权决定；文件大小或 diff 大小不单独决定改动边界。
+- 修改前确认 Git 状态，沿相关入口、状态、请求、持久化、生成物及部署路径确定生产者和消费者。跨包重构同步受影响的接口、调用方、配置、生成物、测试、部署和所有者文档，避免两套事实源或无退出计划的兼容层。
+- 生成物须先修改手写事实源，再通过现有生成入口更新。新增命令须同时实现并接入 manifest 或 CLI，不能把计划中的命令写成既有入口。
+- Rust 模块使用同名文件与目录结构，禁止新增 `mod.rs`。
+- shadcn/ui 组件、API、迁移、CLI 或 registry 工作从 `https://ui.shadcn.com/llms.txt` 定位官方文档，结合 `.agents/skills/shadcn/` 与 `web/README.md`；更新前区分本地定制与过期实现。
 
-- 在完成用户明确目标的前提下，选择对正确性、架构一致性、可维护性和长期成本整体最优的方案。
-- 任务范围不由文件数量或 diff 大小界定。不要追求“最少文件改动”；应根据职责内聚、依赖方向、复用、可测试性和维护成本选择最优文件边界。
-- 如果大规模重构、模块拆分、公共抽象调整或目录重组是当前任务的更优解，可以直接采用，并同步处理受影响的调用方、配置、生成物、测试、部署边界和所有者文档。
-- 重构必须服务于当前目标，不得借机加入未请求的功能、迁移或旁支清理。相关但超出任务范围的改进应单独报告，等待用户决定。
-- 产品行为、公开 API、数据兼容、安全边界或长期架构存在无法从代码与权威资料确定的实质歧义时，先询问用户；普通实现细节按仓库约定选择低风险方案。
-- 开始前检查 Git 状态并保留用户已有及无关改动；不要通过覆盖、回退或无关格式化扩大变更。
+## 文档与命令入口
 
-## 文档路由
+按实际影响读取对应文档与必要实现，已读且未变化的内容不重复加载：
 
-修改某个范围前，必须先阅读对应 README、manifest、入口源码和直接相关配置；跨多个范围的任务取其并集。
+| 范围                                          | 文档                                |
+| --------------------------------------------- | ----------------------------------- |
+| 环境与快速开始                                | `README.md`                         |
+| 前端 workspace、GraphQL client、共享 UI       | `web/README.md`                     |
+| 后端 workspace、服务、Thrift、GraphQL、数据库 | `server/README.md`                  |
+| gateway 路由与 TLS                            | `server/packages/gateway/README.md` |
+| xtask 与 Docker 编排                          | `server/common/xtask/README.md`     |
+| 镜像、Compose、volume、证书与部署             | `docker/README.md`                  |
+| 开发计划与跨包协调                            | `docs/dev/README.md`                |
 
-| 改动范围                                          | 必须先读                            |
-| ------------------------------------------------- | ----------------------------------- |
-| 仓库入口、环境要求与快速开始                      | `README.md`                         |
-| 前端 workspace、模块接入、GraphQL client、共享 UI | `web/README.md`                     |
-| 后端 workspace、服务拓扑、Thrift、GraphQL、数据库 | `server/README.md`                  |
-| gateway 路由、配置、TLS                           | `server/packages/gateway/README.md` |
-| `xtask` CLI 与 Docker 编排行为                    | `server/common/xtask/README.md`     |
-| 镜像、Compose、volume、证书与部署资源             | `docker/README.md`                  |
-| 开发设计计划、跨包协调与完成记录                  | `docs/dev/README.md`                |
-
-README 用于解释架构、所有权和工作流；可执行接口仍以 `package.json`、`Cargo.toml`、CLI help、配置和源码为准。发现冲突时，以可执行事实源为准，并在当前任务涉及该范围时同步修正文档漂移。
+架构与所有权查 README；脚本查根目录及目标包 `package.json`，Rust workspace 与 target 查 `Cargo.toml` 或 `cargo metadata`，CLI 参数查 `--help` 与实现。可执行事实优先于文档示例，当前改动涉及的文档漂移须同步修正。
 
 ## 文档先行
 
-- 新功能以及涉及公开契约、schema、数据库、安全边界、依赖或工具链、生成物、部署拓扑、多个 package/crate 的非平凡改动，必须在修改生产代码前使用 `.agents/skills/implementation-plan-design/` 创建或更新可实施的开发计划。
-- 计划按能够完整拥有改动的最小共同范围放入对应 `docs/dev/`；所有规范计划都必须由根 [`docs/dev/README.md`](docs/dev/README.md) 索引。跨范围计划负责共享契约和执行顺序，package/crate 子计划负责自身精确文件、接口与测试，父子计划互相链接。
-- 真正局部且不改变行为或契约的修正可以不创建持久计划。不要为了满足模板制造空目录、空子计划或重复章节。
-- 计划必须先完成仓库与上游调研，消除实质性产品和架构歧义，再标记为 `Ready`。实施过程中若事实或设计发生实质变化，应先同步计划；完成后记录实际验证、偏差和关联 PR/commit，并标记为 `Done`。
-- 创建 issue、分支、commit、push 或 PR 仍以用户明确要求和当前任务授权为前提；文档先行本身不扩大 GitHub 操作权限。
+- 新功能，以及涉及公开契约、schema、数据库、安全、依赖或工具链、生成物、部署拓扑、多个 package/crate 的非平凡改动，修改生产代码前使用 `.agents/skills/implementation-plan-design/` 创建或更新计划；局部且不改变行为或契约的修正可免建计划。
+- 计划放入能完整拥有改动的最小共同范围的 `docs/dev/`，由根 `docs/dev/README.md` 索引；跨范围契约和执行顺序、所有者子计划、双向链接及 Ready/Done 生命周期按该 skill 执行。事实或设计发生实质变化时先同步计划，不制造空子计划或重复章节。
 
-## 命令与事实来源
+## 验证与协作
 
-- JavaScript 脚本以根目录和目标包的 `package.json` 为准；使用 `pnpm run` 或 `pnpm --filter <package> run` 查看当前脚本，不在本文件维护完整命令清单。
-- Rust workspace、crate 和 target 以各级 `Cargo.toml` 与 `cargo metadata --no-deps --format-version 1` 为准。
-- CLI 子命令与参数先查 `--help`，再查对应实现；不要把 README 中的示例当作完整接口定义。
-- 不要把尚不存在的 script、Cargo alias 或子命令写成既有入口。确需新增时，应同时实现命令、接入 manifest 或 CLI，并更新所有者文档与验证。
-
-## 实现要求
-
-- 修改前沿入口、状态、请求、持久化、生成物与部署路径追踪相关生产者和消费者；不要只根据文件名或搜索命中点推断影响范围。
-- 区分手写事实源与生成物。先修改事实源，再使用所有者文档声明的现有生成入口刷新产物；不要直接编辑生成文件绕过上游定义。
-- 以职责和依赖方向决定模块边界。文件较大不自动要求拆分；当拆分能形成清晰职责、稳定接口或更合理所有权时，应一起完成。
-- 跨 package、crate 或服务的重构应一次性更新公开接口、所有调用点、构建配置、生成物、测试和文档，避免保留两套事实源或无退出计划的兼容层。
-- Rust 模块禁止新增 `mod.rs`；使用同名文件模块与目录并存结构。
-- 处理 shadcn/ui 的组件选型、API、迁移、CLI 或 registry 时，先从 `https://ui.shadcn.com/llms.txt` 定位官方文档，再结合 `.agents/skills/shadcn/` 和 `web/README.md`；更新前区分本地定制与过期实现。
-
-## 验证要求
-
-验证范围由实际影响决定；先运行聚焦检查，再完成所有适用的仓库级检查。
-
-| 改动类型                                 | 必须执行的验证                                                          |
-| ---------------------------------------- | ----------------------------------------------------------------------- |
-| 前端源码或配置                           | `pnpm lint`                                                             |
-| 前端行为、测试或测试配置                 | 再运行 `pnpm test`                                                      |
-| Vite、生产 bundle 或 package export      | 再运行 `pnpm build`                                                     |
-| Rust 源码                                | `cargo clippy --all` 和至少 `cargo test -p <pkg>`                       |
-| 公共 crate、Cargo workspace 或跨服务改动 | `cargo test --workspace`                                                |
-| Cargo workspace 或依赖声明               | `cargo metadata --no-deps --format-version 1`，再执行适用的 clippy/test |
-| schema、operation 或其他生成输入         | 运行所有者文档声明的生成入口，检查生成 diff，再执行受影响层级的检查     |
-| `xtask`、Docker 或部署资源               | 按对应 README 验证静态配置；环境允许时运行受影响的实际任务              |
-| 文档或其他配置                           | 运行对应解析或格式检查；最终至少执行 `git diff --check`                 |
-
-- 同时影响多个层级时取验证集合的并集；大规模重构不能只运行单个叶子包的检查。
-- 不要绕过失败的检查、Git hooks 或使用 `--no-verify`。依赖网络、Docker、证书、端口、域名或外部服务的验证无法执行时，说明未验证范围、失败命令和原因。
-- 汇报中只列实际执行及其结果；未执行的适用检查必须说明原因。
-
-## GitHub 与汇报
-
-- 编写 issue 前读取 `.github/ISSUE_TEMPLATE/*.yml` 并遵循匹配模板；创建分支前确认目标 issue 和仓库命名约定。
-- 执行 commit、push 等会触发 hooks 的命令时等待检查完整结束；先定位慢或失败的具体步骤，不要跳过 hook。
-- 汇报实际修改文件、关键行为变化、架构或重构取舍、数据或兼容影响，以及实际验证结果。
-- 若改动跨前端、后端、数据库或部署，分别说明影响；文档中的命令依赖外部条件时必须标明前置条件。
+- 依据实际影响选择现有包级或目标级 lint、测试、构建和 Clippy 入口；共享契约、workspace、工具链或集成变更覆盖所有受影响层级，不能仅验证叶子包。优先复用关键不变量的已有覆盖。
+- schema、operation 等生成输入变更须运行所有者文档指定的生成入口并检查差异，再验证受影响层级；xtask、Docker 和部署改动按对应 README 检查静态配置，环境允许时运行实际任务。文档与配置使用适用的解析、格式检查及 `git diff --check`。
+- 适用 CI、用户指定验证和 Git hooks 须完成；commit、push 等命令等待 hooks 结束，不用 `--no-verify` 或其他方式绕过失败。外部条件阻塞验证时，说明命令、原因和未验证范围。
+- Issue 遵循 `.github/ISSUE_TEMPLATE/` 的匹配模板；创建分支前确认目标 issue 与命名约定。
+- 汇报实际修改、行为变化、关键取舍和验证结果；跨前后端、数据库或部署的改动分别说明影响，命令有外部依赖时标明前置条件。

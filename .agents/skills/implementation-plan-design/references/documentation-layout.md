@@ -56,7 +56,7 @@ Use the full canonical-plan structure from [plan-template.md](plan-template.md) 
 For cross-owner work, let the canonical hub own:
 
 - status, scope, non-goals, compatibility policy, and release gates;
-- the complete applicability matrix and evidence set;
+- affected surfaces, material no-change decisions, and shared evidence;
 - shared decisions, integration/error contracts, sequencing, and aggregate validation;
 - the plan map and final completion evidence.
 
@@ -70,13 +70,7 @@ Use the compact child structure from [plan-template.md](plan-template.md). Let a
 
 Do not repeat the parent goal, status, applicability matrix, shared decisions, shared contracts, acceptance criteria, or aggregate progress in a child. Reference their stable IDs. Keep status only in the canonical plan.
 
-Add this map to a hub with children:
-
-| Scope     | Document                              | Owns                                            |
-| --------- | ------------------------------------- | ----------------------------------------------- |
-| `<owner>` | `<repository-relative Markdown link>` | `<exact owner-local responsibility and WP IDs>` |
-
-Link every child from the hub and every child back to the hub.
+Use the plan-map shape in [plan-template.md](plan-template.md#plan-map). Link every child from the hub and every child back to the hub.
 
 ## Maintain indexes and links
 
@@ -103,7 +97,7 @@ Use only these canonical-plan statuses:
 | `Done`        | Required implementation and validation are complete and recorded                                           |
 | `Superseded`  | A linked successor replaces the plan                                                                       |
 
-Track a narrow release gate independently when other work remains executable. Do not mark a plan `Ready` while it contains unresolved questions, speculative APIs, work packages that still require architecture selection, or any material choice or assumption awaiting user confirmation. Repository precedent, upstream practice, and an agent recommendation do not count as user confirmation.
+Track a narrow release gate independently when other work remains executable. Do not mark a plan `Ready` while it contains unresolved questions, speculative APIs, work packages that still require architecture selection, or any material choice or assumption awaiting user confirmation. Repository precedent, upstream practice, and an agent recommendation do not count as user confirmation for consequential user choices. Ordinary implementation choices within the already-authorized contract may be decided and recorded by the agent; they do not create a new approval gate. Reuse existing confirmed user decisions.
 
 Before setting `Done`, complete the canonical plan's completion-evidence section, update affected executable facts and owner README files, and verify registry and parent/child links. Keep completed plans at their original paths.
 
