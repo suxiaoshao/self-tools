@@ -19,6 +19,7 @@ Keep each fact in one canonical representation and reference it by stable ID els
 
 Use only families needed by the plan: `S` surfaces, `E` evidence, `D` decisions,
 `F` files, `L` local contracts, `C` integration contracts, `Error` failures,
+`EM` producer mappings, `EA` transport adapters,
 `RT` routes, `ZS` stores, `BP` browser persistence, `ST` state, `DB` persistence,
 `G` generated lineage, `R` requirements, `T` evidence, and `WP` work packages.
 Preserve existing IDs; do not renumber surviving items after a deletion.
