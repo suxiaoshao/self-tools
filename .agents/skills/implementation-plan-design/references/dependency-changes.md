@@ -22,15 +22,7 @@ Include this dependency inventory in the canonical plan. Add one row for every c
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `<name>` | `<direct/transitive; runtime/dev/build/etc.>` | `<manifest and resolved source>` | `<exact target/range/SHA>` | `<primary sources>` | `<paths, APIs, config, generators>` | `<features/peer/MSRV/native/TLS/etc.>` | `<state and exact action>` |
 
-For each row, define:
-
-- direct/transitive scope and runtime/dev/build/generator/framework/toolchain kind;
-- current declaration plus resolved registry, Git, or path source;
-- exact target version, range/pin policy, tag, or full Git SHA;
-- authoritative evidence and complete crossed interval;
-- exact local imports, APIs, configuration, features, generators, CI/Docker consumers, and coupled artifacts;
-- peer, duplicate-major, runtime/MSRV, platform, native, TLS, and serialization constraints;
-- compatibility classification and exact migration, pin, rejection, or gate decision.
+Record complete versions or full Git SHAs and the crossed interval. Constraints include applicable features, duplicate majors, MSRV/runtime, native/platform, TLS and serialization requirements. Include peer ranges and Docker consumers where affected.
 
 Use the package manager to update lockfiles and preserve its format. Never hand-edit a lockfile as a substitute for dependency resolution.
 
@@ -100,9 +92,7 @@ Treat registry-derived UI or other locally customized vendored source according 
 
 ## Upstream reuse
 
-After selecting the target, apply [upstream-reuse-audit.md](upstream-reuse-audit.md) to every affected wrapper, adapter, compatibility layer, parser, helper, state projection, workaround, and vendored subsystem.
-
-A dependency plan is not `Ready` until each affected local subsystem has a `Reuse directly`, `Adapt`, `Retain`, or `Defer` decision. List removals before additions.
+Use [upstream-reuse-audit.md](upstream-reuse-audit.md) when a verified upstream change can replace a local implementation or invalidates its assumptions. Assess those candidates and their consumers; a dependency update alone does not require a subsystem-wide reuse inventory. Unrelated cleanup remains outside the migration.
 
 ## Stop conditions and completion evidence
 
@@ -116,7 +106,7 @@ Dependency-specific completion evidence must show:
 - each upstream-change row has matching code/config edits, deletions, and tests;
 - old imports/configuration/compatibility paths were searched;
 - coupled generated, skill, and vendored artifacts were synchronized or evidenced as unaffected;
-- upstream-reuse decisions were executed;
+- selected in-scope reuse decisions were executed;
 - pins, reversions, rejections, release gates, and stop conditions are accurately recorded.
 
 Use the canonical plan's validation and completion sections for repository-wide commands, status, README updates, and aggregate evidence; do not duplicate them here.

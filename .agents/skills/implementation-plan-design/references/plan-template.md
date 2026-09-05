@@ -1,8 +1,6 @@
 # Implementation-ready Plan Template
 
-Use the canonical template for every plan registered in root `docs/dev/README.md`. Use the compact child template only when a canonical hub delegates substantial owner-local detail. Delete instructional text and inapplicable conditional sections when instantiating a plan.
-
-Do not begin implementation while the canonical plan remains `Draft`.
+Use the [layout reference](documentation-layout.md) for placement, ownership, indexes and lifecycle. Instantiate the relevant skeleton and remove instructional text and inapplicable sections. Shared facts have one canonical owner.
 
 ## Representation rules
 
@@ -17,6 +15,17 @@ Choose the smallest form that makes each part of the design unambiguous:
 
 Keep each fact in one canonical representation and reference it by stable ID elsewhere. Put IDs in headings, tree annotations, diagram nodes, list items, or table rows as appropriate; traceability does not require turning the contract body into a table. Exact declaration blocks define target contracts, not complete implementation bodies. Do not add a diagram when it would merely restate a clearer tree, declaration, table, or numbered sequence.
 
+## Stable IDs
+
+Use only families needed by the plan: `S` surfaces, `E` evidence, `D` decisions,
+`F` files, `L` local contracts, `C` integration contracts, `Error` failures,
+`EM` producer mappings, `EA` transport adapters,
+`RT` routes, `ZS` stores, `BP` browser persistence, `ST` state, `DB` persistence,
+`G` generated lineage, `R` requirements, `T` evidence, and `WP` work packages.
+Preserve existing IDs; do not renumber surviving items after a deletion.
+Each definition has one owner; children reference shared IDs and use distinct
+local ranges. Work packages reference definitions rather than copying them.
+
 ## Canonical plan template
 
 # <Issue or outcome>: <Observable result>
@@ -25,179 +34,111 @@ Keep each fact in one canonical representation and reference it by stable ID els
 
 - Status: `Draft`
 - Tracking issue: `<link or None>`
-- Canonical owner: `<repo, web, server, docker, package, or crate>`
-- Canonical plan: `<repository-relative path>`
+- Plan ID / canonical path: `<ID and repository-relative path>`
+- Canonical owner: `<scope>`
 - Branch: `<branch or Not created>`
-- Affected owners: `<exact package/crate/config owners>`
-- Release gates: `<named gate and verification procedure or None>`
+- Affected owners: `<exact owners>`
+- Release gates: `<artifact, dependent WPs, future verification or None>`
 - Last evidence refresh: `<YYYY-MM-DD>`
 - Implementation references: `Pending`
 
-### Goal
+### Goal and non-goals
 
-State the observable product or engineering outcome.
-
-### Non-goals
-
-List behavior, migrations, compatibility work, and cleanup intentionally excluded from this task.
+State the observable outcome and excluded work. Include material breaking, destructive, security-sensitive or cross-owner effects here, with affected consumers and canonical decision IDs.
 
 ### User decisions
 
-Record only decisions the user explicitly confirmed. Do not persist unanswered questions, inferred preferences, recommendations, or assumed answers as user decisions.
+Record explicitly confirmed choices; keep design decisions in D-IDs and unresolved consequential questions with their dependent work.
 
 ### Compatibility and migration policy
 
-State compatibility for existing APIs, data, configuration, clients, and deployments. Define rollout, rebuild, backfill, rollback, and intentional incompatibility policies.
+Specify applicable compatibility, existing-data, rollout, rollback or rebuild policy, using current user decisions.
 
 ### Plan map
 
-Omit for a single-document plan.
+List documents required by [layout and ownership](documentation-layout.md).
 
-| Scope           | Document               | Owns                                                                                |
-| --------------- | ---------------------- | ----------------------------------------------------------------------------------- |
-| Cross-scope hub | This document          | Shared evidence, decisions, contracts, sequencing, status, and aggregate validation |
-| `<owner>`       | [`<child plan>`](path) | `<owner-local responsibility and WP IDs>`                                           |
+| Scope | Document | Owns | IDs/WPs |
+| ----- | -------- | ---- | ------- |
 
 ## Applicability
 
-Copy every canonical row from [system-surfaces.md](system-surfaces.md) without merging or renaming IDs. Fill each row once with `Applicable`, `No change`, or `N/A`. Cite exact evidence for negative decisions.
+Use [system-surfaces.md](system-surfaces.md) as the taxonomy. Include affected surfaces and material no-change decisions; omit unrelated rows. Child/owner plans reference assigned S-IDs.
 
-| ID       | Surface               | Status    | Current evidence                     | Target decision                            | Owner / WP   |
-| -------- | --------------------- | --------- | ------------------------------------ | ------------------------------------------ | ------------ |
-| `<S-ID>` | `<canonical surface>` | `<value>` | `<exact paths/symbols/config/tests>` | `<decision or evidenced no-change reason>` | `<owner/WP>` |
+| S-ID | Surface | Current evidence | Target decision or material no-change reason | Owner/WP |
+| ---- | ------- | ---------------- | -------------------------------------------- | -------- |
 
 ## Evidence
 
-### Current flow
+Trace the affected current flow with exact paths and symbols. Record facts needed for the design:
 
-Trace the exact current sequence from entrypoint through validation/authentication, state or data acquisition, transformation/persistence, integration boundaries, frontend state/projection, UI/i18n, failures, lifecycle, and deployment consumers. Use numbered steps for a simple linear sequence; use Mermaid flow or sequence diagrams when ownership branches or several participants interact. Label every step or node with exact paths and symbols.
+| E-ID | Classification | Claim | Evidence | Plan consequence |
+| ---- | -------------- | ----- | -------- | ---------------- |
 
-### Evidence registry
-
-| ID     | Classification  | Claim                    | Evidence                                               | Plan consequence       |
-| ------ | --------------- | ------------------------ | ------------------------------------------------------ | ---------------------- |
-| `E-01` | `Current fact`  | `<verified claim>`       | `<local path, symbol, config, test, or command>`       | `<consequence>`        |
-| `E-02` | `Upstream fact` | `<verified claim>`       | `<official docs, release, tag, PR, commit, or source>` | `<consequence>`        |
-| `E-03` | `User decision` | `<resolved decision>`    | `<conversation decision>`                              | `<consequence>`        |
-| `E-04` | `Release-gated` | `<unavailable artifact>` | `<current evidence and future verification>`           | `<blocked scope only>` |
-
-Do not present proposed names or unverified APIs as current facts. Keep stable current architecture in executable sources and owner README files; cite it here rather than copying it into multiple plan documents.
-
-### Conditional evidence tables
-
-- For `S-19`, insert the dependency inventory, upstream-change mapping, and coupled-artifact tables from [dependency-changes.md](dependency-changes.md).
-- When upstream or shared capability may replace local code, insert the decision table from [upstream-reuse-audit.md](upstream-reuse-audit.md).
-
-Keep these tables in the canonical plan or owning child exactly once. Reference their row IDs from decisions and work packages.
+Classifications are current fact, upstream fact, user decision and release-gated evidence. Keep target design separate from verified facts. For dependency work, use [dependency-changes.md](dependency-changes.md); where a verified capability may replace local code, use [upstream-reuse-audit.md](upstream-reuse-audit.md).
 
 ## Decisions
 
-Assign stable IDs and reference them from contracts, work packages, and child plans.
-
-| ID     | Decision            | Evidence                   | Material rejected alternative | Consequence and owner                   |
-| ------ | ------------------- | -------------------------- | ----------------------------- | --------------------------------------- |
-| `D-01` | `<selected design>` | `<E-IDs or direct source>` | `<only when useful>`          | `<behavior, maintenance, owner impact>` |
-
-Before setting `Ready`, obtain user confirmation for every material choice not uniquely fixed by explicit repository policy. This includes choices affecting behavior, public API, schema, ownership, security, dependencies, compatibility, and long-term architecture.
+| D-ID | Decision | Evidence | Material rejected alternative | Consequence/owner |
+| ---- | -------- | -------- | ----------------------------- | ----------------- |
 
 ## Target design
 
-Include only applicable subsections. In a hub with children, keep shared and hub-owned detail here; place owner-local detail only in its child.
+Include only applicable sections. Local detail belongs in its owning document; shared contracts are referenced by ID.
 
 ### File and ownership tree
 
-Assign a stable `F-<number>` ID to every added, modified, moved, deleted, generated, or vendored path. Use one annotated tree per owner so hierarchy and ownership remain visible:
-
-```text
-<owner root>/
-├── <path>  # F-01 [Modify, handwritten] <responsibility and source-of-truth role>
-├── <path>  # F-02 [Add, generated from G-01] <consumer role>
-├── <old path> -> <new path>  # F-03 [Move] <responsibility>
-└── <path>  # F-04 [Delete] <removed responsibility/consumer>
-```
-
-Include source files, consumers, tests, configuration, manifests, migrations, snapshots, generated/vendored outputs, documentation, and deletions. Record non-responsibilities or dependency-direction reasons below the relevant tree when they are not obvious. In a hub with children, show only hub-owned files and child-plan documents; each child owns its local tree. Work packages reference F-IDs instead of repeating paths and actions.
+Use an annotated F-ID tree and [file ownership semantics](implementation-contracts.md#files-modules-and-ownership). A hub shows its own files and links to child-owned trees.
 
 ### Owner-local type and API contracts
 
-Apply [implementation-contracts.md](implementation-contracts.md).
-
-For each local contract, add a `#### L-<number>: <symbol or operation>` subsection with:
-
-- F-ID and exact location;
-- visibility and owning module;
-- callers/consumers;
-- referenced Error IDs and requirement/test IDs;
-- a language-tagged block containing exact target types, interfaces, traits, impl signatures, functions, methods, props, or hooks;
-- invariants, validation, conversions, side effects, authorization, lifecycle, concurrency, and failure behavior that the declarations cannot express.
-
-Do not replace a known declaration with prose or pseudocode. Do not write full method bodies unless a short fragment is the only clear way to fix a critical invariant; describe ordinary implementation sequencing in the work package.
+For each L-ID, record its F-ID/symbol, native target declaration and behavior not expressed by that declaration. Use [implementation-contracts.md](implementation-contracts.md).
 
 ### Frontend routes
 
-Use a route tree, not a filesystem tree, unless the verified router is file-based. Annotate every affected node with an `RT-<number>` ID, `Add / Modify / Delete`, the exact registration F-ID/path and symbol, and its owner:
-
-```text
-/  # RT-01 <root layout; registration F-ID:symbol>
-└── <segment/:param>  # RT-02 [Add] <component; owner>
-    └── <child>  # RT-03 [Modify] <component; owner>
-```
-
-Below the tree, define parameters, parent/outlet, menu/navigation, authentication, loader/action/error boundaries when present, deep-link and unknown-route behavior, navigation lifecycle, removed-URL redirect/compatibility, cleanup, and tests. Include exact JSX/router configuration in a `tsx` block when hierarchy alone does not fix the contract.
+Use an RT-ID route tree; registration paths belong in F-IDs. Apply [route semantics](implementation-contracts.md#routes-zustand-and-browser-persistence).
 
 ### Zustand stores
 
-For each affected store, add a `#### ZS-<number>: <store>` subsection. Include its F-ID/path, authoritative owner, middleware and creation boundary, then provide exact TypeScript declarations for state, actions, selectors, subscribers, and externally visible hooks. Name every writer and reader.
-
-Use concise pseudocode or Mermaid `stateDiagram-v2` only when hydration, authentication, navigation, reload, stale-result handling, reset, renamed/deleted members, or cross-store synchronization is non-trivial. Reference requirement/test IDs and consumer cleanup explicitly.
+Use ZS-ID blocks with exact TypeScript state/action/selector contracts and applicable transitions from [the state reference](implementation-contracts.md#routes-zustand-and-browser-persistence).
 
 ### Browser persistence
 
-Use this inventory for every affected `localStorage` or other browser-persisted value:
+Apply [browser-persistence semantics](implementation-contracts.md#routes-zustand-and-browser-persistence). Type/parser declarations belong under the referenced L-ID.
 
-| BP ID   | Literal key | Action                  | Owner/F-ID | Serialized type and parser | Migration/removal                  | Lifecycle/privacy                 | Tests       |
-| ------- | ----------- | ----------------------- | ---------- | -------------------------- | ---------------------------------- | --------------------------------- | ----------- |
-| `BP-01` | `<key>`     | `Add / Modify / Delete` | `<owner>`  | `<L-ID/symbol>`            | `<version/old key/policy or None>` | `<account/reload/cross-tab rule>` | `<R/T IDs>` |
-
-Provide the exact serialized TypeScript type and parser/serializer signatures under the referenced L-ID. Use pseudocode for multi-step migration or interrupted-migration recovery. Define missing, malformed, unknown-version, deletion, logout/account-switch, reload, cross-tab, privacy, and test behavior.
+| BP-ID | Literal key | Action | Owner/F-ID | Serialized type/parser | Migration/removal | Lifecycle/privacy | R/T IDs |
+| ----- | ----------- | ------ | ---------- | ---------------------- | ----------------- | ----------------- | ------- |
 
 ### State and data flow
 
-Assign `ST-<number>` IDs to authoritative values and projections. Use the representation that exposes the real relationship:
-
-- Mermaid `flowchart` for ownership, transformation, cache/persistence, and derived projections;
-- Mermaid `sequenceDiagram` for end-to-end request/data ordering across participants;
-- Mermaid `stateDiagram-v2` for lifecycle, reset, retry, cancellation, and stale-state transitions;
-- numbered steps for a simple linear flow;
-- an optional compact table only when several homogeneous values need field-by-field comparison.
-
-Label diagram nodes or steps with ST/C/Error/F IDs and exact symbols. Define writers, readers, conversion, persistence/cache, invalidation/reset, stale behavior, and the reason for every duplicated projection. Do not duplicate exact type or transport shapes from their canonical declaration blocks.
+Use ST-IDs and [state authority semantics](implementation-contracts.md#state-and-data-authority).
 
 ### Generated and synchronized lineage
 
-Assign one `G-<number>` ID per lineage. Use an annotated text chain for a linear lineage or Mermaid `flowchart` when it branches to several outputs or consumers. Include handwritten source F-ID, optional snapshot/intermediate F-ID, generated/synchronized output F-IDs, verified existing entrypoint, manual-edit policy, consumers, and drift checks. Use a compact table only when several homogeneous lineages are easier to compare than to draw.
+Use G-ID source-to-output chains with [lineage semantics](implementation-contracts.md#generated-and-synchronized-artifacts).
 
 ### Integration contracts
 
-For `S-06` through `S-09`, insert the contract registry, exact protocol or TypeScript declaration bodies, required trees/flows, and compatibility matrix from [integration-contracts.md](integration-contracts.md). Keep normal boundary shapes there and reference Error IDs rather than copying error semantics.
+Use [integration-contracts.md](integration-contracts.md) for C-ID declarations, participants and compatibility. Reference Error IDs for failure meaning.
 
 ### Error contracts
 
-For `S-10`, insert the canonical catalog and details declarations, producer-normalization mapping, normalized transport-adapter index and exact encodings, affected propagation/recovery flows, occurrence matrix, frontend-recovery index, and test coverage from [error-contracts.md](error-contracts.md). The canonical catalog and referenced details declarations alone own error meaning and safe details.
+Use [error-contracts.md](error-contracts.md) for error identity, producer/adapter mappings, recovery and validation.
 
 ### Database and migration design
 
-For each `DB-<number>` object or query, provide the exact target SQL, Diesel schema/model declaration, or repository-native query signature in a language-tagged block. Then record constraints, indexes, transaction/atomicity, callers, migration/backfill sequence, existing-data policy, rollback/rebuild policy, and requirement/test IDs. Use a table only for a multi-object migration ledger or old/new compatibility matrix.
+Use DB-ID declarations with [persistence semantics](implementation-contracts.md#database-writes-and-migrations).
 
 ### i18n design
 
-| Key               | Locale files    | Meaning     | Interpolation/plural/select | Caller and UI state | Fallback     | Tests       |
-| ----------------- | --------------- | ----------- | --------------------------- | ------------------- | ------------ | ----------- |
-| `<namespace.key>` | `<exact paths>` | `<meaning>` | `<variables/rules>`         | `<caller/state>`    | `<behavior>` | `<R/T IDs>` |
+Apply [i18n semantics](implementation-contracts.md#i18n-contract).
+
+| Key | Locale files | Meaning | Variables/plural/select | Caller/UI state | Fallback | R/T IDs |
+| --- | ------------ | ------- | ----------------------- | --------------- | -------- | ------- |
 
 ### Configuration, security, observability, and deployment
 
-Define exact configuration owners/defaults, environment and secret boundaries, auth checks, route/container/topology changes, trace/log fields and redaction, rollout order, rollback, and external prerequisites. Reference contract, state, error, and file IDs instead of repeating their definitions.
+Use [owner-local security/diagnostics](implementation-contracts.md#security-and-observability) and [integration contracts](integration-contracts.md) for affected trust and deployment boundaries.
 
 ## Work packages
 
@@ -227,13 +168,13 @@ Order work packages by dependency. Assign one owner and one observable outcome t
 
 Reference shared IDs, then describe only WP-specific atomicity, partial progress, cancellation, retry, rollback, or shutdown.
 
-**Tests**
+**Tests (reference existing R/T entries when sufficient)**
 
 | Requirement ID | Test ID/file  | Proposed scenario | Fixture/mock | Assertions                |
 | -------------- | ------------- | ----------------- | ------------ | ------------------------- |
 | `<R-ID>`       | `<T-ID/path>` | `<name>`          | `<setup>`    | `<observable assertions>` |
 
-**Focused validation**
+**Focused validation (commands may reference the shared validation table)**
 
 | Command or manual scenario          | Purpose   | Required environment | Expected evidence     |
 | ----------------------------------- | --------- | -------------------- | --------------------- |
@@ -245,7 +186,7 @@ State the observable result, expected generated/migration/dependency diff, remov
 
 ## Validation
 
-Map each requirement to completion evidence. Take the union of applicable scopes and current repository policy; run focused checks before aggregate checks.
+Map requirements to sufficient evidence for the actual impact and current stage. Reuse existing coverage and remove redundant checks. Aggregate validation is required when cross-owner impact, CI/hooks, or the authorized acceptance scope requires it; do not automatically stack it after every focused check.
 
 | Requirement     | Owner / WP   | Automated or manual evidence                 | Expected result | External prerequisite          |
 | --------------- | ------------ | -------------------------------------------- | --------------- | ------------------------------ |
@@ -269,26 +210,11 @@ Keep pending until implementation starts, then update continuously.
 | Accepted deviations                                                   | `None / Pending` |
 | Unverified boundaries and reason                                      | `None / Pending` |
 
-Set `Done` only when every required item is complete or recorded as an accurately scoped accepted limitation.
+Status transitions follow [documentation-layout.md](documentation-layout.md#manage-lifecycle).
 
 ## Execution handoff audit
 
-- [ ] Keep every implementation fact in exactly one canonical hub or owner child.
-- [ ] Register the canonical plan and link children bidirectionally.
-- [ ] Copy and decide every applicability row from the sole taxonomy.
-- [ ] Record explicit user confirmation for every material choice not uniquely fixed by repository policy; verify every proposed upstream/local API.
-- [ ] Show every affected path in an owner file tree with F-ID, action, artifact kind, responsibility, generated source when applicable, consumers, deletion, and owner docs.
-- [ ] Provide native target declarations and signatures for every L/C/Error/DB contract instead of hiding exact shapes in prose or wide table cells.
-- [ ] Show every affected route in a route tree, every Zustand store through exact TypeScript contracts plus needed transition logic, and every browser-persistence key in the BP inventory with migration/removal, lifecycle, privacy, and tests.
-- [ ] Use numbered flow, Mermaid, pseudocode, prose, or tables according to the representation rules; label references with stable IDs and do not duplicate canonical facts.
-- [ ] Assign one authority to every mutable value and an invalidation/reset rule to every projection.
-- [ ] Give every integration boundary one Contract ID, authoritative definition, consumers, compatibility, and rollout.
-- [ ] Inventory every changed error exactly once and connect producers, adapters, frontend parser/code, recovery, i18n/UI, compatibility, and tests.
-- [ ] Define migration atomicity, rollback, generated lineage, dependency evidence, and upstream reuse when applicable.
-- [ ] Map each requirement to tests and validation evidence.
-- [ ] Remove broad research tasks, repeated tables, ambiguous verbs, speculative APIs, and compatibility layers without exit conditions.
-- [ ] Narrow every release gate to an exact future verification procedure.
-- [ ] Ensure implementation requires no invented architecture, contract, or acceptance criterion.
+At an authorized handoff, check consistency across the affected parts: evidence supports decisions; declarations and owner boundaries agree; WPs cover those decisions in dependency order; requirements map to sufficient validation. Resolve material gaps before `Ready` under [the lifecycle rules](documentation-layout.md#manage-lifecycle). This is a consistency pass, not another copy of the field inventories.
 
 ## Compact child plan template
 
