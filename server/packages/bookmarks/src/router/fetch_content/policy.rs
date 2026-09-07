@@ -1,4 +1,5 @@
 use super::error::ImageProxyError;
+use base64::{Engine as _, engine::general_purpose::STANDARD};
 use std::net::IpAddr;
 use url::{Host, Url};
 
@@ -101,6 +102,26 @@ fn allowed_path(url: &Url) -> bool {
         }
         return seen.iter().all(|v| *v);
     }
+    if url.host_str() == Some("i0-static.jjwxc.net") && url.path() == "/authorimagespace.php" {
+        let mut seen = [false; 2];
+        for (key, value) in url.query_pairs() {
+            let (index, valid) = match key.as_ref() {
+                "path" => (
+                    0,
+                    STANDARD
+                        .decode(value.as_bytes())
+                        .is_ok_and(|id| !id.is_empty() && id.iter().all(u8::is_ascii_digit)),
+                ),
+                "imageName" => (1, filename(&value)),
+                _ => return false,
+            };
+            if seen[index] || !valid {
+                return false;
+            }
+            seen[index] = true;
+        }
+        return seen.iter().all(|v| *v);
+    }
     if url.query().is_some() {
         return false;
     }
@@ -110,7 +131,7 @@ fn allowed_path(url: &Url) -> bool {
             id.strip_prefix("p_").is_some_and(digits)
         }
         (
-            Some("i4-static.jjwxc.net" | "i5-static.jjwxc.net"),
+            Some("i0-static.jjwxc.net" | "i4-static.jjwxc.net" | "i5-static.jjwxc.net"),
             ["", "tmp", "backend", "authorspace", shard, a, b, c, file],
         ) => {
             shard.strip_prefix('s').is_some_and(digits)

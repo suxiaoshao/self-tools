@@ -17,6 +17,8 @@ fn target_policy_and_query_validation() {
         "//bookcover.yuewen.com/qdbimg/349573/1/180",
         "http://bookcover.yuewen.com:80/qdbimg/349573/1/180",
         "https://ccportrait.yuewen.com/apimg/349573/p_3626960803214301/100",
+        "https://i0-static.jjwxc.net/tmp/backend/authorspace/s1/9/8099/809836/20240725231344_300_420.jpg",
+        "https://i0-static.jjwxc.net/authorimagespace.php?path=ODA5ODM2&imageName=20250127020807.jpeg",
         "https://i4-static.jjwxc.net/tmp/backend/authorspace/s1/19/18294/1829338/20230316185201_300_420.jpg",
         "http://i5-static.jjwxc.net/tmp/backend/authorspace/s1/14/13227/1322620/20240326161418.png",
         "https://i9-static.jjwxc.net/novelimage.php?ver=6c95f52cd5e5d1c46c1df1da8abaa2d4&novelid=951169&coverid=21",
@@ -62,6 +64,51 @@ fn target_policy_and_query_validation() {
         .finish();
     assert!(parse_query(Some(&query)).is_ok());
 }
+#[test]
+fn author_image_query_is_limited_to_an_encoded_author_id_and_filename() {
+    for query in [
+        "path=MQ%3D%3D&imageName=cover.jpeg",
+        "imageName=cover_1-2.png&path=ODA5ODM2",
+    ] {
+        assert!(
+            ImageTarget::parse(&format!(
+                "https://i0-static.jjwxc.net/authorimagespace.php?{query}"
+            ))
+            .is_ok()
+        );
+    }
+    for query in [
+        "path=ODA5ODM2",
+        "imageName=cover.jpeg",
+        "path=&imageName=cover.jpeg",
+        "path=MQ&imageName=cover.jpeg",
+        "path=MR%3D%3D&imageName=cover.jpeg",
+        "path=Li4v&imageName=cover.jpeg",
+        "path=YWJj&imageName=cover.jpeg",
+        "path=ODA5ODM2&path=MQ%3D%3D&imageName=cover.jpeg",
+        "path=ODA5ODM2&imageName=cover.jpeg&imageName=other.jpeg",
+        "path=ODA5ODM2&imageName=..%2Fcover.jpeg",
+        "path=ODA5ODM2&imageName=cover.svg",
+        "path=ODA5ODM2&imageName=cover.jpeg&url=https://example.com",
+    ] {
+        assert!(
+            ImageTarget::parse(&format!(
+                "https://i0-static.jjwxc.net/authorimagespace.php?{query}"
+            ))
+            .is_err(),
+            "{query}"
+        );
+    }
+    for url in [
+        "https://i0-static.jjwxc.net.evil.test/tmp/backend/authorspace/s1/1/1/1/a.png",
+        "https://i0-static.jjwxc.net/other.php?path=ODA5ODM2&imageName=cover.jpeg",
+        "https://i4-static.jjwxc.net/authorimagespace.php?path=ODA5ODM2&imageName=cover.jpeg",
+        "https://i0-static.jjwxc.net/tmp/backend/authorspace/s1/1/1/1/a.png?extra=1",
+    ] {
+        assert!(ImageTarget::parse(url).is_err(), "{url}");
+    }
+}
+
 #[test]
 fn address_ranges_and_dns_answers() {
     for ip in [
@@ -425,6 +472,8 @@ async fn live_image_sources() {
     for input in [
         COVER,
         "https://ccportrait.yuewen.com/apimg/349573/p_3626960803214301/100",
+        "https://i0-static.jjwxc.net/tmp/backend/authorspace/s1/9/8099/809836/20240725231344_300_420.jpg",
+        "https://i0-static.jjwxc.net/authorimagespace.php?path=ODA5ODM2&imageName=20250127020807.jpeg",
         "https://i4-static.jjwxc.net/tmp/backend/authorspace/s1/19/18294/1829338/20230316185201_300_420.jpg",
         "https://i9-static.jjwxc.net/novelimage.php?novelid=951169&coverid=21&ver=6c95f52cd5e5d1c46c1df1da8abaa2d4",
         "http://static.jjwxc.net/tmp/guanli/authordefaultcover/20230411155238_643511c6e50a1_350.png",

@@ -92,7 +92,7 @@ GraphQL contract -> 前端 schema/codegen` 的依赖方向检查所有消费者�
 
 ## 图片代理与跨域来源
 
-bookmarks 的 `GET /fetch-content?url=...` 仅代理起点和晋江已核验的封面与作者图片。具体主机、路径和参数规则由 `packages/bookmarks/src/router/fetch_content/policy.rs` 维护；扩展来源须先提供官方页面样本，再补允许/拒绝测试。已有数据库中的原始图片 URL 不改写，HTTP/协议相对地址仅在命中规则后升级为 HTTPS。
+bookmarks 的 `GET /fetch-content?url=...` 仅代理起点和晋江已核验的封面与作者图片。具体主机、路径和参数规则由 `packages/bookmarks/src/router/fetch_content/policy.rs` 维护；扩展来源须先提供官方页面样本，再补允许/拒绝测试。`i0-static.jjwxc.net` 支持受限 authorspace 静态路径和 `authorimagespace.php`（仅 Base64 数字作者 ID 与图片文件名）；该历史来源已由用户确认并完成 HTTPS 抽样。已有数据库中的原始图片 URL 不改写，HTTP/协议相对地址仅在命中规则后升级为 HTTPS。
 
 代理公开访问，不接受登录凭据作为授权输入，也不向上游转发请求头。只连接经校验的公网地址，禁止重定向、环境代理和自动重试；要求部署环境支持正常 DNS 与直连 HTTPS。连接超时 3 秒、全程 10 秒、单图最多 5 MiB。单进程最多 16 个下载，全局令牌桶容量 32、每秒补充 8 个；多副本分别计算。完整收集后根据文件签名返回 JPEG/PNG/GIF/WebP，不解码或转码，不支持 SVG/HTML。该预算限制下载缓冲和上游请求，不是进程总内存或带宽硬配额。
 
