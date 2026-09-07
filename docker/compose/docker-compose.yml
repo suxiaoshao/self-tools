@@ -37,6 +37,8 @@ services:
     image: suxiaoshao/login:latest
     restart: always
     container_name: login
+    environment:
+      CORS_ALLOWED_ORIGINS: null
     depends_on:
       - auth
   bookmarks:

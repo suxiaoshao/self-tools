@@ -89,13 +89,9 @@ async fn create_and_start_container(
             service: service_name.to_string(),
         })?;
 
-    let mut env = runtime.env_from_file.clone();
-    for env_file in service.env_file.as_slice() {
-        env.extend(load_env_file(&runtime.compose_dir.join(env_file))?);
-    }
-    for (k, v) in &service.environment {
-        env.insert(k.clone(), v.clone());
-    }
+    let env = resolve_environment(runtime.env_from_file, runtime.compose_dir, service, |key| {
+        std::env::var(key).ok()
+    })?;
 
     let mut env_list = env
         .iter()
@@ -260,13 +256,9 @@ async fn build_config_signature(
         .id
         .unwrap_or_default();
 
-    let mut env = runtime.env_from_file.clone();
-    for env_file in service.env_file.as_slice() {
-        env.extend(load_env_file(&runtime.compose_dir.join(env_file))?);
-    }
-    for (k, v) in &service.environment {
-        env.insert(k.clone(), v.clone());
-    }
+    let env = resolve_environment(runtime.env_from_file, runtime.compose_dir, service, |key| {
+        std::env::var(key).ok()
+    })?;
 
     let mut env_pairs = env
         .into_iter()
@@ -301,4 +293,86 @@ async fn build_config_signature(
         ports.join(","),
         binds.join(",")
     ))
+}
+
+// Both container creation and its signature must use the same resolved values.
+fn resolve_environment(
+    project_env: &HashMap<String, String>,
+    compose_dir: &std::path::Path,
+    service: &ComposeService,
+    process_env: impl Fn(&str) -> Option<String>,
+) -> Result<HashMap<String, String>, XtaskError> {
+    let mut env = project_env.clone();
+    for env_file in service.env_file.as_slice() {
+        env.extend(load_env_file(&compose_dir.join(env_file))?);
+    }
+    for (key, value) in &service.environment {
+        let value = value
+            .clone()
+            .or_else(|| process_env(key).or_else(|| project_env.get(key).cloned()));
+        if let Some(value) = value {
+            env.insert(key.clone(), value);
+        } else {
+            env.remove(key);
+        }
+    }
+    Ok(env)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::compose_types::ComposeFile;
+
+    #[test]
+    fn login_cors_passthrough_preserves_missing_empty_and_custom_origins() {
+        let compose: ComposeFile = serde_yaml::from_str(include_str!(
+            "../../../../../../docker/compose/docker-compose.yml"
+        ))
+        .unwrap();
+        let login = &compose.services["login"];
+        let key = "CORS_ALLOWED_ORIGINS";
+        assert_eq!(login.environment.get(key), Some(&None));
+        assert!(login.env_file.as_slice().is_empty());
+        for value in [
+            None,
+            Some(""),
+            Some("https://custom.example,http://localhost:3000"),
+        ] {
+            let project = value
+                .map(|v| (key.to_string(), v.to_string()))
+                .into_iter()
+                .collect();
+            let env =
+                resolve_environment(&project, std::path::Path::new("."), login, |_| None).unwrap();
+            assert_eq!(env.get(key).map(String::as_str), value);
+        }
+    }
+
+    #[test]
+    fn environment_precedence_preserves_explicit_values_and_shell_empty() {
+        let service: ComposeService = serde_yaml::from_str(
+            "environment:\n  INHERIT: null\n  EMPTY: null\n  FIXED: literal\n  CLEARED: ''\n  MISSING: null\n"
+        ).unwrap();
+        let project = ["INHERIT", "EMPTY", "FIXED", "CLEARED"]
+            .into_iter()
+            .map(|key| (key.to_string(), "project".to_string()))
+            .collect();
+        let env = resolve_environment(
+            &project,
+            std::path::Path::new("."),
+            &service,
+            |key| match key {
+                "EMPTY" => Some(String::new()),
+                "MISSING" => None,
+                _ => Some("shell".to_string()),
+            },
+        )
+        .unwrap();
+        assert_eq!(env["INHERIT"], "shell");
+        assert_eq!(env["EMPTY"], "");
+        assert_eq!(env["FIXED"], "literal");
+        assert_eq!(env["CLEARED"], "");
+        assert!(!env.contains_key("MISSING"));
+    }
 }

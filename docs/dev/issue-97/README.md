@@ -262,7 +262,7 @@ CORS_ALLOWED_ORIGINS=https://sushao.top
 # CORS_ALLOWED_ORIGINS=https://sushao.top,http://localhost:3000
 ```
 
-当前 Compose 的环境文件/xtask 全量注入能传递该键，无需为此扩展部署工具；只在 owner README 说明。公开图片请求不依赖 CORS 才能被 `<img>` 展示，因此不以其作为防盗链保证。
+PR #111 配置补修（已实现）：login 在 Compose 中以 `environment: { CORS_ALLOWED_ORIGINS: null }` 单键透传，避免 CLI 注入整个共享环境文件。xtask 的 `ComposeService.environment` 支持可空值，统一容器创建与配置签名的环境解析：显式值覆盖；null 从进程环境、项目 `.env` 依次解析，均缺失则移除该键。保留未设置使用服务默认值、显式空值禁用跨域、自定义来源原样传递的语义；不增加 `${…}` 插值。更新 Docker/xtask owner 文档，以真实 Compose 配置覆盖上述三态及透传优先级，并用 CLI `config` 核对；提交 hooks 覆盖受影响 Rust 消费者。补修验证：`cargo test -p xtask` 13 项通过；Docker Compose v5.1.2 对隔离的真实配置副本执行 `config --format json`，未设置、空值、自定义值三态在 login/bookmarks/collections 均一致，login 未收到测试共享密钥。未运行容器重建或浏览器部署验证。公开图片请求不依赖 CORS 才能被 `<img>` 展示，因此不以其作为防盗链保证。
 
 ## 5. 影响面、依赖与兼容
 
