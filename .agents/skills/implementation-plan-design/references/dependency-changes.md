@@ -103,7 +103,6 @@ Dependency-specific completion evidence must show:
 - manifests and lockfile resolution match every decision;
 - all direct and material-transitive inventory rows are complete;
 - features, peers, duplicates, runtime/MSRV, platform, native, and TLS constraints are resolved;
-- each upstream-change row has matching code/config edits, deletions, and tests;
 - old imports/configuration/compatibility paths were searched;
 - coupled generated, skill, and vendored artifacts were synchronized or evidenced as unaffected;
 - selected in-scope reuse decisions were executed;

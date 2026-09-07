@@ -61,7 +61,7 @@ Docker、Compose、证书挂载和域名解析的前置条件见 [`../../../dock
 
 ## 修改与验证
 
-- 新增或调整任务时，同步更新 CLI 定义、`Task` 分派、实现、测试和本文。
+- 新增或调整任务时，同步更新受影响的 CLI 定义、`Task` 分派、实现和本文。
 - `compose` 只支持 [`src/compose_types.rs`](src/compose_types.rs) 建模的 Compose 字段；扩展 `docker-compose.yml` 前先确认解析与运行语义。
-- 至少运行 `cargo test -p xtask` 和 `cargo clippy --all`；涉及 Docker 实际行为时，再在 Docker daemon 可用的环境中执行受影响子命令。
+- 包级验证入口为 `cargo test -p xtask` 和 `cargo clippy -p xtask`；涉及 Docker 行为时，在 daemon 可用的环境执行受影响子命令。
 - 不要用 `--no-verify` 或跳过失败检查；外部环境阻止验证时，明确记录未验证边界。

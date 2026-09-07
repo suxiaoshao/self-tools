@@ -114,7 +114,7 @@ Change the handwritten source first. Derive exact paths and commands from owner 
 
 ## i18n contract
 
-For every changed user-visible label, message, validation result, error, accessibility string, title, menu item, or formatted value, define exact key ownership, all supported locale files, meaning, interpolation/plural/select variables, caller and UI state, fallback, and tests.
+For every changed user-visible label, message, validation result, error, accessibility string, title, menu item, or formatted value, define exact key ownership, all supported locale files, meaning, interpolation/plural/select variables, caller and UI state, and fallback.
 
 Keep the i18n key inventory as a table because keys share comparable fields. Reuse an existing key only when semantics and variables match. Keep supported locale key sets and variables synchronized. Error-specific `code + safe details -> key -> UI` mapping belongs in [error-contracts.md](error-contracts.md).
 

@@ -11,7 +11,7 @@ Use this reference whenever a plan adds, removes, renames, remaps, or changes ha
 - [Frontend classification and recovery](#frontend-classification-and-recovery)
 - [Error classes and fallback](#error-classes-and-fallback)
 - [Compatibility, security, and observability](#compatibility-security-and-observability)
-- [Required tests](#required-tests)
+- [Validation](#validation)
 - [Synchronization order](#synchronization-order)
 
 ## Canonical model and ownership
@@ -124,26 +124,9 @@ Never expose database errors/query text, environment contents, transport debug o
 
 Define the public field allowlist, protected-resource disclosure policy, safe unknown/internal mapping, log location, correlation identifier, severity, and redaction. Never return a Debug representation of the underlying error.
 
-## Required tests
+## Validation
 
-Include this test-coverage table for applicable layers:
-
-| Requirement ID | Layer                                          | Scenario     | Fixture/producer | Expected Error ID/encoding | Security/state/UI assertions |
-| -------------- | ---------------------------------------------- | ------------ | ---------------- | -------------------------- | ---------------------------- |
-| `<R-ID>`       | `<producer/Thrift/HTTP/GraphQL/frontend/i18n>` | `<scenario>` | `<setup>`        | `<expected>`               | `<assertions>`               |
-
-Cover:
-
-- producer normalization and exhaustiveness;
-- Thrift, HTTP, and GraphQL adapter encoding;
-- GraphQL path/null/partial-data and mutation side effects;
-- frontend known/malformed/unknown parsing;
-- exactly-once recovery and propagate/swallow behavior;
-- i18n key/variable coverage and safe fallback;
-- internal-cause and secret redaction;
-- old/new compatibility behavior.
-
-Use repository policy and executable sources for exact commands. Compilation alone does not verify the public error contract.
+Record evidence for changed error semantics, encoding, recovery, redaction, and compatibility in the plan’s validation table. Compilation alone does not verify the public error contract.
 
 ## Synchronization order
 

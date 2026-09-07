@@ -174,11 +174,9 @@ Reference shared IDs, then describe only WP-specific atomicity, partial progress
 | -------------- | ------------- | ----------------- | ------------ | ------------------------- |
 | `<R-ID>`       | `<T-ID/path>` | `<name>`          | `<setup>`    | `<observable assertions>` |
 
-**Focused validation (commands may reference the shared validation table)**
+**Validation**
 
-| Command or manual scenario          | Purpose   | Required environment | Expected evidence     |
-| ----------------------------------- | --------- | -------------------- | --------------------- |
-| `<repository-supported entrypoint>` | `<scope>` | `<prerequisites>`    | `<success condition>` |
+Reference this WP’s rows in the shared validation table.
 
 **Done condition**
 
@@ -188,9 +186,9 @@ State the observable result, expected generated/migration/dependency diff, remov
 
 Map requirements to sufficient evidence for the actual impact and current stage. Reuse existing coverage and remove redundant checks. Aggregate validation is required when cross-owner impact, CI/hooks, or the authorized acceptance scope requires it; do not automatically stack it after every focused check.
 
-| Requirement     | Owner / WP   | Automated or manual evidence                 | Expected result | External prerequisite          |
-| --------------- | ------------ | -------------------------------------------- | --------------- | ------------------------------ |
-| `<requirement>` | `<owner/WP>` | `<test, command, diff, API, or UI scenario>` | `<result>`      | `<None or exact prerequisite>` |
+| Requirement     | Owner / WP   | Command or evidence                          | Expected result | Actual result / unverified boundary | External prerequisite          |
+| --------------- | ------------ | -------------------------------------------- | --------------- | ----------------------------------- | ------------------------------ |
+| `<requirement>` | `<owner/WP>` | `<test, command, diff, API, or UI scenario>` | `<result>`      | `Pending`                           | `<None or exact prerequisite>` |
 
 Discover commands from `AGENTS.md`, manifests, CLI help, owner documentation, configuration, and source. Record exact unverified boundaries when Docker, certificates, domains, databases, browsers, network, or third-party services are unavailable. Do not describe compilation as end-to-end validation.
 
@@ -203,12 +201,9 @@ Keep pending until implementation starts, then update continuously.
 | Implementation PR / commits                                           | `Pending`        |
 | Actual added, modified, moved, deleted, generated, and vendored files | `Pending`        |
 | Delivered contract, state, migration, error, and dependency IDs       | `Pending`        |
-| Automated validation commands and results                             | `Pending`        |
-| Manual or external scenarios and environment                          | `Pending`        |
 | Generated, schema, migration, dependency, or vendored diff            | `Pending`        |
 | Owner README and ADR updates                                          | `Pending`        |
 | Accepted deviations                                                   | `None / Pending` |
-| Unverified boundaries and reason                                      | `None / Pending` |
 
 Status transitions follow [documentation-layout.md](documentation-layout.md#manage-lifecycle).
 

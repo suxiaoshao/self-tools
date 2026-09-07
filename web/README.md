@@ -63,5 +63,4 @@ schema、operation 或 codegen 配置变化时，在受影响的 package 运行 
 - 修改前端源码或配置后运行 `pnpm lint`。
 - 修改行为、测试或测试配置时再运行 `pnpm test`。
 - 修改 Vite、生产 bundle、package export 或构建链路时再运行 `pnpm build`。
-- 修改 GraphQL 输入时，先运行受影响包的 `generate` script 并检查生成 diff，再运行上述适用检查。
 - 文档改动至少运行格式检查和 `git diff --check`；依赖浏览器、域名、后端或其他外部服务的验证无法执行时，应明确说明未覆盖范围。
