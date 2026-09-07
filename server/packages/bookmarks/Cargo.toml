@@ -16,6 +16,7 @@ async-graphql-axum.workspace = true
 serde_json.workspace = true
 
 # fetch content
+base64.workspace = true
 url.workspace = true
 serde.workspace = true
 reqwest = { workspace = true, features = ["gzip", "stream", "rustls"] }

@@ -22,6 +22,8 @@
 
 协议、监听端口、服务发现和数据库变量由 [`../server/README.md`](../server/README.md) 说明；gateway 的 host/path 路由由 [`../server/packages/gateway/README.md`](../server/packages/gateway/README.md) 说明。
 
+bookmarks 运行镜像安装 `libpq5` 与 `ca-certificates`：前者提供 PostgreSQL 客户端库，后者提供图片 HTTPS client 所需的系统信任根；缺少 CA 证书会使 client 初始化失败并阻止服务启动。
+
 ## 配置与本地状态
 
 - `compose/.env` 是本机配置且被 Git 忽略。直接使用 Docker Compose CLI 时，YAML 中的 `env_file` 和 `environment` 决定服务级注入；当前 `xtask compose` 则会把该文件的全部值注入每个受管理容器。不要提交凭据或在文档中保存真实值，并在修正 `xtask` 行为前按更宽的暴露范围评估敏感信息。

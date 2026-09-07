@@ -735,6 +735,7 @@ dependencies = [
  "async-graphql",
  "async-graphql-axum",
  "axum",
+ "base64 0.22.1",
  "bigdecimal",
  "diesel",
  "dotenv",

@@ -16,7 +16,7 @@ RUN if [ -n "$APT_MIRROR" ]; then \
     done; \
     fi \
     && apt-get -o Acquire::Retries=5 update \
-    && apt-get -o Acquire::Retries=5 install -y --no-install-recommends libpq5 \
+    && apt-get -o Acquire::Retries=5 install -y --no-install-recommends libpq5 ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 COPY --from=builder ./app/bookmarks /
 EXPOSE 80
