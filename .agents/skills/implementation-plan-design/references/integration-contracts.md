@@ -13,7 +13,7 @@ Use this reference when two ownership boundaries must agree on data, behavior, c
 
 ## Contract ownership and IDs
 
-Assign one stable `C-<number>` ID to every affected boundary contract. Include this registry in the canonical plan:
+For several changed boundaries, this optional registry can clarify ownership; a single contract can be described directly:
 
 | Contract ID | Direction                                              | Mechanism                           | Authoritative definition | Producer/owner | Consumers     | Compatibility class | Error IDs     | Contract body / WPs |
 | ----------- | ------------------------------------------------------ | ----------------------------------- | ------------------------ | -------------- | ------------- | ------------------- | ------------- | ------------------- |
@@ -49,7 +49,7 @@ For each changed GraphQL contract, add a `#### C-<number>: <operation or schema 
 - exact UI/state derivative declaration and conversion when it differs from generated transport types;
 - consumers, compatibility, rollout, and requirement/test IDs.
 
-Use a Mermaid sequence diagram when a change crosses several resolvers/services, branches on partial data, or has ordering/cancellation behavior that declarations do not show. Do not restate SDL fields in a summary table.
+Consider a sequence diagram when a change crosses several resolvers/services, branches on partial data, or has ordering/cancellation behavior that declarations do not show. Do not restate SDL fields in a summary table.
 
 Keep persistence and service models separate from public GraphQL types unless their invariants and visibility intentionally match. Select only required fields. Reuse fragments only for stable shared projections.
 
@@ -64,7 +64,7 @@ Use direct HTTP only for a verified non-GraphQL boundary such as JSON login/WebA
 - middleware, authentication/authorization, runtime validation, serialization/conversion, producer, consumer, Error IDs, and compatibility;
 - separate browser/in-memory and serialized types plus exact conversions when they differ.
 
-For streaming or proxied external content, also define target/input validation, SSRF and redirect policy, upstream request behavior, timeout and size limits, content-type policy, propagated/rewritten status and headers, streamed-body ownership, browser consumption, and cancellation. Use a sequence diagram when redirects, proxying, streaming ownership, or cancellation cross several participants. Do not force a streamed body into a GraphQL or JSON-error model.
+For streaming or proxied external content, also define target/input validation, SSRF and redirect policy, upstream request behavior, timeout and size limits, content-type policy, propagated/rewritten status and headers, streamed-body ownership, browser consumption, and cancellation. Consider a sequence diagram when redirects, proxying, streaming ownership, or cancellation cross several participants. Do not force a streamed body into a GraphQL or JSON-error model.
 
 Reference Error IDs for failure behavior; define HTTP status/envelope mapping in [error-contracts.md](error-contracts.md).
 
@@ -74,7 +74,7 @@ Reference Error IDs for failure behavior; define HTTP status/envelope mapping in
 
 Treat the verified IDL as the sole wire-contract source. For each changed service boundary, add a `#### C-<number>: <service/method>` body with the exact target Thrift service, method, struct, enum, field, and exception declarations in a `thrift` block. Preserve field IDs, enum values, `required`/`optional`, defaults, return types, and `throws` clauses explicitly.
 
-Below the IDL, define additive versus breaking classification, generator configuration and generated-binding G/F IDs, server implementation owner, every caller, serialization/conversion, Error ID mapping, service discovery/configuration, deployment order, rollback, requirement/tests, and compatibility across mixed producer/consumer versions. Use a sequence diagram when more than one backend hop, fallback, or deployment-order interaction is material.
+Below the IDL, define additive versus breaking classification, generator configuration and generated-binding G/F IDs, server implementation owner, every caller, serialization/conversion, Error ID mapping, service discovery/configuration, deployment order, rollback, requirement/tests, and compatibility across mixed producer/consumer versions. Consider a sequence diagram when more than one backend hop, fallback, or deployment-order interaction is material.
 
 Do not create parallel handwritten RPC wire types or edit generated bindings. Keep endpoint and topology facts in configuration, source, and owner documentation; a plan may change them only with all callers and deployment consumers included.
 
@@ -98,7 +98,7 @@ Keep component internals, Zustand members, and browser-storage schemas in [imple
 
 ## Compatibility and rollout
 
-Classify each changed contract as additive, behavior-compatible, deprecated, breaking, or release-gated. When independently deployed or version-skewed consumers are possible, include this table:
+Classify each changed contract as additive, behavior-compatible, deprecated, breaking, or release-gated. When mixed versions are relevant to the deployment model, describe their compatibility; use this table if comparison helps:
 
 | Contract ID | Old producer/new consumer | New producer/old consumer | Rollout order | Temporary compatibility  | Removal condition | Rollback      |
 | ----------- | ------------------------- | ------------------------- | ------------- | ------------------------ | ----------------- | ------------- |

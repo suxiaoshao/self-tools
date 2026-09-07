@@ -51,11 +51,11 @@ Preserve an established plan path when an issue appears later unless the user ex
 
 ## Use canonical hubs and child plans
 
-Use the full canonical-plan structure from [plan-template.md](plan-template.md) for every plan registered in the root index.
+Use the optional structure in [plan-template.md](plan-template.md), keeping only what the change needs.
 
 For cross-owner work, let the canonical hub own:
 
-- status, scope, non-goals, compatibility policy, and release gates;
+- implementation status, scope, and applicable compatibility constraints;
 - affected surfaces, material no-change decisions, and shared evidence;
 - shared decisions, integration/error contracts, sequencing, and aggregate validation;
 - the plan map and final completion evidence.
@@ -88,18 +88,20 @@ Use repository-relative Markdown links. Keep root `README.md` and `AGENTS.md` li
 
 Use only these canonical-plan statuses:
 
-| Status        | Meaning                                                                                                    |
-| ------------- | ---------------------------------------------------------------------------------------------------------- |
-| `Draft`       | Evidence, decisions, or implementation contracts remain incomplete                                         |
-| `Ready`       | Every work package is executable and all material choices requiring user judgment are explicitly confirmed |
-| `In progress` | Authorized implementation has started                                                                      |
-| `Blocked`     | A named external condition or required user decision prevents all meaningful progress                      |
-| `Done`        | Required implementation and validation are complete and recorded                                           |
-| `Superseded`  | A linked successor replaces the plan                                                                       |
+| Status        | Meaning                                                                                           |
+| ------------- | ------------------------------------------------------------------------------------------------- |
+| `Draft`       | Evidence, decisions, or implementation contracts remain incomplete                                |
+| `Ready`       | Implementation can proceed without unresolved material choices outside the existing authorization |
+| `In progress` | Authorized implementation has started                                                             |
+| `Blocked`     | A named external condition or required user decision prevents all meaningful progress             |
+| `Done`        | Required implementation and validation are complete and recorded                                  |
+| `Superseded`  | A linked successor replaces the plan                                                              |
 
-Track a narrow release gate independently when other work remains executable. Do not mark a plan `Ready` while it contains unresolved questions, speculative APIs, work packages that still require architecture selection, or any material choice or assumption awaiting user confirmation. Repository precedent, upstream practice, and an agent recommendation do not count as user confirmation for consequential user choices. Ordinary implementation choices within the already-authorized contract may be decided and recorded by the agent; they do not create a new approval gate. Reuse existing confirmed user decisions.
+Status tracks implementation and required validation. Commit, push, review, merge, Issue closure, and production rollout status do not control `Done`; keep those changing workflow facts outside the plan. A commit or PR link may be retained as optional provenance. Record deployment behavior and required deployment checks when the change actually affects them, without treating routine release operations as plan work.
 
-Before setting `Done`, complete the canonical plan's completion-evidence section, update affected executable facts and owner README files, and verify registry and parent/child links. Keep completed plans at their original paths.
+Use existing authorization and repository conventions to resolve choices. A missing upstream artifact blocks only the work that actually depends on it. Do not add approval gates for ordinary implementation details or refresh unchanged evidence merely to advance a status.
+
+At completion, summarize delivered behavior, necessary validation and known limits; update affected owner documentation and changed links once. Keep completed plans at their original paths. Later PR or Issue events require no plan edit.
 
 When replacing a plan, preserve the old path, mark it `Superseded`, and link predecessor and successor bidirectionally.
 

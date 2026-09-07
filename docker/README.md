@@ -49,4 +49,4 @@ cargo run -p xtask -- compose
 - 服务镜像变化时，同步检查对应 Dockerfile、`xtask build` 的镜像清单、Compose image 和 CI 发布工作流。
 - 服务依赖、env、port 或 volume 变化时，同步检查 Compose、`xtask` 的解析能力、gateway/服务配置及文档。
 - TLS 或域名变化时，同步检查 gateway 路由、证书路径、挂载和本地信任；生成证书不等于完成系统信任配置。
-- 实际构建或编排需要可用的 Docker daemon。无法运行时应完成静态配置检查，并明确报告未执行的外部验证。
+- 是否实际构建或编排取决于本轮验证与交付范围，遵循根 `AGENTS.md`；需要执行时先确认 Docker daemon 等前置条件。必要的外部验证无法运行时，说明具体未验证范围，不为可选场景持续排障。

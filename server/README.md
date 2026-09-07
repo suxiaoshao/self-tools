@@ -130,8 +130,9 @@ cargo test -p bookmarks live_image_sources -- --ignored --nocapture
   `cargo metadata --no-deps --format-version 1` 为准。
 - Rust 源码改动使用 `cargo clippy -p <package>`；行为或测试改动使用
   `cargo test -p <package>`，范围按根 `AGENTS.md` 选择。
-- 全量验证入口为 `cargo clippy --all` 和 `cargo test --workspace`；manifest
-  变化还应执行 `cargo metadata --no-deps --format-version 1`。
+- 全量入口为 `cargo clippy --all` 和 `cargo test --workspace`，执行范围遵循根 `AGENTS.md`。
+  `cargo metadata --no-deps --format-version 1` 用于需要检查 workspace/target 结构时，
+  无需在 Cargo 已验证 manifest 后仅为重复解析再执行一次。
 - GraphQL、Thrift、migration 或 Diesel schema 变化时，除 Rust 检查外，还要验证
   对应生成链路和实际消费者；涉及数据库的验证应使用明确的测试数据库，不能默认连接
   生产数据。

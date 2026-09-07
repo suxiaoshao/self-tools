@@ -68,7 +68,7 @@ cargo metadata --no-deps --format-version 1
 cargo run -p xtask -- --help
 ```
 
-仓库级常用验证入口是 `pnpm lint`、`pnpm test`、`pnpm build`、`cargo clippy --all` 和 `cargo test --workspace`；应按实际改动范围选择，而不是无条件执行全部命令。更细的生成与验证要求见对应子系统文档和 [`AGENTS.md`](AGENTS.md)。
+仓库级常用验证入口是 `pnpm lint`、`pnpm test`、`pnpm build`、`cargo clippy --all` 和 `cargo test --workspace`；应按实际改动范围选择，而不是无条件执行全部命令。当前阶段的验证与交付边界以 [`AGENTS.md`](AGENTS.md) 为准；子系统 README 提供适用命令和运行前置条件。
 
 ## CI 与部署
 

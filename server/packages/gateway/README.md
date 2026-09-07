@@ -99,8 +99,8 @@ Compose volume 的容器内路径一致。
 
 - route/config/proxy 变化：使用 `cargo test -p gateway` 与 `cargo clippy -p gateway`
   验证受影响的路由和 header 行为。
-- listener 或 TLS 变化：除 Rust 检查外，在具有测试证书的非 Windows 环境验证 HTTP、
-  HTTPS、HTTP/2、证书链和启动失败路径。
+- listener 或 TLS 变化：验证本轮改变的协议或证书行为，优先复用受控测试；
+  必要的实际监听验证使用测试证书和非 Windows 环境，无需因一处变化重测所有协议与失败路径。
 - Docker 或 upstream 拓扑变化：检查 `docker/server/gateway.Dockerfile`、
   `docker/compose/docker-compose.yml` 与 xtask 的 build/compose 实现；需要实际启动时先
   确认 Docker daemon、镜像、证书、端口和宿主机前端服务可用。

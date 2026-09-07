@@ -5,27 +5,29 @@ description: Create or revise implementation-ready plans for substantial self-to
 
 # Implementation Plan Design
 
-Substantial changes need a durable specification of ownership, exact contracts, work packages and completion evidence. Routine local fixes without material contract, ownership or dependency changes do not need a plan. A plan-only request delivers the plan; a review delivers findings.
+A plan resolves decisions needed to implement the requested change. Scale detail to the ambiguity, affected owners, and consequences; routine fixes do not need a new plan.
 
 ## Plan contract
 
-- Reuse the plan that already owns the change. Revisions affect changed work packages, decisions, dependencies and indexes while preserving settled structure and evidence.
-- Place the canonical plan at its smallest complete owner scope and register it in root `docs/dev/README.md`; use child plans for separate owners according to the layout reference. Implementation starts when the canonical plan is `Ready`.
-- Identify affected surfaces with the applicability reference. Specify affected files, symbols, stable IDs, interfaces, lifecycle, dependencies, tests, deletions and acceptance criteria; keep each fact in one canonical location.
-- Separate current facts, verified upstream facts, design decisions, user decisions, release-gated assumptions and implementation evidence. Verify proposed API names, versions, feature flags, configuration and generation/migration entrypoints before marking `Ready`.
-- `Ready` means work packages can be implemented without inventing missing contracts or resolving material product/architecture choices. Material discoveries update the plan; completion records actual validation, deviations, implementation references, owner-document updates, unverified boundaries and `Done` evidence.
+- Reuse the owning plan. Change the affected design and work packages without reopening settled, unaffected decisions. Remove obsolete requirements and redundant detail; existing text has no presumption of correctness.
+- Record the goal, scope, relevant evidence, target behavior, ownership, implementation order, and sufficient validation. Specify public or cross-owner contracts precisely; leave ordinary private implementation choices to the implementer.
+- Use the references as design aids for affected areas, not as a mandatory inventory. Omit irrelevant sections, empty tables, and `N/A` records. Use IDs only where cross-references help.
+- Resolve material ambiguity using the user's instructions, existing decisions, and repository conventions. Ask only when a remaining choice materially changes scope, product behavior, public contracts, data, or security boundaries; continue independent authorized work.
+- Plan status describes implementation and necessary validation. `Done` does not depend on committing, pushing, PR approval/merge, Issue closure, or production deployment. Those workflows belong in GitHub or the task response. Deployment verification matters only when it is part of the authorized implementation acceptance.
+- Distinguish designed behavior from checks required for the current deliverable. For a trial handoff, perform basic checks and directly relevant critical regressions, then hand it over; user feedback or explicit acceptance requests determine further work. Do not turn every risk considered in design into a mechanism or immediate test.
+- Record material design changes and completion evidence, not a running work log. Optional commit/PR links provide provenance, never a completion gate. Stop when the requested deliverable is complete.
 
 ## Reference routing
 
-| Trigger                                                                            | Reference                                                             | Sole responsibility                                                                  |
-| ---------------------------------------------------------------------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| Creating, moving, splitting, completing, or superseding a plan                     | [documentation-layout.md](references/documentation-layout.md)         | Canonical location, hub/child ownership, registry, lifecycle, ADR boundary           |
-| Assessing plan scope                                                               | [system-surfaces.md](references/system-surfaces.md)                   | Applicability taxonomy only                                                          |
-| Designing owner-local implementation                                               | [implementation-contracts.md](references/implementation-contracts.md) | Module, API, UI/state, persistence, lifecycle, security, i18n, and lineage semantics |
-| Changing a frontend/backend, backend/backend, or frontend/frontend boundary        | [integration-contracts.md](references/integration-contracts.md)       | Boundary source of truth, transport/composition contract, compatibility, rollout     |
-| Adding or changing failures, codes, transport error forms, recovery, or error UI   | [error-contracts.md](references/error-contracts.md)                   | Transport-neutral error identity and end-to-end propagation                          |
-| Changing dependencies, frameworks, toolchains, generators, manifests, or lockfiles | [dependency-changes.md](references/dependency-changes.md)             | Dependency evidence, compatibility, migration, coupled artifacts, stop conditions    |
-| Evaluating whether upstream can replace local code                                 | [upstream-reuse-audit.md](references/upstream-reuse-audit.md)         | Reuse/adapt/retain/defer decision                                                    |
-| Writing or handing off a plan                                                      | [plan-template.md](references/plan-template.md)                       | Canonical and child output skeletons plus aggregate readiness audit                  |
+Read only references needed by the current change.
 
-Representation and handoff consistency belong to `plan-template.md`; location, indexes and lifecycle belong to `documentation-layout.md`.
+| Need                                                   | Reference                                                             |
+| ------------------------------------------------------ | --------------------------------------------------------------------- |
+| Plan location, ownership, lifecycle                    | [documentation-layout.md](references/documentation-layout.md)         |
+| Optional writing structure                             | [plan-template.md](references/plan-template.md)                       |
+| Find affected areas                                    | [system-surfaces.md](references/system-surfaces.md)                   |
+| Owner-local behavior and invariants                    | [implementation-contracts.md](references/implementation-contracts.md) |
+| Changed producer/consumer contracts                    | [integration-contracts.md](references/integration-contracts.md)       |
+| Changed public errors and recovery                     | [error-contracts.md](references/error-contracts.md)                   |
+| Dependencies, tooling, generated or vendored artifacts | [dependency-changes.md](references/dependency-changes.md)             |
+| A concrete upstream replacement candidate              | [upstream-reuse-audit.md](references/upstream-reuse-audit.md)         |

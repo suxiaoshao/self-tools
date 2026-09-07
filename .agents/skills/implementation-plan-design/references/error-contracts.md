@@ -1,133 +1,24 @@
 # Error Contracts
 
-Use this reference whenever a plan adds, removes, renames, remaps, or changes handling of an application, validation, transport, dependency, or client-contract failure. Treat error identity as a public end-to-end contract independent of any one transport.
+Use this reference for changed public error semantics, transport mappings, or consumer recovery. A local failure-handling edit does not require a new application-wide error system.
 
-## Contents
+## Ownership and contract
 
-- [Canonical model and ownership](#canonical-model-and-ownership)
-- [End-to-end chain](#end-to-end-chain)
-- [Producer normalization](#producer-normalization)
-- [Transport adapters](#transport-adapters)
-- [Frontend classification and recovery](#frontend-classification-and-recovery)
-- [Error classes and fallback](#error-classes-and-fallback)
-- [Compatibility, security, and observability](#compatibility-security-and-observability)
-- [Validation](#validation)
-- [Synchronization order](#synchronization-order)
+Reuse the established error owner and representation unless the task changes that architecture. Specify changed codes/statuses, meaning, safe details, and consumer behavior precisely. Keep identical semantics consistent across affected transports; do not unify unrelated services merely to create one namespace.
 
-## Canonical model and ownership
+Trace the affected failure from producer through transport to its actual consumers. Record only relevant conversion, partial-result, recovery, cancellation, and compatibility behavior. Use a mapping table when several cases need comparison, not separate mandatory catalogs for each layer.
 
-Use one canonical error namespace and meaning across services and transports unless the plan establishes a different single owner with evidence. Inventory every added, modified, renamed, or removed public error in this canonical catalog:
+## Transport and consumers
 
-| Error ID/code   | Category  | Meaning and trigger    | Details contract     | Retry/idempotency | Compatibility |
-| --------------- | --------- | ---------------------- | -------------------- | ----------------- | ------------- |
-| `<ERR-ID/CODE>` | `<class>` | `<testable semantics>` | `<symbol/L-ID/None>` | `<policy>`        | `<policy>`    |
+- Thrift: preserve field IDs, optionality, and exception/result compatibility in the IDL and generated bindings.
+- HTTP: define meaningful statuses, headers, content type, and empty or structured body behavior. Do not force binary/stream responses into a JSON error envelope.
+- GraphQL: `errors[].extensions` is outside SDL/codegen typing. Validate fields at runtime before consumers rely on them; do not cast arbitrary payloads into a trusted application type.
+- Frontend: use structured identity for branching and recovery, with safe fallback for unknown/malformed errors. Specify state reset, retry, field feedback, or navigation only when affected. Reuse the existing parser and presentation path where appropriate.
 
-Keep code spelling exact and include the default recovery class with retry/idempotency policy.
+Do not classify failures by localized or debug message matching. Distinguish domain failures from network/protocol failures and cancellation when handling depends on that distinction.
 
-After the catalog, provide language-tagged declarations for the canonical code union/enum, each user-safe details type, and public encoder/parser signatures. Keep code spelling, field types, optionality, and unknown-field behavior exact. Do not compress a nested details schema into a table cell.
+## Safety and validation
 
-The catalog is the sole owner of error meaning and details. Operation, transport, and frontend tables reference Error IDs instead of redefining them. Do not create different codes for identical semantics merely because local producer enums or transports differ; do not collapse failures that require different user actions.
+Keep internal causes out of public responses and browser diagnostics. Define the allowed public fields; protect credentials, user content, query text, and internal debug information. Inspect affected logging paths rather than assuming they are safe.
 
-## End-to-end chain
-
-Trace every affected failure through this model:
-
-```text
-domain, validation, database, dependency, or Thrift failure
-  -> canonical application Error ID and safe details
-  -> Thrift, HTTP, or GraphQL adapter
-  -> frontend runtime classification
-  -> state and recovery action
-  -> i18n and UI presentation
-```
-
-Both a `Thrift -> HTTP -> portal` path and a `Thrift -> GraphQL -> feature UI` path may reference the same Error ID while using different adapters and occurrence rows. The semantic meaning and safe details must remain identical.
-
-Use numbered steps for one linear path. Use a Mermaid `sequenceDiagram` when transports branch, several services or frontend consumers participate, partial data is possible, or retry/cancellation/rollback ordering matters. Label participants and messages with Contract, Mapping, Error, state, and file IDs instead of duplicating their definitions.
-
-## Producer normalization
-
-Include this producer-normalization table for every producer variant or condition that reaches a public boundary:
-
-| Mapping ID | Producer boundary | Variant/condition   | Error ID     | Context/details conversion | Internal cause/log policy | Exhaustiveness test |
-| ---------- | ----------------- | ------------------- | ------------ | -------------------------- | ------------------------- | ------------------- |
-| `EM-01`    | `<boundary>`      | `<variant/trigger>` | `<Error ID>` | `<conversion>`             | `<policy>`                | `<test ID>`         |
-
-Cover applicable domain/service errors, guards, validators/scalars, Thrift exceptions, database/pool failures, external HTTP failures, middleware/context lookup, and framework validation paths.
-
-Map each producer to one canonical Error ID using structured upstream status, enum, or payload data; never classify by matching localized or debug messages.
-
-Preserve internal causes for server logs with correlation, but return only the public allowlist. A new producer variant must not silently inherit an unrelated fallback.
-
-## Transport adapters
-
-Use one normalized row per Error ID and affected transport. Reference exact declarations below rather than placing several transport shapes in one wide row:
-
-| Adapter ID | Error ID     | Transport                 | Exact representation   | Null/partial semantics | Unknown/malformed fallback | Compatibility |
-| ---------- | ------------ | ------------------------- | ---------------------- | ---------------------- | -------------------------- | ------------- |
-| `EA-01`    | `<Error ID>` | `Thrift / HTTP / GraphQL` | `<C/L/F-ID or symbol>` | `<behavior>`           | `<fallback>`               | `<policy>`    |
-
-### Thrift
-
-Provide the exact IDL exception or result representation in a `thrift` block, then define field stability, server/caller conversion, and unknown/mixed-version behavior. A Thrift exception does not own application meaning; it encodes a canonical Error ID at a backend boundary.
-
-### HTTP
-
-Provide the exact status-specific envelope in `http`, `json`, Rust, or TypeScript blocks, then define content type, headers, credential/token effects, empty versus structured body, and malformed/unknown fallback. Keep normal success shapes in [integration-contracts.md](integration-contracts.md).
-
-### GraphQL
-
-Define exact `errors[].extensions` runtime fields in TypeScript and parser/guard declarations; this object is outside GraphQL SDL and code generation. The default target contract contains a stable application `code`, optional code-specific user-safe `details`, and optional correlation `traceId`, with exact JSON types and optionality. Keep `message` as a user-safe protocol fallback; never use it for branching, i18n, retry classification, resource extraction, or authentication recovery. Define path/null/partial-data behavior for each affected operation or field.
-
-The same Error ID may have different wire encodings, but transport adapters cannot change its meaning. Record adapter behavior once in the transport table and reference it from occurrence rows.
-
-## Frontend classification and recovery
-
-Maintain an explicit runtime parser/type for every frontend error boundary; GraphQL code generation does not type `errors[].extensions`. Never cast arbitrary data directly to the application error union.
-
-For every affected Error ID, include this frontend recovery/presentation index:
-
-| Error ID     | Parser/details contract | Handling owner | Recovery flow          | Propagate/swallow | i18n key/variables | UI action  | Unknown-code fallback |
-| ------------ | ----------------------- | -------------- | ---------------------- | ----------------- | ------------------ | ---------- | --------------------- |
-| `<Error ID>` | `<L-ID/type/guard>`     | `<owner>`      | `<ST/diagram/step ID>` | `<behavior>`      | `<key/args>`       | `<action>` | `<fallback>`          |
-
-Record:
-
-- runtime code member, details parser/type, and handling owner;
-- missing, malformed, and unknown future-code fallback;
-- state transitions such as auth/token handling, Zustand reset, browser-key removal, Apollo propagation/refetch behavior, navigation, retry state, or no state change;
-- propagate/swallow behavior and exactly-once guarantees;
-- i18n key and variables for every supported locale;
-- field, form/dialog, toast, retry, reauthentication, navigation, silent cancellation, or generic-boundary UI action.
-
-Build user copy from `code + safe details`, not a server-localized message. Keep generic forward-compatible fallback behavior. Error-triggered state transitions live here; the full store or persistence schema remains in [implementation-contracts.md](implementation-contracts.md).
-
-Provide exact frontend code/detail/parser declarations under their L-IDs. Use numbered steps for a simple recovery and Mermaid `stateDiagram-v2` or `sequenceDiagram` when token removal, Apollo or Zustand reset, navigation, retry, concurrent failures, or exactly-once propagation has branching or ordering constraints. Keep the index as a mapping; do not place the full transition design in a cell.
-
-## Error classes and fallback
-
-Distinguish application errors, validation/coercion/document errors, protocol failures, network/transport failures, client parsing failures, cancellation, and unknown internal failures. Do not classify network/protocol/client failures as domain errors.
-
-Use this operation/boundary occurrence matrix to record only occurrence-specific facts:
-
-| Contract/operation/boundary | Producer Mapping IDs | Possible Error IDs | Side effects before failure | Rollback/partial behavior | Frontend call site     | Behavior override    |
-| --------------------------- | -------------------- | ------------------ | --------------------------- | ------------------------- | ---------------------- | -------------------- |
-| `<C-ID/symbol>`             | `<EM-IDs>`           | `<Error IDs>`      | `<effects or None>`         | `<behavior>`              | `<path/symbol or N/A>` | `<override or None>` |
-
-Do not repeat code meaning, safe-details schemas, default i18n, or default UI action in the occurrence matrix.
-
-## Compatibility, security, and observability
-
-Treat code renaming, semantic changes, details changes, adapter changes, and recovery changes as compatibility changes. Define old/new producer and client behavior, rollout order, unknown-code fallback, temporary aliases, removal condition, and rollback.
-
-Never expose database errors/query text, environment contents, transport debug output, stack traces, filesystem paths, internal type dumps, tokens, cookies, credentials, secrets, or raw underlying errors through a message, details field, HTTP body, GraphQL extension, or Thrift exception.
-
-Define the public field allowlist, protected-resource disclosure policy, safe unknown/internal mapping, log location, correlation identifier, severity, and redaction. Never return a Debug representation of the underlying error.
-
-## Validation
-
-Record evidence for changed error semantics, encoding, recovery, redaction, and compatibility in the plan’s validation table. Compilation alone does not verify the public error contract.
-
-## Synchronization order
-
-Order affected WPs from canonical error identity through producer normalization, boundary encoding and consumer recovery. Include stale code/alias/translation removal when applicable. Use the contracts above as the field definitions and the plan's validation table for sufficient regression evidence; do not recreate the same inventory as a handoff checklist.
+For changed behavior, verify appropriate encoding, redaction, and consumer recovery with existing or focused coverage. One end-to-end check may cover several mappings. Compatibility detail is needed where old/new consumers can coexist; a new error case alone does not mandate a version matrix, trace system, or full UI redesign.
