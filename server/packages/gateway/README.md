@@ -93,8 +93,8 @@ Compose volume 的容器内路径一致。
 
 ## 修改与验证
 
-- route/config/proxy 变化：执行 `cargo test -p gateway` 与 `cargo clippy --all`，并用
-  代表性 host/path 覆盖命中、优先级、redirect、404 和 header 传播。
+- route/config/proxy 变化：使用 `cargo test -p gateway` 与 `cargo clippy -p gateway`
+  验证受影响的路由和 header 行为。
 - listener 或 TLS 变化：除 Rust 检查外，在具有测试证书的非 Windows 环境验证 HTTP、
   HTTPS、HTTP/2、证书链和启动失败路径。
 - Docker 或 upstream 拓扑变化：检查 `docker/server/gateway.Dockerfile`、

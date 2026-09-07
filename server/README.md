@@ -104,13 +104,10 @@ GraphQL contract -> 前端 schema/codegen` 的依赖方向检查所有消费者�
 
 - workspace 成员、crate 名和依赖以根 `Cargo.toml`、目标 crate 的 `Cargo.toml` 与
   `cargo metadata --no-deps --format-version 1` 为准。
-- 运行服务或测试前先用 Cargo 元数据确认 package，避免在文档中维护另一份完整命令
-  清单。
-- 修改 Rust 源码后，执行 `cargo clippy --all` 和至少受影响包的
-  `cargo test -p <package>`。
-- 修改公共 crate、workspace 配置或跨服务 contract 时，执行
-  `cargo test --workspace`；manifest 变化还应执行
-  `cargo metadata --no-deps --format-version 1`。
+- Rust 源码改动使用 `cargo clippy -p <package>`；行为或测试改动使用
+  `cargo test -p <package>`，范围按根 `AGENTS.md` 选择。
+- 全量验证入口为 `cargo clippy --all` 和 `cargo test --workspace`；manifest
+  变化还应执行 `cargo metadata --no-deps --format-version 1`。
 - GraphQL、Thrift、migration 或 Diesel schema 变化时，除 Rust 检查外，还要验证
   对应生成链路和实际消费者；涉及数据库的验证应使用明确的测试数据库，不能默认连接
   生产数据。

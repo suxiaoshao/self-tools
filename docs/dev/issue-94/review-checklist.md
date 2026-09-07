@@ -220,7 +220,7 @@ database / RPC / external HTTP / filesystem
 - 一个请求包含多个写 field/command 时，原子性合同是否明确；不能默认 GraphQL/HTTP 框架会共享 transaction。
 - migration 是否有可靠执行入口；事务与非事务 DDL、schema 变更、backfill、constraint 切换和 down migration 是否按不会丢数据的顺序完成。
 
-事务测试至少覆盖：
+事务测试按实际风险检查：
 
 - 中间步骤故障、constraint/FK 失败、记录不存在和 affected rows 为 0，确认没有部分提交。
 - 重复及并发 create/update/delete/move、deadlock/serialization retry，确认结果、次数和幂等性。
@@ -349,12 +349,11 @@ database / RPC / external HTTP / filesystem
 - 为前后端每个关键模块、请求链路和高风险行为建立测试矩阵，记录 owner、路径/符号、现有测试类型和缺失场景；不能只汇总测试文件数量或覆盖率。
 - 前端重点检查 store、hook、数据转换、表单校验、错误映射、权限/路由判断、复杂组件状态和用户失败反馈是否有单元或组件测试。
 - 后端重点检查 domain/service 规则、错误转换、认证授权、middleware、trace 传播、parser、批量/分页逻辑和 transaction 决策是否有单元测试。
-- 成功、失败、边界、空输入、非法输入、权限拒绝、超时、取消、重试和并发路径是否都有对应场景。
 - 单元测试、组件测试、合同测试、集成测试和端到端测试的责任是否区分清楚，是否用宽泛的集成测试掩盖关键纯逻辑缺少单元测试。
 - 测试是否验证可观察行为和不变量，而不是过度绑定内部实现、只断言 snapshot 或只验证“没有抛错”。
 - 难以编写单元测试的位置是否暴露了隐藏全局状态、框架耦合、资源初始化和职责过大的设计问题。
 - 测试是否可重复、相互隔离，不依赖生产数据、真实 secret、不稳定网络、执行顺序或共享可变状态。
-- 生成代码和第三方 vendored 代码不重复测试其内部实现，但必须测试本仓库的手写输入、adapter、配置和消费者边界。
+- 生成代码和第三方 vendored 代码不重复测试其内部实现，检查本仓库的接入边界。
 
 ## 11. 交付、生成与文档专项
 
