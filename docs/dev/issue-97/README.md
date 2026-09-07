@@ -2,13 +2,13 @@
 
 ## 1. 状态、目标与检查重点
 
-- 状态：`In progress`（代码和受控验证已完成；真实网络与浏览器验收尚未完成）。
+- 状态：`In progress`（实施、受控测试、真实网络与桌面浏览器验收、本地部署已完成；CA/i0 补修 PR #112 等待合并）。
 - Issue：[#97](https://github.com/suxiaoshao/self-tools/issues/97)，对应 RF-003、RF-007。
-- 分支：`codex/issue-97-http-trust-boundaries`；代码基线：`0b71c48`。
+- 分支：初始实施 `codex/issue-97-http-trust-boundaries`（基线 `0b71c48`）；当前补修 `codex/issue-97-runtime-ca-certificates`（基线 `3043185`）。
 - 证据日期：2026-09-07。
 - 规范计划：`docs/dev/issue-97/README.md`；由[根索引](../README.md)发现，由 [#94](../issue-94/README.md)跟踪。
 - 所有者：bookmarks HTTP 图片代理、middleware CORS；消费者为 login、bookmarks、collections 及现有前端图片标签。
-- 实施提交：尚未提交。生产代码已实现，受控测试与包级检查通过；未部署。
+- 实施提交：初始实施已通过 [PR #111](https://github.com/suxiaoshao/self-tools/pull/111) 合并（`3043185`）；CA/i0 补修 `15c90b7` 已提交推送至 [PR #112](https://github.com/suxiaoshao/self-tools/pull/112)。两阶段变更均已在本地 OrbStack 部署；本记录不代表远端生产部署。
 
 目标是保留起点和晋江的小说封面、作者头像显示，让 `/fetch-content` 无法请求任意网站、内网或非图片资源，同时消除 CORS 将相似域名误判为可信来源的问题。
 
@@ -361,33 +361,37 @@ PR #111 配置补修（已实现）：login 在 Compose 中以 `environment: { C
 
 本轮按实际影响验证，不运行无前端代码变更的 pnpm lint/test，不提前重复全量 CI。若后续提交 PR，现有 CI/hooks 仍须完成且不绕过。
 
-## 8. 剩余验收与交付边界
+## 8. 已完成验收与交付边界
 
-代码实施和受控验证已完成，以下需要实际运行环境：
+代码实施、受控验证和本地实际运行环境验收已完成：
 
 1. 已配置精确域名及 CDN 别名真实 DNS/直连，live smoke 的八个样本和运行容器抽样均通过；后续 CDN 别名变化仍需维护本机规则。
 2. 小说列表和作者详情的真实图片已在内建浏览器验证，分别为 10/10、18/18 加载成功；晋江抓取预览已返回小说信息与章节列表。
 3. 本地部署后三个服务的合法来源/相似恶意来源 CORS 预检已通过；自定义来源三态由前次 Compose 配置检查覆盖，未在本轮修改环境文件或轮换运行配置。
 
+剩余交付为 PR #112 合并；GitHub #97 保持开放。远端 CI 状态以 PR 检查为准，此处不将本地 hooks 通过等同于远端 CI 或生产部署完成。
+
 ## 9. 完成记录
 
-| 内容               | 当前结果                                                                                    |
-| ------------------ | ------------------------------------------------------------------------------------------- |
-| 代码               | WP-01/02/03 已实施；WP-04 文档已更新                                                        |
-| 实际变更           | F-01 至 F-21 中标注文件已新增或修改；新增 4 个图片模块文件，无数据库/GraphQL 生成物变更     |
-| 依赖               | 声明显式 URL/TLS/Tokio 能力及受控测试依赖；移除 middleware nom；无版本升级                  |
-| 兼容               | 现有前端 API 形状不变；来源白名单与 CORS 收紧按计划生效                                     |
-| 诊断调整           | 失败不收集额外共享字节计数；gateway 图片路径 query 与原始错误脱敏，其他路径保留现状         |
-| 测试               | 原受控测试及提交 hooks 通过；补修 13 个测试、Clippy、八个 live 图片样本及桌面浏览器验收通过 |
-| 提交/PR/部署       | PR #111 已合并并在本地部署；CA/i0 补修已在本地部署但尚未提交，GitHub #97 保持开放           |
-| 文档与当前稳定说明 | 根索引、#94 进度、server/web/gateway README 已同步                                          |
-| 工作区其他修改     | 保留原有 package.json pnpm 版本修改，不纳入本 Issue                                         |
+| 内容               | 当前结果                                                                                                      |
+| ------------------ | ------------------------------------------------------------------------------------------------------------- |
+| 代码               | WP-01/02/03 已实施；WP-04 文档已更新                                                                          |
+| 实际变更           | F-01 至 F-21 中标注文件已新增或修改；新增 4 个图片模块文件，无数据库/GraphQL 生成物变更                       |
+| 依赖               | 声明显式 URL/TLS/Tokio 能力及受控测试依赖；移除 middleware nom；无版本升级                                    |
+| 兼容               | 现有前端 API 形状不变；来源白名单与 CORS 收紧按计划生效                                                       |
+| 诊断调整           | 失败不收集额外共享字节计数；gateway 图片路径 query 与原始错误脱敏，其他路径保留现状                           |
+| 测试               | 原受控测试及提交 hooks 通过；补修 13 个测试、Clippy、八个 live 图片样本及桌面浏览器验收通过                   |
+| 提交/PR/部署       | PR #111 已合并并在本地部署；CA/i0 补修 `15c90b7` 已推送至 PR #112 并在本地部署，等待合并；GitHub #97 保持开放 |
+| 文档与当前稳定说明 | 根索引、#94 进度、server/web/gateway README 已同步                                                            |
+| 工作区其他修改     | 保留原有 package.json pnpm 版本修改，不纳入本 Issue                                                           |
 
 ### PR 提交阶段补充
 
 完整提交 hook 的首次 workspace 测试发现：依赖 feature 合并后 Rustls 同时启用 ring 与 aws-lc-rs，受控 TLS 测试的 ServerConfig 自动选择 provider 会 panic。测试现已使用 `ServerConfig::builder_with_provider` 明确选择 aws-lc-rs；不修改进程全局 provider、不改变生产 client 的 TLS 策略。修正后重新执行完整提交 hooks，结果记录于 PR。
 
-### 本地容器验收补修：运行时 CA（已实现并验证）
+### 本地容器验收补修：运行时 CA（历史阶段记录，后续图片复测已完成）
+
+以下保留 CA 补修阶段的故障与验证过程；当时的图片阻塞已由下一节复测解除，当前交付状态以第 1、8 节为准。
 
 2026-09-07 在 OrbStack 重建并启动合并后的镜像时，bookmarks 因 `No CA certificates were loaded from the system` 重启。`ImageProxyState` 在启动时建立 HTTPS client，运行镜像原来只安装 `libpq5`，没有系统信任根。
 
@@ -422,4 +426,4 @@ PR #111 配置补修（已实现）：login 在 Compose 中以 `environment: { C
 - `cargo clippy -p bookmarks --all-targets --offline -- -D warnings` 通过。base64 使用本机 0.22.1 源码验证的标准解码器：要求规范 padding，拒绝非法尾位；Cargo.lock 仅新增 bookmarks 对既有 base64 的依赖引用。
 - bookmarks 新镜像构建并启动通过；实际 HTTPS `/fetch-content` 八个样本全部 200，大小和 JPEG/PNG 签名符合预期。
 - 内建浏览器桌面 1280×900：作者详情 18/18 图片加载成功且请求均 200，小说列表 10/10 图片加载成功；晋江小说 3854336 的抓取预览返回小说信息和章节列表，未点击保存、未写入业务数据。
-- 上述结果取代前次 Fake-IP/i0 的阻塞结论；移动端导航、Base UI 警告仍为已记录的其他前端问题。代码补修尚未提交，未关闭 #97。
+- 上述结果取代前次 Fake-IP/i0 的阻塞结论；移动端导航、Base UI 警告仍为已记录的其他前端问题。代码补修已提交推送至 PR #112，等待合并；未关闭 #97。
