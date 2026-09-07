@@ -56,6 +56,12 @@ schema、operation 或 codegen 配置变化时，在受影响的 package 运行 
 
 当前 Vite `base`、开发 HMR、认证接口、GraphQL 地址和部分资源地址仍直接使用 `sushao.top` 相关域名。这是现状，不是新增代码应复制的配置方式。新增或调整服务地址时，优先建立集中且可按环境切换的配置入口，并一次性更新相关消费者；不要把线上域名继续散落到新文件。
 
+## 图片来源兼容
+
+bookmarks 的现有 `getImageUrl` 和图片标签继续调用 `/fetch-content`。服务端仅接受已核验的起点、晋江封面与作者头像来源，并规范化为 HTTPS；未知来源及失败图片沿用现有组件或浏览器的加载失败效果，不添加自动重试。不能把页面装饰图、读者头像或任意图床地址当成支持来源。新增 CDN 模式由后端图片策略拥有，并需官方页面证据和测试。
+
+前端页面 Origin 必须出现在服务端 `CORS_ALLOWED_ORIGINS` 中；默认仅 `https://sushao.top`，本地直连端口需显式加入。配置规则、限额和网络前置条件见 [后端说明](../server/README.md#图片代理与跨域来源)。
+
 ## 命令与验证
 
 - 根级脚本以根目录 `package.json` 为准，package 级脚本和 exports 以目标包的 `package.json` 为准；可用 `pnpm run` 和 `pnpm --filter <package> run` 查看当前入口，不在本文复制完整清单。

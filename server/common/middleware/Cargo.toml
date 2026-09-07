@@ -18,15 +18,18 @@ futures-util = { workspace = true, optional = true }
 # cors
 http = { workspace = true, optional = true }
 tower-http = { version = "0.7.0", features = ["cors"], optional = true }
-nom = { workspace = true, optional = true }
+url = { workspace = true, optional = true }
 
 # graphql
 async-graphql = { workspace = true, optional = true }
 
 [dev-dependencies]
+tower = { version = "0.5.3", features = ["util"] }
+tokio = { workspace = true, features = ["macros", "rt"] }
+axum.workspace = true
 anyhow.workspace = true
 
 [features]
 trace = ["rand", "tower", "http", "tracing", "futures", "http-body", "pin-project-lite", "futures-util"]
-cors = ["http", "tower-http", "nom"]
+cors = ["http", "tower-http", "url"]
 graphql-trace = ["tracing", "async-graphql"]

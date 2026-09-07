@@ -24,7 +24,7 @@ async fn main() -> Result<()> {
         .with(fmt::layer().with_filter(LevelFilter::INFO))
         .init();
     // 设置跨域
-    let cors = get_cors();
+    let cors = get_cors()?;
 
     // 获取路由
     let app = get_router()?.layer(cors).layer(trace_layer());

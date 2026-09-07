@@ -1,122 +1,184 @@
+use std::{collections::HashSet, env, fmt};
+
 use http::{
-    HeaderValue, Method,
-    header::{AUTHORIZATION, CONTENT_TYPE},
-};
-use nom::{
-    IResult, Parser,
-    branch::alt,
-    bytes::complete::{tag, take_till},
-    combinator::{all_consuming, complete, map, opt, verify},
+    Method,
+    header::{AUTHORIZATION, CONTENT_TYPE, ORIGIN},
 };
 use tower_http::cors::{AllowOrigin, CorsLayer};
+use url::Url;
 
-pub fn get_cors() -> CorsLayer {
+#[derive(Debug)]
+pub enum CorsConfigError {
+    InvalidEncoding,
+    InvalidOrigin { index: usize },
+}
+impl fmt::Display for CorsConfigError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::InvalidEncoding => write!(f, "CORS_ALLOWED_ORIGINS is not valid Unicode"),
+            Self::InvalidOrigin { index } => {
+                write!(f, "CORS_ALLOWED_ORIGINS entry {index} is invalid")
+            }
+        }
+    }
+}
+impl std::error::Error for CorsConfigError {}
+
+fn canonical_origin(input: &str) -> Option<String> {
+    if input.is_empty()
+        || input
+            .bytes()
+            .any(|b| b.is_ascii_whitespace() || b.is_ascii_control())
+        || input.contains(['\\', '%', '@'])
+    {
+        return None;
+    }
+    let (scheme, rest) = input.split_once("://")?;
+    if !matches!(scheme, "http" | "https") {
+        return None;
+    }
+    // Reject paths before Url can normalize dot segments away.
+    let authority = rest.strip_suffix('/').unwrap_or(rest);
+    if authority.contains(['/', '?', '#']) {
+        return None;
+    }
+    let url = Url::parse(input).ok()?;
+    if url.host_str()?.ends_with('.') || url.port() == Some(0) {
+        return None;
+    }
+    Some(url.origin().ascii_serialization())
+}
+
+fn configured_origins(value: Option<&str>) -> Result<HashSet<String>, CorsConfigError> {
+    let value = value.unwrap_or("https://sushao.top");
+    if value.is_empty() {
+        return Ok(HashSet::new());
+    }
+    value
+        .split(',')
+        .enumerate()
+        .map(|(index, origin)| {
+            canonical_origin(origin.trim()).ok_or(CorsConfigError::InvalidOrigin { index })
+        })
+        .collect()
+}
+
+fn cors_layer(origins: HashSet<String>) -> CorsLayer {
     CorsLayer::new()
-        // allow `GET` and `POST` when accessing the resource
-        .allow_methods(vec![Method::GET, Method::POST, Method::PUT])
-        // allow requests from any origin
-        .allow_origin(AllowOrigin::predicate(|value, _| arrow_origin(value)))
-        .allow_headers(vec![CONTENT_TYPE, AUTHORIZATION])
+        .allow_methods([Method::GET, Method::POST, Method::PUT])
+        .allow_headers([CONTENT_TYPE, AUTHORIZATION])
         .allow_credentials(true)
+        .allow_origin(AllowOrigin::predicate(move |value, parts| {
+            parts.headers.get_all(ORIGIN).iter().count() == 1
+                && value
+                    .to_str()
+                    .ok()
+                    .and_then(canonical_origin)
+                    .is_some_and(|origin| origins.contains(&origin))
+        }))
 }
 
-fn arrow_origin(origin: &HeaderValue) -> bool {
-    let origin = match origin.to_str() {
-        Ok(x) => x,
-        Err(_) => return false,
+pub fn get_cors() -> Result<CorsLayer, CorsConfigError> {
+    let value = match env::var("CORS_ALLOWED_ORIGINS") {
+        Ok(value) => Some(value),
+        Err(env::VarError::NotPresent) => None,
+        Err(env::VarError::NotUnicode(_)) => return Err(CorsConfigError::InvalidEncoding),
     };
-    inner_origin(origin).is_ok()
-}
-
-fn inner_origin(origin: &str) -> IResult<&str, ()> {
-    let (input, _) = complete((
-        tag("http"),
-        opt(tag("s")),
-        tag("://"),
-        inner_host,
-        inner_port,
-    ))
-    .parse(origin)?;
-    Ok((input, ()))
-}
-
-fn inner_host(host: &str) -> IResult<&str, ()> {
-    let (input, _) = complete(alt((
-        map(alt((tag("localhost"), tag("127.0.0.1"))), |_| ()),
-        map(
-            verify(take_till(|x| x == ':'), |s: &str| s.ends_with("sushao.top")),
-            |_| (),
-        ),
-    )))
-    .parse(host)?;
-    Ok((input, ()))
-}
-
-fn inner_port(port: &str) -> IResult<&str, ()> {
-    let (input, _) = all_consuming(opt((
-        tag(":"),
-        verify(nom::character::complete::i32, |port| {
-            (&1..=&65535).contains(&port)
-        }),
-    )))
-    .parse(port)?;
-    Ok((input, ()))
+    Ok(cors_layer(configured_origins(value.as_deref())?))
 }
 
 #[cfg(test)]
-mod test {
-
-    use super::{inner_origin, inner_port};
-
-    use super::inner_host;
+mod tests {
+    use super::*;
+    use axum::{Router, body::Body, routing::get};
+    use http::{Request, header::*};
+    use tower::ServiceExt;
 
     #[test]
-    fn test_inner_host() -> anyhow::Result<()> {
-        inner_host("sushao.top")?;
-        inner_host("admin.sushao.top")?;
-        inner_host("localhost")?;
-        inner_host("127.0.0.1")?;
-
-        assert!(inner_host("admin.sushao.top.com").is_err());
-        assert!(inner_host("127.0.0.2").is_err());
-        assert!(inner_host("localhos").is_err());
-        assert!(inner_host("baidu.com").is_err());
-        Ok(())
+    fn configuration_is_explicit_and_strict() {
+        assert_eq!(
+            configured_origins(None).unwrap(),
+            HashSet::from(["https://sushao.top".into()])
+        );
+        assert!(configured_origins(Some("")).unwrap().is_empty());
+        assert_eq!(
+            configured_origins(Some(" http://localhost:3000 , https://sushao.top:443/ "))
+                .unwrap()
+                .len(),
+            2
+        );
+        for value in [
+            "*",
+            "null",
+            "https://sushao.top,",
+            "https://sushao.top/a/..",
+            "https://a@b",
+            "https://sushao.top.",
+            "https://sushao.top?x",
+            "https://sushao.top#x",
+            "http://localhost:0",
+        ] {
+            assert!(configured_origins(Some(value)).is_err(), "{value}");
+        }
     }
-    #[test]
-    fn test_inner_port() -> anyhow::Result<()> {
-        inner_port("")?;
-        inner_port(":80")?;
-        inner_port(":8080")?;
-
-        assert!(inner_port("80").is_err());
-        assert!(inner_port(":").is_err());
-        assert!(inner_port(":808080").is_err());
-        assert!(inner_port(":8080cc").is_err());
-        Ok(())
-    }
-    #[test]
-    fn test_inner_origin() -> anyhow::Result<()> {
-        inner_origin("http://localhost")?;
-        inner_origin("https://localhost")?;
-        inner_origin("http://localhost:80")?;
-        inner_origin("https://localhost:80")?;
-
-        inner_origin("http://127.0.0.1")?;
-        inner_origin("https://127.0.0.1")?;
-        inner_origin("http://127.0.0.1:80")?;
-        inner_origin("https://127.0.0.1:80")?;
-
-        inner_origin("http://sushao.top:80")?;
-        inner_origin("https://sushao.top:80")?;
-        inner_origin("http://sushao.top")?;
-        inner_origin("https://sushao.top")?;
-        inner_origin("http://auth.sushao.top:80")?;
-        inner_origin("https://auth.sushao.top:80")?;
-        inner_origin("http://auth.sushao.top")?;
-        inner_origin("https://auth.sushao.top")?;
-
-        assert!(inner_origin("https://auth.sushao.top.com").is_err());
-        Ok(())
+    #[tokio::test]
+    async fn exact_origins_and_preflight() {
+        let app = Router::new()
+            .route("/", get(|| async { "ok" }))
+            .layer(cors_layer(configured_origins(None).unwrap()));
+        for (origin, allowed) in [
+            ("https://sushao.top", true),
+            ("https://sushao.top:443", true),
+            ("https://evilsushao.top", false),
+            ("https://sub.sushao.top", false),
+            ("http://sushao.top", false),
+            ("https://sushao.top:444", false),
+            ("null", false),
+            ("http://localhost:3000", false),
+            ("https://sushao.top https://evil.test", false),
+        ] {
+            let response = app
+                .clone()
+                .oneshot(
+                    Request::builder()
+                        .method("OPTIONS")
+                        .uri("/")
+                        .header(ORIGIN, origin)
+                        .header(ACCESS_CONTROL_REQUEST_METHOD, "POST")
+                        .header(ACCESS_CONTROL_REQUEST_HEADERS, "authorization")
+                        .body(Body::empty())
+                        .unwrap(),
+                )
+                .await
+                .unwrap();
+            assert_eq!(
+                response.headers().contains_key(ACCESS_CONTROL_ALLOW_ORIGIN),
+                allowed,
+                "{origin}"
+            );
+            if allowed {
+                assert_eq!(response.headers()[ACCESS_CONTROL_ALLOW_CREDENTIALS], "true");
+                assert!(response.headers().contains_key(VARY));
+            }
+        }
+        let response = app
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .uri("/")
+                    .header(ORIGIN, "https://sushao.top")
+                    .header(ORIGIN, "https://evil.test")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert!(!response.headers().contains_key(ACCESS_CONTROL_ALLOW_ORIGIN));
+        let response = app
+            .oneshot(Request::builder().uri("/").body(Body::empty()).unwrap())
+            .await
+            .unwrap();
+        assert_eq!(response.status(), 200);
+        assert!(!response.headers().contains_key(ACCESS_CONTROL_ALLOW_ORIGIN));
     }
 }

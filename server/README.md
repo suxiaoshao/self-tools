@@ -90,6 +90,30 @@ Rust schema 自动导出到这些文件的脚本。因此服务端 GraphQL contr
 修改数据库结构时，应按 `migration -> 目标数据库 -> Diesel schema -> model/service ->
 GraphQL contract -> 前端 schema/codegen` 的依赖方向检查所有消费者。
 
+## 图片代理与跨域来源
+
+bookmarks 的 `GET /fetch-content?url=...` 仅代理起点和晋江已核验的封面与作者图片。具体主机、路径和参数规则由 `packages/bookmarks/src/router/fetch_content/policy.rs` 维护；扩展来源须先提供官方页面样本，再补允许/拒绝测试。已有数据库中的原始图片 URL 不改写，HTTP/协议相对地址仅在命中规则后升级为 HTTPS。
+
+代理公开访问，不接受登录凭据作为授权输入，也不向上游转发请求头。只连接经校验的公网地址，禁止重定向、环境代理和自动重试；要求部署环境支持正常 DNS 与直连 HTTPS。连接超时 3 秒、全程 10 秒、单图最多 5 MiB。单进程最多 16 个下载，全局令牌桶容量 32、每秒补充 8 个；多副本分别计算。完整收集后根据文件签名返回 JPEG/PNG/GIF/WebP，不解码或转码，不支持 SVG/HTML。该预算限制下载缓冲和上游请求，不是进程总内存或带宽硬配额。
+
+失败返回空 body，429 携带 `Retry-After: 1`；上游响应头、错误正文、Cookie 和原始错误不透传。成功图片缓存一小时，失败不缓存。bookmarks 图片日志仅包含来源类别、状态、耗时等有限字段；gateway 的该路径日志也隐藏 query。GraphQL 原有日志策略另行维护。
+
+login、bookmarks、collections 使用共享 `CORS_ALLOWED_ORIGINS`：
+
+```dotenv
+CORS_ALLOWED_ORIGINS=https://sushao.top
+```
+
+未设置时仅信任 `https://sushao.top`；设置后覆盖默认值，逗号分隔完整 Origin。显式空值不授予任何跨域来源。开发直连须显式加入例如 `http://localhost:3000`。不支持通配符、任意子域或隐式 localhost；非法配置在监听前使启动失败。仍允许业务需要的 GET/POST/PUT、Content-Type/Authorization 和 credentials。CORS 控制浏览器跨域读取，不代替认证，也不能限制普通图片标签或非浏览器客户端的访问。
+
+代理默认测试不访问公网。公开来源抽样需显式运行：
+
+```bash
+cargo test -p bookmarks live_image_sources -- --ignored --nocapture
+```
+
+该测试需要公网 DNS 和直连 HTTPS；使用合成 IP 的本机代理环境会被目标地址规则拒绝。不要为了测试通过关闭生产 IP 校验。完整设计与验证状态见 [#97 计划](../docs/dev/issue-97/README.md)。
+
 ## 实现约定
 
 - 新增 Rust 模块时不使用 `mod.rs`；使用 `foo.rs` 与 `foo/` 并存的模块结构。

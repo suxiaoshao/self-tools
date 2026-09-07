@@ -8,19 +8,20 @@
 mod fetch_content;
 mod graphql;
 use self::graphql::{graphql_handler, graphql_playground};
-use crate::{errors::GraphqlResult, graphql::get_schema};
-use axum::{
-    Router,
-    routing::{get, post},
-};
+use crate::graphql::get_schema;
+use axum::{Router, routing::post};
 
-pub(crate) fn get_router() -> GraphqlResult<Router> {
-    let schema = get_schema()?;
+pub(crate) fn get_router() -> anyhow::Result<Router> {
+    let schema =
+        get_schema().map_err(|_| anyhow::anyhow!("bookmarks schema initialization failed"))?;
+    let images =
+        fetch_content::image_router(std::sync::Arc::new(fetch_content::ImageProxyState::new()?));
 
     let router = Router::new()
         .route("/graphql", post(graphql_handler).get(graphql_playground))
-        .route("/fetch-content", get(fetch_content::fetch_content))
-        .with_state(schema);
+        .layer(middleware::trace_layer())
+        .with_state(schema)
+        .merge(images);
     Ok(router)
 }
 

@@ -7,7 +7,7 @@ edition.workspace = true
 
 [dependencies]
 # runtime
-tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
+tokio = { workspace = true, features = ["macros", "rt-multi-thread", "net", "time", "sync"] }
 
 # graphql
 async-graphql = { workspace = true, features = ["bigdecimal"] }
@@ -16,8 +16,9 @@ async-graphql-axum.workspace = true
 serde_json.workspace = true
 
 # fetch content
+url.workspace = true
 serde.workspace = true
-reqwest = { workspace = true, features = ["gzip", "stream"] }
+reqwest = { workspace = true, features = ["gzip", "stream", "rustls"] }
 
 # database
 diesel = { workspace = true, features = ["postgres", "time", "r2d2", "numeric"] }
@@ -44,5 +45,9 @@ volo-thrift.workspace = true
 novel_crawler.workspace = true
 
 [dev-dependencies]
+rcgen = "0.14.8"
+tokio-rustls = "0.26.4"
+tower = { version = "0.5.3", features = ["util"] }
+tokio = { workspace = true, features = ["io-util"] }
 # env
 dotenv.workspace = true
