@@ -13,7 +13,7 @@ mod service;
 
 use std::net::SocketAddr;
 
-use middleware::{get_cors, trace_layer};
+use middleware::get_cors;
 use tokio::net::TcpListener;
 use tracing::{Level, event, metadata::LevelFilter};
 use tracing_subscriber::{
@@ -28,11 +28,8 @@ async fn main() -> anyhow::Result<()> {
         .with(fmt::layer().with_filter(LevelFilter::INFO))
         .init();
     // 设置跨域
-    let cors = get_cors();
-    let app = get_router()
-        .map_err(|_x| anyhow::anyhow!("VarError"))?
-        .layer(cors)
-        .layer(trace_layer());
+    let cors = get_cors()?;
+    let app = get_router()?.layer(cors);
 
     let addr = "0.0.0.0:8080";
     event!(Level::INFO, addr, "server start");

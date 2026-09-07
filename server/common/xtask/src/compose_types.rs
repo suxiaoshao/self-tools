@@ -25,7 +25,7 @@ pub struct ComposeService {
     #[serde(default)]
     pub volumes: Vec<String>,
     #[serde(default)]
-    pub environment: HashMap<String, String>,
+    pub environment: HashMap<String, Option<String>>,
     #[serde(default)]
     pub env_file: StringOrVec,
     #[serde(default)]

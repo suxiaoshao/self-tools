@@ -28,7 +28,7 @@ async fn main() -> anyhow::Result<()> {
         .with(fmt::layer().with_filter(LevelFilter::INFO))
         .init();
     // 设置跨域
-    let cors = get_cors();
+    let cors = get_cors()?;
     let app = get_router()
         .map_err(|_x| anyhow::anyhow!("VarError"))?
         .layer(cors)

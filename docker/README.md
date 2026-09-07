@@ -24,7 +24,8 @@
 
 ## 配置与本地状态
 
-- `compose/.env` 是本机配置且被 Git 忽略。直接使用 Docker Compose CLI 时，YAML 中的 `env_file` 决定服务级注入；当前 `xtask compose` 则会把该文件的全部值注入每个受管理容器。不要提交凭据或在文档中保存真实值，并在修正 `xtask` 行为前按更宽的暴露范围评估敏感信息。
+- `compose/.env` 是本机配置且被 Git 忽略。直接使用 Docker Compose CLI 时，YAML 中的 `env_file` 和 `environment` 决定服务级注入；当前 `xtask compose` 则会把该文件的全部值注入每个受管理容器。不要提交凭据或在文档中保存真实值，并在修正 `xtask` 行为前按更宽的暴露范围评估敏感信息。
+- login 通过 `environment` 的 null 单键声明透传 `CORS_ALLOWED_ORIGINS`，从进程环境或项目 `.env` 获取值，不加载整份共享环境文件。未设置时保留服务默认来源，显式空值禁用跨域，自定义值覆盖默认。bookmarks/collections 通过现有 `env_file` 读取该键；建议在 `.env` 统一配置三个服务。
 - Compose 当前把宿主机 `/private/etc/letsencrypt` 挂载到容器 `/etc/letsencrypt`；gateway 默认从该容器目录下读取证书。
 - `xtask cert` 默认写入 `compose/certs`，该目录也被 Git 忽略，但不会被当前 Compose 自动挂载。使用生成证书时需要同步调整 volume 和 gateway 证书路径配置。
 - `postgres` 数据保存在命名 volume 中。修改 volume 名称、挂载点或数据库初始化策略前，必须明确已有数据的迁移与回滚方式。

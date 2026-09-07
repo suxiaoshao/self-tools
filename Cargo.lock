@@ -741,6 +741,7 @@ dependencies = [
  "graphql-common",
  "middleware",
  "novel_crawler",
+ "rcgen",
  "reqwest",
  "serde",
  "serde_json",
@@ -748,8 +749,11 @@ dependencies = [
  "thrift",
  "time",
  "tokio",
+ "tokio-rustls",
+ "tower",
  "tracing",
  "tracing-subscriber",
+ "url",
  "volo-thrift",
 ]
 
@@ -2932,16 +2936,18 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-graphql",
+ "axum",
  "futures",
  "futures-util",
  "http",
  "http-body",
- "nom 8.0.0",
  "pin-project-lite",
  "rand 0.10.2",
+ "tokio",
  "tower",
  "tower-http 0.7.0",
  "tracing",
+ "url",
 ]
 
 [[package]]

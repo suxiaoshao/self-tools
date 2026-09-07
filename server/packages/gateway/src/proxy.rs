@@ -341,11 +341,7 @@ impl ProxyHttp for GatewayProxy {
         let req = session.req_header();
         let method = req.method.as_str();
         let host = request_host(req);
-        let path = req
-            .uri
-            .path_and_query()
-            .map(|value| value.as_str())
-            .unwrap_or("/");
+        let path = logged_path(&req.uri);
         let status = session
             .response_written()
             .map(|resp| resp.status.as_u16())
@@ -367,7 +363,7 @@ impl ProxyHttp for GatewayProxy {
                     upstream,
                     trace_id = ctx.trace_id,
                     request_id = ctx.request_id,
-                    error = %error,
+                    error = %if req.uri.path() == "/fetch-content" { "image proxy request failed".to_owned() } else { error.to_string() },
                     "gateway request finished with error"
                 );
             }
@@ -388,9 +384,29 @@ impl ProxyHttp for GatewayProxy {
     }
 }
 
+fn logged_path(uri: &http::Uri) -> &str {
+    if uri.path() == "/fetch-content" {
+        uri.path()
+    } else {
+        uri.path_and_query().map(|v| v.as_str()).unwrap_or("/")
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{normalize_host, request_host};
+    use super::{logged_path, normalize_host, request_host};
+
+    #[test]
+    fn image_query_is_not_logged() {
+        assert_eq!(
+            logged_path(&"/fetch-content?url=secret".parse().unwrap()),
+            "/fetch-content"
+        );
+        assert_eq!(
+            logged_path(&"/graphql?x=1".parse().unwrap()),
+            "/graphql?x=1"
+        );
+    }
     use pingora::http::RequestHeader;
 
     #[test]

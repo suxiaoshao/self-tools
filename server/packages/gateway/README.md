@@ -67,6 +67,10 @@ TLS 在 gateway 终止后，当前 route 以非 TLS 连接访问 upstream。若�
 改为 TLS，必须同时核对 peer 的 TLS 标志、SNI、证书信任与容器网络地址，不能只修改
 URL 文本。
 
+## 图片代理日志
+
+`/fetch-content` 的请求完成日志只记录 path，去除 query；失败时使用固定错误说明，避免原始错误包含目标 URL。其他路径保留现有日志行为。该处理不改变转发 URL、HTTP 到 HTTPS 跳转或上游响应。
+
 ## 平台约束
 
 完整实现只在非 Windows target 编译，Pingora 依赖也只对非 Windows target 启用。

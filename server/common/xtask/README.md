@@ -28,6 +28,7 @@ cargo run -p xtask -- <subcommand> --help
 
 - 读取 `docker/compose/docker-compose.yml`，并在存在时读取 `docker/compose/.env`。
 - 当前实现会先把这份 `.env` 复制给每一个受管理容器，再叠加服务声明的 `env_file` 和 `environment`。这与 Docker Compose CLI 的服务级 `env_file` 边界不同；在实现修正前，应把 `.env` 中的每个值都视为会暴露给全部容器。
+- `environment` 映射支持字符串与 null：字符串直接覆盖，null 优先读取同名进程环境变量，其次项目 `.env`，均缺失则移除该键；空字符串保留。容器创建和配置签名共用此解析逻辑。不支持 `${…}` 插值。
 - 按 `depends_on` 解析服务顺序，确保命名 volume、默认 network 和容器处于声明状态。
 - 容器配置或镜像签名变化时会重建容器；已有但停止的容器会被启动。
 - 不构建或拉取镜像。运行前必须确保 Compose 引用的镜像可用；本地源码变化通常需要先执行 `build`。

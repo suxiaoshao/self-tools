@@ -12,7 +12,7 @@ mod graphql_trace;
 #[cfg(feature = "trace")]
 mod trace;
 #[cfg(feature = "cors")]
-pub use cors::get_cors;
+pub use cors::{CorsConfigError, get_cors};
 
 #[cfg(feature = "graphql-trace")]
 pub use graphql_trace::*;
