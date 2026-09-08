@@ -9,6 +9,9 @@ import { Routes, Route } from 'react-router';
 import AppDrawer from './AppDrawer';
 import Home from '../features/Home';
 import Login, { useLogin } from '../features/Auth';
+import SessionGate from '../features/Auth/SessionGate';
+import Security from '../features/Auth/Security';
+import { useAuthStore } from '../features/Auth/authSlice';
 import { microConfigs } from '@portal/micro';
 import type { Menu } from 'types';
 import { match } from 'ts-pattern';
@@ -39,6 +42,7 @@ function MenuRouter({ path }: Menu) {
 export default function AppRouter() {
   useLogin();
   const t = useI18n();
+  const generation = useAuthStore((s) => s.generation);
 
   return (
     <>
@@ -47,18 +51,21 @@ export default function AppRouter() {
       <link rel="icon" type="image/png" href="/logo.png" sizes="32x32" />
       <link rel="apple-touch-icon" href="/logo.png" />
       <link rel="shortcut icon" href="/logo.png" />
-      <Routes>
-        <Route path="/" element={<AppDrawer />}>
-          <Route path="/" element={<Home />} />
-          {microConfigs.map((item) => (
-            <Route key={`route-${item.getActiveRule()}`} path={item.getActiveRule()} element={item.getElement()}>
-              {item.getMenu().map((menu) => MenuRouter(menu))}
-            </Route>
-          ))}
-        </Route>
-        <Route path="login" element={<Login />} />
-        <Route path="*" element={<ErrorPage />} />
-      </Routes>
+      <SessionGate>
+        <Routes key={generation}>
+          <Route path="/" element={<AppDrawer />}>
+            <Route path="/" element={<Home />} />
+            <Route path="/settings/security" element={<Security />} />
+            {microConfigs.map((item) => (
+              <Route key={`route-${item.getActiveRule()}`} path={item.getActiveRule()} element={item.getElement()}>
+                {item.getMenu().map((menu) => MenuRouter(menu))}
+              </Route>
+            ))}
+          </Route>
+          <Route path="login" element={<Login />} />
+          <Route path="*" element={<ErrorPage />} />
+        </Routes>
+      </SessionGate>
     </>
   );
 }

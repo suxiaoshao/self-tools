@@ -6,7 +6,7 @@
  * @FilePath: /self-tools/server/packages/login/src/main.rs
  */
 use crate::router::get_router;
-use ::middleware::{get_cors, trace_layer};
+use ::middleware::trace_layer;
 use anyhow::Result;
 use std::net::SocketAddr;
 use tokio::net::TcpListener;
@@ -15,7 +15,6 @@ use tracing_subscriber::{
     Layer, fmt, prelude::__tracing_subscriber_SubscriberExt, util::SubscriberInitExt,
 };
 pub mod errors;
-mod middleware;
 mod router;
 
 #[tokio::main]
@@ -23,11 +22,9 @@ async fn main() -> Result<()> {
     tracing_subscriber::registry()
         .with(fmt::layer().with_filter(LevelFilter::INFO))
         .init();
-    // 设置跨域
-    let cors = get_cors()?;
 
     // 获取路由
-    let app = get_router()?.layer(cors).layer(trace_layer());
+    let app = get_router()?.layer(trace_layer());
 
     // run our app with hyper
     // `axum::Server` is a re-export of `hyper::Server`

@@ -33,18 +33,22 @@ impl GatewayProxy {
     }
 
     fn route_for(&self, host: &str, path: &str) -> Option<Route> {
+        if host == self.auth_host
+            || ((host == self.bookmarks_host || host == self.collections_host)
+                && (path == "/graphql" || path.starts_with("/api/")))
+        {
+            return None;
+        }
         self.routes
             .iter()
             .find(|route| {
-                if route.host != host {
+                if host == self.main_host
+                    && (path == "/api" || path.starts_with("/api/"))
+                    && !route.auth_api()
+                {
                     return false;
                 }
-
-                route
-                    .path_prefix
-                    .as_ref()
-                    .map(|prefix| path.starts_with(prefix))
-                    .unwrap_or(true)
+                route.matches(host, path)
             })
             .cloned()
     }
@@ -287,6 +291,19 @@ impl ProxyHttp for GatewayProxy {
             upstream_request.insert_header("Host", host)?;
         }
 
+        let api = ctx.upstream.as_ref().is_some_and(Route::auth_api);
+        let ceremony = api && ctx.upstream.as_ref().is_some_and(|r| r.sni == "login");
+        let cookies =
+            middleware::auth_http::forwarded_cookies(&upstream_request.headers, api, ceremony)
+                .map_err(|_| Error::explain(ErrorType::HTTPStatus(400), "invalid cookie header"))?;
+        upstream_request.remove_header("cookie");
+        if !cookies.is_empty() {
+            upstream_request.insert_header("cookie", cookies)?;
+        }
+        if api {
+            upstream_request.remove_header("authorization");
+        }
+
         upstream_request.remove_header(HEADER_TRACE_PARENT);
         upstream_request.insert_header(HEADER_TRACE_PARENT, &ctx.traceparent)?;
         upstream_request.remove_header(HEADER_X_REQUEST_ID);
@@ -325,6 +342,9 @@ impl ProxyHttp for GatewayProxy {
     where
         Self::CTX: Send + Sync,
     {
+        if ctx.upstream.as_ref().is_some_and(Route::auth_api) {
+            upstream_response.insert_header("cache-control", "no-store")?;
+        }
         upstream_response.remove_header(HEADER_TRACE_PARENT);
         upstream_response.insert_header(HEADER_TRACE_PARENT, &ctx.traceparent)?;
         upstream_response.remove_header(HEADER_X_REQUEST_ID);
@@ -395,6 +415,50 @@ fn logged_path(uri: &http::Uri) -> &str {
 #[cfg(test)]
 mod tests {
     use super::{logged_path, normalize_host, request_host};
+
+    #[test]
+    fn main_api_routes_are_exact_and_retired_hosts_do_not_fall_back() {
+        let config = crate::config::GatewayConfig::from_env();
+        let proxy = super::GatewayProxy::new(crate::route::build_routes(&config), &config);
+        for (path, sni) in [
+            ("/api/auth/session", "login"),
+            ("/api/bookmarks/graphql", "bookmarks"),
+            ("/api/collections/graphql", "collections"),
+        ] {
+            assert_eq!(proxy.route_for(&config.main_host, path).unwrap().sni, sni);
+        }
+        for path in [
+            "/api",
+            "/api/unknown",
+            "/api/authentic/session",
+            "/api/bookmarks/graphql-extra",
+        ] {
+            assert!(proxy.route_for(&config.main_host, path).is_none());
+        }
+        assert!(proxy.route_for(&config.auth_host, "/api/login").is_none());
+        assert!(
+            proxy
+                .route_for(&config.bookmarks_host, "/graphql")
+                .is_none()
+        );
+        assert!(
+            proxy
+                .route_for(&config.collections_host, "/graphql")
+                .is_none()
+        );
+        assert_eq!(
+            proxy
+                .route_for(&config.main_host, "/settings/security")
+                .unwrap()
+                .sni,
+            "portal"
+        );
+        assert!(
+            proxy
+                .route_for(&config.bookmarks_host, "/fetch-content")
+                .is_some()
+        );
+    }
 
     #[test]
     fn image_query_is_not_logged() {

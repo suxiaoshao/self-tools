@@ -10,7 +10,7 @@ Compare behavior, state ownership, error handling, serialization, accessibility 
 
 ## Decisions
 
-Record one decision per candidate in the canonical plan:
+Record the relevant decision briefly; use this table for multiple candidates:
 
 | Local implementation | Upstream capability/evidence | Semantic differences | Decision                                  | Files deleted or changed | Regression tests |
 | -------------------- | ---------------------------- | -------------------- | ----------------------------------------- | ------------------------ | ---------------- |
@@ -31,6 +31,6 @@ A same-named upstream feature alone does not establish semantic equivalence.
 - Does a breaking change invalidate the local abstraction rather than merely make it fail to compile?
 - Can duplicated frontend state return to the established component, router, Apollo, or server source of truth?
 
-## Deletion-first result
+## Result
 
-List removals before additions. Narrow every retained adapter to repository-specific responsibility and name the upstream API it delegates to. Resolve the selected candidates and their migration dependencies before their work packages become executable.
+Choose the approach that best satisfies the required behavior and maintenance constraints; neither old code nor upstream replacement is preferred by age alone. Record necessary removals alongside changes. Narrow every retained adapter to repository-specific responsibility and name the upstream API it delegates to. Resolve the selected candidates and their migration dependencies before their work packages become executable.

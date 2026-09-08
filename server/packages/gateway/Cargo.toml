@@ -12,3 +12,7 @@ tracing-subscriber.workspace = true
 
 [target.'cfg(not(windows))'.dependencies]
 pingora = { version = "0.8", features = ["proxy", "rustls"] }
+
+[dependencies.middleware]
+workspace = true
+features = ["auth-http"]

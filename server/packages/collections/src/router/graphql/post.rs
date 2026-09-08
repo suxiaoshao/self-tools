@@ -1,49 +1,74 @@
-/*
- * @Author: suxiaoshao suxiaoshao@gmail.com
- * @Date: 2024-01-06 01:30:13
- * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-01-22 18:34:48
- * @FilePath: /self-tools/server/packages/collections/src/router/graphql/post.rs
- */
+use crate::graphql::RootSchema;
 use async_graphql_axum::{GraphQLRequest, GraphQLResponse};
 use axum::{
     Extension,
     extract::{State, rejection::ExtensionRejection},
-    http::{
-        HeaderMap,
-        header::{AUTHORIZATION, AsHeaderName},
-    },
+    http::{HeaderMap, Method, StatusCode},
+    response::{IntoResponse, Response},
 };
-use middleware::TraceIdExt;
-
-use crate::graphql::RootSchema;
-
-pub(crate) struct Auth(pub(crate) String);
-
+use middleware::{TraceIdExt, auth_http};
+use thrift::auth::{AuthServiceCheckException, Context, FailureCode};
+use volo_thrift::MaybeException;
+pub(crate) struct Auth;
 pub(crate) async fn graphql_handler(
     State(schema): State<RootSchema>,
-    header: HeaderMap,
+    headers: HeaderMap,
     trace_id: Result<Extension<TraceIdExt>, ExtensionRejection>,
     req: GraphQLRequest,
-) -> GraphQLResponse {
-    let auth = get_header_value(&header, AUTHORIZATION).map(Auth);
-    let trace_id = trace_id.map(|x| x.0);
-    let mut req = req.into_inner();
-    if let Some(auth) = auth {
-        req = req.data(auth);
+) -> Response {
+    let origin = match auth_http::configured_origin() {
+        Ok(v) => v,
+        Err(_) => return failure(StatusCode::SERVICE_UNAVAILABLE, "AUTH_UNAVAILABLE"),
+    };
+    if auth_http::validate_request(&headers, &Method::POST, &origin).is_err() {
+        return failure(StatusCode::FORBIDDEN, "REQUEST_REJECTED");
     }
-    if let Ok(trace_id) = trace_id {
-        req = req.data(trace_id);
+    let token = match auth_http::cookie(&headers, auth_http::SESSION_COOKIE) {
+        Ok(Some(v)) => v,
+        Ok(None) => return failure(StatusCode::UNAUTHORIZED, "UNAUTHENTICATED"),
+        Err(_) => return failure(StatusCode::FORBIDDEN, "REQUEST_REJECTED"),
+    };
+    let client = match thrift::get_client() {
+        Ok(v) => v,
+        Err(_) => return failure(StatusCode::SERVICE_UNAVAILABLE, "AUTH_UNAVAILABLE"),
+    };
+    let trace = trace_id
+        .map(|v| v.0)
+        .unwrap_or_else(|_| TraceIdExt(String::new()));
+    match client
+        .check(Context {
+            trace_id: trace.0.clone().into(),
+            session_token: Some(token.into()),
+        })
+        .await
+    {
+        Ok(MaybeException::Ok(_)) => {}
+        Ok(MaybeException::Exception(AuthServiceCheckException::Err(e)))
+            if e.code == FailureCode::UNAUTHENTICATED =>
+        {
+            return failure(StatusCode::UNAUTHORIZED, "UNAUTHENTICATED");
+        }
+        _ => return failure(StatusCode::SERVICE_UNAVAILABLE, "AUTH_UNAVAILABLE"),
     }
-    schema.execute(req).await.into()
+    let mut response = GraphQLResponse::from(
+        schema
+            .execute(req.into_inner().data(Auth).data(trace))
+            .await,
+    )
+    .into_response();
+    response
+        .headers_mut()
+        .insert("cache-control", "no-store".parse().unwrap());
+    response
 }
-
-fn get_header_value<K>(header: &HeaderMap, key: K) -> Option<String>
-where
-    K: AsHeaderName,
-{
-    header
-        .get(key)
-        .and_then(|x| x.to_str().ok())
-        .map(|x| x.to_string())
+fn failure(status: StatusCode, code: &str) -> Response {
+    let mut response = (
+        status,
+        axum::Json(serde_json::json!({"code":code,"message":code})),
+    )
+        .into_response();
+    response
+        .headers_mut()
+        .insert("cache-control", "no-store".parse().unwrap());
+    response
 }

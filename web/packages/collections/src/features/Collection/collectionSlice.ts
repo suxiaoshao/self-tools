@@ -1,3 +1,4 @@
+import { authenticatedStateVersion, registerAuthenticatedReset } from 'custom-graphql';
 /*
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-08-29 16:36:31
@@ -82,6 +83,8 @@ const useCollectionsStore = create<CollectionSliceType>((set) => ({
   },
 }));
 
+registerAuthenticatedReset(() => useCollectionsStore.setState({ value: getDefault() }));
+
 export function useAllCollection() {
   const { value, setAllCollections, setLoading, setError } = useCollectionsStore(
     useShallow((state) => ({
@@ -93,13 +96,15 @@ export function useAllCollection() {
   );
   const [fn] = useLazyQuery(AllConllections);
   const fetchData = useCallback(async () => {
+    const version = authenticatedStateVersion();
     setLoading();
-    const { data, error } = await fn();
-    if (data) {
-      setAllCollections(data.allCollections);
-    }
-    if (error) {
-      setError(error);
+    try {
+      const { data, error } = await fn();
+      if (version !== authenticatedStateVersion()) return;
+      if (data) setAllCollections(data.allCollections);
+      if (error) setError(error);
+    } catch (error) {
+      if (version === authenticatedStateVersion()) setError(error instanceof Error ? error : new Error('Query failed'));
     }
   }, [fn, setAllCollections, setLoading, setError]);
   useEffect(() => {

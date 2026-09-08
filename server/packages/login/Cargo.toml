@@ -12,14 +12,17 @@ axum = { workspace = true, features = ["json"] }
 
 # error
 anyhow.workspace = true
-thiserror.workspace = true
+
+# cookies
+base64.workspace = true
+getrandom = "0.4.3"
+time = { workspace = true, features = ["formatting"] }
 
 # json
-serde.workspace = true
 serde_json.workspace = true
 
 # cors
-middleware = { workspace = true, features = ["cors", "trace"] }
+middleware = { workspace = true, features = ["auth-http", "trace"] }
 
 # log
 tracing.workspace = true
@@ -28,10 +31,6 @@ tracing-subscriber.workspace = true
 # thrift
 thrift.workspace = true
 volo-thrift.workspace = true
-
-# webauthn
-webauthn-rs = { version = "0.5.5", features = ["danger-allow-state-serialisation"] }
-url.workspace = true
 
 [dev-dependencies]
 axum = { workspace = true, features = ["json", "macros"] }

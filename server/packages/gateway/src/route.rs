@@ -1,5 +1,4 @@
 use crate::config::GatewayConfig;
-
 #[derive(Clone)]
 pub struct Route {
     pub host: String,
@@ -8,43 +7,62 @@ pub struct Route {
     pub tls: bool,
     pub sni: String,
 }
-
+impl Route {
+    pub fn matches(&self, host: &str, path: &str) -> bool {
+        self.host == host
+            && self.path_prefix.as_ref().is_none_or(|p| {
+                if p.ends_with('/') {
+                    path.starts_with(p)
+                } else {
+                    path == p
+                }
+            })
+    }
+    pub fn auth_api(&self) -> bool {
+        self.path_prefix
+            .as_ref()
+            .is_some_and(|p| p.starts_with("/api/"))
+    }
+}
 pub fn build_routes(config: &GatewayConfig) -> Vec<Route> {
+    let route = |host: &String, path: Option<&str>, upstream: &String, sni: &str| Route {
+        host: host.clone(),
+        path_prefix: path.map(Into::into),
+        upstream: upstream.clone(),
+        tls: false,
+        sni: sni.into(),
+    };
     vec![
-        Route {
-            host: config.auth_host.clone(),
-            path_prefix: Some("/api".to_string()),
-            upstream: config.login_upstream.clone(),
-            tls: false,
-            sni: "login".to_string(),
-        },
-        Route {
-            host: config.bookmarks_host.clone(),
-            path_prefix: None,
-            upstream: config.bookmarks_upstream.clone(),
-            tls: false,
-            sni: "bookmarks".to_string(),
-        },
-        Route {
-            host: config.collections_host.clone(),
-            path_prefix: Some("/graphql".to_string()),
-            upstream: config.collections_upstream.clone(),
-            tls: false,
-            sni: "collections".to_string(),
-        },
-        Route {
-            host: config.collections_host.clone(),
-            path_prefix: None,
-            upstream: config.collections_web_upstream.clone(),
-            tls: false,
-            sni: "collections-web".to_string(),
-        },
-        Route {
-            host: config.main_host.clone(),
-            path_prefix: None,
-            upstream: config.main_web_upstream.clone(),
-            tls: false,
-            sni: "portal".to_string(),
-        },
+        route(
+            &config.main_host,
+            Some("/api/auth/"),
+            &config.login_upstream,
+            "login",
+        ),
+        route(
+            &config.main_host,
+            Some("/api/bookmarks/graphql"),
+            &config.bookmarks_upstream,
+            "bookmarks",
+        ),
+        route(
+            &config.main_host,
+            Some("/api/collections/graphql"),
+            &config.collections_upstream,
+            "collections",
+        ),
+        route(
+            &config.bookmarks_host,
+            None,
+            &config.bookmarks_upstream,
+            "bookmarks",
+        ),
+        route(
+            &config.collections_host,
+            None,
+            &config.collections_web_upstream,
+            "collections-web",
+        ),
+        route(&config.main_host, None, &config.main_web_upstream, "portal"),
     ]
 }

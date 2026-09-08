@@ -1,10 +1,10 @@
 # Product and System Surfaces
 
-Use this reference only to decide what the canonical plan must assess. Put implementation semantics in the routed contract reference and concrete output in [plan-template.md](plan-template.md).
+Use this reference only to decide which areas the change affects. Put implementation semantics in the routed contract reference and concrete output in [plan-template.md](plan-template.md).
 
 ## Applicability rules
 
-Record only surfaces changed by the task and material boundaries deliberately left unchanged. Keep canonical S-IDs so plans and references remain comparable.
+Record only surfaces changed by the task and material boundaries deliberately left unchanged. Use S-IDs when cross-references help; no matrix is required for a simple scope.
 
 - Changed surfaces link current evidence to target contracts and work packages.
 - A material no-change decision names the inspected boundary and reason.
@@ -14,9 +14,9 @@ Owner/child plans reference their assigned S-IDs without copying the canonical s
 
 ## Canonical taxonomy
 
-This table is the sole S-ID taxonomy. Select applicable rows without renaming their IDs.
+This is a routing aid, not an audit checklist. Keep existing IDs when referencing rows.
 
-| ID     | Surface                                                         | Apply when the task touches                                                                                                                  | Required target decision                                                                                  |
+| ID     | Surface                                                         | Apply when the task touches                                                                                                                  | Relevant design questions                                                                                 |
 | ------ | --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
 | `S-01` | Workspace and owner boundaries                                  | Packages, crates, modules, exports, aliases, shared code, manifests, file moves, or ownership                                                | Optimal boundary, public/private API, consumers, additions/moves/deletions, owner documentation           |
 | `S-02` | UI composition, interaction, accessibility, responsive behavior | Components, hooks, forms, dialogs, tables, loading/empty/error states, keyboard, focus, ARIA, or layout                                      | Composition owner, state behavior, reused primitives, accessibility and responsive contract               |

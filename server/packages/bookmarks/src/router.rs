@@ -18,7 +18,10 @@ pub(crate) fn get_router() -> anyhow::Result<Router> {
         fetch_content::image_router(std::sync::Arc::new(fetch_content::ImageProxyState::new()?));
 
     let router = Router::new()
-        .route("/graphql", post(graphql_handler).get(graphql_playground))
+        .route(
+            "/api/bookmarks/graphql",
+            post(graphql_handler).get(graphql_playground),
+        )
         .layer(middleware::trace_layer())
         .with_state(schema)
         .merge(images);

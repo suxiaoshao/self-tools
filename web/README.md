@@ -10,7 +10,7 @@
 | `packages/bookmarks`    | 书签业务模块；默认导出实现 `MicroConfig` 的 `BookmarkConfig`，由 `portal` 组合。            |
 | `packages/collections`  | 收藏业务模块；默认导出实现 `MicroConfig` 的 `CollectionConfig`，由 `portal` 组合。          |
 | `common/types`          | 跨包类型，以及 `MicroConfig`、菜单和路由接入契约。                                          |
-| `common/custom-graphql` | Apollo Client 创建、认证请求头和统一错误处理。                                              |
+| `common/custom-graphql` | Apollo Client 创建、同源 Cookie 请求、认证失效通知和错误处理。                              |
 | `common/custom-table`   | TanStack Table 的表格、分页和 column helper 封装。                                          |
 | `common/details`        | 详情页展示组件和类型。                                                                      |
 | `common/edit`           | Monaco Editor 封装及其样式入口。                                                            |
@@ -54,19 +54,37 @@ schema、operation 或 codegen 配置变化时，在受影响的 package 运行 
 
 ## 地址配置现状
 
-当前 Vite `base`、开发 HMR、认证接口、GraphQL 地址和部分资源地址仍直接使用 `sushao.top` 相关域名。这是现状，不是新增代码应复制的配置方式。新增或调整服务地址时，优先建立集中且可按环境切换的配置入口，并一次性更新相关消费者；不要把线上域名继续散落到新文件。
+认证和 GraphQL 使用当前主站的相对 `/api/...` 路径；Vite `base`、开发 HMR 和部分资源地址仍使用 `sushao.top` 相关域名。这是现状，不是新增代码应复制的配置方式。新增或调整服务地址时，优先建立集中且可按环境切换的配置入口，并一次性更新相关消费者；不要把线上域名继续散落到新文件。
+
+## 登录与会话边界
+
+portal 启动清除旧 localStorage `auth` 并查询 `/api/auth/session`，明确区分 checking、
+anonymous、authenticated 和 unavailable。登录页以 Passkey 为主，密码表单按需展开；
+添加、命名和删除移到 `/settings/security`，超过 5 分钟先再认证并继续操作。
+密码和 Passkey 登录都只接收用户与有效期，session token 由 HttpOnly Cookie 持有。
+服务端退出成功后才更新页面状态；请求未确认时保留错误和重试入口。
+
+所有请求携带 `X-Self-Tools-Request: 1`，修改请求用 JSON；同源 Origin 与 Cookie 规则由
+[后端](../server/README.md#管理员会话与通行密钥) 拥有。WebAuthn options 和 response 的
+Base64URL 转换集中在 Auth service，不把原始 Credential 对象直接 JSON.stringify。
+未支持、取消、无 Passkey 时可使用密码，不自动反复唤起认证。
+
+共享 `custom-graphql` 只对 HTTP 401 通知 portal，通过请求代次避免旧 401 清除新登录。
+登录/退出/重新初始化时中止旧业务请求、清 Apollo cache，并清两个集合树的内存投影；
+受保护路由随代次卸载。403、503、业务错误和密码错误不触发全局退出。
+安全操作只允许一个 pending 流程，卸载/取消中止等待；已到达服务器的变更仍需刷新状态确认。
 
 ## 图片来源兼容
 
 bookmarks 的现有 `getImageUrl` 和图片标签继续调用 `/fetch-content`。服务端仅接受已核验的起点、晋江封面与作者头像来源，并规范化为 HTTPS；未知来源及失败图片沿用现有组件或浏览器的加载失败效果，不添加自动重试。不能把页面装饰图、读者头像或任意图床地址当成支持来源。新增 CDN 模式由后端图片策略拥有，并需官方页面证据和测试。
 
-前端页面 Origin 必须出现在服务端 `CORS_ALLOWED_ORIGINS` 中；默认仅 `https://sushao.top`，本地直连端口需显式加入。配置规则、限额和网络前置条件见 [后端说明](../server/README.md#图片代理与跨域来源)。
+图片或遗留跨域入口的页面 Origin 使用 `CORS_ALLOWED_ORIGINS`；认证与 GraphQL 必须经配置的主站 HTTPS Origin，不提供 HTTP localhost 认证例外。配置规则、限额和网络前置条件见 [后端说明](../server/README.md#图片代理与跨域来源)。
 
 ## 命令与验证
 
 - 根级脚本以根目录 `package.json` 为准，package 级脚本和 exports 以目标包的 `package.json` 为准；可用 `pnpm run` 和 `pnpm --filter <package> run` 查看当前入口，不在本文复制完整清单。
 - 根目录 `knip.json` 是 unused files、exports、types 和 dependencies 的配置事实源。删除依赖前先检查打包、codegen、语言服务和 CLI 等隐式消费者；生成代码与基础 UI 的既有忽略项不应在业务代码中重复处理。
-- 修改前端源码或配置后运行 `pnpm lint`。
-- 修改行为、测试或测试配置时再运行 `pnpm test`。
-- 修改 Vite、生产 bundle、package export 或构建链路时再运行 `pnpm build`。
-- 文档改动至少运行格式检查和 `git diff --check`；依赖浏览器、域名、后端或其他外部服务的验证无法执行时，应明确说明未覆盖范围。
+- 前端检查入口为 `pnpm lint`；开发阶段按受影响文件和包选择其中必要的格式、lint、类型检查，具体参数以脚本或工具帮助为准。
+- 行为或测试配置变化时运行受影响的测试；`pnpm test` 是仓库测试入口。
+- Vite、生产 bundle、package export 或构建链路变化时，选择能覆盖受影响产物的构建；`pnpm build` 是整体入口。
+- 验证阶段与停止条件遵循根 `AGENTS.md`。文档改动检查修改文件的格式和 `git diff --check`；依赖浏览器、域名、后端或其他外部服务的验证无法执行时，应明确说明未覆盖范围。

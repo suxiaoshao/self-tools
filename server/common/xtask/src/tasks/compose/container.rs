@@ -325,20 +325,16 @@ mod tests {
     use crate::compose_types::ComposeFile;
 
     #[test]
-    fn login_cors_passthrough_preserves_missing_empty_and_custom_origins() {
+    fn login_auth_origin_passthrough_preserves_missing_empty_and_custom_origin() {
         let compose: ComposeFile = serde_yaml::from_str(include_str!(
             "../../../../../../docker/compose/docker-compose.yml"
         ))
         .unwrap();
         let login = &compose.services["login"];
-        let key = "CORS_ALLOWED_ORIGINS";
+        let key = "AUTH_ORIGIN";
         assert_eq!(login.environment.get(key), Some(&None));
         assert!(login.env_file.as_slice().is_empty());
-        for value in [
-            None,
-            Some(""),
-            Some("https://custom.example,http://localhost:3000"),
-        ] {
+        for value in [None, Some(""), Some("https://custom.example")] {
             let project = value
                 .map(|v| (key.to_string(), v.to_string()))
                 .into_iter()

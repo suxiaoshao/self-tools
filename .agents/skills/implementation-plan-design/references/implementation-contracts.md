@@ -2,7 +2,7 @@
 
 Use this reference after tracing current behavior. Define only implementation owned within a package, crate, module, component, state owner, database owner, or generated-artifact owner. Put boundary contracts in [integration-contracts.md](integration-contracts.md) and error identity/propagation in [error-contracts.md](error-contracts.md).
 
-Follow the representation rules in [plan-template.md](plan-template.md). This reference defines required semantics; it does not require those semantics to be compressed into tables.
+Follow the representation rules in [plan-template.md](plan-template.md). Select details that resolve actual ambiguity or protect a changed invariant; do not instantiate every field below.
 
 ## Contents
 
@@ -21,7 +21,7 @@ Verify exact current names and behavior from owner README files and executable s
 
 ## Files, modules, and ownership
 
-For every added, modified, moved, generated, vendored, or deleted path, define:
+For meaningful ownership or source-of-truth changes, identify relevant paths and:
 
 - owning package, crate, service, deployment resource, or repository scope;
 - one responsibility and explicit non-responsibilities;
@@ -31,50 +31,45 @@ For every added, modified, moved, generated, vendored, or deleted path, define:
 - legacy paths and consumers removed in the same work;
 - owner README or ADR updates required by the final architecture.
 
-Show these paths in the plan's annotated owner file trees. Put the stable F-ID, action, artifact kind, responsibility, and source-of-truth role on the tree node; put longer dependency-direction or non-responsibility reasoning immediately below the tree. Do not repeat the same path inventory in a table.
+Use an annotated tree when it clarifies ownership; a short file/symbol list suffices otherwise.
 
 Choose the optimal boundary by cohesion, dependency direction, testability, and long-term ownership. Require named stable consumers before creating shared code. For a cross-owner refactor, update the contract, all consumers, manifests, aliases, tests, generated artifacts, deployment inputs, and documentation as one coordinated design.
 
 ## Types, functions, and methods
 
-For every new or materially changed type, provide a language-tagged target declaration with exact fields/variants, visibility, optionality/nullability, derives or framework representation, generics and bounds when relevant. Define invariants, identity/equality/order, serialization, invalid states, and conversions below the declaration. Distinguish domain, persistence, transport, generated, form, client-state, browser, and view-model types.
+For new or changed public/cross-owner data contracts, provide precise target declarations for relevant fields, visibility, nullability, serialization, and bounds. Ordinary private types can be designed during implementation. Define invariants, identity/equality/order, serialization, invalid states, and conversions below the declaration. Distinguish domain, persistence, transport, generated, form, client-state, browser, and view-model types.
 
 Let the integration contract own wire types. Use generated GraphQL types at GraphQL boundaries; allow a handwritten frontend derivative only when it represents a distinct form, normalized state, browser value, or view model with an explicit conversion and drift check.
 
-For every new or materially changed function, method, handler, resolver, hook, or service operation, show the exact target signature. For Rust include required trait implementations, associated types, inherent `impl` signatures, visibility, ownership/borrowing, and async bounds; for TypeScript include interfaces/types, function or hook signatures, component props/callbacks, and exported store/selectors. Then define:
+For new or changed public/cross-owner operations, show the target signature when needed to fix the contract. Leave ordinary private helpers to implementation. For Rust include required trait implementations, associated types, inherent `impl` signatures, visibility, ownership/borrowing, and async bounds; for TypeScript include interfaces/types, function or hook signatures, component props/callbacks, and exported store/selectors. Describe the relevant semantics:
 
-- exact target signature and visibility;
 - callers, call frequency, input ownership, validation, and normalization;
 - output, side effects, state changes, and authorization;
 - runtime, browser, thread, connection, or transaction requirements;
 - typed internal failures and referenced canonical Error IDs;
 - retryability, idempotency, partial progress, and tests.
 
-Do not leave an implementer to invent a signature, invariant, conversion, or failure boundary. Use pseudocode only for behavior that cannot be expressed by declarations; do not turn the plan into full implementation bodies.
+Resolve consequential invariants, conversions, and failure boundaries before implementation; ordinary implementation choices remain with the implementer. Use pseudocode only for behavior that cannot be expressed by declarations; do not turn the plan into full implementation bodies.
 
 ## React components and hooks
 
-For every changed component or hook, provide the exact target props/callback/ref or hook signature, then define its owner, parent composition point, required providers, route/outlet relationship, and local/URL/Zustand/Apollo/persisted state.
+Specify changed component/hook contracts and relevant composition or state ownership. Reference unchanged props and providers in source.
 
-Specify loading, empty, partial, validation, error, disabled, and success behavior; mutation completion and invalidation; effect setup/cleanup; double-submit and stale-response behavior; semantic structure, labels, keyboard, focus entry/return, ARIA relationships, screen-reader text, and responsive behavior.
+Where behavior is affected, specify loading, empty, partial, validation, error, disabled, or success states; mutation completion and invalidation; effect setup/cleanup; double-submit and stale-response behavior; semantic structure, labels, keyboard, focus entry/return, ARIA relationships, screen-reader text, and responsive behavior.
 
 Use repository instructions and the current owner documentation when selecting or changing shared UI or vendored components. Record the accessible name of icon-only controls, but do not produce a separate icon inventory.
 
 ## Routes, Zustand, and browser persistence
 
-Classify routes, Zustand, and browser persistence separately in the applicability matrix. Use the separate route-tree, Zustand-contract, and browser-persistence sections in [plan-template.md](plan-template.md); do not merge them into one generic frontend-state inventory.
+Distinguish routing, in-memory state, and persisted data where their lifecycles differ. A single clear description may cover their relationship.
 
-For each route-tree node, define `Add / Modify / Delete`, exact router or feature-registration path and symbol, URL pattern and parameters, owner/composition point, parent/outlet, menu/navigation, authentication boundary, deep-link/unknown-route behavior, route lifecycle, removed-URL compatibility or redirect, consumer cleanup, and tests. Use a route tree even though the repository uses declarative route configuration; use a filesystem tree only for a verified file-based router.
+For changed routing, identify URL/registration ownership and relevant navigation or access behavior. For changed stores, identify authoritative state, readers/writers, and relevant reset or stale-result behavior. For browser persistence, specify the literal key and serialized contract, with migration, malformed-data, and account-isolation behavior where affected.
 
-For each Zustand contract, define `Add / Modify / Delete`, exact store/hook/member symbols, authoritative owner, state/actions/selectors/subscribers/middleware, writers/readers, creation and hydration, route/auth/reload reset, stale behavior, renamed/deleted consumer cleanup, and tests. Express the store surface as exact TypeScript declarations; use concise pseudocode or a state diagram for non-trivial hydration, reset, stale-result, or cross-store behavior.
-
-For each browser-persistence table row, define `Add / Modify / Delete`, exact owner and literal key, schema/version contract reference, missing/malformed/unknown-version handling, old-key/schema migration, deletion and interrupted-migration behavior, account/logout/reload/cross-tab lifecycle, privacy, and tests. Put the exact serialized type and parser/serializer signatures in a TypeScript contract block; use pseudocode for multi-step migration.
-
-Do not collapse these into generic “frontend state.” Reference decision, work-package, requirement, and test IDs instead of repeating implementation prose in the inventory.
+Describe the actual changed paths. Do not require every route, store, or persisted value to acquire new lifecycle mechanisms or a separate test inventory.
 
 ## State and data authority
 
-Assign one authoritative owner to every mutable value. Record writers, readers, derived projections, persistence, invalidation/reset, and stale behavior through ST-labeled numbered steps or Mermaid flow/sequence/state diagrams. Use a table only when several homogeneous values genuinely need comparison.
+Assign one authoritative owner to every mutable value. Record writers, readers, derived projections, persistence, invalidation/reset, and stale behavior using prose, steps, or a diagram as appropriate. Use a table only when several homogeneous values genuinely need comparison.
 
 Use the current repository implementation to choose among component state, URL/router state, Zustand, Apollo/server data, browser persistence, request context, service-owned resources, and PostgreSQL. Any duplicated projection needs a reason, conversion, refresh path, stale behavior, and reset boundary.
 
@@ -82,25 +77,19 @@ Inspect the actual cache policy rather than assuming one. Define resets caused b
 
 ## Database writes and migrations
 
-For every persistence change, provide the exact target SQL, Diesel schema/model declaration, or repository-native query signature, then define the final table/column/type/default/constraint/foreign-key/index/uniqueness design, query/filter/order/page/count impact, existing-data conversion, loss risk, rollback, and all model/service/transport/UI consumers.
+Specify affected schema/query contracts, consumers, and critical data invariants. For writes, establish the necessary atomicity and failure behavior; for schema or existing-data changes, include migration and rollback/loss boundaries. Do not invent distributed failure scenarios where no external action exists.
 
-For every write, name the transaction or atomicity boundary and behavior when an external action succeeds but a later database, generated-artifact, cache, or UI update fails. Discover the actual migration and schema-generation workflow from owner documentation, configuration, and source; never assume startup applies migrations or one owner's generated layout matches another's.
+Discover migration and generation commands from their executable owners; never assume startup applies migrations. Use an explicit test database when verification needs persisted data.
 
 ## Async lifecycle and concurrency
 
-Apply lifecycle detail only when asynchronous work or mutable resources make it relevant.
+Identify resources or results that can outlive their owner or conflict with a newer operation. Specify cancellation, timeout, cleanup, ordering, or transaction boundaries only where those risks exist in the changed path. Reuse framework/RAII/task semantics before introducing new state machines or recovery flows.
 
-For browser work, define effect/listener ownership, abort behavior, unmount/navigation behavior, stale or out-of-order results, concurrent actions, double-submit prevention, and retry owner.
-
-For Rust work, define task and resource ownership, `Send`/`Sync`/`Clone` requirements, request cancellation, timeout/retry ownership, blocking boundaries, failure/partial-completion semantics, connection use across awaits/concurrent queries, transaction cancellation, and shutdown only for long-lived resources.
-
-Mark these details `N/A` for ordinary synchronous work instead of inventing retry, TTL, offline, streaming, cancellation, or shutdown systems.
-
-Use numbered steps for a single linear lifecycle, `sequenceDiagram` for interactions among participants, and `stateDiagram-v2` for recurring state transitions. Do not add a diagram for ordinary synchronous work.
+A lifecycle risk considered during design does not automatically require a new UI, subsystem, or exhaustive manual test. Verify changed critical behavior at the narrowest effective level; follow the current delivery stage for broader scenarios.
 
 ## Generated and synchronized artifacts
 
-For every affected chain, show an annotated text chain or Mermaid flowchart labeled with one G-ID, then define:
+For affected generated artifacts, identify:
 
 - handwritten source of truth;
 - maintained snapshot or intermediate, if any;
@@ -116,14 +105,12 @@ Change the handwritten source first. Derive exact paths and commands from owner 
 
 For every changed user-visible label, message, validation result, error, accessibility string, title, menu item, or formatted value, define exact key ownership, all supported locale files, meaning, interpolation/plural/select variables, caller and UI state, and fallback.
 
-Keep the i18n key inventory as a table because keys share comparable fields. Reuse an existing key only when semantics and variables match. Keep supported locale key sets and variables synchronized. Error-specific `code + safe details -> key -> UI` mapping belongs in [error-contracts.md](error-contracts.md).
+Use a key table only when multiple mappings need comparison; simple changes can reference the locale files directly. Reuse an existing key only when semantics and variables match. Keep supported locale key sets and variables synchronized. Error-specific `code + safe details -> key -> UI` mapping belongs in [error-contracts.md](error-contracts.md).
 
 ## Security and observability
 
-For each affected trust boundary, define authentication and authorization inputs, credential/token/cookie/browser-storage lifecycle, CORS and header handling, secret/environment ownership, forwarded-header trust, WebAuthn or binary serialization, database authorization, public-error allowlist, and redaction.
+For changed trust boundaries, identify untrusted inputs, validation, authorization, and protected data. Specify only affected credential, origin, storage, forwarding, or disclosure rules. Do not redesign all security mechanisms because one boundary changes.
 
-For observable paths, define event/span owner, structured fields, severity, operation/path/upstream/status context, trace/request correlation, sampling where relevant, and tests. Inspect current logging behavior, especially headers and error sources, before changing request tracing.
+For changed diagnostic paths, inspect what is recorded and define the fields, redaction, and correlation actually needed. Do not introduce a tracing system or sampling policy for a local logging fix.
 
-When several trust boundaries or credential transitions participate, use a Mermaid flowchart or sequence diagram with exact owners and C/Error IDs; keep allowlists, redaction rules, and rationale in prose or lists.
-
-Never persist or log real credentials, tokens, cookies, passwords, private keys, production database URLs, full environment contents, or internal causes exposed through public errors.
+Keep real credentials, tokens, private keys, environment secrets, and internal error causes out of public responses and diagnostics exposed to clients.

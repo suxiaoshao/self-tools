@@ -15,6 +15,7 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "collections": "workspace:^",
+    "custom-graphql": "workspace:^",
     "i18n": "workspace:^",
     "next-themes": "^0.4.6",
     "sonner": "^2.0.7",

@@ -1,19 +1,17 @@
 import { useEffect } from 'react';
-import { useNavigate, useLocation, createSearchParams } from 'react-router';
+import { registerAuthBoundary } from 'custom-graphql';
 import { useAuthStore } from './authSlice';
-import { useShallow } from 'zustand/react/shallow';
-
 export default function useLogin() {
-  const auth = useAuthStore(useShallow((state) => state.value));
-  const navigate = useNavigate();
-  const { pathname, search, hash } = useLocation();
-
   useEffect(() => {
-    if (auth === null) {
-      const url = pathname + search + hash;
-      if (pathname !== '/login') {
-        navigate({ pathname: '/login', search: createSearchParams({ from: url }).toString() });
-      }
-    }
-  }, [auth, hash, navigate, pathname, search]);
+    const unregister = registerAuthBoundary({
+      generation: () => useAuthStore.getState().generation,
+      unauthenticated: (generation) => useAuthStore.getState().invalidate(generation),
+    });
+    const controller = new AbortController();
+    void useAuthStore.getState().initialize(controller.signal);
+    return () => {
+      controller.abort();
+      unregister();
+    };
+  }, []);
 }
