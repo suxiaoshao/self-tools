@@ -108,6 +108,8 @@ diesel print-schema
 - gateway 检查自身 HTTP、三个 API upstream，以及 TLS 端口可连接。证书在正常启动时加载；探针不承担证书到期、完整 TLS 协议或宿主前端可用性验证。
 - auth/bookmarks/collections 支持 `--migrate`，读取各自数据库 URL，用嵌入 migration 在会话 advisory lock 下显式升级。已有未知 migration 时拒绝降级，不提供自动 down。正常启动和就绪检查均只读取 migration 记录；缺失、未应用或比镜像更新的 schema 拒绝就绪。
 
+超时预算集中在 `service-health/src/budget.rs`，沿调用链递增：数据库检查 5s → auth RPC 6s（远端 DNS 另限 1s）→ API HTTP 探测 9s → gateway 本地 HTTP 11s，加 TLS 连接最多共 13s。HTTP 预算覆盖 DNS、连接、写请求和读响应的全过程，gateway 的三个 upstream 并行检查。Compose 的服务 healthcheck 为 15s，留出 CLI 启动余量；xtask 每个服务最多等待 90s。调整预算须同步外层探测与 Compose，避免健康但较慢的依赖被提前判失败。
+
 共享实现位于 `common/service-health`；`migrations/` 为唯一版本事实源，build.rs 跟踪其改动。Diesel schema 生成仍使用服务目录中的 `diesel print-schema`。数据库迁移检查回归需要专用 `self_tools_health_test` 库和 `SERVICE_HEALTH_TEST_PG`，通过 `cargo test -p service-health --all-features schema_gate_is_read_only_and_migration_is_explicit -- --ignored` 显式运行。
 
 ## GraphQL 边界

@@ -49,7 +49,7 @@ pub fn check(db: &mut PgConnection, migrations: EmbeddedMigrations) -> Result<()
 pub async fn ready(pool: PgPool, migrations: EmbeddedMigrations) -> bool {
     matches!(
         tokio::time::timeout(
-            Duration::from_secs(5),
+            crate::budget::DATABASE,
             tokio::task::spawn_blocking(move || {
                 let mut db = pool
                     .get_timeout(Duration::from_secs(2))

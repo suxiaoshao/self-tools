@@ -37,7 +37,7 @@ services:
     healthcheck:
       test: ['CMD', '/auth', '--check-ready']
       interval: 10s
-      timeout: 8s
+      timeout: 15s
       start_period: 10s
       retries: 3
   login:
@@ -52,7 +52,7 @@ services:
     healthcheck:
       test: ['CMD', '/login', '--check-ready']
       interval: 10s
-      timeout: 8s
+      timeout: 15s
       start_period: 10s
       retries: 3
   bookmarks:
@@ -72,7 +72,7 @@ services:
     healthcheck:
       test: ['CMD', '/bookmarks', '--check-ready']
       interval: 10s
-      timeout: 8s
+      timeout: 15s
       start_period: 10s
       retries: 3
   collections:
@@ -92,7 +92,7 @@ services:
     healthcheck:
       test: ['CMD', '/collections', '--check-ready']
       interval: 10s
-      timeout: 8s
+      timeout: 15s
       start_period: 10s
       retries: 3
   web:
@@ -128,7 +128,7 @@ services:
     healthcheck:
       test: ['CMD', '/gateway', '--check-ready']
       interval: 10s
-      timeout: 8s
+      timeout: 15s
       start_period: 10s
       retries: 3
 volumes:

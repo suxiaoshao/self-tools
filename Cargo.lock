@@ -4905,6 +4905,7 @@ dependencies = [
  "anyhow",
  "diesel",
  "diesel_migrations",
+ "serde_yaml",
  "thrift",
  "tokio",
 ]

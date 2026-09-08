@@ -32,7 +32,7 @@ async fn main() -> anyhow::Result<()> {
             return Ok(());
         }
         service_health::Mode::CheckReady => {
-            return service_health::probe_http("127.0.0.1:8080");
+            return service_health::probe_http("127.0.0.1:8080").await;
         }
         service_health::Mode::Migrate => {
             return service_health::database::migrate("COLLECTIONS_PG", MIGRATIONS);

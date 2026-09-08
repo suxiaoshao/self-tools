@@ -25,7 +25,7 @@ async fn main() -> Result<()> {
             return Ok(());
         }
         service_health::Mode::CheckReady => {
-            return service_health::probe_http("127.0.0.1:8000");
+            return service_health::probe_http("127.0.0.1:8000").await;
         }
         service_health::Mode::Migrate => unreachable!(),
         service_health::Mode::Serve => (),
