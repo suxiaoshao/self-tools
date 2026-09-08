@@ -13,7 +13,7 @@ import { format } from 'time';
 import ChapterTableAction from './ChapterTableAction';
 import ChapterBatchUpdate from './ChapterBatchUpdate';
 
-type Data = GetNovelQuery['getNovel']['chapters'][0];
+type Data = NonNullable<NonNullable<GetNovelQuery['getNovel']>['chapters']>[0];
 
 interface ChaptersProps extends Omit<CustomTableProps<Data>, 'tableInstance'> {
   chapters: Data[];

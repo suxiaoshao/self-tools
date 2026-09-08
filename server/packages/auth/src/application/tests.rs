@@ -88,7 +88,7 @@ impl Authenticator {
         json!({"id":encode(&self.id),"rawId":encode(&self.id),"type":"public-key","extensions":{},"response":{"authenticatorData":encode(data),"clientDataJSON":encode(client),"signature":encode(signature),"userHandle":null}}).to_string()
     }
 }
-fn app(pool: DbPool, password: &str) -> Arc<Application> {
+pub(super) fn app(pool: DbPool, password: &str) -> Arc<Application> {
     let username = "test-admin".to_owned();
     let secret = b"test-only-hmac-secret".to_vec();
     let fingerprint = session::fingerprint(&secret, &username, password);
@@ -113,7 +113,6 @@ fn app(pool: DbPool, password: &str) -> Arc<Application> {
 }
 fn context(token: Option<&str>) -> Context {
     Context {
-        trace_id: "test".into(),
         session_token: token.map(|v| v.to_owned().into()),
     }
 }
@@ -159,6 +158,32 @@ async fn persistent_sessions_and_signed_passkey_lifecycle() {
         .unwrap();
     let token = login.session_token.to_string();
     let ctx = context(Some(&token));
+    let missing_id = Uuid::new_v4().to_string();
+    let missing_ctx = ctx.clone();
+    let absent = app
+        .run(move |app, db| app.delete_passkey(db, &missing_ctx, &missing_id))
+        .await
+        .unwrap();
+    assert!(!absent.session_invalidated);
+    // A rejection after creating a replacement session must roll back both the creation
+    // and revocation of the old session, while the in-memory attempt budget stays consumed.
+    let rollback_ctx = ctx.clone();
+    let rejected = app
+        .run::<()>(move |app, db| {
+            app.login_password(db, &rollback_ctx, "test-admin", "test-password")?;
+            Err(Rejection::AuthenticationFailed.into())
+        })
+        .await;
+    assert!(matches!(
+        rejected,
+        Err(Error::Rejected(Rejection::AuthenticationFailed))
+    ));
+    let original_ctx = ctx.clone();
+    assert!(
+        app.run(move |app, db| app.check(db, &original_ctx))
+            .await
+            .is_ok()
+    );
     assert_eq!(
         login.session.absolute_expires_at - login.session.idle_expires_at,
         session::ABSOLUTE - session::IDLE
@@ -200,7 +225,7 @@ async fn persistent_sessions_and_signed_passkey_lifecycle() {
     assert!(matches!(
         app.run(move |a, db| a.finish_registration(db, &register_ctx, &credential))
             .await,
-        Err(Error::CeremonyInvalid)
+        Err(Error::Rejected(Rejection::CeremonyInvalid))
     ));
     // The browser binding is checked before consuming; a forged browser cannot
     // consume another browser's pending login.
@@ -217,7 +242,7 @@ async fn persistent_sessions_and_signed_passkey_lifecycle() {
     assert!(matches!(
         app.run(move |a, db| a.finish_login(db, &forged, &credential))
             .await,
-        Err(Error::CeremonyInvalid)
+        Err(Error::Rejected(Rejection::CeremonyInvalid))
     ));
     let credential = key.assertion(&options, 1, "https://sushao.top", false);
     let c = valid.clone();
@@ -229,7 +254,7 @@ async fn persistent_sessions_and_signed_passkey_lifecycle() {
     assert!(matches!(
         app.run(move |a, db| a.finish_login(db, &valid, &credential))
             .await,
-        Err(Error::CeremonyInvalid)
+        Err(Error::Rejected(Rejection::CeremonyInvalid))
     ));
     for (origin, bad_signature) in [
         ("https://evil.sushao.top", false),
@@ -246,7 +271,7 @@ async fn persistent_sessions_and_signed_passkey_lifecycle() {
         assert!(matches!(
             app.run(move |a, db| a.finish_login(db, &c, &credential))
                 .await,
-            Err(Error::AuthenticationFailed)
+            Err(Error::Rejected(Rejection::AuthenticationFailed))
         ));
     }
     // Two valid in-flight assertions may not overwrite a newer persisted counter.
@@ -272,7 +297,7 @@ async fn persistent_sessions_and_signed_passkey_lifecycle() {
     assert!(matches!(
         app.run(move |a, db| a.finish_login(db, &c, &credential))
             .await,
-        Err(Error::CeremonyInvalid)
+        Err(Error::Rejected(Rejection::CeremonyInvalid))
     ));
 
     // Aging recent authentication requires reauth but preserves the absolute cap.
@@ -283,7 +308,7 @@ async fn persistent_sessions_and_signed_passkey_lifecycle() {
     assert!(matches!(
         app.run(move |a, db| a.rename_passkey(db, &c, &id, "New name"))
             .await,
-        Err(Error::ReauthRequired)
+        Err(Error::Rejected(Rejection::ReauthRequired))
     ));
     let c = ctx.clone();
     let reauth = app
@@ -314,13 +339,15 @@ async fn persistent_sessions_and_signed_passkey_lifecycle() {
     let id = registered.id.to_string();
     let c = passkey_ctx.clone();
     assert!(
-        app.run(move |a, db| a.delete_passkey(db, &c, &id))
+        app.run(move |a, db| a
+            .delete_passkey(db, &c, &id)
+            .map(|value| value.session_invalidated))
             .await
             .unwrap()
     );
     assert!(matches!(
         app.run(move |a, db| a.check(db, &passkey_ctx)).await,
-        Err(Error::Unauthenticated)
+        Err(Error::Rejected(Rejection::Unauthenticated))
     ));
     let c = ctx.clone();
     assert!(app.run(move |a, db| a.check(db, &c)).await.is_ok());
@@ -329,7 +356,7 @@ async fn persistent_sessions_and_signed_passkey_lifecycle() {
     assert!(matches!(
         app.run(move |a, db| a.finish_login(db, &c, &credential))
             .await,
-        Err(Error::AuthenticationFailed)
+        Err(Error::Rejected(Rejection::AuthenticationFailed))
     ));
     // A second credential survives an administrator password change.
     let mut second_key = Authenticator::new();
@@ -351,7 +378,7 @@ async fn persistent_sessions_and_signed_passkey_lifecycle() {
     let c = ctx.clone();
     assert!(matches!(
         app.run(move |a, db| a.check(db, &c)).await,
-        Err(Error::Unauthenticated)
+        Err(Error::Rejected(Rejection::Unauthenticated))
     ));
     let login = app
         .run(|a, db| a.login_password(db, &context(None), "test-admin", "test-password"))
@@ -367,7 +394,7 @@ async fn persistent_sessions_and_signed_passkey_lifecycle() {
         .unwrap();
     assert!(matches!(
         app.run(move |a, db| a.check(db, &old)).await,
-        Err(Error::Unauthenticated)
+        Err(Error::Rejected(Rejection::Unauthenticated))
     ));
     let logout_ctx = context(Some(rotated.session_token.as_str()));
     let c2 = logout_ctx.clone();
@@ -376,7 +403,7 @@ async fn persistent_sessions_and_signed_passkey_lifecycle() {
         .unwrap();
     assert!(matches!(
         app.run(move |a, db| a.check(db, &c2)).await,
-        Err(Error::Unauthenticated)
+        Err(Error::Rejected(Rejection::Unauthenticated))
     ));
     let absolute = app
         .run(|a, db| a.login_password(db, &context(None), "test-admin", "test-password"))
@@ -387,7 +414,7 @@ async fn persistent_sessions_and_signed_passkey_lifecycle() {
     let absolute_ctx = context(Some(absolute.session_token.as_str()));
     assert!(matches!(
         app.run(move |a, db| a.check(db, &absolute_ctx)).await,
-        Err(Error::Unauthenticated)
+        Err(Error::Rejected(Rejection::Unauthenticated))
     ));
     let final_login = app
         .run(|a, db| a.login_password(db, &context(None), "test-admin", "test-password"))
@@ -397,7 +424,7 @@ async fn persistent_sessions_and_signed_passkey_lifecycle() {
     let changed = super::tests::app(pool, "changed-password");
     assert!(matches!(
         changed.run(move |a, db| a.check(db, &c)).await,
-        Err(Error::Unauthenticated)
+        Err(Error::Rejected(Rejection::Unauthenticated))
     ));
     let new_login = changed
         .run(|a, db| a.login_password(db, &context(None), "test-admin", "changed-password"))

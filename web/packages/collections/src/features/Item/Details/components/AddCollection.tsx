@@ -1,3 +1,6 @@
+import { attemptWrite, useWriteAction, WriteNotice, RequestNotice } from 'custom-graphql';
+import { membershipResult } from '@collections/results';
+import { checkMembership } from '@collections/reconcile';
 import CollectionSelect from '@collections/components/CollectionSelect';
 import { CollectionLoadingState, useAllCollection } from '@collections/features/Collection/collectionSlice';
 import useDialog from '@collections/hooks/useDialog';
@@ -7,7 +10,7 @@ import { match } from 'ts-pattern';
 import { useI18n } from 'i18n';
 import { graphql } from '@collections/gql';
 import { type InferInput, number, object } from 'valibot';
-import { useMutation } from '@apollo/client/react';
+import { useApolloClient, useMutation } from '@apollo/client/react';
 import { valibotResolver } from '@hookform/resolvers/valibot';
 import { Button } from '@portal/components/ui/button';
 import {
@@ -24,7 +27,36 @@ import { Spinner } from '@portal/components/ui/spinner';
 const AddCollectionForItem = graphql(`
   mutation addCollectionForItem($itemId: Int!, $collectionId: Int!) {
     addCollectionForItem(itemId: $itemId, collectionId: $collectionId) {
-      id
+      __typename
+      ... on CollectionMembershipChanged {
+        collectionId
+        resource {
+          kind
+          id
+        }
+        present
+      }
+      ... on ValidationFailure {
+        issues {
+          path
+          code
+          min
+          max
+        }
+      }
+      ... on MissingResources {
+        resources {
+          kind
+          id
+        }
+      }
+      ... on Conflict {
+        reason
+        resources {
+          kind
+          id
+        }
+      }
     }
   }
 `);
@@ -41,18 +73,29 @@ const selectCollectionSchema = object({
 type SelectCollectionType = InferInput<typeof selectCollectionSchema>;
 
 export default function AddCollection({ itemId, refetch }: AddCollectionProps) {
+  const client = useApolloClient();
+  const action = useWriteAction();
   const { open, handleClose, handleOpen, handleOpenChange } = useDialog();
   const t = useI18n();
   const { value: allCollection, fetchData } = useAllCollection();
   const [fn] = useMutation(AddCollectionForItem);
 
-  const { control, handleSubmit } = useForm<SelectCollectionType>({
+  const { control, handleSubmit, getValues } = useForm<SelectCollectionType>({
     resolver: valibotResolver(selectCollectionSchema),
   });
   const onSubmit = handleSubmit(async ({ collectionId }) => {
-    await fn({ variables: { collectionId, itemId } });
-    handleClose();
-    refetch();
+    const result = await action.run(() =>
+      attemptWrite(
+        () => fn({ variables: { collectionId, itemId } }),
+        (response) => membershipResult(response.data?.addCollectionForItem, true),
+      ),
+    );
+    if (result?.status === 'saved') {
+      handleClose();
+      void Promise.resolve()
+        .then(refetch)
+        .catch(() => undefined);
+    }
   });
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -68,7 +111,7 @@ export default function AddCollection({ itemId, refetch }: AddCollectionProps) {
             .with({ tag: CollectionLoadingState.init }, () => null)
             .with({ tag: CollectionLoadingState.error }, ({ value }) => (
               <div>
-                {value.toString()} <Button onClick={fetchData}>{t('refresh')}</Button>
+                <RequestNotice error={value} retry={fetchData} />
               </div>
             ))
             .with({ tag: CollectionLoadingState.loading }, () => <Spinner />)
@@ -87,9 +130,25 @@ export default function AddCollection({ itemId, refetch }: AddCollectionProps) {
             ))
             .otherwise(() => null)}
 
+          <WriteNotice
+            outcome={action.outcome}
+            pending={action.pending}
+            check={async () => {
+              if (await action.check(() => checkMembership(client, itemId, getValues('collectionId'), true))) {
+                handleClose();
+                void Promise.resolve()
+                  .then(refetch)
+                  .catch(() => undefined);
+              }
+            }}
+          />
           <DialogFooter>
             <DialogClose render={<Button variant="secondary" />}>{t('cancel')}</DialogClose>
-            <Button variant="default" type="submit">
+            <Button
+              variant="default"
+              type="submit"
+              disabled={action.blocked || allCollection.tag !== CollectionLoadingState.state}
+            >
               {t('submit')}
             </Button>
           </DialogFooter>

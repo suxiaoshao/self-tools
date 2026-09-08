@@ -140,6 +140,10 @@ fn parse_chapter_id(url: &str) -> IResult<&str, String> {
 }
 
 fn parse_chapters(html: &Html, selector: &Selector, novel_id: &str) -> NovelResult<Vec<JJChapter>> {
+    let table = Selector::parse("#oneboolt").expect("static selector");
+    if html.select(&table).next().is_none() {
+        return Err(NovelError::ParseError);
+    }
     fn parse_time(time: &str) -> NovelResult<OffsetDateTime> {
         let format = format_description!("[year]-[month]-[day] [hour]:[minute]:[second]");
         let time = PrimitiveDateTime::parse(time, &format)?;
@@ -169,7 +173,7 @@ fn parse_chapters(html: &Html, selector: &Selector, novel_id: &str) -> NovelResu
             .next()
             .ok_or(NovelError::ParseError)?
             .inner_html();
-        Ok((id, name, word_count.parse().unwrap_or(0), time))
+        Ok((id, name, word_count.trim().parse()?, time))
     }
     fn filter_map_chapter(
         element_ref: ElementRef,

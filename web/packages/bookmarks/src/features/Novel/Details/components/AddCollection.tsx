@@ -1,3 +1,7 @@
+import { RequestNotice } from 'custom-graphql';
+import { checkNovelState } from '@bookmarks/reconcile';
+import { useApolloClient } from '@apollo/client/react';
+import useBookmarkWrite from '@bookmarks/useBookmarkWrite';
 import { useMutation } from '@apollo/client/react';
 import CollectionSelect from '@bookmarks/components/CollectionSelect';
 import { CollectionLoadingState, useAllCollection } from '@bookmarks/features/Collections/collectionSlice';
@@ -24,7 +28,36 @@ import { Spinner } from '@portal/components/ui/spinner';
 const AddCollectionForNovel = graphql(`
   mutation addCollectionForNovel($novelId: Int!, $collectionId: Int!) {
     addCollectionForNovel(collectionId: $collectionId, novelId: $novelId) {
-      id
+      __typename
+      ... on CollectionMembershipChanged {
+        collectionId
+        resource {
+          kind
+          id
+        }
+        present
+      }
+      ... on ValidationFailure {
+        issues {
+          path
+          code
+          min
+          max
+        }
+      }
+      ... on MissingResources {
+        resources {
+          kind
+          id
+        }
+      }
+      ... on Conflict {
+        reason
+        resources {
+          kind
+          id
+        }
+      }
     }
   }
 `);
@@ -41,6 +74,8 @@ const selectCollectionSchema = object({
 type SelectCollectionType = InferInput<typeof selectCollectionSchema>;
 
 export default function AddCollection({ novelId, refetch }: AddCollectionProps) {
+  const client = useApolloClient();
+  const write = useBookmarkWrite('/bookmarks/novel');
   const { open, handleClose, handleOpenChange } = useDialog();
   const { value: allCollection, fetchData } = useAllCollection();
 
@@ -51,9 +86,23 @@ export default function AddCollection({ novelId, refetch }: AddCollectionProps) 
     resolver: valibotResolver(selectCollectionSchema),
   });
   const onSubmit = handleSubmit(async ({ collectionId }) => {
-    await fn({ variables: { collectionId, novelId } });
+    if (
+      !(await write.execute(
+        async () => (await fn({ variables: { collectionId, novelId } })).data?.addCollectionForNovel,
+        {
+          verify: () => checkNovelState(client, novelId, { collectionId, present: true }),
+          confirmed: () => {
+            handleClose();
+            refetch();
+          },
+        },
+      ))
+    )
+      return;
     handleClose();
-    refetch();
+    void Promise.resolve()
+      .then(() => refetch())
+      .catch(() => undefined);
   });
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -68,9 +117,7 @@ export default function AddCollection({ novelId, refetch }: AddCollectionProps) 
           {match(allCollection)
             .with({ tag: CollectionLoadingState.init }, () => null)
             .with({ tag: CollectionLoadingState.error }, ({ value }) => (
-              <div>
-                {value.toString()} <Button onClick={fetchData}>{t('refresh')}</Button>
-              </div>
+              <RequestNotice error={value} retry={fetchData} />
             ))
             .with({ tag: CollectionLoadingState.loading }, () => <Spinner />)
             .with({ tag: CollectionLoadingState.state }, ({ value: allCollections }) => (
@@ -88,9 +135,12 @@ export default function AddCollection({ novelId, refetch }: AddCollectionProps) 
             ))
             .otherwise(() => null)}
 
+          {write.notice}
           <DialogFooter>
             <DialogClose render={<Button />}>{t('cancel')}</DialogClose>
-            <Button type="submit">{t('submit')}</Button>
+            <Button disabled={write.blocked} type="submit">
+              {t('submit')}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

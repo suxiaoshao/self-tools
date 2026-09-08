@@ -1,3 +1,4 @@
+import { RequestNotice } from 'custom-graphql';
 import { RefreshCcw } from 'lucide-react';
 import {
   createCustomColumnHelper,
@@ -31,6 +32,7 @@ const GetCollections = graphql(`
         name
         id
         path
+        parentId
         createTime
         updateTime
         description
@@ -51,9 +53,15 @@ export default function Collections() {
   useEffect(() => {
     resetPage();
   }, [parentId]);
-  const { data: { getCollections: { data, total } = {} } = {}, refetch } = useQuery(GetCollections, {
+  const {
+    data: queryData,
+    refetch,
+    error,
+  } = useQuery(GetCollections, {
     variables: { parentId, pagination: { page: pageState.pageIndex, pageSize: pageState.pageSize } },
   });
+  const data = queryData?.getCollections?.data;
+  const total = queryData?.getCollections?.total;
   const page = usePageWithTotal(pageState, total);
   const { fetchData } = useAllCollection();
 
@@ -113,6 +121,7 @@ export default function Collections() {
 
   return (
     <div className="size-full p-4 flex flex-col">
+      <RequestNotice error={error} />
       <AncestorsPath />
       <div className="flex flex-[0_0_auto] mb-4">
         <CreateCollectionButton refetch={refetch} />

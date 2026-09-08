@@ -1,3 +1,5 @@
+import { attemptWrite } from 'custom-graphql';
+import { itemResult } from '@collections/results';
 import ItemForm, { type ItemFormData } from '../../Item/Components/ItemForm';
 import useDialog from '@collections/hooks/useDialog';
 import { useI18n } from 'i18n';
@@ -10,7 +12,24 @@ import type { ComponentProps } from 'react';
 const CreateItem = graphql(`
   mutation createItem($collectionIds: [Int!]!, $name: String!, $content: String!) {
     createItem(collectionIds: $collectionIds, name: $name, content: $content) {
-      name
+      __typename
+      ... on ItemSaved {
+        itemId
+      }
+      ... on ValidationFailure {
+        issues {
+          path
+          code
+          min
+          max
+        }
+      }
+      ... on MissingResources {
+        resources {
+          kind
+          id
+        }
+      }
     }
   }
 `);
@@ -26,8 +45,15 @@ export default function CreateItemButton({ refetch, collectionIds, className, ..
   const [createItem] = useMutation(CreateItem);
 
   const afterSubmit = async ({ name, content, collectionIds }: ItemFormData) => {
-    await createItem({ variables: { name, collectionIds, content } });
-    refetch();
+    const result = await attemptWrite(
+      () => createItem({ variables: { name, collectionIds, content } }),
+      (response) => itemResult(response.data?.createItem),
+    );
+    if (result.status === 'saved')
+      void Promise.resolve()
+        .then(refetch)
+        .catch(() => undefined);
+    return result;
   };
   const { open, handleClose, handleOpen, handleOpenChange } = useDialog();
   const t = useI18n();

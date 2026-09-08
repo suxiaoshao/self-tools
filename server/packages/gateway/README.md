@@ -39,9 +39,10 @@
 响应强制 `Cache-Control: no-store`。gateway 不校验 session，Cookie/Origin 的实际验证由下游所有者执行。
 
 所有现有 upstream route 都使用明文 HTTP，由 gateway 在边缘终止 TLS。代理把请求
-host 规范为小写、移除端口后重写 `Host`，并向 upstream 传播或生成 `traceparent`、
-`x-request-id`、`trace-id`；同时维护 `X-Real-IP` 与 `X-Forwarded-For`。修改这些 header
-时要同步检查下游 middleware 的解析约定。
+host 规范为小写、移除端口后重写 `Host`，同时维护 `X-Real-IP` 与 `X-Forwarded-For`。
+公网入站丢弃外部关联 header，建立 SDK root server span 和 requestId；向 upstream 注入
+独立 client span 的 traceparent、有效 tracestate 与 x-request-id。响应只公开 X-Request-ID，
+旧 trace-id 已删除。内部 HTTP/RPC 的校验由 telemetry 统一拥有。
 
 ## 配置边界
 
@@ -71,9 +72,16 @@ TLS 在 gateway 终止后，当前 route 以非 TLS 连接访问 upstream。若�
 改为 TLS，必须同时核对 peer 的 TLS 标志、SNI、证书信任与容器网络地址，不能只修改
 URL 文本。
 
-## 图片代理日志
+## 错误、日志与追踪
 
-`/fetch-content` 的请求完成日志只记录 path，去除 query；失败时使用固定错误说明，避免原始错误包含目标 URL。其他路径保留现有日志行为。该处理不改变转发 URL、HTTP 到 HTTPS 跳转或上游响应。
+未知路由及代理故障返回受控 JSON error；已开始发送的响应不追加第二份 JSON。
+代理不自动重试失败的 upstream 请求，避免响应丢失后重放写入。
+所有路由的日志只包含静态 route、method、status、耗时和完成状态，不记录实际 URI、query、
+body 或原始错误。`src/trace.rs` 持有 SDK server/client span，分别跟踪下行发送与 upstream
+响应体 EOF；提前断开记 interrupted。无 exporter 仍可用 requestId 关联 stdout。
+正常停止使用 0 秒额外宽限等待、最多 5 秒 runtime 排空；Pingora run 返回后显式执行
+最多 5 秒的 SDK shutdown，初始化失败也释放 provider。
+可选 OTLP 配置见 [Docker README](../../../docker/README.md#可选追踪导出)。
 
 ## 平台约束
 

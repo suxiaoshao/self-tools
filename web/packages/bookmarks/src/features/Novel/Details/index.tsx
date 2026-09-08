@@ -1,3 +1,7 @@
+import { RequestNotice, hasQueryFailure } from 'custom-graphql';
+import { checkNovelState } from '@bookmarks/reconcile';
+import { useApolloClient } from '@apollo/client/react';
+import useBookmarkWrite from '@bookmarks/useBookmarkWrite';
 /*
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-02-28 04:24:47
@@ -85,7 +89,31 @@ const GetNovel = graphql(`
 const UpdateNovelByCrawler = graphql(`
   mutation updateNovelByCrawler($novelId: Int!) {
     updateNovelByCrawler(novelId: $novelId) {
-      id
+      __typename
+      ... on NovelSaved {
+        novelId
+      }
+      ... on ValidationFailure {
+        issues {
+          path
+          code
+          min
+          max
+        }
+      }
+      ... on MissingResources {
+        resources {
+          kind
+          id
+        }
+      }
+      ... on Conflict {
+        reason
+        resources {
+          kind
+          id
+        }
+      }
     }
   }
 `);
@@ -93,21 +121,39 @@ const DeleteCommentForNovel = graphql(`
   mutation deleteCommentForNovel($novelId: Int!) {
     deleteCommentForNovel(novelId: $novelId) {
       __typename
+      ... on ResourceDeleted {
+        resource {
+          kind
+          id
+        }
+      }
+      ... on ValidationFailure {
+        issues {
+          path
+          code
+          min
+          max
+        }
+      }
     }
   }
 `);
 
 export default function NovelDetails() {
+  const client = useApolloClient();
+  const write = useBookmarkWrite('/bookmarks/novel');
   // fetch data
   const { novelId } = useParams();
-  const { data, loading, refetch } = useQuery(GetNovel, { variables: { id: Number(novelId) } });
+  const { data, loading, refetch, error } = useQuery(GetNovel, { variables: { id: Number(novelId) } });
 
   // title
   const t = useI18n();
   useTitle(t('novel_detail', { novelName: data?.getNovel?.name }));
   const navigate = useNavigate();
   const handleRefresh = useCallback(() => {
-    refetch();
+    void Promise.resolve()
+      .then(() => refetch())
+      .catch(() => undefined);
   }, [refetch]);
   const goToSourceSite = useCallback(() => {
     if (data?.getNovel?.url) {
@@ -116,18 +162,36 @@ export default function NovelDetails() {
   }, [data?.getNovel?.url]);
   const [updateNovel, { loading: updateLoading }] = useMutation(UpdateNovelByCrawler);
   const handleUpdateNovel = useCallback(async () => {
-    await updateNovel({ variables: { novelId: Number(novelId) } });
+    if (
+      !(await write.execute(
+        async () => (await updateNovel({ variables: { novelId: Number(novelId) } })).data?.updateNovelByCrawler,
+      ))
+    )
+      return;
     toast.success(t('update_by_crawler_success'));
-    refetch();
-  }, [novelId, updateNovel, refetch, t]);
+    void Promise.resolve()
+      .then(() => refetch())
+      .catch(() => undefined);
+  }, [novelId, updateNovel, refetch, t, write]);
   const items = useNovelDetailItems(data, refetch);
   const [deleteComment] = useMutation(DeleteCommentForNovel, { variables: { novelId: data?.getNovel?.id } });
   const handleDeleteComment = async () => {
-    await deleteComment({ variables: { novelId: data?.getNovel?.id } });
-    refetch();
+    if (
+      !(await write.execute(
+        async () => (await deleteComment({ variables: { novelId: data?.getNovel?.id } })).data?.deleteCommentForNovel,
+        { verify: () => checkNovelState(client, Number(novelId), { comment: null }), confirmed: refetch },
+      ))
+    )
+      return;
+    void Promise.resolve()
+      .then(() => refetch())
+      .catch(() => undefined);
   };
   return (
     <div className="flex flex-col size-full h-screen">
+      <RequestNotice error={error} retry={refetch} />
+      {!loading && data?.getNovel === null && !hasQueryFailure(error, ['getNovel']) && <p>{t('request_missing')}</p>}
+      {write.notice}
       <div className="flex w-full p-4 pb-0">
         <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
           <ChevronLeft />
@@ -151,13 +215,18 @@ export default function NovelDetails() {
                   </ItemMedia>
                   <ItemContent>
                     <ItemTitle>{data.getNovel.name}</ItemTitle>
-                    <ItemDescription>{data.getNovel.author.name}</ItemDescription>
+                    <ItemDescription>{data.getNovel.author?.name ?? '-'}</ItemDescription>
                   </ItemContent>
                   <ItemActions>
                     <Tooltip>
                       <TooltipTrigger
                         render={
-                          <Button variant="ghost" size="icon" disabled={updateLoading} onClick={handleUpdateNovel} />
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            disabled={write.blocked || updateLoading}
+                            onClick={handleUpdateNovel}
+                          />
                         }
                       >
                         <Download />
@@ -180,14 +249,16 @@ export default function NovelDetails() {
                 <CardHeader>
                   <CardTitle>{t('comment')}</CardTitle>
                   <CardAction>
-                    <CommentEdit
-                      refetch={refetch}
-                      novelId={data.getNovel.id}
-                      mode={match(data.getNovel.comments?.content)
-                        .with(P.nonNullable, () => 'update' as const)
-                        .otherwise(() => 'create' as const)}
-                      initContent={data.getNovel.comments?.content}
-                    />
+                    {!hasQueryFailure(error, ['getNovel', 'comments']) && (
+                      <CommentEdit
+                        refetch={refetch}
+                        novelId={data.getNovel.id}
+                        mode={match(data.getNovel.comments?.content)
+                          .with(P.nonNullable, () => 'update' as const)
+                          .otherwise(() => 'create' as const)}
+                        initContent={data.getNovel.comments?.content}
+                      />
+                    )}
                     {data.getNovel.comments?.content && (
                       <Tooltip>
                         <TooltipTrigger render={<Button variant="ghost" size="icon" onClick={handleDeleteComment} />}>
@@ -202,7 +273,9 @@ export default function NovelDetails() {
                   <CustomMarkdown value={data.getNovel.comments?.content || '-'} />
                 </CardContent>
               </Card>
-              <Chapters chapters={data.getNovel.chapters} refetch={refetch} novelId={data.getNovel.id} />
+              {data.getNovel.chapters && (
+                <Chapters chapters={data.getNovel.chapters} refetch={refetch} novelId={data.getNovel.id} />
+              )}
             </>
           )}
           {loading && (

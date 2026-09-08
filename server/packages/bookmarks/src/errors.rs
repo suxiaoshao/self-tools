@@ -1,202 +1,101 @@
-use async_graphql::ErrorExtensionValues;
-use axum::{Json, extract::rejection::QueryRejection, response::IntoResponse};
-use diesel::r2d2;
-use std::{env::VarError, sync::Arc};
-
-#[derive(Debug)]
-pub(crate) enum GraphqlError {
-    /// 数据库连接池
-    R2d2(String),
-    /// 数据库操作错误
-    Diesel(String),
-    /// 没有认证
-    Unauthenticated,
-    /// 资源不存在
-    NotFound(&'static str, i64),
-    /// 已存在
-    AlreadyExists(String),
-    /// thrift 错误
-    Thrift(String),
-    ClientError(String),
-    /// novel 获取错误
-    NovelNetworkError(String),
-    NovelParseError,
-    NovelTimeParseError(time::error::Parse),
-    // query rejection
-    QueryRejection(String),
-    // reqwest error
-    ReqwestError(String),
-    VarError(VarError),
-    NotGraphqlContextData(&'static str),
-    // 保存草稿错误
-    SavaDraftError(&'static str),
-    PageSizeTooMore,
-    // 不存在的 chapter id
-    NotFoundChapterId(Vec<i64>),
-    // 判断是否存在已经已读的章节
-    AlreadyReadChapterId(Vec<i64>),
+//! Application failures contain domain data and typed causes, never GraphQL values.
+use service_errors::{FieldViolation, UseCaseError, UseCaseResult};
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum ResourceKind {
+    Collection,
+    Author,
+    Tag,
+    Novel,
+    Chapter,
+    Comment,
 }
-
-impl IntoResponse for GraphqlError {
-    fn into_response(self) -> axum::response::Response {
-        Json(serde_json::json!({
-            "data": null,
-            "errors":[{
-                "message": self.message(),
-                "extensions": {
-                    "code": self.code(),
-                    "source":format!("{self:#?}")
-                }
-            }]
-        }))
-        .into_response()
+#[derive(Debug, Clone)]
+pub(crate) struct ResourceRef {
+    pub kind: ResourceKind,
+    pub id: i64,
+}
+#[derive(Debug, Clone, Copy)]
+pub(crate) enum ConflictReason {
+    CollectionPath,
+    Membership,
+    SourceId,
+    Comment,
+}
+#[derive(Debug, thiserror::Error)]
+pub(crate) enum Rejection {
+    #[error("validation failed")]
+    Validation(Vec<FieldViolation>),
+    #[error("resources missing")]
+    Missing(Vec<ResourceRef>),
+    #[error("chapters already read")]
+    AlreadyRead(Vec<i64>),
+    #[error("conflict")]
+    Conflict(ConflictReason, Vec<ResourceRef>),
+}
+pub(crate) type AppError = UseCaseError<Rejection>;
+pub(crate) type AppResult<T> = UseCaseResult<T, Rejection>;
+pub(crate) fn missing(kind: ResourceKind, id: i64) -> AppError {
+    UseCaseError::Rejected(Rejection::Missing(vec![ResourceRef { kind, id }]))
+}
+pub(crate) fn conflict(reason: ConflictReason, resources: Vec<ResourceRef>) -> AppError {
+    UseCaseError::Rejected(Rejection::Conflict(reason, resources))
+}
+pub(crate) fn validate_id(id: i64, path: &str) -> AppResult<()> {
+    if id <= 0 {
+        return Err(UseCaseError::Rejected(Rejection::Validation(vec![
+            FieldViolation {
+                path: path.split('.').map(str::to_owned).collect(),
+                code: service_errors::ValidationCode::OutOfRange,
+                min: Some(1),
+                max: None,
+            },
+        ])));
     }
+    Ok(())
+}
+pub(crate) fn validate_name(name: &str) -> AppResult<()> {
+    service_errors::directory_name(name, "name")
+        .map_err(|v| UseCaseError::Rejected(Rejection::Validation(vec![v])))
 }
 
-impl GraphqlError {
-    pub(crate) fn message(&self) -> String {
-        match self {
-            GraphqlError::R2d2(_) => "数据库连接错误".to_string(),
-            GraphqlError::Diesel(data) => format!("数据库错误:{data}"),
-            GraphqlError::Unauthenticated => "未登录".to_string(),
-            GraphqlError::NotFound(tag, id) => format!(r#"{tag}"{id}"不存在"#),
-            GraphqlError::AlreadyExists(name) => format!("{name}已存在"),
-            GraphqlError::Thrift(data) => format!("thrift 错误:{data}"),
-            GraphqlError::ClientError(data) => format!("thrift client错误:{data}"),
-            GraphqlError::NovelNetworkError(err) => format!("小说网络错误:{err}"),
-            GraphqlError::NovelParseError => "小说解析错误".to_string(),
-            GraphqlError::QueryRejection(value) => format!("query rejection:{value}"),
-            GraphqlError::ReqwestError(err) => format!("reqwest error:{err}"),
-            GraphqlError::VarError(err) => format!("env error:{err}"),
-            GraphqlError::NotGraphqlContextData(tag) => {
-                format!("graphql context data:{tag}不存在")
-            }
-            GraphqlError::SavaDraftError(tag) => format!("保存草稿错误:{tag}"),
-            GraphqlError::NovelTimeParseError(tag) => format!("小说时间解析错误:{tag}"),
-            GraphqlError::PageSizeTooMore => "分页大小过大".to_string(),
-            GraphqlError::NotFoundChapterId(ids) => format!("章节id不存在:{ids:?}"),
-            GraphqlError::AlreadyReadChapterId(ids) => format!("章节id已读:{ids:?}"),
+pub(crate) fn source_conflict(error: AppError) -> AppError {
+    if let UseCaseError::Fault(fault) = &error
+        && let Some(diesel::result::Error::DatabaseError(
+            diesel::result::DatabaseErrorKind::UniqueViolation,
+            info,
+        )) = fault.source.downcast_ref::<diesel::result::Error>()
+        && matches!(
+            info.constraint_name(),
+            Some(
+                "author_site_site_id_key"
+                    | "novel_site_id_key"
+                    | "tag_site_site_id_key"
+                    | "chapter_site_novel_id_site_id_key"
+            )
+        )
+    {
+        return conflict(ConflictReason::SourceId, vec![]);
+    }
+    error
+}
+pub(crate) fn crawler_error(error: novel_crawler::NovelError) -> AppError {
+    use service_errors::{Fault, FaultKind};
+    let kind = match &error {
+        novel_crawler::NovelError::NetworkError(source) if source.is_timeout() => {
+            FaultKind::Timeout
         }
-    }
-    pub(crate) fn code(&self) -> &str {
-        match self {
-            GraphqlError::R2d2(_) => "FailedPrecondition",
-            GraphqlError::Diesel(_) => "Internal",
-            GraphqlError::Unauthenticated => "Unauthenticated",
-            GraphqlError::NotFound(..) | GraphqlError::AlreadyExists(_) => "InvalidArgument",
-            GraphqlError::Thrift(_) => "Thrift",
-            GraphqlError::ClientError(_) => "ThriftClient",
-            GraphqlError::NovelNetworkError(_) => "NovelNetworkError",
-            GraphqlError::NovelParseError => "NovelParseError",
-            GraphqlError::QueryRejection(_) => "QueryRejection",
-            GraphqlError::ReqwestError(_) => "ReqwestError",
-            GraphqlError::VarError(_) => "VarError",
-            GraphqlError::NotGraphqlContextData(_) => "NotGraphqlContextData",
-            GraphqlError::SavaDraftError(_) => "SavaDraftError",
-            GraphqlError::NovelTimeParseError(_) => "NovelTimeParseError",
-            GraphqlError::PageSizeTooMore => "PageSizeTooMore",
-            GraphqlError::NotFoundChapterId(_) => "NotFoundChapterId",
-            GraphqlError::AlreadyReadChapterId(_) => "AlreadyReadChapterId",
+        novel_crawler::NovelError::NetworkError(source) if source.is_connect() => {
+            FaultKind::Network
         }
-    }
+        _ => FaultKind::Protocol,
+    };
+    Fault::new(kind, "novel_crawler", error).into()
 }
-
-impl Clone for GraphqlError {
-    fn clone(&self) -> Self {
-        match self {
-            GraphqlError::R2d2(data) => Self::R2d2(data.clone()),
-            GraphqlError::Diesel(data) => Self::Diesel(data.clone()),
-            GraphqlError::Unauthenticated => Self::Unauthenticated,
-            GraphqlError::NotFound(tag, id) => Self::NotFound(tag, *id),
-            GraphqlError::AlreadyExists(name) => Self::AlreadyExists(name.clone()),
-            GraphqlError::Thrift(data) => Self::Thrift(data.clone()),
-            GraphqlError::ClientError(data) => Self::ClientError(data.clone()),
-            GraphqlError::NovelNetworkError(data) => Self::NovelNetworkError(data.clone()),
-            GraphqlError::NovelParseError => Self::NovelParseError,
-            GraphqlError::QueryRejection(data) => Self::QueryRejection(data.clone()),
-            GraphqlError::ReqwestError(data) => Self::ReqwestError(data.clone()),
-            GraphqlError::VarError(data) => Self::VarError(data.clone()),
-            GraphqlError::NotGraphqlContextData(data) => Self::NotGraphqlContextData(data),
-            GraphqlError::SavaDraftError(data) => Self::SavaDraftError(data),
-            GraphqlError::NovelTimeParseError(data) => Self::NovelTimeParseError(*data),
-            GraphqlError::PageSizeTooMore => Self::PageSizeTooMore,
-            GraphqlError::NotFoundChapterId(data) => Self::NotFoundChapterId(data.clone()),
-            GraphqlError::AlreadyReadChapterId(data) => Self::AlreadyReadChapterId(data.clone()),
-        }
-    }
-}
-
-impl From<r2d2::PoolError> for GraphqlError {
-    fn from(error: r2d2::PoolError) -> Self {
-        Self::R2d2(error.to_string())
-    }
-}
-
-impl From<diesel::result::Error> for GraphqlError {
-    fn from(error: diesel::result::Error) -> Self {
-        Self::Diesel(error.to_string())
-    }
-}
-impl From<volo_thrift::error::ClientError> for GraphqlError {
-    fn from(value: volo_thrift::error::ClientError) -> Self {
-        match value {
-            volo_thrift::ClientError::Application(x) => Self::Thrift(x.to_string()),
-            volo_thrift::ClientError::Transport(x) => Self::Thrift(x.to_string()),
-            volo_thrift::ClientError::Protocol(x) => Self::Thrift(x.to_string()),
-            volo_thrift::ClientError::Biz(x) => Self::Thrift(x.to_string()),
-        }
-    }
-}
-
-impl From<thrift::ClientError> for GraphqlError {
-    fn from(value: thrift::ClientError) -> Self {
-        Self::ClientError(value.to_string())
-    }
-}
-
-impl From<novel_crawler::NovelError> for GraphqlError {
-    fn from(value: novel_crawler::NovelError) -> Self {
-        match value {
-            novel_crawler::NovelError::NetworkError(err) => {
-                Self::NovelNetworkError(err.to_string())
-            }
-            novel_crawler::NovelError::ParseError => Self::NovelParseError,
-            novel_crawler::NovelError::TimeParseError(data) => Self::NovelTimeParseError(data),
-        }
-    }
-}
-
-impl From<VarError> for GraphqlError {
-    fn from(value: VarError) -> Self {
-        Self::VarError(value)
-    }
-}
-
-pub(crate) type GraphqlResult<T> = Result<T, GraphqlError>;
-
-impl From<GraphqlError> for async_graphql::Error {
-    fn from(value: GraphqlError) -> async_graphql::Error {
-        let mut extensions = ErrorExtensionValues::default();
-        extensions.set("source", format!("{value:#?}"));
-        let code = value.code();
-        extensions.set("code", code);
-
-        async_graphql::Error {
-            message: value.message(),
-            source: Some(Arc::new(value)),
-            extensions: Some(extensions),
-        }
-    }
-}
-
-impl From<QueryRejection> for GraphqlError {
-    fn from(value: QueryRejection) -> Self {
-        Self::QueryRejection(value.to_string())
-    }
-}
-
-impl From<reqwest::Error> for GraphqlError {
-    fn from(value: reqwest::Error) -> Self {
-        Self::ReqwestError(value.to_string())
-    }
+pub(crate) fn invalid(path: &str, code: service_errors::ValidationCode) -> AppError {
+    UseCaseError::Rejected(Rejection::Validation(vec![FieldViolation {
+        path: path.split('.').map(str::to_owned).collect(),
+        code,
+        min: None,
+        max: None,
+    }]))
 }

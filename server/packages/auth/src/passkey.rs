@@ -1,5 +1,5 @@
 use crate::{
-    application::{Error, Result},
+    application::{Error, Rejection, Result},
     session,
 };
 use serde_json::Value;
@@ -45,7 +45,7 @@ impl Budget {
             self.used = 0;
         }
         if self.used >= self.limit {
-            return Err(Error::RateLimited);
+            return Err(Error::Rejected(Rejection::RateLimited));
         }
         self.used += 1;
         Ok(())
@@ -67,7 +67,7 @@ impl Ceremonies {
     pub fn insert(&mut self, ceremony: Ceremony) -> Result<String> {
         self.records.retain(|_, c| c.expires > Instant::now());
         if self.records.len() >= 256 {
-            return Err(Error::RateLimited);
+            return Err(Error::Rejected(Rejection::RateLimited));
         }
         let id = session::token()?;
         self.records.insert(id.clone(), ceremony);
@@ -81,13 +81,19 @@ impl Ceremonies {
         purpose: Purpose,
     ) -> Result<State> {
         self.records.retain(|_, c| c.expires > Instant::now());
-        let record = self.records.get(id).ok_or(Error::CeremonyInvalid)?;
+        let record = self
+            .records
+            .get(id)
+            .ok_or(Error::Rejected(Rejection::CeremonyInvalid))?;
         if record.binding != binding {
-            return Err(Error::CeremonyInvalid);
+            return Err(Error::Rejected(Rejection::CeremonyInvalid));
         }
-        let record = self.records.remove(id).ok_or(Error::CeremonyInvalid)?;
+        let record = self
+            .records
+            .remove(id)
+            .ok_or(Error::Rejected(Rejection::CeremonyInvalid))?;
         if record.purpose != purpose || record.session.as_deref() != session {
-            return Err(Error::CeremonyInvalid);
+            return Err(Error::Rejected(Rejection::CeremonyInvalid));
         }
         Ok(record.state)
     }
@@ -123,7 +129,7 @@ mod tests {
         let id = store.insert(expired).unwrap();
         assert!(matches!(
             store.consume(&id, &[2; 32], Some(&[1; 32]), Purpose::Register),
-            Err(Error::CeremonyInvalid)
+            Err(Error::Rejected(Rejection::CeremonyInvalid))
         ));
         let id = store.insert(record()).unwrap();
         assert!(
@@ -153,14 +159,20 @@ mod tests {
         let mut budget = Budget::new(2);
         assert!(budget.take().is_ok());
         assert!(budget.take().is_ok());
-        assert!(matches!(budget.take(), Err(Error::RateLimited)));
+        assert!(matches!(
+            budget.take(),
+            Err(Error::Rejected(Rejection::RateLimited))
+        ));
         budget.start = Instant::now() - Duration::from_secs(60);
         assert!(budget.take().is_ok());
         let mut store = Ceremonies::default();
         for _ in 0..256 {
             store.insert(record()).unwrap();
         }
-        assert!(matches!(store.insert(record()), Err(Error::RateLimited)));
+        assert!(matches!(
+            store.insert(record()),
+            Err(Error::Rejected(Rejection::RateLimited))
+        ));
         for record in store.records.values_mut() {
             record.expires = Instant::now();
         }

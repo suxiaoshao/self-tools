@@ -5,16 +5,27 @@
  * @LastEditTime: 2025-09-14 00:14:57
  * @FilePath: /self-tools/web/common/custom-graphql/src/index.tsx
  */
-import { ApolloClient, InMemoryCache, ApolloLink, CombinedGraphQLErrors, CombinedProtocolErrors } from '@apollo/client';
+import { ApolloClient, InMemoryCache, CombinedGraphQLErrors } from '@apollo/client';
 import { HttpLink } from '@apollo/client/link/http';
-import { ErrorLink } from '@apollo/client/link/error';
-import { toast } from 'sonner';
+import {
+  decodePublicError,
+  decodeRequestId,
+  fetchFailure,
+  normalizeRequestFailure,
+  publicHttpStatus,
+  RequestError,
+  type RequestFailure,
+} from 'request-errors';
 
 declare module '@apollo/client' {
   namespace ApolloClient {
     namespace DeclareDefaultOptions {
+      interface Mutate {
+        errorPolicy: 'none';
+      }
+
       interface WatchQuery {
-        errorPolicy: 'ignore';
+        errorPolicy: 'all';
       }
 
       interface Query {
@@ -61,10 +72,58 @@ const getHttpLink = (url: string) =>
       const controller = new AbortController();
       requests.add(controller);
       try {
-        const signal = init?.signal ? AbortSignal.any([init.signal, controller.signal]) : controller.signal;
-        const response = await fetch(input, { ...init, signal });
-        if (response.status === 401 && generation !== undefined && authBoundary === boundary)
-          boundary?.unauthenticated(generation);
+        const signal = AbortSignal.any([
+          controller.signal,
+          AbortSignal.timeout(30_000),
+          ...(init?.signal ? [init.signal] : []),
+        ]);
+        let response: Response;
+        try {
+          response = await fetch(input, { ...init, signal });
+        } catch (error) {
+          throw fetchFailure(error, signal);
+        }
+        const requestId = decodeRequestId(response.headers.get('x-request-id'));
+        const protocol = () => new RequestError({ kind: 'protocol', requestId });
+        let payload: unknown;
+        try {
+          payload = await response.clone().json();
+        } catch (error) {
+          if (signal.aborted) throw fetchFailure(error, signal);
+          throw protocol();
+        }
+        if (signal.aborted || (generation !== undefined && boundary?.generation() !== generation))
+          throw new RequestError({ kind: 'cancelled' });
+        if (!response.ok) {
+          const error =
+            payload && typeof payload === 'object' && 'error' in payload ? decodePublicError(payload.error) : undefined;
+          if (
+            !error ||
+            publicHttpStatus(error.code) !== response.status ||
+            (requestId && error.requestId !== requestId)
+          )
+            throw protocol();
+          if (error.code === 'UNAUTHENTICATED' && generation !== undefined && authBoundary === boundary)
+            boundary?.unauthenticated(generation);
+          throw new RequestError({ kind: 'public', error });
+        }
+        if (payload && typeof payload === 'object' && 'errors' in payload && Array.isArray(payload.errors)) {
+          for (const entry of payload.errors) {
+            const error =
+              entry && typeof entry === 'object' && 'extensions' in entry
+                ? decodePublicError(entry.extensions)
+                : undefined;
+            if (
+              error?.code === 'UNAUTHENTICATED' &&
+              (!requestId || requestId === error.requestId) &&
+              generation !== undefined &&
+              authBoundary === boundary
+            ) {
+              boundary?.unauthenticated(generation);
+              throw new RequestError({ kind: 'public', error });
+            }
+          }
+        }
         return response;
       } finally {
         requests.delete(controller);
@@ -72,37 +131,26 @@ const getHttpLink = (url: string) =>
     },
   });
 
-/** 错误处理  */
-const errorLink = new ErrorLink(({ error }) => {
-  if (CombinedGraphQLErrors.is(error)) {
-    error.errors.forEach(({ message, locations, path, extensions }) => {
-      toast(message);
-      let source = '';
-      if (typeof extensions?.['source'] === 'string') {
-        source = extensions['source'];
-      } else {
-        source = JSON.stringify(extensions?.['source'] ?? null);
-      }
-      console.log(
-        `[GraphQL error]: Message: ${message}, Location: ${JSON.stringify(locations)}, Path: ${JSON.stringify(path)} source: ${source}`,
-      );
+export interface GraphQLFailure {
+  failure: RequestFailure;
+  path?: readonly (string | number)[];
+}
+/** Safe local projections retain GraphQL paths for partial-query rendering. */
+export function graphQLFailures(error: unknown): GraphQLFailure[] {
+  if (CombinedGraphQLErrors.is(error))
+    return error.errors.map((entry) => {
+      const publicError = decodePublicError(entry.extensions);
+      return { failure: publicError ? { kind: 'public', error: publicError } : { kind: 'protocol' }, path: entry.path };
     });
-  } else if (CombinedProtocolErrors.is(error)) {
-    error.errors.forEach(({ message, extensions }) => {
-      toast(message);
-      console.log(`[Protocol error]: Message: ${message}, Extensions: ${JSON.stringify(extensions)}`);
-    });
-  } else if (error.name !== 'AbortError') {
-    toast(`网络错误:${error.message}`);
-    console.log(`[Network error]: ${error.message}`);
-  }
-});
+  return error ? [{ failure: normalizeRequestFailure(error) }] : [];
+}
 
 const defaultOptions = {
   watchQuery: {
     fetchPolicy: 'no-cache',
-    errorPolicy: 'ignore',
+    errorPolicy: 'all',
   },
+  mutate: { errorPolicy: 'none' },
   query: {
     fetchPolicy: 'no-cache',
     errorPolicy: 'all',
@@ -111,7 +159,7 @@ const defaultOptions = {
 
 export function getClient(url: string): ApolloClient {
   const client = new ApolloClient({
-    link: ApolloLink.from([errorLink, getHttpLink(url)]),
+    link: getHttpLink(url),
     cache: new InMemoryCache(),
     defaultOptions,
     devtools: { enabled: process.env.NODE_ENV === 'development' },
@@ -119,3 +167,5 @@ export function getClient(url: string): ApolloClient {
   clients.add(client);
   return client;
 }
+
+export * from './feedback';

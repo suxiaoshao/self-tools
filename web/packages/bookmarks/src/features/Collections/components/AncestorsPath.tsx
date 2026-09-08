@@ -1,3 +1,4 @@
+import { RequestNotice } from 'custom-graphql';
 import { createSearchParams, Link } from 'react-router';
 import useParentId from './useParentId';
 import { graphql } from '@bookmarks/gql';
@@ -29,13 +30,18 @@ const GetCollectionAncestors = graphql(`
 
 export default function AncestorsPath() {
   const parentId = useParentId();
-  const { data: { getCollection } = {}, loading } = useQuery(GetCollectionAncestors, {
+  const {
+    data: { getCollection } = {},
+    loading,
+    error,
+  } = useQuery(GetCollectionAncestors, {
     variables: { id: parentId ?? 0 },
     skip: parentId === null,
   });
   const t = useI18n();
   return (
     <>
+      <RequestNotice error={error} />
       {getCollection && (
         <Breadcrumb className="mb-2">
           <BreadcrumbList>
@@ -52,7 +58,7 @@ export default function AncestorsPath() {
                 {t('root')}
               </BreadcrumbLink>
             </BreadcrumbItem>
-            {getCollection.ancestors.map(({ name, id }) => (
+            {getCollection.ancestors?.map(({ name, id }) => (
               <Fragment key={id}>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>

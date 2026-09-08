@@ -1,368 +1,314 @@
-/*
- * @Author: suxiaoshao suxiaoshao@gmail.com
- * @Date: 2024-01-06 01:30:13
- * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-05-24 16:20:09
- * @FilePath: /self-tools/server/packages/bookmarks/src/graphql/mutation.rs
- */
-
-use super::{guard::AuthGuard, validator::DirNameValidator};
-use async_graphql::{Context, Object};
-use novel_crawler::{JJAuthor, JJNovel, QDAuthor, QDNovel};
-use tracing::{Level, event};
-
-use crate::{
-    errors::{GraphqlError, GraphqlResult},
-    model::{PgPool, schema::custom_type::NovelSite},
-    service::{
-        author::Author,
-        collection::Collection,
-        novel::{CreateNovelInput, Novel},
-        novel_comment::NovelComment,
-        save_draft::{SaveDraftAuthor, SaveDraftNovel},
-        tag::Tag,
-    },
+use super::{
+    enums::NovelSite,
+    error::{pool, project, write},
+    guard::AuthGuard,
+    input::*,
+    results::*,
 };
-
+use crate::service::{
+    author::Author, collection::Collection, novel::Novel, novel_comment::NovelComment, tag::Tag,
+};
+use async_graphql::{Context, Object, Result};
 pub(crate) struct MutationRoot;
-
 #[Object]
 impl MutationRoot {
-    /// 创建目录
     #[graphql(guard = "AuthGuard")]
     async fn create_collection(
         &self,
-        context: &Context<'_>,
-        #[graphql(validator(custom = "DirNameValidator"))] name: String,
+        ctx: &Context<'_>,
+        name: String,
         parent_id: Option<i64>,
         description: Option<String>,
-    ) -> GraphqlResult<Collection> {
-        let conn = &mut context
-            .data::<PgPool>()
-            .map_err(|_| {
-                event!(Level::WARN, "graphql context data PgPool 不存在");
-                GraphqlError::NotGraphqlContextData("PgPool")
-            })?
-            .get()?;
-        let new_directory = Collection::create(&name, parent_id, description, conn)?;
-        Ok(new_directory)
+    ) -> Result<CollectionWriteResult> {
+        write(
+            ctx,
+            |conn| Collection::create(&name, parent_id, description, conn),
+            |v| {
+                CollectionWriteResult::CollectionSaved(CollectionSaved {
+                    collection_id: v.id,
+                })
+            },
+        )
     }
-    /// 删除目录
-    #[graphql(guard = "AuthGuard")]
-    async fn delete_collection(&self, context: &Context<'_>, id: i64) -> GraphqlResult<usize> {
-        let conn = &mut context
-            .data::<PgPool>()
-            .map_err(|_| {
-                event!(Level::WARN, "graphql context data PgPool 不存在");
-                GraphqlError::NotGraphqlContextData("PgPool")
-            })?
-            .get()?;
-        let count = Collection::delete(id, conn)?;
-        Ok(count)
-    }
-    /// 更新目录
     #[graphql(guard = "AuthGuard")]
     async fn update_collection(
         &self,
-        context: &Context<'_>,
+        ctx: &Context<'_>,
         id: i64,
-        #[graphql(validator(custom = "DirNameValidator"))] name: String,
+        name: String,
         parent_id: Option<i64>,
         description: Option<String>,
-    ) -> GraphqlResult<Collection> {
-        let conn = &mut context
-            .data::<PgPool>()
-            .map_err(|_| {
-                event!(Level::WARN, "graphql context data PgPool 不存在");
-                GraphqlError::NotGraphqlContextData("PgPool")
-            })?
-            .get()?;
-        let updated_collection =
-            Collection::update(id, &name, parent_id, description.as_deref(), conn)?;
-        Ok(updated_collection)
+    ) -> Result<CollectionWriteResult> {
+        write(
+            ctx,
+            |conn| Collection::update(id, &name, parent_id, description.as_deref(), conn),
+            |v| {
+                CollectionWriteResult::CollectionSaved(CollectionSaved {
+                    collection_id: v.id,
+                })
+            },
+        )
     }
-    /// 创建作者
     #[graphql(guard = "AuthGuard")]
     async fn create_author(
         &self,
-        context: &Context<'_>,
+        ctx: &Context<'_>,
         name: String,
         avatar: String,
         description: String,
         site: NovelSite,
         site_id: String,
-    ) -> GraphqlResult<Author> {
-        let conn = &mut context
-            .data::<PgPool>()
-            .map_err(|_| {
-                event!(Level::WARN, "graphql context data PgPool 不存在");
-                GraphqlError::NotGraphqlContextData("PgPool")
-            })?
-            .get()?;
-        let new_author = Author::create(&name, &avatar, &description, site, &site_id, conn)?;
-        Ok(new_author)
+    ) -> Result<AuthorWriteResult> {
+        write(
+            ctx,
+            |conn| Author::create(&name, &avatar, &description, site.into(), &site_id, conn),
+            |v| AuthorWriteResult::AuthorSaved(AuthorSaved { author_id: v.id }),
+        )
     }
-    /// 删除作者
-    #[graphql(guard = "AuthGuard")]
-    async fn delete_author(&self, context: &Context<'_>, id: i64) -> GraphqlResult<Author> {
-        let conn = &mut context
-            .data::<PgPool>()
-            .map_err(|_| {
-                event!(Level::WARN, "graphql context data PgPool 不存在");
-                GraphqlError::NotGraphqlContextData("PgPool")
-            })?
-            .get()?;
-        let deleted_author = Author::delete(id, conn)?;
-        Ok(deleted_author)
-    }
-    /// 创建标签
     #[graphql(guard = "AuthGuard")]
     async fn create_tag(
         &self,
-        context: &Context<'_>,
-        #[graphql(validator(min_length = 2, max_length = 20))] name: String,
+        ctx: &Context<'_>,
+        name: String,
         site: NovelSite,
         site_id: String,
-    ) -> GraphqlResult<Tag> {
-        let conn = &mut context
-            .data::<PgPool>()
-            .map_err(|_| {
-                event!(Level::WARN, "graphql context data PgPool 不存在");
-                GraphqlError::NotGraphqlContextData("PgPool")
-            })?
-            .get()?;
-        let new_tag = Tag::create(&name, site, &site_id, conn)?;
-        Ok(new_tag)
+    ) -> Result<TagWriteResult> {
+        write(
+            ctx,
+            |conn| Tag::create(&name, site.into(), &site_id, conn),
+            |v| TagWriteResult::TagSaved(TagSaved { tag_id: v.id }),
+        )
     }
-    /// 删除标签
-    #[graphql(guard = "AuthGuard")]
-    async fn delete_tag(&self, context: &Context<'_>, id: i64) -> GraphqlResult<Tag> {
-        let conn = &mut context
-            .data::<PgPool>()
-            .map_err(|_| {
-                event!(Level::WARN, "graphql context data PgPool 不存在");
-                GraphqlError::NotGraphqlContextData("PgPool")
-            })?
-            .get()?;
-        let deleted_tag = Tag::delete(id, conn)?;
-        Ok(deleted_tag)
-    }
-    /// 创建小说
     #[graphql(guard = "AuthGuard")]
     async fn create_novel(
         &self,
-        context: &Context<'_>,
+        ctx: &Context<'_>,
         data: CreateNovelInput,
-    ) -> GraphqlResult<Novel> {
-        let conn = &mut context
-            .data::<PgPool>()
-            .map_err(|_| {
-                event!(Level::WARN, "graphql context data PgPool 不存在");
-                GraphqlError::NotGraphqlContextData("PgPool")
-            })?
-            .get()?;
-        data.create(conn)
+    ) -> Result<NovelWriteResult> {
+        write(
+            ctx,
+            |conn| crate::service::novel::CreateNovelInput::from(data).create(conn),
+            |v| NovelWriteResult::NovelSaved(NovelSaved { novel_id: v.id }),
+        )
     }
-    /// 删除小说
-    #[graphql(guard = "AuthGuard")]
-    async fn delete_novel(&self, context: &Context<'_>, id: i64) -> GraphqlResult<Novel> {
-        let conn = &mut context
-            .data::<PgPool>()
-            .map_err(|_| {
-                event!(Level::WARN, "graphql context data PgPool 不存在");
-                GraphqlError::NotGraphqlContextData("PgPool")
-            })?
-            .get()?;
-        let deleted_novel = Novel::delete(id, conn)?;
-        Ok(deleted_novel)
-    }
-    /// 保存 draft author
     #[graphql(guard = "AuthGuard")]
     async fn save_draft_author(
         &self,
-        context: &Context<'_>,
+        ctx: &Context<'_>,
         author: SaveDraftAuthor,
-    ) -> GraphqlResult<Author> {
-        let conn = &mut context
-            .data::<PgPool>()
-            .map_err(|_| {
-                event!(Level::WARN, "graphql context data PgPool 不存在");
-                GraphqlError::NotGraphqlContextData("PgPool")
-            })?
-            .get()?;
-        author.save(conn)
+    ) -> Result<AuthorWriteResult> {
+        write(
+            ctx,
+            |conn| crate::service::save_draft::SaveDraftAuthor::from(author).save(conn),
+            |v| AuthorWriteResult::AuthorSaved(AuthorSaved { author_id: v.id }),
+        )
     }
-    /// 保存 draft novel
     #[graphql(guard = "AuthGuard")]
     async fn save_draft_novel(
         &self,
-        context: &Context<'_>,
+        ctx: &Context<'_>,
         novel: SaveDraftNovel,
-    ) -> GraphqlResult<Novel> {
-        let conn = &mut context
-            .data::<PgPool>()
-            .map_err(|_| {
-                event!(Level::WARN, "graphql context data PgPool 不存在");
-                GraphqlError::NotGraphqlContextData("PgPool")
-            })?
-            .get()?;
-        novel.save(conn)
+    ) -> Result<NovelWriteResult> {
+        write(
+            ctx,
+            |conn| crate::service::save_draft::SaveDraftNovel::from(novel).save(conn),
+            |v| NovelWriteResult::NovelSaved(NovelSaved { novel_id: v.id }),
+        )
     }
-    /// 通过 fetch 更新小说
     #[graphql(guard = "AuthGuard")]
-    async fn update_novel_by_crawler(
-        &self,
-        context: &Context<'_>,
-        novel_id: i64,
-    ) -> GraphqlResult<Novel> {
-        let conn = &mut context
-            .data::<PgPool>()
-            .map_err(|_| {
-                event!(Level::WARN, "graphql context data PgPool 不存在");
-                GraphqlError::NotGraphqlContextData("PgPool")
-            })?
-            .get()?;
-        let novel = Novel::get(novel_id, conn)?;
-        match novel.site {
-            NovelSite::Qidian => novel.update_by_crawler::<QDNovel>(conn).await,
-            NovelSite::Jjwxc => novel.update_by_crawler::<JJNovel>(conn).await,
-        }
+    async fn delete_collection(&self, ctx: &Context<'_>, id: i64) -> Result<DeleteResult> {
+        write(
+            ctx,
+            |conn| Collection::delete(id, conn),
+            |v| {
+                DeleteResult::ResourceDeleted(ResourceDeleted {
+                    resource: ResourceRef {
+                        kind: ResourceKind::Collection,
+                        id: v,
+                    },
+                })
+            },
+        )
     }
-    /// 通过 fetch 更新作者
     #[graphql(guard = "AuthGuard")]
-    async fn update_author_by_crawler(
-        &self,
-        context: &Context<'_>,
-        author_id: i64,
-    ) -> GraphqlResult<Author> {
-        let conn = &mut context
-            .data::<PgPool>()
-            .map_err(|_| {
-                event!(Level::WARN, "graphql context data PgPool 不存在");
-                GraphqlError::NotGraphqlContextData("PgPool")
-            })?
-            .get()?;
-        let author = Author::get(author_id, conn)?;
-        match author.site {
-            NovelSite::Qidian => author.update_by_crawler::<QDAuthor>(conn).await,
-            NovelSite::Jjwxc => author.update_by_crawler::<JJAuthor>(conn).await,
-        }
+    async fn delete_author(&self, ctx: &Context<'_>, id: i64) -> Result<DeleteResult> {
+        write(
+            ctx,
+            |conn| Author::delete(id, conn),
+            |v| {
+                DeleteResult::ResourceDeleted(ResourceDeleted {
+                    resource: ResourceRef {
+                        kind: ResourceKind::Author,
+                        id: v,
+                    },
+                })
+            },
+        )
     }
-    /// 给小说添加集合
     #[graphql(guard = "AuthGuard")]
-    async fn add_collection_for_novel(
-        &self,
-        context: &Context<'_>,
-        collection_id: i64,
-        novel_id: i64,
-    ) -> GraphqlResult<Novel> {
-        let conn = &mut context
-            .data::<PgPool>()
-            .map_err(|_| {
-                event!(Level::WARN, "graphql context data PgPool 不存在");
-                GraphqlError::NotGraphqlContextData("PgPool")
-            })?
-            .get()?;
-        Novel::add_collection(collection_id, novel_id, conn)
+    async fn delete_novel(&self, ctx: &Context<'_>, id: i64) -> Result<DeleteResult> {
+        write(
+            ctx,
+            |conn| Novel::delete(id, conn),
+            |v| {
+                DeleteResult::ResourceDeleted(ResourceDeleted {
+                    resource: ResourceRef {
+                        kind: ResourceKind::Novel,
+                        id: v,
+                    },
+                })
+            },
+        )
     }
-    /// 给小说删除集合
     #[graphql(guard = "AuthGuard")]
-    async fn delete_collection_for_novel(
-        &self,
-        context: &Context<'_>,
-        collection_id: i64,
-        novel_id: i64,
-    ) -> GraphqlResult<Novel> {
-        let conn = &mut context
-            .data::<PgPool>()
-            .map_err(|_| {
-                event!(Level::WARN, "graphql context data PgPool 不存在");
-                GraphqlError::NotGraphqlContextData("PgPool")
-            })?
-            .get()?;
-        Novel::delete_collection(collection_id, novel_id, conn)
+    async fn delete_tag(&self, ctx: &Context<'_>, id: i64) -> Result<DeleteResult> {
+        write(
+            ctx,
+            |conn| Tag::delete(id, conn),
+            |v| {
+                DeleteResult::ResourceDeleted(ResourceDeleted {
+                    resource: ResourceRef {
+                        kind: ResourceKind::Tag,
+                        id: v,
+                    },
+                })
+            },
+        )
     }
-    /// 给小说添加评论
-    #[graphql(guard = "AuthGuard")]
-    async fn add_comment_for_novel(
-        &self,
-        context: &Context<'_>,
-        novel_id: i64,
-        content: String,
-    ) -> GraphqlResult<NovelComment> {
-        let conn = &mut context
-            .data::<PgPool>()
-            .map_err(|_| {
-                event!(Level::WARN, "graphql context data PgPool 不存在");
-                GraphqlError::NotGraphqlContextData("PgPool")
-            })?
-            .get()?;
-        NovelComment::create(novel_id, &content, conn)
-    }
-    /// 给小说删除评论
     #[graphql(guard = "AuthGuard")]
     async fn delete_comment_for_novel(
         &self,
-        context: &Context<'_>,
+        ctx: &Context<'_>,
         novel_id: i64,
-    ) -> GraphqlResult<NovelComment> {
-        let conn = &mut context
-            .data::<PgPool>()
-            .map_err(|_| {
-                event!(Level::WARN, "graphql context data PgPool 不存在");
-                GraphqlError::NotGraphqlContextData("PgPool")
-            })?
-            .get()?;
-        NovelComment::delete(novel_id, conn)
+    ) -> Result<DeleteResult> {
+        write(
+            ctx,
+            |conn| NovelComment::delete(novel_id, conn),
+            |v| {
+                DeleteResult::ResourceDeleted(ResourceDeleted {
+                    resource: ResourceRef {
+                        kind: ResourceKind::Comment,
+                        id: v,
+                    },
+                })
+            },
+        )
     }
-    /// 给小说修改评论
+    #[graphql(guard = "AuthGuard")]
+    async fn add_comment_for_novel(
+        &self,
+        ctx: &Context<'_>,
+        novel_id: i64,
+        content: String,
+    ) -> Result<CommentWriteResult> {
+        write(
+            ctx,
+            |conn| NovelComment::create(novel_id, &content, conn),
+            |v| CommentWriteResult::CommentSaved(CommentSaved { novel_id: v }),
+        )
+    }
     #[graphql(guard = "AuthGuard")]
     async fn update_comment_for_novel(
         &self,
-        context: &Context<'_>,
+        ctx: &Context<'_>,
         novel_id: i64,
         content: String,
-    ) -> GraphqlResult<NovelComment> {
-        let conn = &mut context
-            .data::<PgPool>()
-            .map_err(|_| {
-                event!(Level::WARN, "graphql context data PgPool 不存在");
-                GraphqlError::NotGraphqlContextData("PgPool")
-            })?
-            .get()?;
-        NovelComment::update(novel_id, &content, conn)
+    ) -> Result<CommentWriteResult> {
+        write(
+            ctx,
+            |conn| NovelComment::update(novel_id, &content, conn),
+            |v| CommentWriteResult::CommentSaved(CommentSaved { novel_id: v }),
+        )
     }
-    /// 给章节添加阅读记录
+    #[graphql(guard = "AuthGuard")]
+    async fn add_collection_for_novel(
+        &self,
+        ctx: &Context<'_>,
+        collection_id: i64,
+        novel_id: i64,
+    ) -> Result<AddMembershipResult> {
+        write(
+            ctx,
+            |conn| Novel::add_collection(collection_id, novel_id, conn),
+            |_| {
+                AddMembershipResult::CollectionMembershipChanged(CollectionMembershipChanged {
+                    collection_id,
+                    resource: ResourceRef {
+                        kind: ResourceKind::Novel,
+                        id: novel_id,
+                    },
+                    present: true,
+                })
+            },
+        )
+    }
+    #[graphql(guard = "AuthGuard")]
+    async fn delete_collection_for_novel(
+        &self,
+        ctx: &Context<'_>,
+        collection_id: i64,
+        novel_id: i64,
+    ) -> Result<RemoveMembershipResult> {
+        write(
+            ctx,
+            |conn| Novel::delete_collection(collection_id, novel_id, conn),
+            |_| {
+                RemoveMembershipResult::CollectionMembershipChanged(CollectionMembershipChanged {
+                    collection_id,
+                    resource: ResourceRef {
+                        kind: ResourceKind::Novel,
+                        id: novel_id,
+                    },
+                    present: false,
+                })
+            },
+        )
+    }
+    #[graphql(guard = "AuthGuard")]
+    async fn update_novel_by_crawler(
+        &self,
+        ctx: &Context<'_>,
+        novel_id: i64,
+    ) -> Result<NovelWriteResult> {
+        let result = Novel::refresh(novel_id, pool(ctx)?.clone()).await;
+        project(ctx, result, |v| {
+            NovelWriteResult::NovelSaved(NovelSaved { novel_id: v.id })
+        })
+    }
+    #[graphql(guard = "AuthGuard")]
+    async fn update_author_by_crawler(
+        &self,
+        ctx: &Context<'_>,
+        author_id: i64,
+    ) -> Result<AuthorWriteResult> {
+        let result = Author::refresh(author_id, pool(ctx)?.clone()).await;
+        project(ctx, result, |v| {
+            AuthorWriteResult::AuthorSaved(AuthorSaved { author_id: v.id })
+        })
+    }
     #[graphql(guard = "AuthGuard")]
     async fn add_read_records_for_chapter(
         &self,
-        context: &Context<'_>,
+        ctx: &Context<'_>,
         novel_id: i64,
         chapter_ids: Vec<i64>,
-    ) -> GraphqlResult<usize> {
-        let conn = &mut context
-            .data::<PgPool>()
-            .map_err(|_| {
-                event!(Level::WARN, "graphql context data PgPool 不存在");
-                GraphqlError::NotGraphqlContextData("PgPool")
-            })?
-            .get()?;
-        Novel::add_read_records(novel_id, &chapter_ids, conn)
+    ) -> Result<AddReadRecordsResult> {
+        write(
+            ctx,
+            |conn| Novel::add_read_records(novel_id, &chapter_ids, conn),
+            |v| AddReadRecordsResult::ReadRecordsUpdated(v.into()),
+        )
     }
-    /// 给章节删除阅读记录
     #[graphql(guard = "AuthGuard")]
     async fn delete_read_records_for_chapter(
         &self,
-        context: &Context<'_>,
+        ctx: &Context<'_>,
         chapter_ids: Vec<i64>,
-    ) -> GraphqlResult<usize> {
-        let conn = &mut context
-            .data::<PgPool>()
-            .map_err(|_| {
-                event!(Level::WARN, "graphql context data PgPool 不存在");
-                GraphqlError::NotGraphqlContextData("PgPool")
-            })?
-            .get()?;
-        Novel::delete_read_records(&chapter_ids, conn)
+    ) -> Result<DeleteReadRecordsResult> {
+        write(
+            ctx,
+            |conn| Novel::delete_read_records(&chapter_ids, conn),
+            |v| DeleteReadRecordsResult::ReadRecordsUpdated(v.into()),
+        )
     }
 }

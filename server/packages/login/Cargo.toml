@@ -6,6 +6,8 @@ edition.workspace = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+service-errors.workspace = true
+telemetry.workspace = true
 service-health = { workspace = true, features = ["auth"] }
 # http
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
@@ -23,7 +25,7 @@ time = { workspace = true, features = ["formatting"] }
 serde_json.workspace = true
 
 # cors
-middleware = { workspace = true, features = ["auth-http", "trace"] }
+middleware = { workspace = true, features = ["public-errors", "auth-http", "trace"] }
 
 # log
 tracing.workspace = true

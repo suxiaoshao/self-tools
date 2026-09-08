@@ -1,0 +1,12 @@
+{
+  "name": "request-errors",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "valibot": "1.4.2"
+  }
+}

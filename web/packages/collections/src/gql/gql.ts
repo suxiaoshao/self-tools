@@ -15,48 +15,55 @@ import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/
  */
 type Documents = {
   '\n  query allCollections {\n    allCollections {\n      name\n      id\n      path\n      createTime\n      updateTime\n      description\n      parentId\n    }\n  }\n': typeof types.AllCollectionsDocument;
-  '\n  mutation deleteCollection($id: Int!) {\n    deleteCollection(id: $id) {\n      path\n    }\n  }\n': typeof types.DeleteCollectionDocument;
-  '\n  mutation deleteItem($id: Int!) {\n    deleteItem(id: $id) {\n      name\n    }\n  }\n': typeof types.DeleteItemDocument;
+  '\n  mutation deleteCollection($id: Int!) {\n    deleteCollection(id: $id) {\n      __typename\n      ... on ResourceDeleted {\n        resource {\n          kind\n          id\n        }\n      }\n      ... on ValidationFailure {\n        issues {\n          path\n          code\n          min\n          max\n        }\n      }\n    }\n  }\n': typeof types.DeleteCollectionDocument;
+  '\n  mutation deleteItem($id: Int!) {\n    deleteItem(id: $id) {\n      __typename\n      ... on ResourceDeleted {\n        resource {\n          kind\n          id\n        }\n      }\n      ... on ValidationFailure {\n        issues {\n          path\n          code\n          min\n          max\n        }\n      }\n    }\n  }\n': typeof types.DeleteItemDocument;
   '\n  query getEditItem($id: Int!) {\n    getItem(id: $id) {\n      name\n      content\n      collections {\n        id\n      }\n    }\n  }\n': typeof types.GetEditItemDocument;
-  '\n  mutation updateCollection($id: Int!, $name: String!, $description: String) {\n    updateCollection(id: $id, name: $name, description: $description) {\n      path\n    }\n  }\n': typeof types.UpdateCollectionDocument;
-  '\n  mutation updateItem($id: Int!, $name: String!, $content: String!) {\n    updateItem(id: $id, name: $name, content: $content) {\n      id\n      name\n      content\n    }\n  }\n': typeof types.UpdateItemDocument;
+  '\n  mutation updateCollection($id: Int!, $name: String!, $description: String) {\n    updateCollection(id: $id, name: $name, description: $description) {\n      __typename\n      ... on CollectionSaved {\n        collectionId\n      }\n      ... on ValidationFailure {\n        issues {\n          path\n          code\n          min\n          max\n        }\n      }\n      ... on MissingResources {\n        resources {\n          kind\n          id\n        }\n      }\n      ... on Conflict {\n        reason\n        resources {\n          kind\n          id\n        }\n      }\n    }\n  }\n': typeof types.UpdateCollectionDocument;
+  '\n  mutation updateItem($id: Int!, $name: String!, $content: String!) {\n    updateItem(id: $id, name: $name, content: $content) {\n      __typename\n      ... on ItemSaved {\n        itemId\n      }\n      ... on ValidationFailure {\n        issues {\n          path\n          code\n          min\n          max\n        }\n      }\n      ... on MissingResources {\n        resources {\n          kind\n          id\n        }\n      }\n    }\n  }\n': typeof types.UpdateItemDocument;
   '\n  query getCollectionAncestors($id: Int!) {\n    getCollection(id: $id) {\n      ancestors {\n        id\n        name\n      }\n      id\n      name\n    }\n  }\n': typeof types.GetCollectionAncestorsDocument;
-  '\n  mutation createCollection($parentId: Int, $name: String!, $description: String) {\n    createCollection(parentId: $parentId, name: $name, description: $description) {\n      path\n    }\n  }\n': typeof types.CreateCollectionDocument;
-  '\n  mutation createItem($collectionIds: [Int!]!, $name: String!, $content: String!) {\n    createItem(collectionIds: $collectionIds, name: $name, content: $content) {\n      name\n    }\n  }\n': typeof types.CreateItemDocument;
+  '\n  mutation createCollection($parentId: Int, $name: String!, $description: String) {\n    createCollection(parentId: $parentId, name: $name, description: $description) {\n      __typename\n      ... on CollectionSaved {\n        collectionId\n      }\n      ... on ValidationFailure {\n        issues {\n          path\n          code\n          min\n          max\n        }\n      }\n      ... on MissingResources {\n        resources {\n          kind\n          id\n        }\n      }\n      ... on Conflict {\n        reason\n        resources {\n          kind\n          id\n        }\n      }\n    }\n  }\n': typeof types.CreateCollectionDocument;
+  '\n  mutation createItem($collectionIds: [Int!]!, $name: String!, $content: String!) {\n    createItem(collectionIds: $collectionIds, name: $name, content: $content) {\n      __typename\n      ... on ItemSaved {\n        itemId\n      }\n      ... on ValidationFailure {\n        issues {\n          path\n          code\n          min\n          max\n        }\n      }\n      ... on MissingResources {\n        resources {\n          kind\n          id\n        }\n      }\n    }\n  }\n': typeof types.CreateItemDocument;
   '\n  query collectionAndItems($query: CollectionItemQuery!) {\n    collectionAndItem(query: $query) {\n      data {\n        ... on Collection {\n          name\n          id\n          path\n          createTime\n          updateTime\n          description\n          __typename\n        }\n        ... on Item {\n          name\n          id\n          updateTime\n          createTime\n          __typename\n        }\n      }\n      total\n    }\n  }\n': typeof types.CollectionAndItemsDocument;
-  '\n  mutation addCollectionForItem($itemId: Int!, $collectionId: Int!) {\n    addCollectionForItem(itemId: $itemId, collectionId: $collectionId) {\n      id\n    }\n  }\n': typeof types.AddCollectionForItemDocument;
+  '\n  mutation addCollectionForItem($itemId: Int!, $collectionId: Int!) {\n    addCollectionForItem(itemId: $itemId, collectionId: $collectionId) {\n      __typename\n      ... on CollectionMembershipChanged {\n        collectionId\n        resource {\n          kind\n          id\n        }\n        present\n      }\n      ... on ValidationFailure {\n        issues {\n          path\n          code\n          min\n          max\n        }\n      }\n      ... on MissingResources {\n        resources {\n          kind\n          id\n        }\n      }\n      ... on Conflict {\n        reason\n        resources {\n          kind\n          id\n        }\n      }\n    }\n  }\n': typeof types.AddCollectionForItemDocument;
   '\n  query getItem($id: Int!) {\n    getItem(id: $id) {\n      id\n      name\n      content\n      createTime\n      updateTime\n      collections {\n        id\n        name\n        path\n        description\n      }\n    }\n  }\n': typeof types.GetItemDocument;
-  '\n  mutation deleteCollectionForItem($collectionId: Int!, $itemId: Int!) {\n    deleteCollectionForItem(collectionId: $collectionId, itemId: $itemId) {\n      id\n    }\n  }\n': typeof types.DeleteCollectionForItemDocument;
+  '\n  mutation deleteCollectionForItem($collectionId: Int!, $itemId: Int!) {\n    deleteCollectionForItem(collectionId: $collectionId, itemId: $itemId) {\n      __typename\n      ... on CollectionMembershipChanged {\n        collectionId\n        resource {\n          kind\n          id\n        }\n        present\n      }\n      ... on ValidationFailure {\n        issues {\n          path\n          code\n          min\n          max\n        }\n      }\n    }\n  }\n': typeof types.DeleteCollectionForItemDocument;
   '\n  query getItems($collectionMatch: TagMatch, $pagination: Pagination!) {\n    queryItems(collectionMatch: $collectionMatch, pagination: $pagination) {\n      data {\n        id\n        name\n        content\n        createTime\n        updateTime\n      }\n      total\n    }\n  }\n': typeof types.GetItemsDocument;
+  '\n  query ReadItemState($id: Int!) {\n    getItem(id: $id) {\n      id\n      name\n      content\n      collections {\n        id\n      }\n    }\n  }\n': typeof types.ReadItemStateDocument;
+  '\n  query ReadCollectionState($id: Int!) {\n    getCollection(id: $id) {\n      id\n      name\n      description\n    }\n  }\n': typeof types.ReadCollectionStateDocument;
 };
 const documents: Documents = {
   '\n  query allCollections {\n    allCollections {\n      name\n      id\n      path\n      createTime\n      updateTime\n      description\n      parentId\n    }\n  }\n':
     types.AllCollectionsDocument,
-  '\n  mutation deleteCollection($id: Int!) {\n    deleteCollection(id: $id) {\n      path\n    }\n  }\n':
+  '\n  mutation deleteCollection($id: Int!) {\n    deleteCollection(id: $id) {\n      __typename\n      ... on ResourceDeleted {\n        resource {\n          kind\n          id\n        }\n      }\n      ... on ValidationFailure {\n        issues {\n          path\n          code\n          min\n          max\n        }\n      }\n    }\n  }\n':
     types.DeleteCollectionDocument,
-  '\n  mutation deleteItem($id: Int!) {\n    deleteItem(id: $id) {\n      name\n    }\n  }\n': types.DeleteItemDocument,
+  '\n  mutation deleteItem($id: Int!) {\n    deleteItem(id: $id) {\n      __typename\n      ... on ResourceDeleted {\n        resource {\n          kind\n          id\n        }\n      }\n      ... on ValidationFailure {\n        issues {\n          path\n          code\n          min\n          max\n        }\n      }\n    }\n  }\n':
+    types.DeleteItemDocument,
   '\n  query getEditItem($id: Int!) {\n    getItem(id: $id) {\n      name\n      content\n      collections {\n        id\n      }\n    }\n  }\n':
     types.GetEditItemDocument,
-  '\n  mutation updateCollection($id: Int!, $name: String!, $description: String) {\n    updateCollection(id: $id, name: $name, description: $description) {\n      path\n    }\n  }\n':
+  '\n  mutation updateCollection($id: Int!, $name: String!, $description: String) {\n    updateCollection(id: $id, name: $name, description: $description) {\n      __typename\n      ... on CollectionSaved {\n        collectionId\n      }\n      ... on ValidationFailure {\n        issues {\n          path\n          code\n          min\n          max\n        }\n      }\n      ... on MissingResources {\n        resources {\n          kind\n          id\n        }\n      }\n      ... on Conflict {\n        reason\n        resources {\n          kind\n          id\n        }\n      }\n    }\n  }\n':
     types.UpdateCollectionDocument,
-  '\n  mutation updateItem($id: Int!, $name: String!, $content: String!) {\n    updateItem(id: $id, name: $name, content: $content) {\n      id\n      name\n      content\n    }\n  }\n':
+  '\n  mutation updateItem($id: Int!, $name: String!, $content: String!) {\n    updateItem(id: $id, name: $name, content: $content) {\n      __typename\n      ... on ItemSaved {\n        itemId\n      }\n      ... on ValidationFailure {\n        issues {\n          path\n          code\n          min\n          max\n        }\n      }\n      ... on MissingResources {\n        resources {\n          kind\n          id\n        }\n      }\n    }\n  }\n':
     types.UpdateItemDocument,
   '\n  query getCollectionAncestors($id: Int!) {\n    getCollection(id: $id) {\n      ancestors {\n        id\n        name\n      }\n      id\n      name\n    }\n  }\n':
     types.GetCollectionAncestorsDocument,
-  '\n  mutation createCollection($parentId: Int, $name: String!, $description: String) {\n    createCollection(parentId: $parentId, name: $name, description: $description) {\n      path\n    }\n  }\n':
+  '\n  mutation createCollection($parentId: Int, $name: String!, $description: String) {\n    createCollection(parentId: $parentId, name: $name, description: $description) {\n      __typename\n      ... on CollectionSaved {\n        collectionId\n      }\n      ... on ValidationFailure {\n        issues {\n          path\n          code\n          min\n          max\n        }\n      }\n      ... on MissingResources {\n        resources {\n          kind\n          id\n        }\n      }\n      ... on Conflict {\n        reason\n        resources {\n          kind\n          id\n        }\n      }\n    }\n  }\n':
     types.CreateCollectionDocument,
-  '\n  mutation createItem($collectionIds: [Int!]!, $name: String!, $content: String!) {\n    createItem(collectionIds: $collectionIds, name: $name, content: $content) {\n      name\n    }\n  }\n':
+  '\n  mutation createItem($collectionIds: [Int!]!, $name: String!, $content: String!) {\n    createItem(collectionIds: $collectionIds, name: $name, content: $content) {\n      __typename\n      ... on ItemSaved {\n        itemId\n      }\n      ... on ValidationFailure {\n        issues {\n          path\n          code\n          min\n          max\n        }\n      }\n      ... on MissingResources {\n        resources {\n          kind\n          id\n        }\n      }\n    }\n  }\n':
     types.CreateItemDocument,
   '\n  query collectionAndItems($query: CollectionItemQuery!) {\n    collectionAndItem(query: $query) {\n      data {\n        ... on Collection {\n          name\n          id\n          path\n          createTime\n          updateTime\n          description\n          __typename\n        }\n        ... on Item {\n          name\n          id\n          updateTime\n          createTime\n          __typename\n        }\n      }\n      total\n    }\n  }\n':
     types.CollectionAndItemsDocument,
-  '\n  mutation addCollectionForItem($itemId: Int!, $collectionId: Int!) {\n    addCollectionForItem(itemId: $itemId, collectionId: $collectionId) {\n      id\n    }\n  }\n':
+  '\n  mutation addCollectionForItem($itemId: Int!, $collectionId: Int!) {\n    addCollectionForItem(itemId: $itemId, collectionId: $collectionId) {\n      __typename\n      ... on CollectionMembershipChanged {\n        collectionId\n        resource {\n          kind\n          id\n        }\n        present\n      }\n      ... on ValidationFailure {\n        issues {\n          path\n          code\n          min\n          max\n        }\n      }\n      ... on MissingResources {\n        resources {\n          kind\n          id\n        }\n      }\n      ... on Conflict {\n        reason\n        resources {\n          kind\n          id\n        }\n      }\n    }\n  }\n':
     types.AddCollectionForItemDocument,
   '\n  query getItem($id: Int!) {\n    getItem(id: $id) {\n      id\n      name\n      content\n      createTime\n      updateTime\n      collections {\n        id\n        name\n        path\n        description\n      }\n    }\n  }\n':
     types.GetItemDocument,
-  '\n  mutation deleteCollectionForItem($collectionId: Int!, $itemId: Int!) {\n    deleteCollectionForItem(collectionId: $collectionId, itemId: $itemId) {\n      id\n    }\n  }\n':
+  '\n  mutation deleteCollectionForItem($collectionId: Int!, $itemId: Int!) {\n    deleteCollectionForItem(collectionId: $collectionId, itemId: $itemId) {\n      __typename\n      ... on CollectionMembershipChanged {\n        collectionId\n        resource {\n          kind\n          id\n        }\n        present\n      }\n      ... on ValidationFailure {\n        issues {\n          path\n          code\n          min\n          max\n        }\n      }\n    }\n  }\n':
     types.DeleteCollectionForItemDocument,
   '\n  query getItems($collectionMatch: TagMatch, $pagination: Pagination!) {\n    queryItems(collectionMatch: $collectionMatch, pagination: $pagination) {\n      data {\n        id\n        name\n        content\n        createTime\n        updateTime\n      }\n      total\n    }\n  }\n':
     types.GetItemsDocument,
+  '\n  query ReadItemState($id: Int!) {\n    getItem(id: $id) {\n      id\n      name\n      content\n      collections {\n        id\n      }\n    }\n  }\n':
+    types.ReadItemStateDocument,
+  '\n  query ReadCollectionState($id: Int!) {\n    getCollection(id: $id) {\n      id\n      name\n      description\n    }\n  }\n':
+    types.ReadCollectionStateDocument,
 };
 
 /**
@@ -83,14 +90,14 @@ export function graphql(
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(
-  source: '\n  mutation deleteCollection($id: Int!) {\n    deleteCollection(id: $id) {\n      path\n    }\n  }\n',
-): (typeof documents)['\n  mutation deleteCollection($id: Int!) {\n    deleteCollection(id: $id) {\n      path\n    }\n  }\n'];
+  source: '\n  mutation deleteCollection($id: Int!) {\n    deleteCollection(id: $id) {\n      __typename\n      ... on ResourceDeleted {\n        resource {\n          kind\n          id\n        }\n      }\n      ... on ValidationFailure {\n        issues {\n          path\n          code\n          min\n          max\n        }\n      }\n    }\n  }\n',
+): (typeof documents)['\n  mutation deleteCollection($id: Int!) {\n    deleteCollection(id: $id) {\n      __typename\n      ... on ResourceDeleted {\n        resource {\n          kind\n          id\n        }\n      }\n      ... on ValidationFailure {\n        issues {\n          path\n          code\n          min\n          max\n        }\n      }\n    }\n  }\n'];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(
-  source: '\n  mutation deleteItem($id: Int!) {\n    deleteItem(id: $id) {\n      name\n    }\n  }\n',
-): (typeof documents)['\n  mutation deleteItem($id: Int!) {\n    deleteItem(id: $id) {\n      name\n    }\n  }\n'];
+  source: '\n  mutation deleteItem($id: Int!) {\n    deleteItem(id: $id) {\n      __typename\n      ... on ResourceDeleted {\n        resource {\n          kind\n          id\n        }\n      }\n      ... on ValidationFailure {\n        issues {\n          path\n          code\n          min\n          max\n        }\n      }\n    }\n  }\n',
+): (typeof documents)['\n  mutation deleteItem($id: Int!) {\n    deleteItem(id: $id) {\n      __typename\n      ... on ResourceDeleted {\n        resource {\n          kind\n          id\n        }\n      }\n      ... on ValidationFailure {\n        issues {\n          path\n          code\n          min\n          max\n        }\n      }\n    }\n  }\n'];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -101,14 +108,14 @@ export function graphql(
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(
-  source: '\n  mutation updateCollection($id: Int!, $name: String!, $description: String) {\n    updateCollection(id: $id, name: $name, description: $description) {\n      path\n    }\n  }\n',
-): (typeof documents)['\n  mutation updateCollection($id: Int!, $name: String!, $description: String) {\n    updateCollection(id: $id, name: $name, description: $description) {\n      path\n    }\n  }\n'];
+  source: '\n  mutation updateCollection($id: Int!, $name: String!, $description: String) {\n    updateCollection(id: $id, name: $name, description: $description) {\n      __typename\n      ... on CollectionSaved {\n        collectionId\n      }\n      ... on ValidationFailure {\n        issues {\n          path\n          code\n          min\n          max\n        }\n      }\n      ... on MissingResources {\n        resources {\n          kind\n          id\n        }\n      }\n      ... on Conflict {\n        reason\n        resources {\n          kind\n          id\n        }\n      }\n    }\n  }\n',
+): (typeof documents)['\n  mutation updateCollection($id: Int!, $name: String!, $description: String) {\n    updateCollection(id: $id, name: $name, description: $description) {\n      __typename\n      ... on CollectionSaved {\n        collectionId\n      }\n      ... on ValidationFailure {\n        issues {\n          path\n          code\n          min\n          max\n        }\n      }\n      ... on MissingResources {\n        resources {\n          kind\n          id\n        }\n      }\n      ... on Conflict {\n        reason\n        resources {\n          kind\n          id\n        }\n      }\n    }\n  }\n'];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(
-  source: '\n  mutation updateItem($id: Int!, $name: String!, $content: String!) {\n    updateItem(id: $id, name: $name, content: $content) {\n      id\n      name\n      content\n    }\n  }\n',
-): (typeof documents)['\n  mutation updateItem($id: Int!, $name: String!, $content: String!) {\n    updateItem(id: $id, name: $name, content: $content) {\n      id\n      name\n      content\n    }\n  }\n'];
+  source: '\n  mutation updateItem($id: Int!, $name: String!, $content: String!) {\n    updateItem(id: $id, name: $name, content: $content) {\n      __typename\n      ... on ItemSaved {\n        itemId\n      }\n      ... on ValidationFailure {\n        issues {\n          path\n          code\n          min\n          max\n        }\n      }\n      ... on MissingResources {\n        resources {\n          kind\n          id\n        }\n      }\n    }\n  }\n',
+): (typeof documents)['\n  mutation updateItem($id: Int!, $name: String!, $content: String!) {\n    updateItem(id: $id, name: $name, content: $content) {\n      __typename\n      ... on ItemSaved {\n        itemId\n      }\n      ... on ValidationFailure {\n        issues {\n          path\n          code\n          min\n          max\n        }\n      }\n      ... on MissingResources {\n        resources {\n          kind\n          id\n        }\n      }\n    }\n  }\n'];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -119,14 +126,14 @@ export function graphql(
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(
-  source: '\n  mutation createCollection($parentId: Int, $name: String!, $description: String) {\n    createCollection(parentId: $parentId, name: $name, description: $description) {\n      path\n    }\n  }\n',
-): (typeof documents)['\n  mutation createCollection($parentId: Int, $name: String!, $description: String) {\n    createCollection(parentId: $parentId, name: $name, description: $description) {\n      path\n    }\n  }\n'];
+  source: '\n  mutation createCollection($parentId: Int, $name: String!, $description: String) {\n    createCollection(parentId: $parentId, name: $name, description: $description) {\n      __typename\n      ... on CollectionSaved {\n        collectionId\n      }\n      ... on ValidationFailure {\n        issues {\n          path\n          code\n          min\n          max\n        }\n      }\n      ... on MissingResources {\n        resources {\n          kind\n          id\n        }\n      }\n      ... on Conflict {\n        reason\n        resources {\n          kind\n          id\n        }\n      }\n    }\n  }\n',
+): (typeof documents)['\n  mutation createCollection($parentId: Int, $name: String!, $description: String) {\n    createCollection(parentId: $parentId, name: $name, description: $description) {\n      __typename\n      ... on CollectionSaved {\n        collectionId\n      }\n      ... on ValidationFailure {\n        issues {\n          path\n          code\n          min\n          max\n        }\n      }\n      ... on MissingResources {\n        resources {\n          kind\n          id\n        }\n      }\n      ... on Conflict {\n        reason\n        resources {\n          kind\n          id\n        }\n      }\n    }\n  }\n'];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(
-  source: '\n  mutation createItem($collectionIds: [Int!]!, $name: String!, $content: String!) {\n    createItem(collectionIds: $collectionIds, name: $name, content: $content) {\n      name\n    }\n  }\n',
-): (typeof documents)['\n  mutation createItem($collectionIds: [Int!]!, $name: String!, $content: String!) {\n    createItem(collectionIds: $collectionIds, name: $name, content: $content) {\n      name\n    }\n  }\n'];
+  source: '\n  mutation createItem($collectionIds: [Int!]!, $name: String!, $content: String!) {\n    createItem(collectionIds: $collectionIds, name: $name, content: $content) {\n      __typename\n      ... on ItemSaved {\n        itemId\n      }\n      ... on ValidationFailure {\n        issues {\n          path\n          code\n          min\n          max\n        }\n      }\n      ... on MissingResources {\n        resources {\n          kind\n          id\n        }\n      }\n    }\n  }\n',
+): (typeof documents)['\n  mutation createItem($collectionIds: [Int!]!, $name: String!, $content: String!) {\n    createItem(collectionIds: $collectionIds, name: $name, content: $content) {\n      __typename\n      ... on ItemSaved {\n        itemId\n      }\n      ... on ValidationFailure {\n        issues {\n          path\n          code\n          min\n          max\n        }\n      }\n      ... on MissingResources {\n        resources {\n          kind\n          id\n        }\n      }\n    }\n  }\n'];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -137,8 +144,8 @@ export function graphql(
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(
-  source: '\n  mutation addCollectionForItem($itemId: Int!, $collectionId: Int!) {\n    addCollectionForItem(itemId: $itemId, collectionId: $collectionId) {\n      id\n    }\n  }\n',
-): (typeof documents)['\n  mutation addCollectionForItem($itemId: Int!, $collectionId: Int!) {\n    addCollectionForItem(itemId: $itemId, collectionId: $collectionId) {\n      id\n    }\n  }\n'];
+  source: '\n  mutation addCollectionForItem($itemId: Int!, $collectionId: Int!) {\n    addCollectionForItem(itemId: $itemId, collectionId: $collectionId) {\n      __typename\n      ... on CollectionMembershipChanged {\n        collectionId\n        resource {\n          kind\n          id\n        }\n        present\n      }\n      ... on ValidationFailure {\n        issues {\n          path\n          code\n          min\n          max\n        }\n      }\n      ... on MissingResources {\n        resources {\n          kind\n          id\n        }\n      }\n      ... on Conflict {\n        reason\n        resources {\n          kind\n          id\n        }\n      }\n    }\n  }\n',
+): (typeof documents)['\n  mutation addCollectionForItem($itemId: Int!, $collectionId: Int!) {\n    addCollectionForItem(itemId: $itemId, collectionId: $collectionId) {\n      __typename\n      ... on CollectionMembershipChanged {\n        collectionId\n        resource {\n          kind\n          id\n        }\n        present\n      }\n      ... on ValidationFailure {\n        issues {\n          path\n          code\n          min\n          max\n        }\n      }\n      ... on MissingResources {\n        resources {\n          kind\n          id\n        }\n      }\n      ... on Conflict {\n        reason\n        resources {\n          kind\n          id\n        }\n      }\n    }\n  }\n'];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -149,14 +156,26 @@ export function graphql(
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(
-  source: '\n  mutation deleteCollectionForItem($collectionId: Int!, $itemId: Int!) {\n    deleteCollectionForItem(collectionId: $collectionId, itemId: $itemId) {\n      id\n    }\n  }\n',
-): (typeof documents)['\n  mutation deleteCollectionForItem($collectionId: Int!, $itemId: Int!) {\n    deleteCollectionForItem(collectionId: $collectionId, itemId: $itemId) {\n      id\n    }\n  }\n'];
+  source: '\n  mutation deleteCollectionForItem($collectionId: Int!, $itemId: Int!) {\n    deleteCollectionForItem(collectionId: $collectionId, itemId: $itemId) {\n      __typename\n      ... on CollectionMembershipChanged {\n        collectionId\n        resource {\n          kind\n          id\n        }\n        present\n      }\n      ... on ValidationFailure {\n        issues {\n          path\n          code\n          min\n          max\n        }\n      }\n    }\n  }\n',
+): (typeof documents)['\n  mutation deleteCollectionForItem($collectionId: Int!, $itemId: Int!) {\n    deleteCollectionForItem(collectionId: $collectionId, itemId: $itemId) {\n      __typename\n      ... on CollectionMembershipChanged {\n        collectionId\n        resource {\n          kind\n          id\n        }\n        present\n      }\n      ... on ValidationFailure {\n        issues {\n          path\n          code\n          min\n          max\n        }\n      }\n    }\n  }\n'];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(
   source: '\n  query getItems($collectionMatch: TagMatch, $pagination: Pagination!) {\n    queryItems(collectionMatch: $collectionMatch, pagination: $pagination) {\n      data {\n        id\n        name\n        content\n        createTime\n        updateTime\n      }\n      total\n    }\n  }\n',
 ): (typeof documents)['\n  query getItems($collectionMatch: TagMatch, $pagination: Pagination!) {\n    queryItems(collectionMatch: $collectionMatch, pagination: $pagination) {\n      data {\n        id\n        name\n        content\n        createTime\n        updateTime\n      }\n      total\n    }\n  }\n'];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(
+  source: '\n  query ReadItemState($id: Int!) {\n    getItem(id: $id) {\n      id\n      name\n      content\n      collections {\n        id\n      }\n    }\n  }\n',
+): (typeof documents)['\n  query ReadItemState($id: Int!) {\n    getItem(id: $id) {\n      id\n      name\n      content\n      collections {\n        id\n      }\n    }\n  }\n'];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(
+  source: '\n  query ReadCollectionState($id: Int!) {\n    getCollection(id: $id) {\n      id\n      name\n      description\n    }\n  }\n',
+): (typeof documents)['\n  query ReadCollectionState($id: Int!) {\n    getCollection(id: $id) {\n      id\n      name\n      description\n    }\n  }\n'];
 
 export function graphql(source: string) {
   return (documents as any)[source] ?? {};

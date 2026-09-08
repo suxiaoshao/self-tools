@@ -24,6 +24,11 @@ services:
     container_name: auth
     restart: always
     environment:
+      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: null
+      OTEL_EXPORTER_OTLP_TRACES_HEADERS: null
+      OTEL_EXPORTER_OTLP_TRACES_TIMEOUT: null
+      OTEL_TRACES_SAMPLER: null
+      OTEL_TRACES_SAMPLER_ARG: null
       AUTH_PG: null
       USERNAME: null
       PASSWORD: null
@@ -45,6 +50,11 @@ services:
     container_name: login
     restart: always
     environment:
+      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: null
+      OTEL_EXPORTER_OTLP_TRACES_HEADERS: null
+      OTEL_EXPORTER_OTLP_TRACES_TIMEOUT: null
+      OTEL_TRACES_SAMPLER: null
+      OTEL_TRACES_SAMPLER_ARG: null
       AUTH_ORIGIN: null
     depends_on:
       auth:
@@ -60,6 +70,11 @@ services:
     container_name: bookmarks
     restart: always
     environment:
+      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: null
+      OTEL_EXPORTER_OTLP_TRACES_HEADERS: null
+      OTEL_EXPORTER_OTLP_TRACES_TIMEOUT: null
+      OTEL_TRACES_SAMPLER: null
+      OTEL_TRACES_SAMPLER_ARG: null
       BOOKMARKS_PG: null
       AUTH_ORIGIN: null
       CORS_ALLOWED_ORIGINS: null
@@ -80,6 +95,11 @@ services:
     container_name: collections
     restart: always
     environment:
+      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: null
+      OTEL_EXPORTER_OTLP_TRACES_HEADERS: null
+      OTEL_EXPORTER_OTLP_TRACES_TIMEOUT: null
+      OTEL_TRACES_SAMPLER: null
+      OTEL_TRACES_SAMPLER_ARG: null
       COLLECTIONS_PG: null
       AUTH_ORIGIN: null
       CORS_ALLOWED_ORIGINS: null
@@ -100,6 +120,11 @@ services:
     container_name: web
     restart: always
     environment:
+      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: null
+      OTEL_EXPORTER_OTLP_TRACES_HEADERS: null
+      OTEL_EXPORTER_OTLP_TRACES_TIMEOUT: null
+      OTEL_TRACES_SAMPLER: null
+      OTEL_TRACES_SAMPLER_ARG: null
       GATEWAY_AUTH_HOST: null
       GATEWAY_BOOKMARKS_HOST: null
       GATEWAY_COLLECTIONS_HOST: null

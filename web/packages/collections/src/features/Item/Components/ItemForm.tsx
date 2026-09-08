@@ -1,3 +1,4 @@
+import { RequestNotice, useWriteAction, WriteNotice, rejectionFieldErrors, type WriteOutcome } from 'custom-graphql';
 import { Edit as EditIcon, View } from 'lucide-react';
 import { useI18n } from 'i18n';
 import { useEffect, useState } from 'react';
@@ -22,25 +23,55 @@ const itemFormSchema = object({
 export type ItemFormData = InferInput<typeof itemFormSchema>;
 
 interface ItemFormProps {
-  afterSubmit?: (data: ItemFormData) => Promise<void>;
+  afterSubmit?: (data: ItemFormData) => Promise<WriteOutcome>;
   handleClose: () => void;
+  checkResult?: (data: ItemFormData) => Promise<boolean>;
   mode?: 'create' | 'edit';
   initialValues?: ItemFormData;
   loading?: boolean;
+  readError?: unknown;
+  retryRead?: () => unknown;
 }
 
-export default function ItemForm({ afterSubmit, handleClose, mode, initialValues }: ItemFormProps) {
+export default function ItemForm({
+  afterSubmit,
+  handleClose,
+  mode,
+  initialValues,
+  loading,
+  checkResult,
+  readError,
+  retryRead,
+}: ItemFormProps) {
   // 表单控制
-  const { handleSubmit, register, control, setValue } = useForm<ItemFormData>({ defaultValues: initialValues });
+  const {
+    handleSubmit,
+    register,
+    control,
+    setValue,
+    setError,
+    clearErrors,
+    getValues,
+    formState: { errors },
+  } = useForm<ItemFormData>({ defaultValues: initialValues });
   useEffect(() => {
     if (initialValues) {
       setValue('name', initialValues?.name);
       setValue('content', initialValues?.content);
+      setValue('collectionIds', initialValues.collectionIds);
     }
   }, [initialValues, setValue]);
+  const action = useWriteAction();
   const onSubmit: SubmitHandler<ItemFormData> = async (data) => {
-    await afterSubmit?.(data);
-    handleClose();
+    if (!afterSubmit) return;
+    clearErrors();
+    const result = await action.run(() => afterSubmit(data));
+    for (const issue of rejectionFieldErrors(result)) {
+      const field = issue.path[0];
+      if (field === 'name' || field === 'content' || field === 'collectionIds')
+        setError(field, { type: 'server', message: t('request_invalid') });
+    }
+    if (result?.status === 'saved') handleClose();
   };
   const [alignment, setAlignment] = useState<'edit' | 'preview'>('edit');
   const handleAlignment = (newAlignment: string) => {
@@ -59,19 +90,24 @@ export default function ItemForm({ afterSubmit, handleClose, mode, initialValues
             .otherwise(() => t('modify_item'))}
         </DialogTitle>
       </DialogHeader>
+      <RequestNotice error={readError} retry={retryRead} />
+      {mode === 'edit' && !loading && !initialValues && <p>{t('request_association_failed')}</p>}
       <FieldGroup className="w-full">
         <Field>
           <FieldLabel>{t('item_name')}</FieldLabel>
-          <Input required {...register('name', { required: true })} />
+          <Input aria-invalid={!!errors.name} required {...register('name', { required: true })} />
+          {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
         </Field>
-        <Field>
-          <FieldLabel>{t('match_collections')}</FieldLabel>
-          <Controller
-            control={control}
-            name="collectionIds"
-            render={({ field }) => <CollectionMultiSelect {...field} />}
-          />
-        </Field>
+        {mode === 'create' && (
+          <Field>
+            <FieldLabel>{t('match_collections')}</FieldLabel>
+            <Controller
+              control={control}
+              name="collectionIds"
+              render={({ field }) => <CollectionMultiSelect {...field} />}
+            />
+          </Field>
+        )}
 
         <Controller
           control={control}
@@ -108,9 +144,22 @@ export default function ItemForm({ afterSubmit, handleClose, mode, initialValues
           )}
         />
       </FieldGroup>
+      <WriteNotice
+        outcome={action.outcome}
+        pending={action.pending}
+        viewHref="/collections/collections"
+        check={
+          checkResult
+            ? async () => {
+                if (await action.check(() => checkResult(getValues()))) handleClose();
+              }
+            : undefined
+        }
+      />
       <DialogFooter>
         <DialogClose render={<Button variant="secondary" />}>{t('cancel')}</DialogClose>
         <Button
+          disabled={action.blocked || loading || (mode === 'edit' && !initialValues)}
           onClick={() => {
             handleSubmit(onSubmit)();
           }}

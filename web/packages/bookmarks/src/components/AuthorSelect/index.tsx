@@ -1,3 +1,4 @@
+import { RequestNotice } from 'custom-graphql';
 /*
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-01-06 01:30:13
@@ -40,7 +41,7 @@ interface TagsSelectProps extends Omit<ComponentProps<'input'>, 'onChange' | 'va
 }
 
 export default function AuthorSelect({ onChange, className, value, ...props }: TagsSelectProps) {
-  const { loading, data: { allAuthors } = {} } = useQuery(SearchAuthor);
+  const { error, loading, data: { allAuthors } = {} } = useQuery(SearchAuthor);
   const authors = allAuthors ?? [];
   const t = useI18n();
   const selectedAuthor = useMemo(() => {
@@ -50,34 +51,37 @@ export default function AuthorSelect({ onChange, className, value, ...props }: T
   const anchor = useComboboxAnchor();
 
   return (
-    <Combobox<(typeof authors)[number]>
-      items={authors}
-      itemToStringLabel={(item) => item.name}
-      value={selectedAuthor ?? null}
-      onValueChange={(selectedAuthorItem) => {
-        if (selectedAuthorItem) {
-          onChange(selectedAuthorItem.id);
-        }
-      }}
-    >
-      <ComboboxInput placeholder={t('search')} className={className} {...props} />
-      <ComboboxContent anchor={anchor}>
-        <ComboboxEmpty>
-          {match(loading)
-            .with(true, () => t('loading'))
-            .otherwise(() => t('no_author_found'))}
-        </ComboboxEmpty>
-        <ComboboxList>
-          {(item) => (
-            <ComboboxItem key={item.id} value={item}>
-              <Avatar className="size-5">
-                <AvatarImage src={getImageUrl(item.avatar)} />
-              </Avatar>
-              {item.name}
-            </ComboboxItem>
-          )}
-        </ComboboxList>
-      </ComboboxContent>
-    </Combobox>
+    <>
+      <RequestNotice error={error} />
+      <Combobox<(typeof authors)[number]>
+        items={authors}
+        itemToStringLabel={(item) => item.name}
+        value={selectedAuthor ?? null}
+        onValueChange={(selectedAuthorItem) => {
+          if (selectedAuthorItem) {
+            onChange(selectedAuthorItem.id);
+          }
+        }}
+      >
+        <ComboboxInput disabled={!!error} placeholder={t('search')} className={className} {...props} />
+        <ComboboxContent anchor={anchor}>
+          <ComboboxEmpty>
+            {match(loading)
+              .with(true, () => t('loading'))
+              .otherwise(() => t('no_author_found'))}
+          </ComboboxEmpty>
+          <ComboboxList>
+            {(item) => (
+              <ComboboxItem key={item.id} value={item}>
+                <Avatar className="size-5">
+                  <AvatarImage src={getImageUrl(item.avatar)} />
+                </Avatar>
+                {item.name}
+              </ComboboxItem>
+            )}
+          </ComboboxList>
+        </ComboboxContent>
+      </Combobox>
+    </>
   );
 }

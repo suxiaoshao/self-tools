@@ -1,117 +1,171 @@
-use super::collection::Collection;
 use crate::{
-    errors::{GraphqlError, GraphqlResult},
-    model::{PgPool, collection_item::CollectionItemModel},
-    service::utils::{find_all_children, find_all_item_by_collection},
+    errors::*,
+    model::{
+        PgPool, collection::CollectionModel, collection_item::CollectionItemModel, item::ItemModel,
+    },
+    service::{
+        input::{CollectionItemQuery, ItemAndCollection},
+        utils::{find_all_children, find_all_item_by_collection},
+    },
 };
-use crate::{graphql::types::CollectionItemQuery, model::collection::CollectionModel};
-use crate::{graphql::types::ItemAndCollection, model::item::ItemModel};
-use async_graphql::{ComplexObject, Context, SimpleObject};
-use diesel::{Connection, PgConnection};
-use graphql_common::{DateTime, Paginate, Queryable, TagMatch};
+use diesel::{Connection, PgConnection, RunQueryDsl};
+use service_query::{Paginate, Queryable, TagFilter};
 use std::collections::HashSet;
-use tracing::{Level, event};
-
-#[derive(SimpleObject, Clone)]
-#[graphql(complex)]
+use time::OffsetDateTime;
+#[derive(Clone)]
 pub(crate) struct Item {
-    pub(crate) id: i64,
-    pub(crate) name: String,
-    pub(crate) content: String,
-    pub(crate) create_time: DateTime,
-    pub(crate) update_time: DateTime,
+    pub id: i64,
+    pub name: String,
+    pub content: String,
+    pub create_time: OffsetDateTime,
+    pub update_time: OffsetDateTime,
 }
-
-#[ComplexObject]
-impl Item {
-    async fn collections(&self, context: &Context<'_>) -> GraphqlResult<Vec<Collection>> {
-        let conn = &mut context
-            .data::<PgPool>()
-            .map_err(|_| {
-                event!(Level::WARN, "graphql context data PgPool 不存在");
-                GraphqlError::NotGraphqlContextData("PgPool")
-            })?
-            .get()?;
-        let collection = CollectionModel::get_collections_by_item_id(self.id, conn)?;
-        Ok(collection.into_iter().map(|c| c.into()).collect())
-    }
-}
-
 impl From<ItemModel> for Item {
-    fn from(value: ItemModel) -> Self {
+    fn from(v: ItemModel) -> Self {
         Self {
-            id: value.id,
-            name: value.name,
-            content: value.content,
-            create_time: value.create_time.into(),
-            update_time: value.update_time.into(),
+            id: v.id,
+            name: v.name,
+            content: v.content,
+            create_time: v.create_time,
+            update_time: v.update_time,
         }
     }
 }
-
+fn lock_relations(conn: &mut PgConnection) -> AppResult<()> {
+    diesel::sql_query("LOCK TABLE collection, item, collection_item IN SHARE ROW EXCLUSIVE MODE")
+        .execute(conn)?;
+    Ok(())
+}
 impl Item {
-    /// 创建记录
-    pub(crate) fn create(
+    pub fn create(
         name: String,
         content: String,
-        collection_ids: Vec<i64>,
+        mut collection_ids: Vec<i64>,
         conn: &mut PgConnection,
-    ) -> GraphqlResult<Self> {
-        //  判断父目录是否存在
-        if !CollectionModel::exists_many(&collection_ids, conn)? {
-            event!(Level::WARN, "父目录不存在: {:?}", collection_ids);
-            return Err(GraphqlError::NotFoundMany("父目录", collection_ids));
+    ) -> AppResult<Self> {
+        for (index, id) in collection_ids.iter().enumerate() {
+            validate_id(*id, &format!("collectionIds.{index}"))?;
         }
-        let new_item = conn.transaction::<_, GraphqlError, _>(|conn| {
-            let new_item = ItemModel::create(&name, &content, conn)?;
-            new_item.add_collections(&collection_ids, conn)?;
-            Ok(new_item.into())
-        })?;
-        Ok(new_item)
-    }
-    /// 删除记录
-    pub(crate) fn delete(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
-        if !ItemModel::exists(id, conn)? {
-            event!(Level::WARN, "记录不存在: {}", id);
-            return Err(GraphqlError::NotFound("记录", id));
-        }
-        let data = conn.transaction::<_, GraphqlError, _>(|conn| {
-            // 删除关系
-            CollectionItemModel::delete_by_item_id(id, conn)?;
-            let item = ItemModel::delete(id, conn)?;
+        collection_ids.sort_unstable();
+        collection_ids.dedup();
+        conn.transaction(|conn| {
+            lock_relations(conn)?;
+            let mut resources = vec![];
+            for id in &collection_ids {
+                if !CollectionModel::exists(*id, conn)? {
+                    resources.push(ResourceRef {
+                        kind: ResourceKind::Collection,
+                        id: *id,
+                    });
+                }
+            }
+            if !resources.is_empty() {
+                return Err(service_errors::UseCaseError::Rejected(Rejection::Missing(
+                    resources,
+                )));
+            }
+            let item = ItemModel::create(&name, &content, conn)?;
+            if !collection_ids.is_empty() {
+                item.add_collections(&collection_ids, conn)?;
+            }
             Ok(item.into())
-        })?;
-        Ok(data)
+        })
     }
-    /// 获取记录
-    pub(crate) fn get(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
+    pub fn get(id: i64, conn: &mut PgConnection) -> AppResult<Self> {
+        validate_id(id, "id")?;
         if !ItemModel::exists(id, conn)? {
-            event!(Level::WARN, "记录不存在: {}", id);
-            return Err(GraphqlError::NotFound("记录", id));
+            return Err(missing(ResourceKind::Item, id));
         }
-        let item = ItemModel::find_one(id, conn)?;
-        Ok(item.into())
+        Ok(ItemModel::find_one(id, conn)?.into())
     }
-    /// 更新记录
-    pub(crate) fn update(
+    pub fn delete(id: i64, conn: &mut PgConnection) -> AppResult<i64> {
+        validate_id(id, "id")?;
+        conn.transaction(|conn| {
+            lock_relations(conn)?;
+            if ItemModel::exists(id, conn)? {
+                CollectionItemModel::delete_by_item_id(id, conn)?;
+                ItemModel::delete(id, conn)?;
+            }
+            Ok(id)
+        })
+    }
+    pub fn update(id: i64, name: &str, content: &str, conn: &mut PgConnection) -> AppResult<Self> {
+        validate_id(id, "id")?;
+        conn.transaction(|conn| {
+            lock_relations(conn)?;
+            Self::get(id, conn)?;
+            Ok(ItemModel::update(id, name, content, conn)?.into())
+        })
+    }
+    pub fn collections(
         id: i64,
-        name: &str,
-        content: &str,
         conn: &mut PgConnection,
-    ) -> GraphqlResult<Self> {
-        if !ItemModel::exists(id, conn)? {
-            event!(Level::WARN, "记录不存在: {}", id);
-            return Err(GraphqlError::NotFound("记录", id));
-        }
-        let item = ItemModel::update(id, name, content, conn)?;
-        Ok(item.into())
+    ) -> AppResult<Vec<super::collection::Collection>> {
+        Ok(CollectionModel::get_collections_by_item_id(id, conn)?
+            .into_iter()
+            .map(Into::into)
+            .collect())
+    }
+    pub fn add_collection(
+        collection_id: i64,
+        item_id: i64,
+        conn: &mut PgConnection,
+    ) -> AppResult<()> {
+        validate_id(collection_id, "collectionId")?;
+        validate_id(item_id, "itemId")?;
+        conn.transaction(|conn| {
+            lock_relations(conn)?;
+            let mut resources = vec![];
+            if !CollectionModel::exists(collection_id, conn)? {
+                resources.push(ResourceRef {
+                    kind: ResourceKind::Collection,
+                    id: collection_id,
+                });
+            }
+            if !ItemModel::exists(item_id, conn)? {
+                resources.push(ResourceRef {
+                    kind: ResourceKind::Item,
+                    id: item_id,
+                });
+            }
+            if !resources.is_empty() {
+                return Err(service_errors::UseCaseError::Rejected(Rejection::Missing(
+                    resources,
+                )));
+            }
+            if CollectionItemModel::exists(collection_id, item_id, conn)? {
+                return Err(conflict(
+                    ConflictReason::MembershipExists,
+                    vec![
+                        ResourceRef {
+                            kind: ResourceKind::Collection,
+                            id: collection_id,
+                        },
+                        ResourceRef {
+                            kind: ResourceKind::Item,
+                            id: item_id,
+                        },
+                    ],
+                ));
+            }
+            CollectionItemModel::save(collection_id, item_id, conn)
+        })
+    }
+    pub fn delete_collection(
+        collection_id: i64,
+        item_id: i64,
+        conn: &mut PgConnection,
+    ) -> AppResult<()> {
+        validate_id(collection_id, "collectionId")?;
+        validate_id(item_id, "itemId")?;
+        CollectionItemModel::delete(collection_id, item_id, conn)
     }
     /// 查询
     pub(crate) fn query(
-        collection_match: Option<TagMatch>,
+        collection_match: Option<TagFilter>,
         conn: &mut PgConnection,
-    ) -> GraphqlResult<Vec<Self>> {
-        if let Some(TagMatch { match_set, .. }) = &collection_match {
+    ) -> AppResult<Vec<Self>> {
+        if let Some(TagFilter { match_set, .. }) = &collection_match {
             // collection 不存在
             CollectionModel::exists_all(match_set, conn)?;
         }
@@ -119,7 +173,7 @@ impl Item {
             .into_iter()
             .map(Into::into)
             .collect::<Vec<Self>>();
-        if let Some(TagMatch {
+        if let Some(TagFilter {
             match_set,
             full_match,
         }) = collection_match
@@ -174,54 +228,7 @@ impl Item {
         }
         Ok(data)
     }
-    /// 添加集合
-    pub(crate) fn add_collection(
-        collection_id: i64,
-        item_id: i64,
-        conn: &mut PgConnection,
-    ) -> GraphqlResult<Item> {
-        if !CollectionModel::exists(collection_id, conn)? {
-            event!(Level::WARN, "目录不存在: {}", collection_id);
-            return Err(GraphqlError::NotFound("目录", collection_id));
-        }
-        if !ItemModel::exists(item_id, conn)? {
-            event!(Level::WARN, "小说不存在: {}", item_id);
-            return Err(GraphqlError::NotFound("小说", item_id));
-        }
-        if CollectionItemModel::exists(collection_id, item_id, conn)? {
-            event!(Level::WARN, "小说集合关系存在: {}", item_id);
-            return Err(GraphqlError::AlreadyExists(format!(
-                "{collection_id}/{item_id}"
-            )));
-        }
-        CollectionItemModel::save(collection_id, item_id, conn)?;
-        let item = ItemModel::find_one(item_id, conn)?;
-        Ok(item.into())
-    }
-    /// 删除
-    pub(crate) fn delete_collection(
-        collection_id: i64,
-        item_id: i64,
-        conn: &mut PgConnection,
-    ) -> GraphqlResult<Item> {
-        if !CollectionModel::exists(collection_id, conn)? {
-            event!(Level::WARN, "目录不存在: {}", collection_id);
-            return Err(GraphqlError::NotFound("目录", collection_id));
-        }
-        if !ItemModel::exists(item_id, conn)? {
-            event!(Level::WARN, "小说不存在: {}", item_id);
-            return Err(GraphqlError::NotFound("小说", item_id));
-        }
-        if !CollectionItemModel::exists(collection_id, item_id, conn)? {
-            event!(Level::WARN, "小说集合关系不存在: {}", item_id);
-            return Err(GraphqlError::NotFound("小说集合关系", collection_id));
-        }
-        CollectionItemModel::delete(collection_id, item_id, conn)?;
-        let item = ItemModel::find_one(item_id, conn)?;
-        Ok(item.into())
-    }
 }
-
 pub(crate) struct ItemQueryRunner {
     query: CollectionItemQuery,
     count: i64,
@@ -229,7 +236,7 @@ pub(crate) struct ItemQueryRunner {
 }
 
 impl ItemQueryRunner {
-    pub(crate) async fn new(query: CollectionItemQuery, conn: PgPool) -> GraphqlResult<Self> {
+    pub(crate) async fn new(query: CollectionItemQuery, conn: PgPool) -> AppResult<Self> {
         let conn_temp = &mut conn.get()?;
         let CollectionItemQuery {
             id,
@@ -249,8 +256,7 @@ impl ItemQueryRunner {
         };
         //  判断父目录是否存在
         if !CollectionModel::exists(collection_id, conn_temp)? {
-            event!(Level::WARN, "目录不存在: {}", collection_id);
-            return Err(GraphqlError::NotFound("目录", collection_id));
+            return Err(missing(ResourceKind::Collection, collection_id));
         }
         let count = ItemModel::count(collection_id, create_time, update_time, conn_temp)?;
         Ok(Self { query, count, conn })
@@ -261,7 +267,7 @@ impl ItemQueryRunner {
 impl Queryable for ItemQueryRunner {
     type Item = ItemAndCollection;
 
-    type Error = GraphqlError;
+    type Error = AppError;
 
     async fn len(&self) -> Result<i64, Self::Error> {
         Ok(self.count)
@@ -273,20 +279,9 @@ impl Queryable for ItemQueryRunner {
             id,
             create_time,
             update_time,
-            pagination: source_pagination,
+            ..
         } = self.query;
-        let len = self.len().await?;
-        if len < offset {
-            event!(
-                Level::ERROR,
-                "全记录查询时页码太大 pagination: {:?} len: {} offset: {} offset_pagination: {:?}",
-                source_pagination,
-                len,
-                offset,
-                pagination
-            );
-            return Err(GraphqlError::PageSizeTooMore);
-        }
+
         let limit = pagination.limit();
         let conn = &mut self.conn.get()?;
         let collection_id = match id {
@@ -297,8 +292,7 @@ impl Queryable for ItemQueryRunner {
         };
         //  判断父目录是否存在
         if !CollectionModel::exists(collection_id, conn)? {
-            event!(Level::WARN, "目录不存在: {}", collection_id);
-            return Err(GraphqlError::NotFound("目录", collection_id));
+            return Err(missing(ResourceKind::Collection, collection_id));
         }
         let data = ItemModel::query(collection_id, create_time, update_time, offset, limit, conn)?
             .into_iter()
@@ -308,14 +302,12 @@ impl Queryable for ItemQueryRunner {
     }
 }
 
-graphql_common::list!(Item);
-
 pub(crate) struct ItemRunner {
     data: Vec<Item>,
 }
 
 impl ItemRunner {
-    pub(crate) fn new(collection_match: Option<TagMatch>, conn: PgPool) -> GraphqlResult<Self> {
+    pub(crate) fn new(collection_match: Option<TagFilter>, conn: PgPool) -> AppResult<Self> {
         let conn = &mut conn.get()?;
         let data = Item::query(collection_match, conn)?;
         Ok(Self { data })
@@ -325,7 +317,7 @@ impl ItemRunner {
 impl Queryable for ItemRunner {
     type Item = Item;
 
-    type Error = GraphqlError;
+    type Error = AppError;
 
     async fn len(&self) -> Result<i64, Self::Error> {
         Ok(self.data.len() as i64)
@@ -333,17 +325,7 @@ impl Queryable for ItemRunner {
 
     async fn query<P: Paginate>(&self, pagination: P) -> Result<Vec<Self::Item>, Self::Error> {
         let offset = pagination.offset();
-        let len = self.len().await?;
-        if len < offset {
-            event!(
-                Level::ERROR,
-                "偏移量超出范围 pagination: {:?} len: {} offset: {}",
-                pagination,
-                len,
-                offset
-            );
-            return Err(GraphqlError::PageSizeTooMore);
-        }
+
         let limit = pagination.limit();
         Ok(self
             .data

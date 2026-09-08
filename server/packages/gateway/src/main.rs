@@ -6,6 +6,8 @@ mod config;
 mod proxy;
 #[cfg(not(windows))]
 mod route;
+#[cfg(not(windows))]
+mod trace;
 
 #[cfg(not(windows))]
 use config::GatewayConfig;
@@ -18,18 +20,7 @@ use proxy::GatewayProxy;
 #[cfg(not(windows))]
 use route::build_routes;
 #[cfg(not(windows))]
-use tracing::{Level, event, metadata::LevelFilter};
-#[cfg(not(windows))]
-use tracing_subscriber::{
-    Layer, fmt, prelude::__tracing_subscriber_SubscriberExt, util::SubscriberInitExt,
-};
-
-#[cfg(not(windows))]
 fn main() -> Result<()> {
-    tracing_subscriber::registry()
-        .with(fmt::layer().with_filter(LevelFilter::INFO))
-        .init();
-
     let config = GatewayConfig::from_env();
     match service_health::mode(false)
         .map_err(|_| pingora::Error::new(pingora::ErrorType::InternalError))?
@@ -46,29 +37,43 @@ fn main() -> Result<()> {
         }
         service_health::Mode::Migrate => unreachable!(),
     }
-    let routes = build_routes(&config);
+    let telemetry = telemetry::init("gateway").map_err(|e| {
+        pingora::Error::because(
+            pingora::ErrorType::InternalError,
+            "telemetry initialization failed",
+            e,
+        )
+    })?;
+    let result = (|| {
+        let routes = build_routes(&config);
 
-    let mut server = Server::new(None)?;
-    server.bootstrap();
+        // Containers must reach SDK shutdown without Pingora's five-minute grace delay.
+        let mut server = Server::new_with_opt_and_conf(
+            None,
+            pingora::server::configuration::ServerConf {
+                grace_period_seconds: Some(0),
+                graceful_shutdown_timeout_seconds: Some(5),
+                ..Default::default()
+            },
+        );
+        server.bootstrap();
 
-    let mut service = http_proxy_service(&server.configuration, GatewayProxy::new(routes, &config));
-    service.add_tcp(&config.listen_http);
-    let mut tls_settings = TlsSettings::intermediate(&config.tls_cert, &config.tls_key)?;
-    tls_settings.enable_h2();
-    service.add_tls_with_settings(&config.listen_https, None, tls_settings);
-    server.add_service(service);
+        let mut service =
+            http_proxy_service(&server.configuration, GatewayProxy::new(routes, &config));
+        service.add_tcp(&config.listen_http);
+        let mut tls_settings = TlsSettings::intermediate(&config.tls_cert, &config.tls_key)?;
+        tls_settings.enable_h2();
+        service.add_tls_with_settings(&config.listen_https, None, tls_settings);
+        server.add_service(service);
 
-    event!(
-        Level::INFO,
-        listen_http = config.listen_http,
-        listen_https = config.listen_https,
-        tls_cert = config.tls_cert,
-        tls_key = config.tls_key,
-        http2_enabled = true,
-        "gateway started"
-    );
-
-    server.run_forever();
+        tracing::info!(target:"telemetry",event="service.started");
+        server.run(pingora::server::RunArgs::default());
+        Ok(())
+    })();
+    if telemetry.shutdown().is_err() {
+        eprintln!("telemetry shutdown incomplete");
+    }
+    result
 }
 
 #[cfg(windows)]

@@ -14,24 +14,31 @@ use std::net::SocketAddr;
 use dns_lookup::lookup_host;
 pub use gen_thrift::volo_gen::*;
 
-#[derive(Debug, thiserror::Error, serde::Serialize, Clone)]
-pub enum ClientError {
-    #[error("auth ip not find")]
-    NotFindIp,
-    #[error("auth ip parse error:{}",.0)]
-    LookupError(String),
-}
+mod client;
+pub use client::{AuthClient, RpcError, context};
 
-pub fn get_client() -> Result<self::auth::AuthServiceClient, ClientError> {
-    let addr: SocketAddr = get_ip()?;
-    Ok(auth::AuthServiceClientBuilder::new("auth")
-        .address(addr)
-        .build())
+pub fn get_client() -> Result<AuthClient, service_errors::Fault> {
+    Ok(client_at(get_ip()?))
 }
-
-fn get_ip() -> Result<SocketAddr, ClientError> {
-    let hostname = "auth";
-    let mut ips = lookup_host(hostname).map_err(|e| ClientError::LookupError(e.to_string()))?;
-    let ip = ips.next().ok_or(ClientError::NotFindIp)?;
+/// Build the same bounded, non-replaying client for an explicitly owned internal address.
+pub fn client_at(addr: SocketAddr) -> AuthClient {
+    AuthClient(
+        auth::AuthServiceClientBuilder::new("auth")
+            .address(addr)
+            .retry_count(0)
+            .rpc_timeout(None)
+            .build(),
+    )
+}
+fn get_ip() -> Result<SocketAddr, service_errors::Fault> {
+    let mut ips = lookup_host("auth").map_err(|source| {
+        service_errors::Fault::new(service_errors::FaultKind::Network, "auth_dns", source)
+    })?;
+    let ip = ips.next().ok_or_else(|| {
+        service_errors::Fault::new(service_errors::FaultKind::Network, "auth_dns", NoAddress)
+    })?;
     Ok(SocketAddr::new(ip, 80))
 }
+#[derive(Debug, thiserror::Error)]
+#[error("authentication service address unavailable")]
+struct NoAddress;

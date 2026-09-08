@@ -1,3 +1,4 @@
+import { RequestNotice } from 'custom-graphql';
 import { useI18n } from 'i18n';
 import { createSearchParams, Link } from 'react-router';
 import useParentId from '../hooks/useParentId';
@@ -29,7 +30,12 @@ const GetCollectionAncestors = graphql(`
 
 export default function AncestorsPath() {
   const parentId = useParentId();
-  const { data: { getCollection } = {}, loading } = useQuery(GetCollectionAncestors, {
+  const {
+    data: { getCollection } = {},
+    loading,
+    error,
+    refetch,
+  } = useQuery(GetCollectionAncestors, {
     variables: { id: parentId ?? 0 },
     skip: parentId === null,
   });
@@ -53,7 +59,7 @@ export default function AncestorsPath() {
                 {t('root')}
               </BreadcrumbLink>
             </BreadcrumbItem>
-            {getCollection.ancestors.map(({ id, name }) => (
+            {getCollection.ancestors?.map(({ id, name }) => (
               <Fragment key={id}>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
@@ -72,6 +78,8 @@ export default function AncestorsPath() {
           </BreadcrumbList>
         </Breadcrumb>
       )}
+      <RequestNotice error={error} retry={refetch} />
+      {!loading && !error && parentId !== null && getCollection === null && <p>{t('request_not_found')}</p>}
       {loading && <Spinner className="mb-2" />}
     </>
   );

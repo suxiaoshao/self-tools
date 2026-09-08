@@ -1,3 +1,7 @@
+import { RequestNotice } from 'custom-graphql';
+import { checkDeleted } from '@bookmarks/reconcile';
+import { useApolloClient } from '@apollo/client/react';
+import useBookmarkWrite from '@bookmarks/useBookmarkWrite';
 import { RefreshCcw } from 'lucide-react';
 import {
   createCustomColumnHelper,
@@ -64,7 +68,21 @@ const GetNovels = graphql(`
 const DeleteNovel = graphql(`
   mutation deleteNovel($id: Int!) {
     deleteNovel(id: $id) {
-      id
+      __typename
+      ... on ResourceDeleted {
+        resource {
+          kind
+          id
+        }
+      }
+      ... on ValidationFailure {
+        issues {
+          path
+          code
+          min
+          max
+        }
+      }
     }
   }
 `);
@@ -74,6 +92,8 @@ type Data = GetNovelsQuery['queryNovels']['data'][0];
 const columnHelper = createCustomColumnHelper<Data>();
 
 export default function NovelList() {
+  const client = useApolloClient();
+  const write = useBookmarkWrite('/bookmarks/novel');
   // i18n
   const t = useI18n();
   // title
@@ -88,9 +108,15 @@ export default function NovelList() {
     },
   });
   const form = watch();
-  const { data: { queryNovels: { data, total } = {} } = {}, refetch } = useQuery(GetNovels, {
+  const {
+    data: queryData,
+    refetch,
+    error,
+  } = useQuery(GetNovels, {
     variables: convertFormToVariables(form, pageState),
   });
+  const data = queryData?.queryNovels?.data;
+  const total = queryData?.queryNovels?.total;
   const page = usePageWithTotal(pageState, total);
 
   const [deleteNovel] = useMutation(DeleteNovel);
@@ -157,8 +183,16 @@ export default function NovelList() {
                 {
                   text: t('delete'),
                   onClick: async () => {
-                    await deleteNovel({ variables: { id } });
-                    await refetch();
+                    if (
+                      !(await write.execute(async () => (await deleteNovel({ variables: { id } })).data?.deleteNovel, {
+                        verify: () => checkDeleted(client, id, 'Novel'),
+                        confirmed: refetch,
+                      }))
+                    )
+                      return;
+                    void Promise.resolve()
+                      .then(() => refetch())
+                      .catch(() => undefined);
                   },
                 },
               ]}
@@ -171,7 +205,7 @@ export default function NovelList() {
           },
         ),
       ] as CustomColumnDefArray<Data>,
-    [deleteNovel, refetch, t],
+    [deleteNovel, refetch, t, write, client],
   );
   const tableOptions = useMemo<CustomTableOptions<Data>>(
     () => ({ columns, data: data ?? [], getCoreRowModel: getCoreRowModel() }),
@@ -181,6 +215,8 @@ export default function NovelList() {
   const navigate = useNavigate();
   return (
     <div className="flex flex-col size-full">
+      <RequestNotice error={error} />
+      {write.notice}
       <div className="basis-auto flex p-4 pb-0 gap-4">
         <CreateNovelButton refetch={refetch} />
         <Button onClick={() => navigate('/bookmarks/novel/fetch')}>{t('crawler')}</Button>

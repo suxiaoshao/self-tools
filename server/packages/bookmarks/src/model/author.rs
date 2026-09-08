@@ -9,7 +9,7 @@ use super::schema::{
     author::{self},
     custom_type::NovelSite,
 };
-use crate::errors::GraphqlResult;
+use crate::errors::AppResult;
 use diesel::prelude::*;
 use time::OffsetDateTime;
 
@@ -35,7 +35,7 @@ impl AuthorModel {
         site_id: &str,
         description: &str,
         conn: &mut PgConnection,
-    ) -> GraphqlResult<Self> {
+    ) -> AppResult<Self> {
         let now = time::OffsetDateTime::now_utc();
         let new_author = NewAuthor {
             site,
@@ -53,18 +53,18 @@ impl AuthorModel {
         Ok(new_author)
     }
     /// 是否存在
-    pub(crate) fn exists(id: i64, conn: &mut PgConnection) -> GraphqlResult<bool> {
+    pub(crate) fn exists(id: i64, conn: &mut PgConnection) -> AppResult<bool> {
         let exists = diesel::select(diesel::dsl::exists(author::table.filter(author::id.eq(id))))
             .get_result(conn)?;
         Ok(exists)
     }
     /// 删除作者
-    pub(crate) fn delete(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
+    pub(crate) fn delete(id: i64, conn: &mut PgConnection) -> AppResult<Self> {
         let deleted = diesel::delete(author::table.filter(author::id.eq(id))).get_result(conn)?;
         Ok(deleted)
     }
     /// 获取作者
-    pub(crate) fn get(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
+    pub(crate) fn get(id: i64, conn: &mut PgConnection) -> AppResult<Self> {
         let author = author::table.filter(author::id.eq(id)).first(conn)?;
         Ok(author)
     }
@@ -76,20 +76,17 @@ impl AuthorModel {
         offset: i64,
         limit: i64,
         conn: &mut PgConnection,
-    ) -> GraphqlResult<Vec<Self>> {
+    ) -> AppResult<Vec<Self>> {
         let authors = author::table.offset(offset).limit(limit).load(conn)?;
         Ok(authors)
     }
     /// 获取所有作者
-    pub(crate) fn all(conn: &mut PgConnection) -> GraphqlResult<Vec<Self>> {
+    pub(crate) fn all(conn: &mut PgConnection) -> AppResult<Vec<Self>> {
         let authors = author::table.load(conn)?;
         Ok(authors)
     }
     /// 获取搜索全部作者
-    pub(crate) fn search_all(
-        search_name: String,
-        conn: &mut PgConnection,
-    ) -> GraphqlResult<Vec<Self>> {
+    pub(crate) fn search_all(search_name: String, conn: &mut PgConnection) -> AppResult<Vec<Self>> {
         let authors = author::table
             .filter(author::name.like(format!("%{search_name}%")))
             .load(conn)?;
@@ -101,7 +98,7 @@ impl AuthorModel {
         offset: i64,
         limit: i64,
         conn: &mut PgConnection,
-    ) -> GraphqlResult<Vec<Self>> {
+    ) -> AppResult<Vec<Self>> {
         let authors = author::table
             .filter(author::name.like(format!("%{search_name}%")))
             .offset(offset)
@@ -110,15 +107,12 @@ impl AuthorModel {
         Ok(authors)
     }
     /// 获取所有作者数量
-    pub(crate) fn get_count(conn: &mut PgConnection) -> GraphqlResult<i64> {
+    pub(crate) fn get_count(conn: &mut PgConnection) -> AppResult<i64> {
         let count = author::table.count().get_result(conn)?;
         Ok(count)
     }
     /// 获取作者搜索数量
-    pub(crate) fn get_search_count(
-        search_name: &str,
-        conn: &mut PgConnection,
-    ) -> GraphqlResult<i64> {
+    pub(crate) fn get_search_count(search_name: &str, conn: &mut PgConnection) -> AppResult<i64> {
         let count = author::table
             .filter(author::name.like(format!("%{search_name}%")))
             .count()
@@ -129,22 +123,11 @@ impl AuthorModel {
 
 /// site_id 相关的操作
 impl AuthorModel {
-    pub(crate) fn exists_by_site_id(
-        site_id: &str,
-        site: NovelSite,
-        conn: &mut PgConnection,
-    ) -> GraphqlResult<bool> {
-        let exists = diesel::select(diesel::dsl::exists(
-            author::table.filter(author::site_id.eq(site_id).and(author::site.eq(site))),
-        ))
-        .get_result(conn)?;
-        Ok(exists)
-    }
     pub(crate) fn get_id_by_site_id(
         site_id: &str,
         site: NovelSite,
         conn: &mut PgConnection,
-    ) -> GraphqlResult<Option<i64>> {
+    ) -> AppResult<Option<i64>> {
         let id = author::table
             .filter(author::site_id.eq(site_id).and(author::site.eq(site)))
             .select(author::id)
@@ -180,7 +163,7 @@ pub(crate) struct UpdateAuthorModel<'a> {
 }
 
 impl UpdateAuthorModel<'_> {
-    pub(crate) fn update(&self, conn: &mut PgConnection) -> GraphqlResult<AuthorModel> {
+    pub(crate) fn update(&self, conn: &mut PgConnection) -> AppResult<AuthorModel> {
         let author = diesel::update(author::table.filter(author::id.eq(self.id)))
             .set(self)
             .get_result(conn)?;

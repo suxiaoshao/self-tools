@@ -7,22 +7,11 @@
  */
 use async_graphql::InputObject;
 use graphql_common::{DateTime, Pagination};
-use time::OffsetDateTime;
 
 #[derive(InputObject, Debug, Clone, Copy)]
 pub(crate) struct TimeRange {
-    start: DateTime,
-    end: DateTime,
-}
-
-impl TimeRange {
-    pub(crate) fn start(&self) -> OffsetDateTime {
-        self.start.into()
-    }
-
-    pub(crate) fn end(&self) -> OffsetDateTime {
-        self.end.into()
-    }
+    pub start: DateTime,
+    pub end: DateTime,
 }
 
 #[derive(InputObject, Debug, Clone, Copy)]
@@ -31,4 +20,27 @@ pub(crate) struct CollectionItemQuery {
     pub(crate) create_time: Option<TimeRange>,
     pub(crate) update_time: Option<TimeRange>,
     pub(crate) pagination: Pagination,
+}
+
+impl CollectionItemQuery {
+    pub fn checked(self) -> async_graphql::Result<crate::service::input::CollectionItemQuery> {
+        let pagination = self.pagination.checked().map_err(|mut v| {
+            v.path.splice(0..0, ["query".into(), "pagination".into()]);
+            graphql_common::invalid_fields(vec![v])
+        })?;
+        Ok(crate::service::input::CollectionItemQuery {
+            id: self.id,
+            create_time: self.create_time.map(Into::into),
+            update_time: self.update_time.map(Into::into),
+            pagination,
+        })
+    }
+}
+impl From<TimeRange> for crate::service::input::TimeRange {
+    fn from(v: TimeRange) -> Self {
+        Self {
+            start: v.start.into(),
+            end: v.end.into(),
+        }
+    }
 }

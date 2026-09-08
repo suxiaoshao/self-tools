@@ -2,7 +2,7 @@ import { LogOut, ShieldCheck } from 'lucide-react';
 import { Link } from 'react-router';
 import { useI18n } from 'i18n';
 import { useAuthStore } from './authSlice';
-import { authRequest } from './service';
+import { logout } from './service';
 import { useAuthAction } from './useAuthAction';
 import { SidebarMenuButton, SidebarMenuItem } from '@portal/components/ui/sidebar';
 export default function AuthDrawerItem() {
@@ -21,7 +21,7 @@ export default function AuthDrawerItem() {
           disabled={action.pending}
           onClick={() =>
             action.run(async (signal, generation) => {
-              await authRequest('logout', signal, {});
+              await logout(signal);
               if (!signal.aborted) useAuthStore.getState().accept(null, generation);
             })
           }
@@ -31,7 +31,7 @@ export default function AuthDrawerItem() {
         </SidebarMenuButton>
         {action.error && (
           <p role="alert" className="px-2 text-sm">
-            {t(action.error)}
+            {t(action.error)} {action.requestId && <code>{action.requestId}</code>}
           </p>
         )}
       </SidebarMenuItem>

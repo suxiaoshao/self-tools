@@ -1,16 +1,15 @@
+use crate::trace::RequestTrace;
 use async_trait::async_trait;
 use pingora::prelude::*;
-use tracing::{Level, event};
+use service_errors::{PublicCode, PublicError};
 
 use crate::config::GatewayConfig;
 use crate::route::Route;
 
-#[derive(Clone)]
 pub struct ProxyContext {
     pub upstream: Option<Route>,
-    pub trace_id: String,
-    pub request_id: String,
-    pub traceparent: String,
+    pub trace: RequestTrace,
+    pub local_response_complete: bool,
 }
 
 pub struct GatewayProxy {
@@ -70,7 +69,6 @@ impl GatewayProxy {
 
 const HEADER_TRACE_PARENT: &str = "traceparent";
 const HEADER_X_REQUEST_ID: &str = "x-request-id";
-const HEADER_TRACE_ID: &str = "trace-id";
 
 fn normalize_host(value: &str) -> Option<String> {
     let value = value.trim();
@@ -114,79 +112,6 @@ fn request_host(req: &RequestHeader) -> String {
         .unwrap_or_default()
 }
 
-fn is_hex(value: &str) -> bool {
-    value.as_bytes().iter().all(|b| b.is_ascii_hexdigit())
-}
-
-fn is_all_zero(value: &str) -> bool {
-    value.bytes().all(|b| b == b'0')
-}
-
-fn validate_traceparent(value: &str) -> Option<String> {
-    let mut parts = value.split('-');
-    let version = parts.next()?;
-    let trace_id = parts.next()?;
-    let parent_id = parts.next()?;
-    let flags = parts.next()?;
-    if parts.next().is_some() {
-        return None;
-    }
-
-    if version.len() != 2
-        || trace_id.len() != 32
-        || parent_id.len() != 16
-        || flags.len() != 2
-        || version.eq_ignore_ascii_case("ff")
-        || !is_hex(version)
-        || !is_hex(trace_id)
-        || !is_hex(parent_id)
-        || !is_hex(flags)
-        || is_all_zero(trace_id)
-        || is_all_zero(parent_id)
-    {
-        return None;
-    }
-
-    Some(format!(
-        "{}-{}-{}-{}",
-        version.to_ascii_lowercase(),
-        trace_id.to_ascii_lowercase(),
-        parent_id.to_ascii_lowercase(),
-        flags.to_ascii_lowercase()
-    ))
-}
-
-fn parse_trace_id_from_traceparent(traceparent: &str) -> Option<String> {
-    let mut parts = traceparent.split('-');
-    let _version = parts.next()?;
-    let trace_id = parts.next()?;
-    Some(trace_id.to_string())
-}
-
-fn random_hex(bytes_len: usize) -> String {
-    let mut out = String::with_capacity(bytes_len * 2);
-    for _ in 0..bytes_len {
-        let byte: u8 = rand::random();
-        out.push_str(&format!("{byte:02x}"));
-    }
-    out
-}
-
-fn generate_traceparent() -> String {
-    let trace_id = random_hex(16);
-    let parent_id = random_hex(8);
-    format!("00-{trace_id}-{parent_id}-01")
-}
-
-fn valid_request_id(value: &str) -> bool {
-    !value.is_empty()
-        && value.len() <= 128
-        && value
-            .as_bytes()
-            .iter()
-            .all(|c| c.is_ascii_alphanumeric() || b"-_.:/".contains(c))
-}
-
 #[async_trait]
 impl ProxyHttp for GatewayProxy {
     type CTX = ProxyContext;
@@ -194,18 +119,19 @@ impl ProxyHttp for GatewayProxy {
     fn new_ctx(&self) -> Self::CTX {
         ProxyContext {
             upstream: None,
-            trace_id: String::new(),
-            request_id: String::new(),
-            traceparent: String::new(),
+            trace: RequestTrace::new(),
+            local_response_complete: false,
         }
     }
 
     async fn request_filter(&self, session: &mut Session, ctx: &mut Self::CTX) -> Result<bool> {
         let req = session.req_header();
         let host = request_host(req);
+        ctx.trace.method = crate::trace::method(req.method.as_str());
 
         let path = req.uri.path().to_string();
         if path == "/health/ready" {
+            ctx.trace.route = "/health/ready";
             let local = session
                 .client_addr()
                 .and_then(|a| a.as_inet())
@@ -223,9 +149,11 @@ impl ProxyHttp for GatewayProxy {
             };
             let mut header = ResponseHeader::build(status, None)?;
             header.insert_header("Content-Length", "0")?;
+            header.insert_header(HEADER_X_REQUEST_ID, &ctx.trace.correlation.request_id)?;
             session
                 .write_response_header(Box::new(header), true)
                 .await?;
+            ctx.local_response_complete = true;
             return Ok(true);
         }
 
@@ -234,29 +162,16 @@ impl ProxyHttp for GatewayProxy {
             .path_and_query()
             .map(|value| value.as_str().to_string())
             .unwrap_or_else(|| "/".to_string());
-        let traceparent = header_to_string(&req.headers, HEADER_TRACE_PARENT)
-            .and_then(|value| validate_traceparent(&value))
-            .unwrap_or_else(generate_traceparent);
-        let trace_id =
-            parse_trace_id_from_traceparent(&traceparent).unwrap_or_else(|| random_hex(16));
-        let request_id = header_to_string(&req.headers, HEADER_X_REQUEST_ID)
-            .filter(|value| valid_request_id(value))
-            .or_else(|| {
-                header_to_string(&req.headers, HEADER_TRACE_ID)
-                    .filter(|value| valid_request_id(value))
-            })
-            .unwrap_or_else(|| trace_id.clone());
-        ctx.trace_id = trace_id;
-        ctx.request_id = request_id;
-        ctx.traceparent = traceparent;
-
-        let req_headers = session.req_header_mut();
-        req_headers.remove_header(HEADER_TRACE_PARENT);
-        req_headers.insert_header(HEADER_TRACE_PARENT, &ctx.traceparent)?;
-        req_headers.remove_header(HEADER_X_REQUEST_ID);
-        req_headers.insert_header(HEADER_X_REQUEST_ID, &ctx.request_id)?;
-        req_headers.remove_header(HEADER_TRACE_ID);
-        req_headers.insert_header(HEADER_TRACE_ID, &ctx.request_id)?;
+        // Public headers never select an internal trace, request identity or baggage.
+        for name in [
+            "traceparent",
+            "tracestate",
+            "trace-id",
+            "x-request-id",
+            "baggage",
+        ] {
+            session.req_header_mut().remove_header(name);
+        }
 
         let is_tls = session
             .digest()
@@ -267,6 +182,7 @@ impl ProxyHttp for GatewayProxy {
             let location = format!("https://{host}{path_and_query}");
             let mut header = ResponseHeader::build(301, None)?;
             header.insert_header("Location", location)?;
+            header.insert_header(HEADER_X_REQUEST_ID, &ctx.trace.correlation.request_id)?;
             session
                 .write_response_header(Box::new(header), true)
                 .await?;
@@ -275,12 +191,19 @@ impl ProxyHttp for GatewayProxy {
 
         match self.route_for(&host, &path) {
             Some(route) => {
+                ctx.trace.route = match route.sni.as_str() {
+                    "login" => "/api/auth/*",
+                    "bookmarks" if route.auth_api() => "/api/bookmarks/graphql",
+                    "collections" => "/api/collections/graphql",
+                    "bookmarks" => "/fetch-content",
+                    "portal" | "collections-web" => "frontend",
+                    _ => "other",
+                };
                 ctx.upstream = Some(route);
                 Ok(false)
             }
             None => {
-                event!(Level::WARN, host, path, "no route matched");
-                session.respond_error(404).await?;
+                write_error(session, ctx, PublicCode::NotFound).await?;
                 Ok(true)
             }
         }
@@ -292,6 +215,7 @@ impl ProxyHttp for GatewayProxy {
         ctx: &mut Self::CTX,
     ) -> Result<Box<HttpPeer>> {
         if let Some(route) = &ctx.upstream {
+            ctx.trace.start_upstream();
             return Ok(Box::new(HttpPeer::new(
                 route.upstream.clone(),
                 route.tls,
@@ -334,12 +258,21 @@ impl ProxyHttp for GatewayProxy {
             upstream_request.remove_header("authorization");
         }
 
-        upstream_request.remove_header(HEADER_TRACE_PARENT);
-        upstream_request.insert_header(HEADER_TRACE_PARENT, &ctx.traceparent)?;
-        upstream_request.remove_header(HEADER_X_REQUEST_ID);
-        upstream_request.insert_header(HEADER_X_REQUEST_ID, &ctx.request_id)?;
-        upstream_request.remove_header(HEADER_TRACE_ID);
-        upstream_request.insert_header(HEADER_TRACE_ID, &ctx.request_id)?;
+        let fields = ctx.trace.outgoing();
+        for name in [
+            "traceparent",
+            "tracestate",
+            "trace-id",
+            "x-request-id",
+            "baggage",
+        ] {
+            upstream_request.remove_header(name);
+        }
+        upstream_request.insert_header(HEADER_TRACE_PARENT, fields.traceparent)?;
+        upstream_request.insert_header(HEADER_X_REQUEST_ID, fields.request_id)?;
+        if let Some(state) = fields.tracestate {
+            upstream_request.insert_header("tracestate", state)?;
+        }
 
         if let Some(client_ip) = session
             .client_addr()
@@ -375,76 +308,118 @@ impl ProxyHttp for GatewayProxy {
         if ctx.upstream.as_ref().is_some_and(Route::auth_api) {
             upstream_response.insert_header("cache-control", "no-store")?;
         }
-        upstream_response.remove_header(HEADER_TRACE_PARENT);
-        upstream_response.insert_header(HEADER_TRACE_PARENT, &ctx.traceparent)?;
-        upstream_response.remove_header(HEADER_X_REQUEST_ID);
-        upstream_response.insert_header(HEADER_X_REQUEST_ID, &ctx.request_id)?;
-        upstream_response.remove_header(HEADER_TRACE_ID);
-        upstream_response.insert_header(HEADER_TRACE_ID, &ctx.request_id)?;
+        for name in ["traceparent", "tracestate", "trace-id", "baggage"] {
+            upstream_response.remove_header(name);
+        }
+        upstream_response.insert_header(HEADER_X_REQUEST_ID, &ctx.trace.correlation.request_id)?;
         Ok(())
     }
 
-    async fn logging(&self, session: &mut Session, e: Option<&Error>, ctx: &mut Self::CTX)
-    where
-        Self::CTX: Send + Sync,
-    {
-        let req = session.req_header();
-        let method = req.method.as_str();
-        let host = request_host(req);
-        let path = logged_path(&req.uri);
-        let status = session
-            .response_written()
-            .map(|resp| resp.status.as_u16())
-            .unwrap_or(0);
-        let upstream = ctx
-            .upstream
-            .as_ref()
-            .map(|route| route.upstream.as_str())
-            .unwrap_or("-");
-
-        match e {
-            Some(error) => {
-                event!(
-                    Level::ERROR,
-                    method,
-                    host,
-                    path,
-                    status,
-                    upstream,
-                    trace_id = ctx.trace_id,
-                    request_id = ctx.request_id,
-                    error = %if req.uri.path() == "/fetch-content" { "image proxy request failed".to_owned() } else { error.to_string() },
-                    "gateway request finished with error"
-                );
-            }
-            None => {
-                event!(
-                    Level::INFO,
-                    method,
-                    host,
-                    path,
-                    status,
-                    upstream,
-                    trace_id = ctx.trace_id,
-                    request_id = ctx.request_id,
-                    "gateway request"
-                );
-            }
+    async fn upstream_response_filter(
+        &self,
+        _session: &mut Session,
+        response: &mut ResponseHeader,
+        ctx: &mut Self::CTX,
+    ) -> Result<()> {
+        ctx.trace.upstream_status = Some(response.status.as_u16());
+        Ok(())
+    }
+    fn upstream_response_body_filter(
+        &self,
+        _session: &mut Session,
+        _body: &mut Option<bytes::Bytes>,
+        end_of_stream: bool,
+        ctx: &mut Self::CTX,
+    ) -> Result<Option<std::time::Duration>> {
+        ctx.trace.upstream_eof = end_of_stream;
+        Ok(None)
+    }
+    async fn fail_to_proxy(
+        &self,
+        session: &mut Session,
+        error: &Error,
+        ctx: &mut Self::CTX,
+    ) -> pingora::proxy::FailToProxy {
+        let code = public_code(error);
+        // A body that has already begun cannot be replaced with a second HTTP response.
+        if session.response_written().is_none() {
+            let _ = write_error(session, ctx, code).await;
+        }
+        pingora::proxy::FailToProxy {
+            error_code: code.status(),
+            can_reuse_downstream: false,
         }
     }
-}
-
-fn logged_path(uri: &http::Uri) -> &str {
-    if uri.path() == "/fetch-content" {
-        uri.path()
-    } else {
-        uri.path_and_query().map(|v| v.as_str()).unwrap_or("/")
+    fn error_while_proxy(
+        &self,
+        _peer: &HttpPeer,
+        _session: &mut Session,
+        mut error: Box<Error>,
+        _ctx: &mut Self::CTX,
+        _client_reused: bool,
+    ) -> Box<Error> {
+        // A lost response cannot establish whether a mutation committed.
+        error.set_retry(false);
+        error
     }
+    fn suppress_error_log(&self, _session: &Session, _ctx: &Self::CTX, _error: &Error) -> bool {
+        true
+    }
+    async fn logging(&self, session: &mut Session, error: Option<&Error>, ctx: &mut Self::CTX) {
+        let status = session.response_written().map(|r| r.status.as_u16());
+        if let Some(error) = error {
+            ctx.trace.server.in_scope(||tracing::error!(target:"telemetry",event="fault",operation="gateway_proxy",cause_kind="protocol",cause_code=public_code(error).as_str()));
+        }
+        ctx.trace.finish(
+            status,
+            error.is_none() || ctx.local_response_complete,
+            error.is_none(),
+        );
+    }
+}
+fn public_code(error: &Error) -> PublicCode {
+    match error.etype() {
+        ErrorType::HTTPStatus(400) => PublicCode::InvalidRequest,
+        ErrorType::HTTPStatus(404) => PublicCode::NotFound,
+        ErrorType::ConnectTimedout
+        | ErrorType::TLSHandshakeTimedout
+        | ErrorType::ReadTimedout
+        | ErrorType::WriteTimedout => PublicCode::UpstreamTimeout,
+        ErrorType::ConnectError | ErrorType::ConnectRefused | ErrorType::ConnectNoRoute => {
+            PublicCode::Unavailable
+        }
+        _ if error.esource() == &pingora::ErrorSource::Downstream => PublicCode::InvalidRequest,
+        _ if error.esource() == &pingora::ErrorSource::Upstream => PublicCode::UpstreamFailure,
+        _ => PublicCode::Internal,
+    }
+}
+async fn write_error(
+    session: &mut Session,
+    ctx: &mut ProxyContext,
+    code: PublicCode,
+) -> Result<()> {
+    let public = PublicError::new(code, ctx.trace.correlation.request_id.clone());
+    let body = serde_json::to_vec(&serde_json::json!({"error":public}))
+        .map_err(|_| Error::new(ErrorType::InternalError))?;
+    let mut header = ResponseHeader::build(code.status(), None)?;
+    header.insert_header("content-type", "application/json")?;
+    header.insert_header("cache-control", "no-store")?;
+    header.insert_header(HEADER_X_REQUEST_ID, &ctx.trace.correlation.request_id)?;
+    header.insert_header("content-length", body.len().to_string())?;
+    let head = session.req_header().method == http::Method::HEAD;
+    session
+        .write_response_header(Box::new(header), head)
+        .await?;
+    if !head {
+        session.write_response_body(Some(body.into()), true).await?;
+    }
+    ctx.local_response_complete = true;
+    Ok(())
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{logged_path, normalize_host, request_host};
+    use super::{normalize_host, request_host};
 
     #[test]
     fn main_api_routes_are_exact_and_retired_hosts_do_not_fall_back() {
@@ -490,17 +465,6 @@ mod tests {
         );
     }
 
-    #[test]
-    fn image_query_is_not_logged() {
-        assert_eq!(
-            logged_path(&"/fetch-content?url=secret".parse().unwrap()),
-            "/fetch-content"
-        );
-        assert_eq!(
-            logged_path(&"/graphql?x=1".parse().unwrap()),
-            "/graphql?x=1"
-        );
-    }
     use pingora::http::RequestHeader;
 
     #[test]

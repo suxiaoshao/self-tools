@@ -10,5 +10,8 @@
   "exports": {
     ".": "./src/index.tsx"
   },
-  "dependencies": {}
+  "dependencies": {
+    "i18n": "workspace:^",
+    "request-errors": "workspace:*"
+  }
 }

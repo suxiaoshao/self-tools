@@ -1,4 +1,4 @@
-use crate::{errors::GraphqlResult, model::schema::collection_novel};
+use crate::{errors::AppResult, model::schema::collection_novel};
 use diesel::prelude::*;
 use std::collections::{HashMap, HashSet};
 
@@ -14,7 +14,7 @@ impl CollectionNovelModel {
         collection_id: i64,
         novel_id: i64,
         conn: &mut PgConnection,
-    ) -> GraphqlResult<()> {
+    ) -> AppResult<()> {
         let model = Self {
             collection_id,
             novel_id,
@@ -28,7 +28,7 @@ impl CollectionNovelModel {
         collection_id: i64,
         novel_id: i64,
         conn: &mut PgConnection,
-    ) -> GraphqlResult<()> {
+    ) -> AppResult<()> {
         diesel::delete(
             collection_novel::table.filter(
                 collection_novel::collection_id
@@ -43,7 +43,7 @@ impl CollectionNovelModel {
         collection_id: i64,
         novel_id: i64,
         conn: &mut PgConnection,
-    ) -> GraphqlResult<bool> {
+    ) -> AppResult<bool> {
         let exists = diesel::select(diesel::dsl::exists(
             collection_novel::table.filter(
                 collection_novel::collection_id
@@ -57,29 +57,22 @@ impl CollectionNovelModel {
     pub(crate) fn delete_by_collection_ids(
         collection_id: &HashSet<i64>,
         conn: &mut PgConnection,
-    ) -> GraphqlResult<()> {
+    ) -> AppResult<()> {
         diesel::delete(
             collection_novel::table.filter(collection_novel::collection_id.eq_any(collection_id)),
         )
         .execute(conn)?;
         Ok(())
     }
-    pub(crate) fn delete_by_novel_id(novel_id: i64, conn: &mut PgConnection) -> GraphqlResult<()> {
+    pub(crate) fn delete_by_novel_id(novel_id: i64, conn: &mut PgConnection) -> AppResult<()> {
         diesel::delete(collection_novel::table.filter(collection_novel::novel_id.eq(novel_id)))
             .execute(conn)?;
         Ok(())
     }
-    pub(crate) fn delete_by_novel_ids(
-        novel_id: &[i64],
-        conn: &mut PgConnection,
-    ) -> GraphqlResult<()> {
-        diesel::delete(collection_novel::table.filter(collection_novel::novel_id.eq_any(novel_id)))
-            .execute(conn)?;
-        Ok(())
-    }
+
     pub(crate) fn map_novel_collection(
         conn: &mut PgConnection,
-    ) -> GraphqlResult<HashMap<i64, HashSet<i64>>> {
+    ) -> AppResult<HashMap<i64, HashSet<i64>>> {
         let all_data = collection_novel::table
             .select((collection_novel::collection_id, collection_novel::novel_id))
             .get_results::<(i64, i64)>(conn)?;
@@ -92,7 +85,7 @@ impl CollectionNovelModel {
     }
     pub(crate) fn map_collection_novel(
         conn: &mut PgConnection,
-    ) -> GraphqlResult<HashMap<i64, HashSet<i64>>> {
+    ) -> AppResult<HashMap<i64, HashSet<i64>>> {
         let all_data = collection_novel::table
             .select((collection_novel::collection_id, collection_novel::novel_id))
             .get_results::<(i64, i64)>(conn)?;
@@ -103,10 +96,7 @@ impl CollectionNovelModel {
         }
         Ok(lookup)
     }
-    pub(crate) fn many_by_novel_id(
-        novel_id: i64,
-        conn: &mut PgConnection,
-    ) -> GraphqlResult<Vec<i64>> {
+    pub(crate) fn many_by_novel_id(novel_id: i64, conn: &mut PgConnection) -> AppResult<Vec<i64>> {
         let data = collection_novel::table
             .select(collection_novel::collection_id)
             .filter(collection_novel::novel_id.eq(novel_id))

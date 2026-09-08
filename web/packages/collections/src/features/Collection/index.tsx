@@ -1,3 +1,4 @@
+import { RequestNotice } from 'custom-graphql';
 /*
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-01-06 01:30:13
@@ -55,7 +56,11 @@ export default function Collection() {
     pageState.setPage(1);
     // oxlint-disable-next-line exhaustive-deps
   }, [id]);
-  const { data: sourceData, refetch } = useQuery(CollectionAndItems, {
+  const {
+    data: sourceData,
+    refetch,
+    error,
+  } = useQuery(CollectionAndItems, {
     variables: { query: { id, pagination: { page: pageState.pageIndex, pageSize: pageState.pageSize } } },
   });
   const { fetchData } = useAllCollection();
@@ -86,6 +91,7 @@ export default function Collection() {
           <RefreshCcw />
         </Button>
       </div>
+      <RequestNotice error={error} retry={allRefetch} />
       <CustomTable tableInstance={tableInstance} page={page} />
     </div>
   );

@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { CreateCollectionMutationVariables } from '@bookmarks/gql/graphql';
 import { type SubmitHandler, useForm } from 'react-hook-form';
 import { useI18n } from 'i18n';
@@ -25,6 +26,8 @@ export type CollectionFormData = Omit<CreateCollectionMutationVariables, 'parent
 
 interface CollectionFormProps {
   afterSubmit?: (data: CollectionFormData) => Promise<void>;
+  notice?: ReactNode;
+  disabled?: boolean;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   mode?: CollectionFormType;
@@ -33,6 +36,8 @@ interface CollectionFormProps {
 
 export default function CollectionForm({
   open,
+  notice,
+  disabled,
   onOpenChange,
   afterSubmit,
   initialValues,
@@ -75,9 +80,11 @@ export default function CollectionForm({
             </Field>
           </FieldGroup>
 
+          {notice}
           <DialogFooter>
             <DialogClose render={<Button variant="secondary" />}>{t('cancel')}</DialogClose>
             <Button
+              disabled={disabled}
               onClick={() => {
                 handleSubmit(onSubmit)();
               }}

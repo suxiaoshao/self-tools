@@ -1,3 +1,4 @@
+import useBookmarkWrite from '@bookmarks/useBookmarkWrite';
 /*
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-01-06 01:30:13
@@ -29,7 +30,31 @@ import { Input } from '@portal/components/ui/input';
 const CreateNovel = graphql(`
   mutation createNovel($data: CreateNovelInput!) {
     createNovel(data: $data) {
-      id
+      __typename
+      ... on NovelSaved {
+        novelId
+      }
+      ... on ValidationFailure {
+        issues {
+          path
+          code
+          min
+          max
+        }
+      }
+      ... on MissingResources {
+        resources {
+          kind
+          id
+        }
+      }
+      ... on Conflict {
+        reason
+        resources {
+          kind
+          id
+        }
+      }
     }
   }
 `);
@@ -40,6 +65,7 @@ interface CreateNovelButtonProps {
 }
 
 export default function CreateNovelButton({ refetch }: CreateNovelButtonProps) {
+  const write = useBookmarkWrite('/bookmarks/novel');
   type FormData = Omit<CreateNovelMutationVariables['data'], 'collectionId'>;
   // 表单控制
   const { handleSubmit, register, control } = useForm<FormData>({ defaultValues: { tags: [] } });
@@ -47,8 +73,15 @@ export default function CreateNovelButton({ refetch }: CreateNovelButtonProps) {
   const [createNovel] = useMutation(CreateNovel);
 
   const onSubmit: SubmitHandler<FormData> = async ({ ...formData }) => {
-    await createNovel({ variables: { data: { ...formData } } });
-    refetch();
+    if (
+      !(await write.execute(
+        async () => (await createNovel({ variables: { data: { ...formData } } })).data?.createNovel,
+      ))
+    )
+      return;
+    void Promise.resolve()
+      .then(() => refetch())
+      .catch(() => undefined);
     handleClose();
   };
   // 控制 dialog
@@ -64,6 +97,14 @@ export default function CreateNovelButton({ refetch }: CreateNovelButtonProps) {
         <form className="flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)}>
           <FieldGroup>
             <Field>
+              <FieldLabel>{t('novel_status')}</FieldLabel>
+              <select {...register('novelStatus', { required: true })}>
+                <option value="ONGOING">{t('ongoing')}</option>
+                <option value="COMPLETED">{t('completed')}</option>
+                <option value="PAUSED">{t('paused')}</option>
+              </select>
+            </Field>
+            <Field>
               <FieldLabel>{t('novel_name')}</FieldLabel>
               <Input required {...register('name', { required: true })} />
             </Field>
@@ -76,8 +117,15 @@ export default function CreateNovelButton({ refetch }: CreateNovelButtonProps) {
               <Input {...register('description')} />
             </Field>
             <Field>
-              <FieldLabel>{t('link')}</FieldLabel>
-              <Input required {...register('site', { required: true })} />
+              <FieldLabel>{t('novel_site')}</FieldLabel>
+              <select {...register('site', { required: true })}>
+                <option value="JJWXC">{t('jjwxc')}</option>
+                <option value="QIDIAN">{t('qidian')}</option>
+              </select>
+            </Field>
+            <Field>
+              <FieldLabel>{t('request_source_id')}</FieldLabel>
+              <Input required {...register('siteId', { required: true })} />
             </Field>
             <Controller
               control={control}
@@ -101,9 +149,12 @@ export default function CreateNovelButton({ refetch }: CreateNovelButtonProps) {
               )}
             />
           </FieldGroup>
+          {write.notice}
           <DialogFooter>
             <DialogClose render={<Button type="button" variant="secondary" />}>{t('cancel')}</DialogClose>
-            <Button type="submit">{t('submit')}</Button>
+            <Button disabled={write.blocked} type="submit">
+              {t('submit')}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

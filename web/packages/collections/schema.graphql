@@ -1,114 +1,160 @@
-schema {
-  query: QueryRoot
-  mutation: MutationRoot
-}
-
-# Indicates that an Input Object is a OneOf Input Object (and thus requires exactly one of its field be provided)
-directive @oneOf on INPUT_OBJECT
+union AddMembershipResult = CollectionMembershipChanged | ValidationFailure | MissingResources | Conflict
 
 type Collection {
-  id: Int!
-  name: String!
-  path: String!
-  parentId: Int
-  description: String
-  createTime: DateTime!
-  updateTime: DateTime!
-
-  # 获取祖先列表
-  ancestors: [Collection!]!
+	id: Int!
+	name: String!
+	path: String!
+	parentId: Int
+	description: String
+	createTime: DateTime!
+	updateTime: DateTime!
+	ancestors: [Collection!]
 }
 
 input CollectionItemQuery {
-  id: Int
-  createTime: TimeRange
-  updateTime: TimeRange
-  pagination: Pagination!
+	id: Int
+	createTime: TimeRange
+	updateTime: TimeRange
+	pagination: Pagination!
 }
 
-# A datetime with timezone offset.
-#
-# The input is a string in RFC3339 format, e.g. "2022-01-12T04:00:19.12345Z"
-# or "2022-01-12T04:00:19+03:00". The output is also a string in RFC3339
-# format, but it is always normalized to the UTC (Z) offset, e.g.
-# "2022-01-12T04:00:19.12345Z".
+type CollectionMembershipChanged {
+	collectionId: Int!
+	resource: ResourceRef!
+	present: Boolean!
+}
+
+"""
+A committed collection identifier; no fallible post-write reads.
+"""
+type CollectionSaved {
+	collectionId: Int!
+}
+
+union CollectionWriteResult = CollectionSaved | ValidationFailure | MissingResources | Conflict
+
+type Conflict {
+	reason: ConflictReason!
+	resources: [ResourceRef!]!
+}
+
+enum ConflictReason {
+	COLLECTION_PATH_EXISTS
+	MEMBERSHIP_EXISTS
+}
+
 scalar DateTime
 
+union DeleteResult = ResourceDeleted | ValidationFailure
+
+type FieldViolation {
+	path: [String!]!
+	code: ValidationCode!
+	min: Int
+	max: Int
+}
+
 type Item {
-  id: Int!
-  name: String!
-  content: String!
-  createTime: DateTime!
-  updateTime: DateTime!
-  collections: [Collection!]!
+	id: Int!
+	name: String!
+	content: String!
+	createTime: DateTime!
+	updateTime: DateTime!
+	collections: [Collection!]
 }
 
 union ItemAndCollection = Item | Collection
 
 type ItemAndCollectionList {
-  data: [ItemAndCollection!]!
-  total: Int!
+	data: [ItemAndCollection!]!
+	total: Int!
 }
 
 type ItemList {
-  data: [Item!]!
-  total: Int!
+	data: [Item!]!
+	total: Int!
+}
+
+type ItemSaved {
+	itemId: Int!
+}
+
+union ItemWriteResult = ItemSaved | ValidationFailure | MissingResources
+
+type MissingResources {
+	resources: [ResourceRef!]!
 }
 
 type MutationRoot {
-  # 创建目录
-  createCollection(name: String!, parentId: Int, description: String): Collection!
-
-  # 删除目录
-  deleteCollection(id: Int!): Collection!
-
-  # 修改目录
-  updateCollection(id: Int!, name: String!, description: String): Collection!
-
-  # 创建记录
-  createItem(name: String!, content: String!, collectionIds: [Int!]!): Item!
-
-  # 删除记录
-  deleteItem(id: Int!): Item!
-
-  # 修改记录
-  updateItem(id: Int!, name: String!, content: String!): Item!
-
-  # 给条目添加集合
-  addCollectionForItem(collectionId: Int!, itemId: Int!): Item!
-
-  # 给条目删除集合
-  deleteCollectionForItem(collectionId: Int!, itemId: Int!): Item!
+	createCollection(name: String!, parentId: Int, description: String): CollectionWriteResult!
+	updateCollection(id: Int!, name: String!, description: String): CollectionWriteResult!
+	createItem(name: String!, content: String!, collectionIds: [Int!]!): ItemWriteResult!
+	updateItem(id: Int!, name: String!, content: String!): ItemWriteResult!
+	deleteCollection(id: Int!): DeleteResult!
+	deleteItem(id: Int!): DeleteResult!
+	addCollectionForItem(collectionId: Int!, itemId: Int!): AddMembershipResult!
+	deleteCollectionForItem(collectionId: Int!, itemId: Int!): RemoveMembershipResult!
 }
 
 input Pagination {
-  page: Int! = 1
-  pageSize: Int! = 10
+	page: Int! = 1
+	pageSize: Int! = 10
 }
 
 type QueryRoot {
-  # 获取所有集合
-  allCollections: [Collection!]!
+	allCollections: [Collection!]!
+	getCollection(id: Int!): Collection
+	getItem(id: Int!): Item
+	collectionAndItem(query: CollectionItemQuery!): ItemAndCollectionList!
+	queryItems(collectionMatch: TagMatch, pagination: Pagination!): ItemList!
+}
 
-  # 获取目录详情
-  getCollection(id: Int!): Collection!
+union RemoveMembershipResult = CollectionMembershipChanged | ValidationFailure
 
-  # 获取记录详情
-  getItem(id: Int!): Item!
+type ResourceDeleted {
+	resource: ResourceRef!
+}
 
-  # 获取集合下的集合和记录
-  collectionAndItem(query: CollectionItemQuery!): ItemAndCollectionList!
+enum ResourceKind {
+	COLLECTION
+	ITEM
+}
 
-  # 获取条目列表
-  queryItems(collectionMatch: TagMatch, pagination: Pagination!): ItemList!
+type ResourceRef {
+	kind: ResourceKind!
+	id: Int!
 }
 
 input TagMatch {
-  matchSet: [Int!]!
-  fullMatch: Boolean!
+	matchSet: [Int!]!
+	fullMatch: Boolean!
 }
 
 input TimeRange {
-  start: DateTime!
-  end: DateTime!
+	start: DateTime!
+	end: DateTime!
+}
+
+enum ValidationCode {
+	REQUIRED
+	INVALID_FORMAT
+	TOO_LONG
+	OUT_OF_RANGE
+}
+
+type ValidationFailure {
+	issues: [FieldViolation!]!
+}
+
+"""
+Directs the executor to include this field or fragment only when the `if` argument is true.
+"""
+directive @include(if: Boolean!) on FIELD | FRAGMENT_SPREAD | INLINE_FRAGMENT
+"""
+Directs the executor to skip this field or fragment when the `if` argument is true.
+"""
+directive @skip(if: Boolean!) on FIELD | FRAGMENT_SPREAD | INLINE_FRAGMENT
+schema {
+	query: QueryRoot
+	mutation: MutationRoot
 }

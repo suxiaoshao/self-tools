@@ -49,7 +49,6 @@ pub(crate) fn get_router() -> anyhow::Result<Router> {
             "/api/bookmarks/graphql",
             post(graphql_handler).get(graphql_playground),
         )
-        .layer(middleware::trace_layer())
         .with_state(schema)
         .merge(images);
     Ok(router)

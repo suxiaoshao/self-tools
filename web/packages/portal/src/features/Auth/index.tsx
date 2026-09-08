@@ -86,7 +86,11 @@ export default function Login() {
             </form>
           )}
           {action.pending && <output>{t('auth_working')}</output>}
-          {action.error && <p role="alert">{t(action.error)}</p>}
+          {action.error && (
+            <p role="alert">
+              {t(action.error)} {action.requestId && <code>{action.requestId}</code>}
+            </p>
+          )}
           {action.pending && (
             <Button variant="outline" onClick={action.cancel}>
               {t('cancel')}

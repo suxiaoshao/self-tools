@@ -1,3 +1,7 @@
+import { RequestNotice } from 'custom-graphql';
+import { checkDeleted } from '@bookmarks/reconcile';
+import { useApolloClient } from '@apollo/client/react';
+import useBookmarkWrite from '@bookmarks/useBookmarkWrite';
 import { Search } from 'lucide-react';
 import { useCallback, useEffect, useMemo } from 'react';
 import {
@@ -40,7 +44,21 @@ const GetTags = graphql(`
 const DeleteTag = graphql(`
   mutation deleteTag($id: Int!) {
     deleteTag(id: $id) {
-      id
+      __typename
+      ... on ResourceDeleted {
+        resource {
+          kind
+          id
+        }
+      }
+      ... on ValidationFailure {
+        issues {
+          path
+          code
+          min
+          max
+        }
+      }
     }
   }
 `);
@@ -52,8 +70,12 @@ type Data = GetTagsQuery['queryTags']['data'][0];
 const columnHelper = createCustomColumnHelper<Data>();
 
 export default function Tags() {
+  const client = useApolloClient();
+  const write = useBookmarkWrite('/bookmarks/tags');
   const pageState = usePage();
-  const [getTags, { data: { queryTags: { data, total } = {} } = {}, refetch }] = useLazyQuery(GetTags);
+  const [getTags, { data: queryData, refetch, error }] = useLazyQuery(GetTags);
+  const data = queryData?.queryTags?.data;
+  const total = queryData?.queryTags?.total;
   const page = usePageWithTotal(pageState, total);
   const [deleteTag] = useMutation(DeleteTag);
   const onSearch = useCallback(() => {
@@ -114,8 +136,16 @@ export default function Tags() {
                 {
                   text: t('delete'),
                   onClick: async () => {
-                    await deleteTag({ variables: { id } });
-                    await refetch();
+                    if (
+                      !(await write.execute(async () => (await deleteTag({ variables: { id } })).data?.deleteTag, {
+                        verify: () => checkDeleted(client, id, 'Tag'),
+                        confirmed: refetch,
+                      }))
+                    )
+                      return;
+                    void Promise.resolve()
+                      .then(() => refetch())
+                      .catch(() => undefined);
                   },
                 },
               ]}
@@ -128,7 +158,7 @@ export default function Tags() {
           },
         ),
       ] as CustomColumnDefArray<Data>,
-    [deleteTag, refetch, t],
+    [deleteTag, refetch, t, write, client],
   );
   const tableOptions = useMemo<CustomTableOptions<Data>>(
     () => ({ columns, data: data ?? [], getCoreRowModel: rowModel }),
@@ -149,6 +179,8 @@ export default function Tags() {
 
   return (
     <div className="flex flex-col size-full p-4">
+      <RequestNotice error={error} />
+      {write.notice}
       {input}
       <CustomTable tableInstance={tableInstance} page={page} />
     </div>

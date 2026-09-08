@@ -3,14 +3,18 @@ import { KeyRound, Plus } from 'lucide-react';
 import { useI18n } from 'i18n';
 import { useAuthStore } from './authSlice';
 import {
-  AuthError,
-  authRequest,
+  getPasskeys,
   getSession,
   passkeyAuthentication,
+  passwordReauth,
   registerPasskey,
+  renamePasskey,
+  deletePasskey,
+  UnconfirmedWrite,
   type PasskeyView,
   type SessionView,
 } from './service';
+import { normalizeRequestFailure } from 'request-errors';
 import { useAuthAction, formText } from './useAuthAction';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@portal/components/ui/card';
 import {
@@ -32,42 +36,88 @@ export default function Security() {
   const [operation, setOperation] = useState<Operation | null>(null);
   const [reauth, setReauth] = useState(false);
   const [passwordOpen, setPasswordOpen] = useState(false);
-  const { run, pending, error, setError, cancel } = useAuthAction();
+  const [unconfirmed, setUnconfirmed] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const { run, pending, error, requestId, setError, cancel } = useAuthAction();
   useEffect(() => {
     void run(async (signal, generation) => {
-      const values = await authRequest<PasskeyView[]>('passkeys', signal);
+      const values = await getPasskeys(signal);
       if (!signal.aborted && useAuthStore.getState().generation === generation) setKeys(values);
     });
   }, [run]);
-  async function execute(op: Operation, signal: AbortSignal, generation: number) {
+  async function refreshKeys(signal: AbortSignal, generation: number) {
     try {
-      if (op.kind === 'add') await registerPasskey(op.name.trim(), signal);
-      else if (op.kind === 'rename') await authRequest(`passkeys/${op.id}`, signal, { name: op.name.trim() }, 'PATCH');
-      else await authRequest(`passkeys/${op.id}`, signal, {}, 'DELETE');
+      const values = await getPasskeys(signal);
+      if (!signal.aborted && useAuthStore.getState().generation === generation) setKeys(values);
+    } catch {
+      if (!signal.aborted && useAuthStore.getState().generation === generation) setError('auth_refresh_failed');
+    }
+  }
+  async function execute(op: Operation, signal: AbortSignal, generation: number) {
+    let sessionInvalidated = false;
+    try {
+      if (op.kind === 'add') {
+        const key = await registerPasskey(op.name.trim(), signal);
+        if (!signal.aborted && useAuthStore.getState().generation === generation)
+          setKeys((keys) => [...(keys ?? []), key]);
+      } else if (op.kind === 'rename') {
+        const key = await renamePasskey(op.id, op.name.trim(), signal);
+        if (!signal.aborted && useAuthStore.getState().generation === generation)
+          setKeys((keys) => keys?.map((old) => (old.id === key.id ? key : old)) ?? null);
+      } else {
+        const result = await deletePasskey(op.id, signal);
+        sessionInvalidated = result.sessionInvalidated;
+        if (!signal.aborted && useAuthStore.getState().generation === generation)
+          setKeys((keys) => keys?.filter((key) => key.id !== result.id) ?? null);
+      }
     } catch (error) {
-      if (error instanceof AuthError && error.code === 'REAUTH_REQUIRED') {
+      if (signal.aborted || useAuthStore.getState().generation !== generation) return;
+      const failure = normalizeRequestFailure(error);
+      if (failure.kind === 'public' && failure.error.code === 'REAUTH_REQUIRED') {
         setReauth(true);
         return;
       }
+      if (error instanceof UnconfirmedWrite) setUnconfirmed(true);
       throw error;
     }
     if (signal.aborted || useAuthStore.getState().generation !== generation) return;
     setOperation(null);
     setReauth(false);
-    // Deleting a credential can revoke this browser's session as well.
-    if (op.kind === 'delete') {
+    setSaved(true);
+    setUnconfirmed(false);
+    if (sessionInvalidated) {
+      useAuthStore.getState().invalidate(generation);
+      return;
+    }
+    await refreshKeys(signal, generation);
+  }
+  async function checkResult(signal: AbortSignal, generation: number) {
+    if (!operation) return;
+    if (operation.kind === 'delete') {
       const session = await getSession(signal);
+      if (signal.aborted || useAuthStore.getState().generation !== generation) return;
       if (!session) {
         useAuthStore.getState().invalidate(generation);
         return;
       }
       useAuthStore.getState().refresh(session, generation);
     }
-    const values = await authRequest<PasskeyView[]>('passkeys', signal);
-    if (!signal.aborted && useAuthStore.getState().generation === generation) setKeys(values);
+    const values = await getPasskeys(signal);
+    if (signal.aborted || useAuthStore.getState().generation !== generation) return;
+    setKeys(values);
+    const confirmed =
+      operation.kind === 'delete'
+        ? !values.some((key) => key.id === operation.id)
+        : operation.kind === 'rename' &&
+          values.some((key) => key.id === operation.id && key.name === operation.name.trim());
+    if (confirmed) {
+      setOperation(null);
+      setUnconfirmed(false);
+      setSaved(true);
+    } else setError(operation.kind === 'add' ? 'auth_registration_unconfirmed' : 'auth_result_unconfirmed');
   }
   function submitOperation() {
-    if (!operation) return;
+    if (!operation || unconfirmed) return;
     const recent = useAuthStore.getState().session?.recentAuthenticationUntil;
     if (!recent || Date.now() >= Date.parse(recent)) {
       setReauth(true);
@@ -87,9 +137,16 @@ export default function Security() {
     setOperation(null);
     setReauth(false);
     setPasswordOpen(false);
+    setUnconfirmed(false);
     setError(null);
   };
   const open = (operation: Operation) => {
+    setSaved(false);
+    setUnconfirmed(false);
+    void run(async (signal, generation) => {
+      const values = await getPasskeys(signal);
+      if (!signal.aborted && useAuthStore.getState().generation === generation) setKeys(values);
+    });
     setOperation(operation);
     setReauth(false);
     setError(null);
@@ -103,6 +160,7 @@ export default function Security() {
           <CardDescription>{t('auth_security_description')}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-6">
+          {saved && <output>{t('auth_operation_saved')}</output>}
           <div className="flex items-center justify-between gap-4">
             <h2 className="font-medium">{t('auth_passkeys')}</h2>
             <Button disabled={pending || keys === null} onClick={() => open({ kind: 'add', name: '' })}>
@@ -155,13 +213,15 @@ export default function Security() {
           )}
           {!operation && error && (
             <>
-              <p role="alert">{t(error)}</p>
+              <p role="alert">
+                {t(error)} {requestId && <code>{requestId}</code>}
+              </p>
               <Button
                 variant="outline"
                 disabled={pending}
                 onClick={() =>
                   run(async (signal, generation) => {
-                    const values = await authRequest<PasskeyView[]>('passkeys', signal);
+                    const values = await getPasskeys(signal);
                     if (!signal.aborted && useAuthStore.getState().generation === generation) setKeys(values);
                   })
                 }
@@ -226,11 +286,7 @@ export default function Security() {
                     event.preventDefault();
                     const password = formText(new FormData(event.currentTarget), 'password');
                     void run(async (signal, generation) =>
-                      verified(
-                        await authRequest<SessionView>('reauth/password', signal, { password }),
-                        signal,
-                        generation,
-                      ),
+                      verified(await passwordReauth(password, signal), signal, generation),
                     );
                   }}
                 >
@@ -256,7 +312,7 @@ export default function Security() {
               )}
             </div>
           ) : operation?.kind === 'delete' ? (
-            <Button variant="destructive" disabled={pending} onClick={submitOperation}>
+            <Button variant="destructive" disabled={pending || unconfirmed} onClick={submitOperation}>
               {t('auth_delete_passkey')}
             </Button>
           ) : (
@@ -275,7 +331,7 @@ export default function Security() {
                     value={operation?.name ?? ''}
                     required
                     maxLength={64}
-                    disabled={pending}
+                    disabled={pending || unconfirmed}
                     onChange={(event) => {
                       const name = event.target.value;
                       setOperation((old) => old && { ...old, name });
@@ -283,15 +339,24 @@ export default function Security() {
                   />
                 </Field>
                 <Field>
-                  <Button type="submit" disabled={pending || !operation?.name.trim()}>
+                  <Button type="submit" disabled={pending || unconfirmed || !operation?.name.trim()}>
                     {t(operation?.kind === 'add' ? 'auth_add_passkey' : 'auth_save')}
                   </Button>
                 </Field>
               </FieldGroup>
             </form>
           )}
+          {unconfirmed && (
+            <Button variant="outline" disabled={pending} onClick={() => run(checkResult)}>
+              {t('auth_check_result')}
+            </Button>
+          )}
           {pending && <output>{t('auth_working')}</output>}
-          {error && <p role="alert">{t(error)}</p>}
+          {error && (
+            <p role="alert">
+              {t(error)} {requestId && <code>{requestId}</code>}
+            </p>
+          )}
           <DialogFooter>
             <Button variant="outline" onClick={close}>
               {t('cancel')}

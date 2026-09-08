@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { safeFrom } from './redirect';
-import { credentialJSON, decodeBase64Url, AuthError, authRequest } from './service';
+import { credentialJSON, decodeBase64Url, passwordReauth, passwordLogin, UnconfirmedWrite } from './service';
+import { RequestError } from 'request-errors';
 import { useAuthStore } from './authSlice';
 vi.mock('custom-graphql', () => ({ clearAuthenticatedState: vi.fn<() => void>() }));
 const session = {
@@ -30,7 +31,9 @@ describe('session identity boundary', () => {
       'fetch',
       vi
         .fn<typeof fetch>()
-        .mockResolvedValue(new Response(JSON.stringify({ code: 'AUTH_UNAVAILABLE' }), { status: 503 })),
+        .mockResolvedValue(
+          new Response(JSON.stringify({ error: { code: 'UNAVAILABLE', requestId: 'a'.repeat(32) } }), { status: 503 }),
+        ),
     );
     await useAuthStore.getState().initialize(new AbortController().signal);
     expect(localStorage.getItem('auth')).toBeNull();
@@ -70,12 +73,14 @@ it('accepts only safe local return paths', () => {
   expect(safeFrom('/bookmarks/novels?page=2#item')).toBe('/bookmarks/novels?page=2#item');
 });
 it('sends same-origin JSON and keeps server failure codes', async () => {
-  const fetchMock = vi
-    .fn<typeof fetch>()
-    .mockResolvedValue(new Response(JSON.stringify({ code: 'AUTHENTICATION_FAILED' }), { status: 401 }));
+  const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
+    new Response(JSON.stringify({ error: { code: 'AUTHENTICATION_FAILED', requestId: 'a'.repeat(32) } }), {
+      status: 401,
+    }),
+  );
   vi.stubGlobal('fetch', fetchMock);
-  await expect(authRequest('reauth/password', new AbortController().signal, { password: 'test-only' })).rejects.toEqual(
-    new AuthError('AUTHENTICATION_FAILED'),
+  await expect(passwordReauth('test-only', new AbortController().signal)).rejects.toEqual(
+    new RequestError({ kind: 'public', error: { code: 'AUTHENTICATION_FAILED', requestId: 'a'.repeat(32) } }),
   );
   expect(fetchMock).toHaveBeenCalledWith(
     '/api/auth/reauth/password',
@@ -109,4 +114,24 @@ it('serializes all assertion bytes and only one extension field', () => {
   });
   expect(json).not.toHaveProperty('extensions');
   expect(Array.from(decodeBase64Url('__4'))).toEqual([255, 254]);
+});
+
+it('rejects malformed success data and preserves an unconfirmed login after failed reconciliation', async () => {
+  const fetchMock = vi
+    .fn<typeof fetch>()
+    .mockResolvedValueOnce(new Response(JSON.stringify({ data: { user: 'malformed' } })))
+    .mockRejectedValueOnce(new TypeError('private network detail'));
+  vi.stubGlobal('fetch', fetchMock);
+  await expect(passwordLogin('admin', 'secret', new AbortController().signal)).rejects.toBeInstanceOf(UnconfirmedWrite);
+  expect(fetchMock).toHaveBeenCalledTimes(2);
+  expect(fetchMock.mock.calls[1][0]).toBe('/api/auth/session');
+});
+it('confirms a lost login response by reading the session without replaying the password', async () => {
+  const fetchMock = vi
+    .fn<typeof fetch>()
+    .mockRejectedValueOnce(new TypeError('network'))
+    .mockResolvedValueOnce(new Response(JSON.stringify({ data: session })));
+  vi.stubGlobal('fetch', fetchMock);
+  await expect(passwordLogin('admin', 'secret', new AbortController().signal)).resolves.toEqual(session);
+  expect(fetchMock).toHaveBeenCalledTimes(2);
 });

@@ -1,6 +1,6 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
-  "ignoreDependencies": ["@testing-library/react", "ts-node"],
+  "ignoreDependencies": ["ts-node"],
   "ignoreIssues": {
     "**/src/gql/**": ["exports", "types"],
     "**/src/components/ui/**": ["exports", "types"],

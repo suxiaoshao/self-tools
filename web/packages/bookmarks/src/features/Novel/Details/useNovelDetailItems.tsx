@@ -1,3 +1,6 @@
+import { checkNovelState } from '@bookmarks/reconcile';
+import { useApolloClient } from '@apollo/client/react';
+import useBookmarkWrite from '@bookmarks/useBookmarkWrite';
 import { useMutation } from '@apollo/client/react';
 import { graphql } from '@bookmarks/gql';
 import type { GetNovelQuery } from '@bookmarks/gql/graphql';
@@ -18,11 +21,29 @@ import { X } from 'lucide-react';
 const DeleteCollectionForNovel = graphql(`
   mutation deleteCollectionForNovel($novelId: Int!, $collectionId: Int!) {
     deleteCollectionForNovel(collectionId: $collectionId, novelId: $novelId) {
-      id
+      __typename
+      ... on CollectionMembershipChanged {
+        collectionId
+        resource {
+          kind
+          id
+        }
+        present
+      }
+      ... on ValidationFailure {
+        issues {
+          path
+          code
+          min
+          max
+        }
+      }
     }
   }
 `);
 export default function useNovelDetailItems(data: GetNovelQuery | undefined, refetch: () => void) {
+  const client = useApolloClient();
+  const write = useBookmarkWrite('/bookmarks/novel');
   const [deleteCollectionForNovel] = useMutation(DeleteCollectionForNovel);
 
   const t = useI18n();
@@ -35,10 +56,12 @@ export default function useNovelDetailItems(data: GetNovelQuery | undefined, ref
             [
               {
                 label: t('author'),
-                value: (
+                value: data.author ? (
                   <Button variant="link" className="text-foreground w-fit px-0 text-left">
                     <Link to={`/bookmarks/authors/${data.author.id}`}>{data.author.name}</Link>
                   </Button>
+                ) : (
+                  '-'
                 ),
               },
               {
@@ -72,7 +95,7 @@ export default function useNovelDetailItems(data: GetNovelQuery | undefined, ref
                   .with(0, () => '-')
                   .otherwise(() => (
                     <div className="flex gap-2">
-                      {data.tags.map((tag) => (
+                      {data.tags?.map((tag) => (
                         <Badge
                           className="cursor-pointer"
                           variant="secondary"
@@ -92,7 +115,7 @@ export default function useNovelDetailItems(data: GetNovelQuery | undefined, ref
                 label: t('collections'),
                 value: (
                   <div className="flex gap-2">
-                    {data.collections.map(({ id, name, path }) => (
+                    {data.collections?.map(({ id, name, path }) => (
                       <Tooltip key={id}>
                         <TooltipTrigger render={<Badge variant="secondary" />}>
                           <Link to={`/bookmarks/collections?parentId=${id}`}>{name}</Link>
@@ -102,8 +125,25 @@ export default function useNovelDetailItems(data: GetNovelQuery | undefined, ref
                             className="data-[state=open]:bg-muted size-6 rounded-full"
                             onClick={async (e) => {
                               e.stopPropagation();
-                              await deleteCollectionForNovel({ variables: { collectionId: id, novelId: data.id } });
-                              refetch();
+                              if (
+                                !(await write.execute(
+                                  async () =>
+                                    (
+                                      await deleteCollectionForNovel({
+                                        variables: { collectionId: id, novelId: data.id },
+                                      })
+                                    ).data?.deleteCollectionForNovel,
+                                  {
+                                    verify: () =>
+                                      checkNovelState(client, data.id, { collectionId: id, present: false }),
+                                    confirmed: refetch,
+                                  },
+                                ))
+                              )
+                                return;
+                              void Promise.resolve()
+                                .then(() => refetch())
+                                .catch(() => undefined);
                             }}
                           >
                             <X />
@@ -112,6 +152,7 @@ export default function useNovelDetailItems(data: GetNovelQuery | undefined, ref
                         <TooltipContent>{path}</TooltipContent>
                       </Tooltip>
                     ))}
+                    {write.notice}
                     <AddCollection novelId={data.id} refetch={refetch} />
                   </div>
                 ),
@@ -125,7 +166,7 @@ export default function useNovelDetailItems(data: GetNovelQuery | undefined, ref
             ] satisfies DetailsItem[],
         )
         .otherwise(() => []),
-    [data, t, deleteCollectionForNovel, refetch],
+    [data, t, deleteCollectionForNovel, refetch, write, client],
   );
   return items;
 }

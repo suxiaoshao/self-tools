@@ -10,10 +10,6 @@ use ::middleware::trace_layer;
 use anyhow::Result;
 use std::net::SocketAddr;
 use tokio::net::TcpListener;
-use tracing::{Level, event, metadata::LevelFilter};
-use tracing_subscriber::{
-    Layer, fmt, prelude::__tracing_subscriber_SubscriberExt, util::SubscriberInitExt,
-};
 pub mod errors;
 mod router;
 
@@ -30,19 +26,26 @@ async fn main() -> Result<()> {
         service_health::Mode::Migrate => unreachable!(),
         service_health::Mode::Serve => (),
     }
-    tracing_subscriber::registry()
-        .with(fmt::layer().with_filter(LevelFilter::INFO))
-        .init();
+    let telemetry = telemetry::init("login")?;
+    let result: anyhow::Result<()> = async {
+        // 获取路由
+        let app = get_router()?.layer(trace_layer());
 
-    // 获取路由
-    let app = get_router()?.layer(trace_layer());
+        // run our app with hyper
+        // `axum::Server` is a re-export of `hyper::Server`
+        let addr = SocketAddr::from(([0, 0, 0, 0], 8000));
+        let listener = TcpListener::bind(addr).await?;
 
-    // run our app with hyper
-    // `axum::Server` is a re-export of `hyper::Server`
-    let addr = SocketAddr::from(([0, 0, 0, 0], 8000));
-    let listener = TcpListener::bind(addr).await?;
-
-    event!(Level::INFO, "server start on {}", addr);
-    axum::serve(listener, app).await?;
-    Ok(())
+        tracing::info!(target: "telemetry", event = "service.started");
+        axum::serve(listener, app)
+            .with_graceful_shutdown(middleware::shutdown_signal())
+            .await?;
+        Ok(())
+    }
+    .await;
+    let shutdown = tokio::task::spawn_blocking(move || telemetry.shutdown()).await;
+    if !matches!(shutdown, Ok(Ok(()))) {
+        eprintln!("telemetry shutdown incomplete");
+    }
+    result
 }

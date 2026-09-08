@@ -1,5 +1,5 @@
 use crate::{
-    application::{Error, Result},
+    application::{Error, Rejection, Result},
     session::{ABSOLUTE, IDLE, RECENT, now},
 };
 use diesel::{
@@ -33,10 +33,10 @@ pub struct SessionRow {
     pub expires: i64,
 }
 impl SessionRow {
-    pub fn view(&self) -> thrift::auth::Session {
-        thrift::auth::Session {
-            user_id: self.user_id.to_string().into(),
-            username: self.username.clone().into(),
+    pub fn view(&self) -> crate::domain::Session {
+        crate::domain::Session {
+            user_id: self.user_id.to_string(),
+            username: self.username.clone(),
             idle_expires_at: (self.last_seen + IDLE).min(self.expires),
             absolute_expires_at: self.expires,
             recent_authentication_until: self.authenticated + RECENT,
@@ -61,14 +61,15 @@ pub struct KeyRow {
 impl KeyRow {
     pub fn key(&self) -> Result<webauthn_rs::prelude::Passkey> {
         if self.format_version != 1 {
-            return Err(Error::Unavailable);
+            return Err(service_errors::Fault::internal("passkey_format_version").into());
         }
-        serde_json::from_value(self.credential.clone()).map_err(|_| Error::Unavailable)
+        serde_json::from_value(self.credential.clone())
+            .map_err(|source| crate::error::fault("passkey_serialization", source))
     }
-    pub fn view(&self) -> thrift::auth::PasskeyInfo {
-        thrift::auth::PasskeyInfo {
-            id: self.id.to_string().into(),
-            name: self.name.clone().into(),
+    pub fn view(&self) -> crate::domain::PasskeyInfo {
+        crate::domain::PasskeyInfo {
+            id: self.id.to_string(),
+            name: self.name.clone(),
             created_at: self.created,
             last_used_at: self.used,
         }
@@ -83,13 +84,13 @@ pub fn key(db: &mut PgConnection, id: Uuid) -> Result<KeyRow> {
         .bind::<SqlUuid, _>(id)
         .get_result(db)
         .optional()?
-        .ok_or(Error::NotFound)
+        .ok_or_else(|| Rejection::NotFound(id.to_string()).into())
 }
 pub fn check(db: &mut PgConnection, hash: &[u8], recent: bool) -> Result<SessionRow> {
     let row: SessionRow = diesel::sql_query("UPDATE auth_session s SET last_seen_at = to_timestamp($2) FROM auth_admin a WHERE s.token_hash=$1 AND s.user_id=a.user_id AND s.absolute_expires_at > to_timestamp($2) AND s.last_seen_at > to_timestamp($2 - $3) RETURNING s.user_id, a.username, EXTRACT(EPOCH FROM s.last_seen_at)::bigint AS last_seen, EXTRACT(EPOCH FROM s.authenticated_at)::bigint AS authenticated, EXTRACT(EPOCH FROM s.absolute_expires_at)::bigint AS expires")
-      .bind::<Binary,_>(hash).bind::<BigInt,_>(now()).bind::<BigInt,_>(IDLE).get_result(db).optional()?.ok_or(Error::Unauthenticated)?;
+      .bind::<Binary,_>(hash).bind::<BigInt,_>(now()).bind::<BigInt,_>(IDLE).get_result(db).optional()?.ok_or(Error::Rejected(Rejection::Unauthenticated))?;
     if recent && now() >= row.authenticated + RECENT {
-        return Err(Error::ReauthRequired);
+        return Err(Error::Rejected(Rejection::ReauthRequired));
     }
     Ok(row)
 }
@@ -104,7 +105,7 @@ pub fn login(
     user: Uuid,
     key: Option<Uuid>,
     old: Option<&[u8]>,
-) -> Result<thrift::auth::LoginResult> {
+) -> Result<crate::domain::LoginResult> {
     if let Some(old) = old {
         logout(db, old)?;
     }
@@ -114,12 +115,12 @@ pub fn login(
     let time = now();
     diesel::sql_query("INSERT INTO auth_session (token_hash,user_id,passkey_id,created_at,last_seen_at,authenticated_at,absolute_expires_at) VALUES ($1,$2,$3,to_timestamp($4),to_timestamp($4),to_timestamp($4),to_timestamp($5))")
         .bind::<Binary,_>(&hash).bind::<SqlUuid,_>(user).bind::<Nullable<SqlUuid>,_>(key).bind::<BigInt,_>(time).bind::<BigInt,_>(time+ABSOLUTE).execute(db)?;
-    Ok(thrift::auth::LoginResult {
-        session_token: token.into(),
+    Ok(crate::domain::LoginResult {
+        session_token: token,
         session: check(db, &hash, false)?.view(),
     })
 }
-pub fn reauth(db: &mut PgConnection, hash: &[u8]) -> Result<thrift::auth::Session> {
+pub fn reauth(db: &mut PgConnection, hash: &[u8]) -> Result<crate::domain::Session> {
     check(db, hash, false)?;
     diesel::sql_query(
         "UPDATE auth_session SET authenticated_at=to_timestamp($2) WHERE token_hash=$1",
@@ -156,7 +157,10 @@ pub fn update_key(
         "UPDATE auth_passkey SET credential=$2,last_used_at=to_timestamp($3) WHERE id=$1",
     )
     .bind::<SqlUuid, _>(id)
-    .bind::<Jsonb, _>(serde_json::to_value(key).map_err(|_| Error::Unavailable)?)
+    .bind::<Jsonb, _>(
+        serde_json::to_value(key)
+            .map_err(|source| crate::error::fault("passkey_serialization", source))?,
+    )
     .bind::<BigInt, _>(now())
     .execute(db)?;
     Ok(())
@@ -172,10 +176,14 @@ pub fn insert_key(
         .bind::<SqlUuid, _>(id)
         .bind::<SqlUuid, _>(user)
         .bind::<Binary, _>(key.cred_id().as_ref())
-        .bind::<Jsonb, _>(serde_json::to_value(key).map_err(|_| Error::Unavailable)?)
+        .bind::<Jsonb, _>(serde_json::to_value(key).map_err(|source| crate::error::fault("passkey_serialization", source))?)
         .bind::<Text, _>(name)
         .bind::<BigInt, _>(now())
-        .execute(db)?;
+        .execute(db).map_err(|source| match &source {
+            diesel::result::Error::DatabaseError(diesel::result::DatabaseErrorKind::UniqueViolation, info)
+                if info.constraint_name() == Some("auth_passkey_credential_id_key") => Error::Rejected(Rejection::PasskeyExists),
+            _ => source.into(),
+        })?;
     Ok(())
 }
 pub fn rename_key(db: &mut PgConnection, id: Uuid, name: &str) -> Result<()> {
@@ -185,9 +193,9 @@ pub fn rename_key(db: &mut PgConnection, id: Uuid, name: &str) -> Result<()> {
         .execute(db)?;
     Ok(())
 }
-pub fn delete_key(db: &mut PgConnection, id: Uuid) -> Result<()> {
-    diesel::sql_query("DELETE FROM auth_passkey WHERE id=$1")
+pub fn delete_key(db: &mut PgConnection, id: Uuid) -> Result<bool> {
+    let changed = diesel::sql_query("DELETE FROM auth_passkey WHERE id=$1")
         .bind::<SqlUuid, _>(id)
         .execute(db)?;
-    Ok(())
+    Ok(changed != 0)
 }

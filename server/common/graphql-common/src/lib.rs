@@ -1,3 +1,7 @@
+mod public_error;
+mod result;
+pub use public_error::*;
+pub use result::*;
 mod date_time;
 mod paginate;
 mod tag_match;
@@ -10,8 +14,7 @@ pub use tag_match::{TagMatch, TagMatchValidator};
 #[macro_export]
 macro_rules! list {
     ($type:ident) => {
-        use graphql_common::paste;
-        paste! {
+        $crate::paste! {
             #[derive(SimpleObject)]
             pub(crate) struct [<$type List>]{
                 data:Vec<$type>,

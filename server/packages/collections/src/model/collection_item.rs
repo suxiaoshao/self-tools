@@ -1,6 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
-use crate::{errors::GraphqlResult, model::schema::collection_item};
+use crate::{errors::AppResult, model::schema::collection_item};
 use diesel::{
     ExpressionMethods, PgConnection, QueryDsl, RunQueryDsl,
     prelude::{Insertable, Queryable},
@@ -14,11 +14,7 @@ pub(crate) struct CollectionItemModel {
 }
 
 impl CollectionItemModel {
-    pub(crate) fn save(
-        collection_id: i64,
-        item_id: i64,
-        conn: &mut PgConnection,
-    ) -> GraphqlResult<()> {
+    pub(crate) fn save(collection_id: i64, item_id: i64, conn: &mut PgConnection) -> AppResult<()> {
         diesel::insert_into(collection_item::table)
             .values(CollectionItemModel {
                 collection_id,
@@ -31,7 +27,7 @@ impl CollectionItemModel {
     pub(crate) fn delete_by_collection_id(
         collection_id: i64,
         conn: &mut PgConnection,
-    ) -> GraphqlResult<usize> {
+    ) -> AppResult<usize> {
         let deleted = diesel::delete(
             collection_item::table.filter(collection_item::collection_id.eq(collection_id)),
         )
@@ -39,7 +35,7 @@ impl CollectionItemModel {
         Ok(deleted)
     }
     /// 根据 item_id 删除记录
-    pub(crate) fn delete_by_item_id(item_id: i64, conn: &mut PgConnection) -> GraphqlResult<usize> {
+    pub(crate) fn delete_by_item_id(item_id: i64, conn: &mut PgConnection) -> AppResult<usize> {
         let deleted =
             diesel::delete(collection_item::table.filter(collection_item::item_id.eq(item_id)))
                 .execute(conn)?;
@@ -47,7 +43,7 @@ impl CollectionItemModel {
     }
     pub(crate) fn map_collection_item(
         conn: &mut PgConnection,
-    ) -> GraphqlResult<HashMap<i64, HashSet<i64>>> {
+    ) -> AppResult<HashMap<i64, HashSet<i64>>> {
         let all_data = collection_item::table
             .select((collection_item::collection_id, collection_item::item_id))
             .get_results::<(i64, i64)>(conn)?;
@@ -60,7 +56,7 @@ impl CollectionItemModel {
     }
     pub(crate) fn map_item_collection(
         conn: &mut PgConnection,
-    ) -> GraphqlResult<HashMap<i64, HashSet<i64>>> {
+    ) -> AppResult<HashMap<i64, HashSet<i64>>> {
         let all_data = collection_item::table
             .select((collection_item::collection_id, collection_item::item_id))
             .get_results::<(i64, i64)>(conn)?;
@@ -75,7 +71,7 @@ impl CollectionItemModel {
         collection_id: i64,
         item_id: i64,
         conn: &mut PgConnection,
-    ) -> GraphqlResult<bool> {
+    ) -> AppResult<bool> {
         let exists = diesel::select(diesel::dsl::exists(
             collection_item::table
                 .filter(collection_item::collection_id.eq(collection_id))
@@ -88,7 +84,7 @@ impl CollectionItemModel {
         collection_id: i64,
         item_id: i64,
         conn: &mut PgConnection,
-    ) -> GraphqlResult<()> {
+    ) -> AppResult<()> {
         diesel::delete(collection_item::table)
             .filter(collection_item::collection_id.eq(collection_id))
             .filter(collection_item::item_id.eq(item_id))

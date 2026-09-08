@@ -1,3 +1,4 @@
+import { useWriteAction, WriteNotice, rejectionFieldErrors, type WriteOutcome } from 'custom-graphql';
 import { useI18n } from 'i18n';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import type { CreateCollectionMutationVariables } from '../../../gql/graphql';
@@ -8,19 +9,41 @@ import { FieldGroup, FieldLabel, Field } from '@portal/components/ui/field';
 import { Input } from '@portal/components/ui/input';
 export type CollectionFormData = Omit<CreateCollectionMutationVariables, 'parentId'>;
 interface CollectFormProps {
-  afterSubmit?: (data: CollectionFormData) => Promise<void>;
+  afterSubmit?: (data: CollectionFormData) => Promise<WriteOutcome>;
   handleClose: () => void;
+  checkResult?: (data: CollectionFormData) => Promise<boolean>;
   mode?: 'create' | 'edit';
   initialValues?: CollectionFormData;
 }
 
-export default function CollectionForm({ afterSubmit, handleClose, mode = 'create', initialValues }: CollectFormProps) {
+export default function CollectionForm({
+  afterSubmit,
+  handleClose,
+  mode = 'create',
+  initialValues,
+  checkResult,
+}: CollectFormProps) {
   // 表单控制
-  const { handleSubmit, register } = useForm<CollectionFormData>({ defaultValues: initialValues });
+  const {
+    handleSubmit,
+    register,
+    setError,
+    clearErrors,
+    getValues,
+    formState: { errors },
+  } = useForm<CollectionFormData>({ defaultValues: initialValues });
 
+  const action = useWriteAction();
   const onSubmit: SubmitHandler<CollectionFormData> = async (data) => {
-    await afterSubmit?.(data);
-    handleClose();
+    if (!afterSubmit) return;
+    clearErrors();
+    const result = await action.run(() => afterSubmit(data));
+    for (const issue of rejectionFieldErrors(result)) {
+      const field = issue.path[0];
+      if (field === 'name' || field === 'description')
+        setError(field, { type: 'server', message: t('request_invalid') });
+    }
+    if (result?.status === 'saved') handleClose();
   };
   const t = useI18n();
 
@@ -38,7 +61,8 @@ export default function CollectionForm({ afterSubmit, handleClose, mode = 'creat
         <FieldGroup>
           <Field>
             <FieldLabel>{t('collection_name')}</FieldLabel>
-            <Input required {...register('name', { required: true })} />
+            <Input aria-invalid={!!errors.name} required {...register('name', { required: true })} />
+            {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
           </Field>
           <Field>
             <FieldLabel>{t('description')}</FieldLabel>
@@ -47,9 +71,22 @@ export default function CollectionForm({ afterSubmit, handleClose, mode = 'creat
         </FieldGroup>
       </form>
 
+      <WriteNotice
+        outcome={action.outcome}
+        pending={action.pending}
+        viewHref="/collections/collections"
+        check={
+          checkResult
+            ? async () => {
+                if (await action.check(() => checkResult(getValues()))) handleClose();
+              }
+            : undefined
+        }
+      />
       <DialogFooter>
         <DialogClose render={<Button />}>{t('cancel')}</DialogClose>
         <Button
+          disabled={action.blocked}
           onClick={() => {
             handleSubmit(onSubmit)();
           }}

@@ -37,6 +37,18 @@ graphql-common = { path = "server/common/graphql-common" }
 middleware = { path = "server/common/middleware" }
 novel_crawler = { path = "server/common/novel_crawler" }
 thrift = { path = "server/common/thrift" }
+service-query = { path = "server/common/service-query" }
+service-errors = { path = "server/common/service-errors" }
+telemetry = { path = "server/common/telemetry" }
+opentelemetry = { version = "0.32.0", default-features = false, features = ["trace"] }
+opentelemetry_sdk = { version = "0.32.1", default-features = false, features = ["trace", "internal-logs"] }
+opentelemetry-otlp = { version = "0.32.0", default-features = false, features = [
+  "trace",
+  "http-proto",
+  "reqwest-blocking-client",
+  "reqwest-rustls",
+] }
+tracing-opentelemetry = { version = "0.33.0", default-features = false }
 
 [profile.release]
 strip = "symbols"

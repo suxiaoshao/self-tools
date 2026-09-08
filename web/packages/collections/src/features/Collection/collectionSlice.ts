@@ -1,4 +1,5 @@
-import { authenticatedStateVersion, registerAuthenticatedReset } from 'custom-graphql';
+import { RequestError } from 'request-errors';
+import { authenticatedStateVersion, registerAuthenticatedReset, graphQLFailures } from 'custom-graphql';
 /*
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-08-29 16:36:31
@@ -79,7 +80,12 @@ const useCollectionsStore = create<CollectionSliceType>((set) => ({
     set({ value: { tag: CollectionLoadingState.loading } });
   },
   setError: (error: Error) => {
-    set({ value: { tag: CollectionLoadingState.error, value: error } });
+    set({
+      value: {
+        tag: CollectionLoadingState.error,
+        value: new RequestError(graphQLFailures(error)[0]?.failure ?? { kind: 'protocol' }),
+      },
+    });
   },
 }));
 
@@ -101,8 +107,9 @@ export function useAllCollection() {
     try {
       const { data, error } = await fn();
       if (version !== authenticatedStateVersion()) return;
-      if (data) setAllCollections(data.allCollections);
       if (error) setError(error);
+      else if (data) setAllCollections(data.allCollections);
+      else setError(new RequestError({ kind: 'protocol' }));
     } catch (error) {
       if (version === authenticatedStateVersion()) setError(error instanceof Error ? error : new Error('Query failed'));
     }

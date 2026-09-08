@@ -1,3 +1,5 @@
+import { attemptWrite } from 'custom-graphql';
+import { collectionResult } from '@collections/results';
 import { useI18n } from 'i18n';
 import useDialog from '@collections/hooks/useDialog';
 import useParentId from '../hooks/useParentId';
@@ -10,7 +12,31 @@ import { Button } from '@portal/components/ui/button';
 const CreateCollection = graphql(`
   mutation createCollection($parentId: Int, $name: String!, $description: String) {
     createCollection(parentId: $parentId, name: $name, description: $description) {
-      path
+      __typename
+      ... on CollectionSaved {
+        collectionId
+      }
+      ... on ValidationFailure {
+        issues {
+          path
+          code
+          min
+          max
+        }
+      }
+      ... on MissingResources {
+        resources {
+          kind
+          id
+        }
+      }
+      ... on Conflict {
+        reason
+        resources {
+          kind
+          id
+        }
+      }
     }
   }
 `);
@@ -26,8 +52,15 @@ export default function CreateCollectionButton({ refetch }: CreateCollectButtonP
   const [createCollection] = useMutation(CreateCollection);
 
   const afterSubmit = async ({ name, description }: CollectionFormData) => {
-    await createCollection({ variables: { name, parentId, description } });
-    refetch();
+    const result = await attemptWrite(
+      () => createCollection({ variables: { name, parentId, description } }),
+      (response) => collectionResult(response.data?.createCollection),
+    );
+    if (result.status === 'saved')
+      void Promise.resolve()
+        .then(refetch)
+        .catch(() => undefined);
+    return result;
   };
   const { open, handleClose, handleOpenChange } = useDialog();
   const t = useI18n();

@@ -4,6 +4,10 @@ version.workspace = true
 edition.workspace = true
 
 [dependencies]
+service-errors.workspace = true
+service-query.workspace = true
+telemetry.workspace = true
+serde_json.workspace = true
 tokio = { workspace = true, features = ["macros"] }
 async-graphql.workspace = true
 paste = "1.0.15"

@@ -6,6 +6,11 @@ edition.workspace = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+telemetry.workspace = true
+service-errors.workspace = true
+tracing.workspace = true
+tokio = { workspace = true, features = ["time"] }
+uuid = "1.23.4"
 # volo
 volo.workspace = true
 volo-thrift.workspace = true

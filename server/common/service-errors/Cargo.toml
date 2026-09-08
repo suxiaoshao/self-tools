@@ -1,0 +1,15 @@
+[package]
+name = "service-errors"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+serde = { workspace = true, features = ["derive"] }
+thiserror.workspace = true
+diesel = { workspace = true, optional = true, features = ["r2d2"] }
+
+[features]
+database = ["dep:diesel"]
+
+[dev-dependencies]
+serde_json.workspace = true
