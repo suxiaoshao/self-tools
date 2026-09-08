@@ -396,17 +396,12 @@ impl Application {
     }
 }
 fn optional_hash(ctx: &Context) -> Result<Option<Vec<u8>>> {
-    ctx.session_token
-        .as_ref()
-        .map(|s| {
-            session::hash(s.as_str()).map_err(|_| {
-                invalid(
-                    "sessionToken",
-                    service_errors::ValidationCode::InvalidFormat,
-                )
-            })
-        })
-        .transpose()
+    match ctx.session_token.as_deref().map(session::hash).transpose() {
+        // A broken old credential cannot authenticate or identify a session to revoke.
+        // Login authenticates independently; required-session operations reject None.
+        Err(Error::Rejected(Rejection::Unauthenticated)) => Ok(None),
+        result => result,
+    }
 }
 fn session_hash(ctx: &Context) -> Result<Vec<u8>> {
     optional_hash(ctx)?.ok_or(Error::Rejected(Rejection::Unauthenticated))

@@ -127,6 +127,32 @@ fn finish(mut ctx: CeremonyContext, options: &Options) -> CeremonyContext {
     ctx.ceremony_id = Some(options.ceremony_id.clone());
     ctx
 }
+#[test]
+fn invalid_session_credentials_are_anonymous_without_becoming_input_errors() {
+    for token in [
+        None,
+        Some(""),
+        Some("abc"),
+        Some("legacy.jwt.token"),
+        Some("===="),
+    ] {
+        let ctx = context(token);
+        assert_eq!(optional_hash(&ctx).unwrap(), None);
+        assert!(matches!(
+            session_hash(&ctx),
+            Err(Error::Rejected(Rejection::Unauthenticated))
+        ));
+    }
+    let token = session::token().unwrap();
+    let ctx = context(Some(&token));
+    assert_eq!(
+        optional_hash(&ctx).unwrap(),
+        Some(session::hash(&token).unwrap())
+    );
+    assert!(session_hash(&ctx).is_ok());
+    assert_eq!(optional_hash(&context(Some(&(token + "=")))).unwrap(), None);
+}
+
 #[tokio::test]
 #[ignore = "requires migrated self_tools_auth_test database via AUTH_TEST_PG"]
 async fn persistent_sessions_and_signed_passkey_lifecycle() {
@@ -152,8 +178,35 @@ async fn persistent_sessions_and_signed_passkey_lifecycle() {
         .execute(&mut pool.get().unwrap())
         .unwrap();
     let app = app(pool.clone(), "test-password");
+    for token in ["", "abc", "legacy.jwt.token"] {
+        let ctx = context(Some(token));
+        app.run(move |a, db| {
+            assert!(matches!(
+                a.check(db, &ctx),
+                Err(Error::Rejected(Rejection::Unauthenticated))
+            ));
+            assert!(matches!(
+                a.list_passkeys(db, &ctx),
+                Err(Error::Rejected(Rejection::Unauthenticated))
+            ));
+            assert!(matches!(
+                a.reauth_password(db, &ctx, "test-password"),
+                Err(Error::Rejected(Rejection::Unauthenticated))
+            ));
+            a.logout(db, &ctx)
+        })
+        .await
+        .unwrap();
+    }
     let login = app
-        .run(|a, db| a.login_password(db, &context(None), "test-admin", "test-password"))
+        .run(|a, db| {
+            a.login_password(
+                db,
+                &context(Some("legacy.jwt.token")),
+                "test-admin",
+                "test-password",
+            )
+        })
         .await
         .unwrap();
     let token = login.session_token.to_string();
@@ -229,7 +282,7 @@ async fn persistent_sessions_and_signed_passkey_lifecycle() {
     ));
     // The browser binding is checked before consuming; a forged browser cannot
     // consume another browser's pending login.
-    let begin_ctx = ceremony(context(None));
+    let begin_ctx = ceremony(context(Some("invalid.old.session")));
     let c = begin_ctx.clone();
     let options = app
         .run(move |a, db| a.begin(db, &c, Purpose::Login, None))

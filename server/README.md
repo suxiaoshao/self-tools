@@ -81,6 +81,9 @@ Passkey 完整库数据存 PostgreSQL；challenge 只在 auth 内存中保留 5 
 GraphQL POST 携带 `X-Self-Tools-Request: 1`；修改请求还要求精确 Origin 和 JSON Content-Type。
 `AUTH_ORIGIN` 在 auth/login/两个 GraphQL 服务中一致，默认 `https://sushao.top`；
 WebAuthn RP ID 默认由其 host 推导，可显式用 `AUTH_RP_ID` 指定由库校验的 RP。
+HTTP 层校验 Cookie 结构与唯一性，auth 统一判定 session token：不可用值按未登录处理，
+查询 session 返回 null，受保护操作返回 401；密码/Passkey 登录可替换无效旧 Cookie，退出仍成功。
+重复 Cookie、来源违规及损坏的 ceremony 绑定继续严格拒绝。查询 session 不写回 Cookie。
 login 不授予跨域 CORS；`CORS_ALLOWED_ORIGINS` 不能替代认证 API 的同源校验。
 HTTP/RPC 的完整端点与错误码见 [认证设计](../docs/dev/issue-96/README.md#http-api)。
 

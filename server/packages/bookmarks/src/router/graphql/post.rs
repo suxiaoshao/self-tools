@@ -18,7 +18,7 @@ pub(crate) async fn graphql_handler(
     let origin = auth_http::configured_origin().map_err(|_| Fault::internal("auth_origin"))?;
     auth_http::validate_request(&headers, &Method::POST, &origin)
         .map_err(|_| HttpError::new(PublicCode::RequestRejected))?;
-    let token = auth_http::cookie(&headers, auth_http::SESSION_COOKIE)
+    let token = auth_http::session_cookie(&headers)
         .map_err(|_| HttpError::new(PublicCode::RequestRejected))?
         .ok_or_else(|| HttpError::new(PublicCode::Unauthenticated))?;
     let client = thrift::get_client()?;

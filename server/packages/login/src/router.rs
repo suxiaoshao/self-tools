@@ -64,10 +64,8 @@ async fn handle(State(origin): State<String>, req: Request) -> Result<Response, 
     let path = req.uri().path().trim_start_matches("/api/auth/").to_owned();
     auth_http::validate_request(req.headers(), &method, &origin)
         .map_err(|_| ApiError::rejected())?;
-    let session =
-        auth_http::cookie(req.headers(), SESSION_COOKIE).map_err(|_| ApiError::rejected())?;
-    let binding =
-        auth_http::cookie(req.headers(), CEREMONY_COOKIE).map_err(|_| ApiError::rejected())?;
+    let session = auth_http::session_cookie(req.headers()).map_err(|_| ApiError::rejected())?;
+    let binding = auth_http::ceremony_cookie(req.headers()).map_err(|_| ApiError::rejected())?;
     let ctx = thrift::context(session);
     let bytes = to_bytes(req.into_body(), 64 * 1024)
         .await

@@ -318,6 +318,8 @@ type PublicError = { requestId: string } & (
 
 Auth 原请求、SessionView、PasskeyView、options 的成功数据沿用 [现有 router](../../../server/packages/login/src/router.rs) 合同，客户端分别验证这些形状；`GET /api/auth/session` 的 `data: null` 是正常未登录。唯一成功响应改动是 `DELETE /api/auth/passkeys/{id}`：改为 200 JSON `{"data":{"id":"<uuid>","sessionInvalidated":true|false}}`，明确消费 [RPC 删除结果](rpc.md)。失效时服务端清 cookie，前端按 generation 清状态；logout 继续 204 空体。Cookie 安全属性、Origin、no-store、请求体限额与 WebAuthn 校验保持现有合同。
 
+HTTP Cookie 层只对 session 做结构与同名唯一性校验，token 的有效性由 auth 统一判定；两个 GraphQL 入口使用同一提取规则。单个不可用 session 下，GET /api/auth/session 返回正常 data:null，受保护操作返回 401，密码/Passkey 登录可用新 Cookie 替换旧值，logout 清除 Cookie。读取 session 不写回 Cookie，避免迟到的查询响应覆盖新登录；重复同名 Cookie、缺少等号的目标 Cookie、Origin/header 违规仍为 REQUEST_REJECTED。ceremony Cookie 仍要求规范的 32 字节 Base64URL 值。回归覆盖 HTTP 提取与拒绝、应用层登录/退出/受保护操作及专用数据库的密码和 Passkey 恢复。
+
 图片代理仍为空错误 body、既有状态/Retry-After 与资源限制；只接入安全诊断和关联 ID，不套 JSON。内部 readiness 仍 204/503 或 RPC bool，公开内容不增加原因链。gateway 的非 JSON/传输错误由客户端识别为协议或网络故障，不推断登录失效。
 
 ## C4：前端标准化与恢复状态

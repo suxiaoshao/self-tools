@@ -88,7 +88,7 @@ service AuthService {
 | ------------------ | ------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
 | LoginPassword      | AuthenticationFailed、RateLimited                                                     | 创建新 session，旧 session 的撤销与新建同事务                                                                  |
 | Check              | Unauthenticated                                                                       | session 缺失/过期是明确认证状态；底层 DB 故障不能变为此分支                                                    |
-| Logout             | 无                                                                                    | 有效格式但目标不存在成功；会话已登出可重复达成目标                                                             |
+| Logout             | 无                                                                                    | 缺失、不可用或目标不存在均成功；会话已登出可重复达成目标                                                       |
 | ReauthPassword     | Unauthenticated、AuthenticationFailed、RateLimited                                    | 保留同一 session，更新认证时效                                                                                 |
 | BeginLogin         | NoPasskey、RateLimited、CeremonyInvalid                                               | ceremony/binding 校验保留，空凭据无法开始 WebAuthn 登录                                                        |
 | FinishLogin        | CeremonyInvalid、AuthenticationFailed                                                 | 一次性状态不可重复消费                                                                                         |
@@ -101,6 +101,8 @@ service AuthService {
 | DeletePasskey      | Unauthenticated、ReauthRequired                                                       | 先验证 session/recent authentication；合法 UUID 已不存在成功，sessionInvalidated=false；实际删除时返回级联影响 |
 
 签名中的 AuthRejected 是领域共享结构，不代表每个方法都可随意返回全部 code。现有内存限流/ceremony 的具体时间、次数、绑定与消费顺序保持原合同。登录、重新认证、注册的浏览器 credential 不进入日志或诊断上下文。
+
+sessionToken 是可失效的凭据，不作为普通业务字段返回 InvalidRequest。缺失、空值、非法 Base64URL 或错误长度均不能提供认证身份：Check/重新认证/凭据管理返回 Unauthenticated；LoginPassword/FinishLogin 忽略不可用的旧 token，在密码或签名验证成功后签发新 session；Logout 对此正常成功。有效旧 token 的撤销仍与新建同事务，DB/任务故障仍走故障通道，不吞为匿名。browserBinding 属于 ceremony 绑定，继续严格校验，不采用 session 的恢复语义。
 
 ### 故障与公开投影
 
