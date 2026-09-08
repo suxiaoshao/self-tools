@@ -122,7 +122,7 @@ export default function Collections() {
       <RequestNotice error={error} />
       <AncestorsPath />
       <div className="flex flex-[0_0_auto] mb-4">
-        <CreateCollectionButton refetch={refetch} />
+        <CreateCollectionButton refetch={allRefetch} />
         <Button variant="ghost" size="icon" className="ml-auto" onClick={() => refetch()}>
           <RefreshCcw />
         </Button>
