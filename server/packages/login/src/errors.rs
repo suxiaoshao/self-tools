@@ -1,133 +1,139 @@
-/*
- * @Author: suxiaoshao suxiaoshao@gmail.com
- * @Date: 2024-01-06 01:30:13
- * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-04-14 11:34:42
- * @FilePath: /self-tools/server/packages/login/src/errors/mod.rs
- */
 use axum::{
     Json,
-    extract::rejection::{ExtensionRejection, JsonRejection},
-};
-use axum::{
-    http::header::InvalidHeaderValue,
+    http::StatusCode,
     response::{IntoResponse, Response},
 };
-use serde::Serialize;
-use serde_json::json;
-use std::convert::From;
-use thiserror::Error;
-use thrift::auth::{AuthError, ItemServiceLoginException};
-use tracing::{Level, event};
-use webauthn_rs::prelude::WebauthnError;
-
-use self::response::OpenErrorResponse;
-
-pub mod response;
-#[derive(Error, Debug, Serialize)]
-pub enum OpenError {
-    #[error("未知错误")]
-    UnknownError,
-    #[error("json 解析错误：{}",.0)]
-    JsonError(String),
-    #[error("extension 解析错误:{}",.0)]
-    ExtensionError(String),
-    #[error("jwt 解析错误")]
-    Jwt,
-    #[error("密码错误")]
-    PasswordError,
-    #[error("登陆过期")]
-    AuthTimeout,
-    #[error("token 错误")]
-    TokenError,
-    #[error("密码未设置")]
-    PasswordNotSet,
-    #[error("secret key未设置")]
-    SecretKeyNotSet,
-    #[error("username未设置")]
-    UsernameNotSet,
-    #[error("thrift client 错误:{}",.0)]
-    ClientError(String),
-    #[error("webauthn 错误:{}",.0)]
-    WebauthnError(String),
-    #[error("url parse:{}",.0)]
-    UrlParseError(&'static str),
-    #[error("Session 错误:{}",.0)]
-    SessionError(String),
-    #[error("webauthn 用户不存在")]
-    WebauthnUserNotExist,
-    #[error("用户没有凭证")]
-    UserHasNoCredentials,
-    #[error("webauthn auth 没设置")]
-    WebauthnAuthNotSet,
-}
-
-impl From<InvalidHeaderValue> for OpenError {
-    fn from(_value: InvalidHeaderValue) -> Self {
-        Self::UnknownError
+use thrift::auth::*;
+#[derive(Debug)]
+pub struct ApiError(pub StatusCode, pub &'static str, pub Option<i32>);
+impl ApiError {
+    pub fn invalid() -> Self {
+        Self(StatusCode::BAD_REQUEST, "INVALID_REQUEST", None)
+    }
+    pub fn rejected() -> Self {
+        Self(StatusCode::FORBIDDEN, "REQUEST_REJECTED", None)
+    }
+    pub fn unavailable() -> Self {
+        Self(StatusCode::SERVICE_UNAVAILABLE, "AUTH_UNAVAILABLE", None)
     }
 }
-
-impl From<JsonRejection> for OpenError {
-    fn from(value: JsonRejection) -> Self {
-        Self::JsonError(value.to_string())
-    }
-}
-
-impl From<ExtensionRejection> for OpenError {
-    fn from(value: ExtensionRejection) -> Self {
-        Self::ExtensionError(value.to_string())
-    }
-}
-
-impl From<volo_thrift::error::ClientError> for OpenError {
-    fn from(_: volo_thrift::error::ClientError) -> Self {
-        Self::UnknownError
-    }
-}
-
-impl From<thrift::ClientError> for OpenError {
-    fn from(value: thrift::ClientError) -> Self {
-        Self::ClientError(value.to_string())
-    }
-}
-
-impl From<ItemServiceLoginException> for OpenError {
-    fn from(ItemServiceLoginException::Err(AuthError { code }): ItemServiceLoginException) -> Self {
-        match code {
-            thrift::auth::AuthErrorCode::JWT => Self::Jwt,
-            thrift::auth::AuthErrorCode::PASSWORD_ERROR => Self::PasswordError,
-            thrift::auth::AuthErrorCode::AUTH_TIMEOUT => Self::AuthTimeout,
-            thrift::auth::AuthErrorCode::TOKEN_ERROR => Self::TokenError,
-            thrift::auth::AuthErrorCode::PASSWORD_NOT_SET => Self::PasswordNotSet,
-            thrift::auth::AuthErrorCode::SECRET_KEY_NOT_SET => Self::SecretKeyNotSet,
-            thrift::auth::AuthErrorCode::USERNAME_NOT_SET => Self::UsernameNotSet,
-            _ => Self::UnknownError,
-        }
-    }
-}
-
-impl From<WebauthnError> for OpenError {
-    fn from(value: WebauthnError) -> Self {
-        Self::WebauthnError(value.to_string())
-    }
-}
-
-pub type OpenResult<T> = Result<T, OpenError>;
-
-impl IntoResponse for OpenError {
+impl IntoResponse for ApiError {
     fn into_response(self) -> Response {
-        let error_response = OpenErrorResponse::from(self);
-        match serde_json::to_value(&error_response) {
-            Ok(e) => Json(e),
-            Err(_) => {
-                event!(Level::ERROR, "json 解析错误: {:?}", error_response);
-                Json(json!({
-                    "code":"UnknownError",
-                    "message":"未知错误"
-                }))
-            }
+        let mut response = (
+            self.0,
+            Json(serde_json::json!({"code":self.1,"message":self.1})),
+        )
+            .into_response();
+        response
+            .headers_mut()
+            .insert("cache-control", "no-store".parse().unwrap());
+        if let Some(seconds) = self.2 {
+            response
+                .headers_mut()
+                .insert("retry-after", seconds.to_string().parse().unwrap());
         }
-        .into_response()
+        response
+    }
+}
+impl From<AuthFailure> for ApiError {
+    fn from(value: AuthFailure) -> Self {
+        let (status, code) = match value.code {
+            FailureCode::UNAUTHENTICATED => (401, "UNAUTHENTICATED"),
+            FailureCode::REAUTH_REQUIRED => (403, "REAUTH_REQUIRED"),
+            FailureCode::AUTHENTICATION_FAILED => (401, "AUTHENTICATION_FAILED"),
+            FailureCode::CEREMONY_INVALID => (400, "CEREMONY_INVALID"),
+            FailureCode::NO_PASSKEY => (409, "NO_PASSKEY"),
+            FailureCode::PASSKEY_EXISTS => (409, "PASSKEY_EXISTS"),
+            FailureCode::INVALID_REQUEST => (400, "INVALID_REQUEST"),
+            FailureCode::NOT_FOUND => (404, "NOT_FOUND"),
+            FailureCode::RATE_LIMITED => (429, "RATE_LIMITED"),
+            _ => (503, "AUTH_UNAVAILABLE"),
+        };
+        Self(
+            StatusCode::from_u16(status).unwrap(),
+            code,
+            value.retry_after_seconds,
+        )
+    }
+}
+impl From<volo_thrift::ClientError> for ApiError {
+    fn from(_: volo_thrift::ClientError) -> Self {
+        Self::unavailable()
+    }
+}
+impl From<thrift::ClientError> for ApiError {
+    fn from(_: thrift::ClientError) -> Self {
+        Self::unavailable()
+    }
+}
+impl From<AuthServiceLoginPasswordException> for ApiError {
+    fn from(AuthServiceLoginPasswordException::Err(e): AuthServiceLoginPasswordException) -> Self {
+        e.into()
+    }
+}
+impl From<AuthServiceCheckException> for ApiError {
+    fn from(AuthServiceCheckException::Err(e): AuthServiceCheckException) -> Self {
+        e.into()
+    }
+}
+impl From<AuthServiceLogoutException> for ApiError {
+    fn from(AuthServiceLogoutException::Err(e): AuthServiceLogoutException) -> Self {
+        e.into()
+    }
+}
+impl From<AuthServiceReauthPasswordException> for ApiError {
+    fn from(
+        AuthServiceReauthPasswordException::Err(e): AuthServiceReauthPasswordException,
+    ) -> Self {
+        e.into()
+    }
+}
+impl From<AuthServiceBeginLoginException> for ApiError {
+    fn from(AuthServiceBeginLoginException::Err(e): AuthServiceBeginLoginException) -> Self {
+        e.into()
+    }
+}
+impl From<AuthServiceFinishLoginException> for ApiError {
+    fn from(AuthServiceFinishLoginException::Err(e): AuthServiceFinishLoginException) -> Self {
+        e.into()
+    }
+}
+impl From<AuthServiceBeginReauthException> for ApiError {
+    fn from(AuthServiceBeginReauthException::Err(e): AuthServiceBeginReauthException) -> Self {
+        e.into()
+    }
+}
+impl From<AuthServiceFinishReauthException> for ApiError {
+    fn from(AuthServiceFinishReauthException::Err(e): AuthServiceFinishReauthException) -> Self {
+        e.into()
+    }
+}
+impl From<AuthServiceListPasskeysException> for ApiError {
+    fn from(AuthServiceListPasskeysException::Err(e): AuthServiceListPasskeysException) -> Self {
+        e.into()
+    }
+}
+impl From<AuthServiceBeginRegistrationException> for ApiError {
+    fn from(
+        AuthServiceBeginRegistrationException::Err(e): AuthServiceBeginRegistrationException,
+    ) -> Self {
+        e.into()
+    }
+}
+impl From<AuthServiceFinishRegistrationException> for ApiError {
+    fn from(
+        AuthServiceFinishRegistrationException::Err(e): AuthServiceFinishRegistrationException,
+    ) -> Self {
+        e.into()
+    }
+}
+impl From<AuthServiceRenamePasskeyException> for ApiError {
+    fn from(AuthServiceRenamePasskeyException::Err(e): AuthServiceRenamePasskeyException) -> Self {
+        e.into()
+    }
+}
+impl From<AuthServiceDeletePasskeyException> for ApiError {
+    fn from(AuthServiceDeletePasskeyException::Err(e): AuthServiceDeletePasskeyException) -> Self {
+        e.into()
     }
 }

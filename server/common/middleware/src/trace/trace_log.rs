@@ -45,7 +45,7 @@ where
 
     fn call(&mut self, req: Request<B>) -> Self::Future {
         event!(Level::INFO, "Request started");
-        let req_header = format!("{:#?}", req.headers());
+        let req_header = format!("{:?}", safe_headers(req.headers()));
         let method = req.method().to_string();
         let url = req.uri().to_string();
         event!(
@@ -90,7 +90,7 @@ where
     fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
         let this = self.project();
         let res = ready!(this.future.poll(cx)?);
-        let res_header = format!("{:#?}", res.headers());
+        let res_header = format!("{:?}", safe_headers(res.headers()));
         let status = res.status().to_string();
         event!(
             Level::INFO,
@@ -101,4 +101,17 @@ where
         event!(Level::INFO, "Request completed");
         Poll::Ready(Ok(res))
     }
+}
+
+fn safe_headers(headers: &http::HeaderMap) -> http::HeaderMap {
+    let mut safe = headers.clone();
+    for name in [
+        "cookie",
+        "set-cookie",
+        "authorization",
+        "proxy-authorization",
+    ] {
+        safe.remove(name);
+    }
+    safe
 }

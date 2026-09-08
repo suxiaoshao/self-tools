@@ -6,6 +6,9 @@ edition.workspace = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+# auth
+base64 = { workspace = true, optional = true }
+
 # trace
 rand = { workspace = true, optional = true }
 tower = { version = "0.5.3", optional = true }
@@ -30,6 +33,7 @@ axum.workspace = true
 anyhow.workspace = true
 
 [features]
+auth-http = ["http", "url", "base64"]
 trace = ["rand", "tower", "http", "tracing", "futures", "http-body", "pin-project-lite", "futures-util"]
 cors = ["http", "tower-http", "url"]
 graphql-trace = ["tracing", "async-graphql"]

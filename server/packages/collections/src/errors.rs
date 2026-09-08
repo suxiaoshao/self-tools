@@ -2,7 +2,6 @@ use async_graphql::ErrorExtensionValues;
 use axum::{Json, response::IntoResponse};
 use diesel::r2d2;
 use std::{env::VarError, sync::Arc};
-use thrift::auth::ItemServiceCheckException;
 
 #[derive(Debug)]
 pub(crate) enum GraphqlError {
@@ -19,13 +18,6 @@ pub(crate) enum GraphqlError {
     /// 已存在
     AlreadyExists(String),
     PageSizeTooMore,
-    Jwt,
-    PasswordError,
-    AuthTimeout,
-    TokenError,
-    PasswordNotSet,
-    SecretKeyNotSet,
-    UsernameNotSet,
     /// thrift 错误
     Thrift(String),
     ClientError(String),
@@ -54,17 +46,10 @@ impl GraphqlError {
         match self {
             GraphqlError::R2d2(_) => "数据库连接错误".to_string(),
             GraphqlError::Diesel(data) => format!("数据库错误:{data}"),
-            GraphqlError::Unauthenticated => "没有发送 token".to_string(),
+            GraphqlError::Unauthenticated => "未登录".to_string(),
             GraphqlError::NotFound(tag, id) => format!(r#"{tag}"{id}"不存在"#),
             GraphqlError::AlreadyExists(name) => format!("{name}已存在"),
             GraphqlError::PageSizeTooMore => "页码太大".to_string(),
-            GraphqlError::Jwt => "jwt 解析错误".to_string(),
-            GraphqlError::PasswordError => "密码错误".to_string(),
-            GraphqlError::AuthTimeout => "登陆过期".to_string(),
-            GraphqlError::TokenError => "token 错误".to_string(),
-            GraphqlError::PasswordNotSet => "密码未设置".to_string(),
-            GraphqlError::SecretKeyNotSet => "select key未设置".to_string(),
-            GraphqlError::UsernameNotSet => "username未设置".to_string(),
             GraphqlError::Thrift(data) => format!("thrift 错误:{data}"),
             GraphqlError::ClientError(data) => format!("thrift client错误:{data}"),
             GraphqlError::VarError(err) => format!("env error:{err}"),
@@ -81,13 +66,6 @@ impl GraphqlError {
             GraphqlError::Unauthenticated => "Unauthenticated",
             GraphqlError::NotFound(..) | GraphqlError::AlreadyExists(_) => "InvalidArgument",
             GraphqlError::PageSizeTooMore => "InvalidArgument",
-            GraphqlError::Jwt => "Jwt",
-            GraphqlError::PasswordError => "PasswordError",
-            GraphqlError::AuthTimeout => "AuthTimeout",
-            GraphqlError::TokenError => "TokenError",
-            GraphqlError::PasswordNotSet => "PasswordNotSet",
-            GraphqlError::SecretKeyNotSet => "SecretKeyNotSet",
-            GraphqlError::UsernameNotSet => "UsernameNotSet",
             GraphqlError::Thrift(_) => "Thrift",
             GraphqlError::ClientError(_) => "ThriftClient",
             GraphqlError::VarError(_) => "VarError",
@@ -106,13 +84,6 @@ impl Clone for GraphqlError {
             GraphqlError::NotFound(tag, id) => Self::NotFound(tag, *id),
             GraphqlError::AlreadyExists(name) => Self::AlreadyExists(name.clone()),
             GraphqlError::PageSizeTooMore => Self::PageSizeTooMore,
-            GraphqlError::Jwt => Self::Jwt,
-            GraphqlError::PasswordError => Self::PasswordError,
-            GraphqlError::AuthTimeout => Self::AuthTimeout,
-            GraphqlError::TokenError => Self::TokenError,
-            GraphqlError::PasswordNotSet => Self::PasswordNotSet,
-            GraphqlError::SecretKeyNotSet => Self::SecretKeyNotSet,
-            GraphqlError::UsernameNotSet => Self::UsernameNotSet,
             GraphqlError::Thrift(data) => Self::Thrift(data.clone()),
             GraphqlError::ClientError(data) => Self::ClientError(data.clone()),
             GraphqlError::VarError(data) => Self::VarError(data.clone()),
@@ -141,23 +112,6 @@ impl From<volo_thrift::error::ClientError> for GraphqlError {
             volo_thrift::ClientError::Transport(x) => Self::Thrift(x.to_string()),
             volo_thrift::ClientError::Protocol(x) => Self::Thrift(x.to_string()),
             volo_thrift::ClientError::Biz(x) => Self::Thrift(x.to_string()),
-        }
-    }
-}
-
-impl From<ItemServiceCheckException> for GraphqlError {
-    fn from(value: ItemServiceCheckException) -> Self {
-        match value {
-            ItemServiceCheckException::Err(thrift::auth::AuthError { code }) => match code {
-                thrift::auth::AuthErrorCode::JWT => Self::Jwt,
-                thrift::auth::AuthErrorCode::PASSWORD_ERROR => Self::PasswordError,
-                thrift::auth::AuthErrorCode::AUTH_TIMEOUT => Self::AuthTimeout,
-                thrift::auth::AuthErrorCode::TOKEN_ERROR => Self::TokenError,
-                thrift::auth::AuthErrorCode::PASSWORD_NOT_SET => Self::PasswordNotSet,
-                thrift::auth::AuthErrorCode::SECRET_KEY_NOT_SET => Self::SecretKeyNotSet,
-                thrift::auth::AuthErrorCode::USERNAME_NOT_SET => Self::UsernameNotSet,
-                _ => Self::Thrift("未知错误".to_string()),
-            },
         }
     }
 }

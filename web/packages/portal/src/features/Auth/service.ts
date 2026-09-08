@@ -1,163 +1,158 @@
-import type { Enum } from 'types';
-import type { LoginForm } from './authSlice';
-import { match } from 'ts-pattern';
-import { toast } from 'sonner';
-
-type HttpResponse<T> = Enum<'network'> | Enum<'response', T> | Enum<'unknown'> | Enum<'json'> | Enum<'error', string>;
-
-export function responseThen<T>(response: HttpResponse<T>, doThen: (data: T) => void): void {
-  match(response as HttpResponse<unknown>)
-    .with({ tag: 'response' }, ({ value }) => {
-      doThen(value as T);
-    })
-    .with({ tag: 'json' }, () => {
-      toast.error('json error');
-    })
-    .with({ tag: 'error' }, ({ value }) => {
-      toast.error(value);
-    })
-    .with({ tag: 'network' }, () => {
-      toast.error('network error');
-    })
-    .with({ tag: 'unknown' }, () => {
-      toast.error('unknown error');
-    });
+export interface SessionView {
+  user: { id: string; username: string };
+  idleExpiresAt: string;
+  absoluteExpiresAt: string;
+  recentAuthenticationUntil: string;
 }
-
-async function fetchBase<Bod, Res>(url: string, body: Bod): Promise<HttpResponse<Res>> {
-  const headers = new Headers({ 'Content-Type': 'application/json' });
-  const request = new Request(url, {
-    mode: 'cors',
-    credentials: 'include',
-    method: 'POST',
-    body: JSON.stringify(body),
-    headers,
-  });
+export interface PasskeyView {
+  id: string;
+  name: string;
+  createdAt: string;
+  lastUsedAt: string | null;
+}
+export class AuthError extends Error {
+  constructor(public readonly code: string) {
+    super(code);
+  }
+}
+export async function authRequest<T>(
+  path: string,
+  signal: AbortSignal,
+  body?: unknown,
+  method = body === undefined ? 'GET' : 'POST',
+): Promise<T> {
+  let response: Response;
   try {
-    const response = await fetch(request);
-    try {
-      const auth = await response.json();
-      if (auth.message) {
-        return { value: auth.message, tag: 'error' };
-      }
-      return { value: auth.data as Res, tag: 'response' } as HttpResponse<Res>;
-    } catch (error) {
-      if (error instanceof Error) {
-        return { tag: 'json' };
-      }
-      return { tag: 'unknown' };
-    }
+    response = await fetch(`/api/auth/${path}`, {
+      credentials: 'same-origin',
+      method,
+      signal,
+      cache: 'no-store',
+      headers: { 'X-Self-Tools-Request': '1', ...(body === undefined ? {} : { 'Content-Type': 'application/json' }) },
+      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+    });
   } catch (error) {
-    if (error instanceof Error) {
-      return { tag: 'network' };
+    if (signal.aborted) throw error;
+    throw new AuthError('NETWORK_ERROR');
+  }
+  if (response.status === 204) return undefined as T;
+  const result = await response.json().catch(() => {
+    throw new AuthError('NETWORK_ERROR');
+  });
+  if (!response.ok) throw new AuthError(typeof result.code === 'string' ? result.code : 'AUTH_UNAVAILABLE');
+  return result.data as T;
+}
+export const getSession = (signal: AbortSignal) => authRequest<SessionView | null>('session', signal);
+async function loginResult(path: string, body: unknown, signal: AbortSignal): Promise<SessionView> {
+  try {
+    return await authRequest<SessionView>(path, signal, body);
+  } catch (error) {
+    // A response may be lost after Set-Cookie has already reached the browser.
+    if (error instanceof AuthError && error.code === 'NETWORK_ERROR' && !signal.aborted) {
+      const session = await getSession(signal);
+      if (session) return session;
     }
-    return { tag: 'unknown' };
+    throw error;
   }
 }
-
-export async function login(data: LoginForm): Promise<HttpResponse<string>> {
-  return await fetchBase('https://auth.sushao.top/api/login', data);
+export const passwordLogin = (username: string, password: string, signal: AbortSignal) =>
+  loginResult('password/login', { username, password }, signal);
+export function decodeBase64Url(value: string): Uint8Array<ArrayBuffer> {
+  const binary = atob(value.replaceAll('-', '+').replaceAll('_', '/') + '='.repeat((4 - (value.length % 4)) % 4));
+  return Uint8Array.from(binary, (char) => char.charCodeAt(0));
 }
-
-interface RegistrationRequest {
-  publicKey: Omit<PublicKeyCredentialCreationOptions, 'user' | 'challenge'> & {
-    challenge: string;
-    user: Omit<PublicKeyCredentialUserEntity, 'id'> & {
-      id: string;
+function encodeBase64Url(value: ArrayBuffer): string {
+  return btoa(Array.from(new Uint8Array(value), (byte) => String.fromCharCode(byte)).join(''))
+    .replaceAll('+', '-')
+    .replaceAll('/', '_')
+    .replaceAll('=', '');
+}
+type DescriptorJSON = Omit<PublicKeyCredentialDescriptor, 'id'> & { id: string };
+type RequestJSON = Omit<PublicKeyCredentialRequestOptions, 'challenge' | 'allowCredentials'> & {
+  challenge: string;
+  allowCredentials?: DescriptorJSON[];
+};
+type CreationJSON = Omit<PublicKeyCredentialCreationOptions, 'challenge' | 'user' | 'excludeCredentials'> & {
+  challenge: string;
+  user: Omit<PublicKeyCredentialUserEntity, 'id'> & { id: string };
+  excludeCredentials?: DescriptorJSON[];
+};
+interface Options<T> {
+  ceremonyId: string;
+  publicKey: T;
+}
+const descriptor = (value: DescriptorJSON): PublicKeyCredentialDescriptor => ({
+  ...value,
+  id: decodeBase64Url(value.id),
+});
+export function credentialJSON(credential: PublicKeyCredential): unknown {
+  const response = credential.response;
+  const common = {
+    id: credential.id,
+    rawId: encodeBase64Url(credential.rawId),
+    type: credential.type,
+    clientExtensionResults: credential.getClientExtensionResults(),
+    authenticatorAttachment: credential.authenticatorAttachment,
+  };
+  if (response instanceof AuthenticatorAttestationResponse)
+    return {
+      ...common,
+      response: {
+        clientDataJSON: encodeBase64Url(response.clientDataJSON),
+        attestationObject: encodeBase64Url(response.attestationObject),
+        transports: response.getTransports?.() ?? [],
+      },
     };
-  };
+  if (response instanceof AuthenticatorAssertionResponse)
+    return {
+      ...common,
+      response: {
+        clientDataJSON: encodeBase64Url(response.clientDataJSON),
+        authenticatorData: encodeBase64Url(response.authenticatorData),
+        signature: encodeBase64Url(response.signature),
+        userHandle: response.userHandle ? encodeBase64Url(response.userHandle) : null,
+      },
+    };
+  throw new AuthError('PASSKEY_UNSUPPORTED');
 }
-function base64UrlToUint8Array(base64Url: string): Uint8Array<ArrayBuffer> {
-  // 1. 补齐“=”到 4 的倍数
-  const padLength = (4 - (base64Url.length % 4)) % 4;
-  const padded = base64Url + '='.repeat(padLength);
-
-  // 2. 恢复成标准 Base64
-  const b64 = padded.replaceAll('-', '+').replaceAll('_', '/');
-
-  // 3. 解码成 binary string
-  const binary = atob(b64);
-
-  // 4. 转成 Uint8Array
-  const len = binary.length;
-  const bytes = new Uint8Array(len);
-  for (let i = 0; i < len; i += 1) {
-    bytes[i] = binary.codePointAt(i) ?? 0;
-  }
-  return bytes;
+function requirePasskeys(): void {
+  if (!window.PublicKeyCredential || !navigator.credentials) throw new AuthError('PASSKEY_UNSUPPORTED');
 }
-
-export async function startRegister(data: LoginForm): Promise<HttpResponse<CredentialCreationOptions>> {
-  const response = await fetchBase<LoginForm, RegistrationRequest>('https://auth.sushao.top/api/start-register', data);
-  return match(response)
-    .with(
-      { tag: 'response' },
-      ({ value }) =>
-        ({
-          tag: 'response',
-          value: {
-            publicKey: {
-              ...value.publicKey,
-              user: {
-                id: base64UrlToUint8Array(value.publicKey.user.id),
-                name: value.publicKey.user.name,
-                displayName: value.publicKey.user.displayName,
-              },
-              challenge: base64UrlToUint8Array(value.publicKey.challenge),
-            },
-          } satisfies CredentialCreationOptions,
-        }) satisfies HttpResponse<CredentialCreationOptions>,
-    )
-    .otherwise((value) => value);
+export async function passkeyAuthentication(purpose: 'login' | 'reauth', signal: AbortSignal): Promise<SessionView> {
+  requirePasskeys();
+  const path = purpose === 'login' ? 'passkey/login' : 'reauth/passkey';
+  const options = await authRequest<Options<RequestJSON>>(`${path}/options`, signal, {});
+  const credential = await navigator.credentials.get({
+    signal,
+    publicKey: {
+      ...options.publicKey,
+      challenge: decodeBase64Url(options.publicKey.challenge),
+      allowCredentials: options.publicKey.allowCredentials?.map(descriptor),
+    },
+  });
+  signal.throwIfAborted();
+  if (!(credential instanceof PublicKeyCredential)) throw new AuthError('PASSKEY_CANCELLED');
+  const body = { ceremonyId: options.ceremonyId, credential: credentialJSON(credential) };
+  return purpose === 'login'
+    ? loginResult(`${path}/finish`, body, signal)
+    : authRequest<SessionView>(`${path}/finish`, signal, body);
 }
-
-export async function finishRegister(data: Credential): Promise<HttpResponse<string>> {
-  const response = await fetchBase<Credential, string>('https://auth.sushao.top/api/finish-register', data);
-  return response;
-}
-
-interface StartAuthenticationRequest {
-  username: string;
-}
-
-interface StartAuthenticationResponse {
-  publicKey: Omit<PublicKeyCredentialRequestOptions, 'challenge' | 'allowCredentials'> & {
-    challenge: string;
-    allowCredentials: (Omit<PublicKeyCredentialDescriptor, 'id'> & {
-      id: string;
-    })[];
-  };
-}
-
-export async function startAuthentication(
-  data: StartAuthenticationRequest,
-): Promise<HttpResponse<CredentialRequestOptions>> {
-  const response = await fetchBase<StartAuthenticationRequest, StartAuthenticationResponse>(
-    'https://auth.sushao.top/api/start-authentication',
-    data,
-  );
-  return match(response)
-    .with(
-      { tag: 'response' },
-      ({ value }) =>
-        ({
-          tag: 'response',
-          value: {
-            publicKey: {
-              ...value.publicKey,
-              challenge: base64UrlToUint8Array(value.publicKey.challenge),
-              allowCredentials: value.publicKey.allowCredentials.map((credential) => ({
-                ...credential,
-                id: base64UrlToUint8Array(credential.id),
-              })),
-            },
-          } satisfies CredentialRequestOptions,
-        }) satisfies HttpResponse<CredentialRequestOptions>,
-    )
-    .otherwise((value) => value);
-}
-
-export async function finishAuthentication(data: Credential): Promise<HttpResponse<string>> {
-  const response = await fetchBase<Credential, string>('https://auth.sushao.top/api/finish-authentication', data);
-  return response;
+export async function registerPasskey(name: string, signal: AbortSignal): Promise<PasskeyView> {
+  requirePasskeys();
+  const options = await authRequest<Options<CreationJSON>>('passkeys/options', signal, { name });
+  const credential = await navigator.credentials.create({
+    signal,
+    publicKey: {
+      ...options.publicKey,
+      challenge: decodeBase64Url(options.publicKey.challenge),
+      user: { ...options.publicKey.user, id: decodeBase64Url(options.publicKey.user.id) },
+      excludeCredentials: options.publicKey.excludeCredentials?.map(descriptor),
+    },
+  });
+  signal.throwIfAborted();
+  if (!(credential instanceof PublicKeyCredential)) throw new AuthError('PASSKEY_CANCELLED');
+  return authRequest<PasskeyView>('passkeys/finish', signal, {
+    ceremonyId: options.ceremonyId,
+    credential: credentialJSON(credential),
+  });
 }

@@ -1,71 +1,272 @@
-/*
- * @Author: suxiaoshao suxiaoshao@gmail.com
- * @Date: 2024-01-18 01:32:12
- * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-04-14 10:07:00
- * @FilePath: /self-tools/server/packages/new_auth/src/impls/mod.rs
- */
-use thrift::auth::{
-    CheckRequest, ItemServiceCheckException, ItemServiceLoginException, LoginReply, LoginRequest,
+use crate::{
+    application::{Application, Error},
+    passkey::Purpose,
 };
-use tracing::{Level, event};
+use std::sync::Arc;
+use thrift::auth::*;
 use volo_thrift::MaybeException;
-
-use crate::utils::Claims;
-
-pub struct AuthImpl;
-
-impl thrift::auth::ItemService for AuthImpl {
-    async fn login(
+pub struct AuthImpl(pub Arc<Application>);
+impl AuthService for AuthImpl {
+    async fn login_password(
         &self,
-        _req: thrift::auth::LoginRequest,
+        ctx: Context,
+        username: volo::FastStr,
+        password: volo::FastStr,
     ) -> Result<
-        volo_thrift::MaybeException<LoginReply, ItemServiceLoginException>,
+        MaybeException<LoginResult, AuthServiceLoginPasswordException>,
         volo_thrift::ServerError,
     > {
-        let LoginRequest {
-            username,
-            password,
-            trace_id,
-        } = _req;
-        let trace_id = trace_id.as_str();
-        let span = tracing::info_span!("login", trace_id);
-        let _enter = span.enter();
-        event!(Level::INFO, "login start");
-        event!(Level::INFO, "login request: {}", &username);
-        let auth = match Claims::manager_token(username.into(), password.into()) {
-            Ok(auth) => auth,
-            Err(err) => {
-                event!(Level::ERROR, "login failed: {}", err.inner());
-                return Ok(MaybeException::Exception(ItemServiceLoginException::Err(
-                    thrift::auth::AuthError { code: err },
-                )));
-            }
-        };
-        event!(Level::INFO, "login success");
-        Ok(MaybeException::Ok(LoginReply { auth: auth.into() }))
+        Ok(
+            match self
+                .0
+                .run(move |app, db| {
+                    app.login_password(db, &ctx, username.as_str(), password.as_str())
+                })
+                .await
+            {
+                Ok(value) => MaybeException::Ok(value),
+                Err(error) => MaybeException::Exception(AuthServiceLoginPasswordException::Err(
+                    failure(error),
+                )),
+            },
+        )
     }
-
     async fn check(
         &self,
-        _req: thrift::auth::CheckRequest,
-    ) -> Result<volo_thrift::MaybeException<(), ItemServiceCheckException>, volo_thrift::ServerError>
+        ctx: Context,
+    ) -> Result<MaybeException<Session, AuthServiceCheckException>, volo_thrift::ServerError> {
+        Ok(match self.0.run(move |app, db| app.check(db, &ctx)).await {
+            Ok(value) => MaybeException::Ok(value),
+            Err(error) => MaybeException::Exception(AuthServiceCheckException::Err(failure(error))),
+        })
+    }
+    async fn logout(
+        &self,
+        ctx: Context,
+    ) -> Result<MaybeException<(), AuthServiceLogoutException>, volo_thrift::ServerError> {
+        Ok(
+            match self.0.run(move |app, db| app.logout(db, &ctx)).await {
+                Ok(value) => MaybeException::Ok(value),
+                Err(error) => {
+                    MaybeException::Exception(AuthServiceLogoutException::Err(failure(error)))
+                }
+            },
+        )
+    }
+    async fn reauth_password(
+        &self,
+        ctx: Context,
+        password: volo::FastStr,
+    ) -> Result<MaybeException<Session, AuthServiceReauthPasswordException>, volo_thrift::ServerError>
     {
-        let CheckRequest { auth, trace_id } = _req;
-        let trace_id = trace_id.as_str();
-        let span = tracing::info_span!("check", trace_id);
-        let _enter = span.enter();
-        event!(Level::INFO, "check start");
-        match Claims::check_manager(auth.into()) {
-            Ok(_) => {}
-            Err(err) => {
-                event!(Level::ERROR, "check failed: {}", err.inner());
-                return Ok(MaybeException::Exception(ItemServiceCheckException::Err(
-                    thrift::auth::AuthError { code: err },
-                )));
-            }
-        };
-        event!(Level::INFO, "check success");
-        Ok(MaybeException::Ok(()))
+        Ok(
+            match self
+                .0
+                .run(move |app, db| app.reauth_password(db, &ctx, password.as_str()))
+                .await
+            {
+                Ok(value) => MaybeException::Ok(value),
+                Err(error) => MaybeException::Exception(AuthServiceReauthPasswordException::Err(
+                    failure(error),
+                )),
+            },
+        )
+    }
+    async fn begin_login(
+        &self,
+        ctx: CeremonyContext,
+    ) -> Result<MaybeException<Options, AuthServiceBeginLoginException>, volo_thrift::ServerError>
+    {
+        Ok(
+            match self
+                .0
+                .run(move |app, db| app.begin(db, &ctx, Purpose::Login, None))
+                .await
+            {
+                Ok(value) => MaybeException::Ok(value),
+                Err(error) => {
+                    MaybeException::Exception(AuthServiceBeginLoginException::Err(failure(error)))
+                }
+            },
+        )
+    }
+    async fn finish_login(
+        &self,
+        ctx: CeremonyContext,
+        credential_json: volo::FastStr,
+    ) -> Result<
+        MaybeException<LoginResult, AuthServiceFinishLoginException>,
+        volo_thrift::ServerError,
+    > {
+        Ok(
+            match self
+                .0
+                .run(move |app, db| app.finish_login(db, &ctx, credential_json.as_str()))
+                .await
+            {
+                Ok(value) => MaybeException::Ok(value),
+                Err(error) => {
+                    MaybeException::Exception(AuthServiceFinishLoginException::Err(failure(error)))
+                }
+            },
+        )
+    }
+    async fn begin_reauth(
+        &self,
+        ctx: CeremonyContext,
+    ) -> Result<MaybeException<Options, AuthServiceBeginReauthException>, volo_thrift::ServerError>
+    {
+        Ok(
+            match self
+                .0
+                .run(move |app, db| app.begin(db, &ctx, Purpose::Reauth, None))
+                .await
+            {
+                Ok(value) => MaybeException::Ok(value),
+                Err(error) => {
+                    MaybeException::Exception(AuthServiceBeginReauthException::Err(failure(error)))
+                }
+            },
+        )
+    }
+    async fn finish_reauth(
+        &self,
+        ctx: CeremonyContext,
+        credential_json: volo::FastStr,
+    ) -> Result<MaybeException<Session, AuthServiceFinishReauthException>, volo_thrift::ServerError>
+    {
+        Ok(
+            match self
+                .0
+                .run(move |app, db| app.finish_reauth(db, &ctx, credential_json.as_str()))
+                .await
+            {
+                Ok(value) => MaybeException::Ok(value),
+                Err(error) => {
+                    MaybeException::Exception(AuthServiceFinishReauthException::Err(failure(error)))
+                }
+            },
+        )
+    }
+    async fn list_passkeys(
+        &self,
+        ctx: Context,
+    ) -> Result<
+        MaybeException<Vec<PasskeyInfo>, AuthServiceListPasskeysException>,
+        volo_thrift::ServerError,
+    > {
+        Ok(
+            match self.0.run(move |app, db| app.list_passkeys(db, &ctx)).await {
+                Ok(value) => MaybeException::Ok(value),
+                Err(error) => {
+                    MaybeException::Exception(AuthServiceListPasskeysException::Err(failure(error)))
+                }
+            },
+        )
+    }
+    async fn begin_registration(
+        &self,
+        ctx: CeremonyContext,
+        name: volo::FastStr,
+    ) -> Result<
+        MaybeException<Options, AuthServiceBeginRegistrationException>,
+        volo_thrift::ServerError,
+    > {
+        Ok(
+            match self
+                .0
+                .run(move |app, db| app.begin(db, &ctx, Purpose::Register, Some(name.as_str())))
+                .await
+            {
+                Ok(value) => MaybeException::Ok(value),
+                Err(error) => MaybeException::Exception(
+                    AuthServiceBeginRegistrationException::Err(failure(error)),
+                ),
+            },
+        )
+    }
+    async fn finish_registration(
+        &self,
+        ctx: CeremonyContext,
+        credential_json: volo::FastStr,
+    ) -> Result<
+        MaybeException<PasskeyInfo, AuthServiceFinishRegistrationException>,
+        volo_thrift::ServerError,
+    > {
+        Ok(
+            match self
+                .0
+                .run(move |app, db| app.finish_registration(db, &ctx, credential_json.as_str()))
+                .await
+            {
+                Ok(value) => MaybeException::Ok(value),
+                Err(error) => MaybeException::Exception(
+                    AuthServiceFinishRegistrationException::Err(failure(error)),
+                ),
+            },
+        )
+    }
+    async fn rename_passkey(
+        &self,
+        ctx: Context,
+        id: volo::FastStr,
+        name: volo::FastStr,
+    ) -> Result<
+        MaybeException<PasskeyInfo, AuthServiceRenamePasskeyException>,
+        volo_thrift::ServerError,
+    > {
+        Ok(
+            match self
+                .0
+                .run(move |app, db| app.rename_passkey(db, &ctx, id.as_str(), name.as_str()))
+                .await
+            {
+                Ok(value) => MaybeException::Ok(value),
+                Err(error) => MaybeException::Exception(AuthServiceRenamePasskeyException::Err(
+                    failure(error),
+                )),
+            },
+        )
+    }
+    async fn delete_passkey(
+        &self,
+        ctx: Context,
+        id: volo::FastStr,
+    ) -> Result<MaybeException<bool, AuthServiceDeletePasskeyException>, volo_thrift::ServerError>
+    {
+        Ok(
+            match self
+                .0
+                .run(move |app, db| app.delete_passkey(db, &ctx, id.as_str()))
+                .await
+            {
+                Ok(value) => MaybeException::Ok(value),
+                Err(error) => MaybeException::Exception(AuthServiceDeletePasskeyException::Err(
+                    failure(error),
+                )),
+            },
+        )
+    }
+}
+fn failure(error: Error) -> AuthFailure {
+    let code = match error {
+        Error::Unauthenticated => FailureCode::UNAUTHENTICATED,
+        Error::ReauthRequired => FailureCode::REAUTH_REQUIRED,
+        Error::AuthenticationFailed => FailureCode::AUTHENTICATION_FAILED,
+        Error::CeremonyInvalid => FailureCode::CEREMONY_INVALID,
+        Error::NoPasskey => FailureCode::NO_PASSKEY,
+        Error::PasskeyExists => FailureCode::PASSKEY_EXISTS,
+        Error::InvalidRequest => FailureCode::INVALID_REQUEST,
+        Error::NotFound => FailureCode::NOT_FOUND,
+        Error::RateLimited => FailureCode::RATE_LIMITED,
+        Error::Unavailable => FailureCode::UNAVAILABLE,
+    };
+    AuthFailure {
+        code,
+        retry_after_seconds: if matches!(error, Error::RateLimited) {
+            Some(60)
+        } else {
+            None
+        },
     }
 }

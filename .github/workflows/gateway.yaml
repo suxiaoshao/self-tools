@@ -6,6 +6,7 @@ on:
     paths:
       - docker/server/gateway.Dockerfile
       - server/packages/gateway/**
+      - server/common/middleware/**
       - Cargo.lock
       - Cargo.toml
       - .cargo/**

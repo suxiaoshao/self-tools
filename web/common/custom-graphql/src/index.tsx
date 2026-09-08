@@ -7,7 +7,6 @@
  */
 import { ApolloClient, InMemoryCache, ApolloLink, CombinedGraphQLErrors, CombinedProtocolErrors } from '@apollo/client';
 import { HttpLink } from '@apollo/client/link/http';
-import { SetContextLink } from '@apollo/client/link/context';
 import { ErrorLink } from '@apollo/client/link/error';
 import { toast } from 'sonner';
 
@@ -25,10 +24,52 @@ declare module '@apollo/client' {
   }
 }
 
+type AuthBoundary = { generation: () => number; unauthenticated: (requestGeneration: number) => void };
+let authBoundary: AuthBoundary | undefined;
+const clients = new Set<ApolloClient>();
+const requests = new Set<AbortController>();
+export function registerAuthBoundary(boundary: AuthBoundary): () => void {
+  authBoundary = boundary;
+  return () => {
+    if (authBoundary === boundary) authBoundary = undefined;
+  };
+}
+let stateVersion = 0;
+const resetAuthenticated = new Set<() => void>();
+export const authenticatedStateVersion = () => stateVersion;
+export function registerAuthenticatedReset(reset: () => void): () => void {
+  resetAuthenticated.add(reset);
+  return () => {
+    resetAuthenticated.delete(reset);
+  };
+}
+export function clearAuthenticatedState(): void {
+  stateVersion += 1;
+  for (const reset of resetAuthenticated) reset();
+  for (const controller of requests) controller.abort();
+  requests.clear();
+  for (const client of clients) void client.clearStore().catch(() => undefined);
+}
 const getHttpLink = (url: string) =>
   new HttpLink({
-    uri: String(url),
-    credentials: 'include',
+    uri: url,
+    credentials: 'same-origin',
+    headers: { 'X-Self-Tools-Request': '1' },
+    fetch: async (input, init) => {
+      const boundary = authBoundary;
+      const generation = boundary?.generation();
+      const controller = new AbortController();
+      requests.add(controller);
+      try {
+        const signal = init?.signal ? AbortSignal.any([init.signal, controller.signal]) : controller.signal;
+        const response = await fetch(input, { ...init, signal });
+        if (response.status === 401 && generation !== undefined && authBoundary === boundary)
+          boundary?.unauthenticated(generation);
+        return response;
+      } finally {
+        requests.delete(controller);
+      }
+    },
   });
 
 /** 错误处理  */
@@ -51,21 +92,10 @@ const errorLink = new ErrorLink(({ error }) => {
       toast(message);
       console.log(`[Protocol error]: Message: ${message}, Extensions: ${JSON.stringify(extensions)}`);
     });
-  } else {
+  } else if (error.name !== 'AbortError') {
     toast(`网络错误:${error.message}`);
     console.log(`[Network error]: ${error.message}`);
   }
-});
-
-const authLink = new SetContextLink((prevContext) => {
-  const token = window.localStorage.getItem('auth');
-  // return the headers to the context so httpLink can read them
-  return {
-    headers: {
-      ...prevContext.headers,
-      authorization: token,
-    },
-  };
 });
 
 const defaultOptions = {
@@ -79,12 +109,13 @@ const defaultOptions = {
   },
 } as const;
 
-export const getClient = (url: string) =>
-  new ApolloClient({
-    link: ApolloLink.from([errorLink, authLink, getHttpLink(url)]),
+export function getClient(url: string): ApolloClient {
+  const client = new ApolloClient({
+    link: ApolloLink.from([errorLink, getHttpLink(url)]),
     cache: new InMemoryCache(),
     defaultOptions,
-    devtools: {
-      enabled: process.env.NODE_ENV === 'development',
-    },
+    devtools: { enabled: process.env.NODE_ENV === 'development' },
   });
+  clients.add(client);
+  return client;
+}

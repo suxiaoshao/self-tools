@@ -9,9 +9,11 @@ import { Outlet } from 'react-router';
 import { ApolloProvider } from '@apollo/client/react';
 import { getClient } from 'custom-graphql';
 
+const client = getClient('/api/collections/graphql');
+
 function App() {
   return (
-    <ApolloProvider client={getClient('https://collections.sushao.top/graphql')}>
+    <ApolloProvider client={client}>
       <Outlet />
     </ApolloProvider>
   );

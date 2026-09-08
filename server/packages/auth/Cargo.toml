@@ -13,9 +13,18 @@ volo.workspace = true
 volo-thrift.workspace = true
 tokio = { workspace = true, features = ["full"] }
 
-# jwt
-jsonwebtoken = { version = "10.4.0", default-features = false, features = ["rust_crypto"] }
-serde.workspace = true
+# authentication
+webauthn-rs = "0.5.5"
+diesel = { workspace = true, features = ["postgres", "r2d2", "time", "uuid", "serde_json"] }
+time = { workspace = true, features = ["serde", "formatting"] }
+uuid = { version = "1.23.4", features = ["v4", "serde"] }
+getrandom = "0.4.3"
+sha2 = "0.10.9"
+hmac = "0.12.1"
+base64.workspace = true
+serde_json.workspace = true
+url.workspace = true
+thiserror.workspace = true
 
 # log
 tracing.workspace = true
@@ -23,3 +32,6 @@ tracing-subscriber.workspace = true
 
 # errors
 anyhow.workspace = true
+
+[dev-dependencies]
+openssl = "0.10.81"

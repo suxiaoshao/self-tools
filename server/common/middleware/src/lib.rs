@@ -18,3 +18,6 @@ pub use cors::{CorsConfigError, get_cors};
 pub use graphql_trace::*;
 #[cfg(feature = "trace")]
 pub use trace::*;
+
+#[cfg(feature = "auth-http")]
+pub mod auth_http;

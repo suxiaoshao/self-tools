@@ -20,19 +20,23 @@
 
 ## 路由顺序
 
-`build_routes` 返回有序列表，代理使用第一个同时匹配 host 与 path prefix 的条目。
-prefix 使用字符串 `starts_with`，且转发时不重写 path。
+`build_routes` 返回有序列表，使用第一个 host 与 path 都匹配的条目，不重写 URI。
+以 `/` 结尾的 path 规则匹配该目录前缀，其他 path 规则精确匹配。
 
-| host 角色        | path 条件   | upstream 角色           |
-| ---------------- | ----------- | ----------------------- |
-| auth host        | `/api*`     | `login` HTTP 服务       |
-| bookmarks host   | 任意路径    | `bookmarks` HTTP 服务   |
-| collections host | `/graphql*` | `collections` HTTP 服务 |
-| collections host | 其他路径    | 外部/遗留前端服务       |
-| main host        | 任意路径    | portal 前端服务         |
+| host 角色        | path 条件                          | upstream 角色 |
+| ---------------- | ---------------------------------- | ------------- |
+| main host        | `/api/auth/` 前缀                  | login         |
+| main host        | 精确 `/api/bookmarks/graphql`      | bookmarks     |
+| main host        | 精确 `/api/collections/graphql`    | collections   |
+| bookmarks host   | `/fetch-content` 等现有非 API 路径 | bookmarks     |
+| collections host | 现有非 API、非 `/graphql` 路径     | 遗留前端      |
+| main host        | 非 `/api`、非 `/api/` 路径         | portal        |
 
-collections 的 GraphQL 条目必须位于前端 fallback 之前。新增重叠 prefix 时同样需要先写
-更具体的规则，并为优先级补测试。未匹配请求返回 `404`。
+主站未知 `/api/` 返回 404，不落入前端 fallback。旧 auth host 认证接口和两个子域的
+`/graphql` 已退役。API 规则必须位于 portal fallback 前。
+仅向上述三个 API upstream 传递 session Cookie，ceremony Cookie 仅传给 login；
+其他 upstream 移除这两个 Cookie，保留不相关 Cookie。API 移除旧 Authorization，
+响应强制 `Cache-Control: no-store`。gateway 不校验 session，Cookie/Origin 的实际验证由下游所有者执行。
 
 所有现有 upstream route 都使用明文 HTTP，由 gateway 在边缘终止 TLS。代理把请求
 host 规范为小写、移除端口后重写 `Host`，并向 upstream 传播或生成 `traceparent`、

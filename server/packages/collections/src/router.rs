@@ -7,7 +7,10 @@ pub(crate) fn get_router() -> GraphqlResult<Router> {
     let schema = get_schema()?;
 
     let router = Router::new()
-        .route("/graphql", post(graphql_handler).get(graphql_playground))
+        .route(
+            "/api/collections/graphql",
+            post(graphql_handler).get(graphql_playground),
+        )
         .with_state(schema);
     Ok(router)
 }

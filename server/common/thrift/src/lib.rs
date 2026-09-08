@@ -22,9 +22,9 @@ pub enum ClientError {
     LookupError(String),
 }
 
-pub fn get_client() -> Result<self::auth::ItemServiceClient, ClientError> {
+pub fn get_client() -> Result<self::auth::AuthServiceClient, ClientError> {
     let addr: SocketAddr = get_ip()?;
-    Ok(auth::ItemServiceClientBuilder::new("auth")
+    Ok(auth::AuthServiceClientBuilder::new("auth")
         .address(addr)
         .build())
 }

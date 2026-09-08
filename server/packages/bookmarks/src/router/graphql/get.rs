@@ -3,6 +3,6 @@ use axum::response::{self, IntoResponse};
 
 pub(crate) async fn graphql_playground() -> impl IntoResponse {
     response::Html(playground_source(
-        GraphQLPlaygroundConfig::new("/graphql").subscription_endpoint("/ws"),
+        GraphQLPlaygroundConfig::new("/api/bookmarks/graphql").subscription_endpoint("/ws"),
     ))
 }

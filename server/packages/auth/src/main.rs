@@ -14,9 +14,12 @@ use service::AuthImpl;
 
 use crate::middleware::LogLayer;
 
+mod application;
 mod middleware;
+mod passkey;
+mod repository;
 mod service;
-mod utils;
+mod session;
 
 #[volo::main]
 async fn main() -> anyhow::Result<()> {
@@ -29,7 +32,7 @@ async fn main() -> anyhow::Result<()> {
     let addr: SocketAddr = "0.0.0.0:80".parse()?;
     let addr = volo::net::Address::from(addr);
 
-    thrift::auth::ItemServiceServer::new(AuthImpl)
+    thrift::auth::AuthServiceServer::new(AuthImpl(application::Application::new()?))
         .layer(LogLayer)
         .run(addr)
         .await
