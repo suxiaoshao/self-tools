@@ -10,19 +10,22 @@ mod error;
 mod tasks;
 
 pub use error::XtaskError;
+pub use tasks::migrate_postgres::Options as MigrationOptions;
 
 pub type TaskResult = Result<(), XtaskError>;
 
-#[derive(Debug, Clone, Default)]
+#[derive(Clone)]
 pub struct BuildOptions {
+    pub tag: String,
     pub http_proxy: Option<String>,
     pub https_proxy: Option<String>,
     pub no_proxy: Option<String>,
     pub debian_mirror_url: Option<String>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub enum Task {
+    MigratePostgres(MigrationOptions),
     Build(BuildOptions),
     Compose {
         retries: usize,
@@ -36,7 +39,8 @@ pub enum Task {
 
 pub fn run(task: Task) -> TaskResult {
     match task {
-        Task::Build(options) => block_on(tasks::build::run(options)),
+        Task::MigratePostgres(options) => tasks::migrate_postgres::run(options),
+        Task::Build(options) => tasks::build::run(options),
         Task::Compose { retries } => run_compose_with_retry(retries),
         Task::Lint => tasks::lint::run(),
         Task::Cert {
@@ -58,6 +62,9 @@ fn run_compose_with_retry(retries: usize) -> TaskResult {
             return Ok(());
         }
 
+        if attempt == max_attempts {
+            return result;
+        }
         if attempt < max_attempts {
             event!(Level::WARN, attempt, "compose attempt failed, retrying");
             thread::sleep(Duration::from_secs(1));

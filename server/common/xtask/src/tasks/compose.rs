@@ -4,12 +4,13 @@ use bollard::Docker;
 
 use crate::{
     TaskResult,
-    compose_types::{ComposeFile, ComposeService},
+    compose_types::{ComposeFile, DependencyCondition},
     context::{load_env_file, workspace_root},
 };
 
 mod container;
 mod helpers;
+mod readiness;
 mod resources;
 mod topology;
 
@@ -17,7 +18,6 @@ use container::ensure_service_running;
 use resources::{compose_project_name, default_network_name, ensure_named_volumes, ensure_network};
 use topology::resolve_order;
 
-const CONFIG_SIGNATURE_LABEL: &str = "self-tools.compose.signature";
 const COMPOSE_PROJECT_LABEL: &str = "com.docker.compose.project";
 const COMPOSE_SERVICE_LABEL: &str = "com.docker.compose.service";
 const COMPOSE_NETWORK_LABEL: &str = "com.docker.compose.network";
@@ -44,9 +44,6 @@ pub async fn run_once() -> TaskResult {
     let project_name = compose_project_name(&root);
     let network_name = default_network_name(&project_name);
 
-    ensure_named_volumes(&docker, &compose, &project_name).await?;
-    ensure_network(&docker, &network_name, &project_name).await?;
-
     let env_from_file = load_env_file(&env_path)?;
     let runtime = ComposeRuntime {
         docker: &docker,
@@ -58,13 +55,45 @@ pub async fn run_once() -> TaskResult {
     };
 
     let order = resolve_order(&compose.services)?;
-    for service_name in order {
-        let service: &ComposeService = runtime
-            .compose
-            .services
-            .get(&service_name)
-            .expect("service order generated from existing keys");
-        ensure_service_running(&runtime, &service_name, service).await?;
+    let mut desired = HashMap::new();
+    // Validate every service before modifying even the first container.
+    for name in &order {
+        let service = &compose.services[name];
+        for (dep, condition) in service.depends_on.entries() {
+            if condition == DependencyCondition::ServiceHealthy
+                && compose.services[dep].healthcheck.is_none()
+            {
+                return Err(crate::error::XtaskError::InvalidHealthcheck {
+                    service: dep.into(),
+                });
+            }
+        }
+        desired.insert(
+            name.clone(),
+            container::prepare(&runtime, name, service).await?,
+        );
+    }
+    ensure_named_volumes(&docker, &compose, &project_name).await?;
+    ensure_network(&docker, &network_name, &project_name).await?;
+    for name in order {
+        let service = &compose.services[&name];
+        for (dep, condition) in service.depends_on.entries() {
+            readiness::wait(
+                &runtime,
+                dep,
+                &desired[dep].name,
+                condition == DependencyCondition::ServiceHealthy,
+            )
+            .await?;
+        }
+        ensure_service_running(&runtime, &desired[&name]).await?;
+        readiness::wait(
+            &runtime,
+            &name,
+            &desired[&name].name,
+            service.healthcheck.is_some(),
+        )
+        .await?;
     }
 
     Ok(())

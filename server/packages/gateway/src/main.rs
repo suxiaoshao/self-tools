@@ -31,6 +31,31 @@ fn main() -> Result<()> {
         .init();
 
     let config = GatewayConfig::from_env();
+    match service_health::mode(false)
+        .map_err(|_| pingora::Error::new(pingora::ErrorType::InternalError))?
+    {
+        service_health::Mode::Serve => (),
+        service_health::Mode::Help => {
+            service_health::help(false);
+            return Ok(());
+        }
+        service_health::Mode::CheckReady => {
+            let address: std::net::SocketAddr = config
+                .listen_http
+                .parse()
+                .map_err(|_| pingora::Error::new(pingora::ErrorType::InternalError))?;
+            let ip = if address.ip().is_unspecified() {
+                "127.0.0.1".parse().unwrap()
+            } else {
+                address.ip()
+            };
+            service_health::probe_http(&std::net::SocketAddr::new(ip, address.port()).to_string())
+                .and_then(|_| service_health::probe_listener(&config.listen_https))
+                .map_err(|_| pingora::Error::new(pingora::ErrorType::ConnectError))?;
+            return Ok(());
+        }
+        service_health::Mode::Migrate => unreachable!(),
+    }
     let routes = build_routes(&config);
 
     let mut server = Server::new(None)?;

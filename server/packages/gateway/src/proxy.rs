@@ -14,6 +14,7 @@ pub struct ProxyContext {
 }
 
 pub struct GatewayProxy {
+    health_upstreams: [String; 3],
     routes: Vec<Route>,
     auth_host: String,
     bookmarks_host: String,
@@ -24,6 +25,11 @@ pub struct GatewayProxy {
 impl GatewayProxy {
     pub fn new(routes: Vec<Route>, config: &GatewayConfig) -> Self {
         Self {
+            health_upstreams: [
+                config.login_upstream.clone(),
+                config.bookmarks_upstream.clone(),
+                config.collections_upstream.clone(),
+            ],
             routes,
             auth_host: config.auth_host.clone(),
             bookmarks_host: config.bookmarks_host.clone(),
@@ -199,6 +205,30 @@ impl ProxyHttp for GatewayProxy {
         let host = request_host(req);
 
         let path = req.uri.path().to_string();
+        if path == "/health/ready" {
+            let local = session
+                .client_addr()
+                .and_then(|a| a.as_inet())
+                .is_some_and(|a| a.ip().is_loopback());
+            let status = if local {
+                let [login, bookmarks, collections] = self.health_upstreams.clone();
+                let (a, b, c) = tokio::join!(
+                    service_health::http_ready(login),
+                    service_health::http_ready(bookmarks),
+                    service_health::http_ready(collections)
+                );
+                if a && b && c { 204 } else { 503 }
+            } else {
+                404
+            };
+            let mut header = ResponseHeader::build(status, None)?;
+            header.insert_header("Content-Length", "0")?;
+            session
+                .write_response_header(Box::new(header), true)
+                .await?;
+            return Ok(true);
+        }
+
         let path_and_query = req
             .uri
             .path_and_query()

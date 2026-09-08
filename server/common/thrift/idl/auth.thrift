@@ -22,6 +22,7 @@ enum FailureCode {
 }
 exception AuthFailure { 1: required FailureCode code, 2: optional i32 retryAfterSeconds }
 service AuthService {
+  bool Ready(),
   LoginResult LoginPassword(1: Context ctx, 2: string username, 3: string password) throws (1: AuthFailure err),
   Session Check(1: Context ctx) throws (1: AuthFailure err),
   void Logout(1: Context ctx) throws (1: AuthFailure err),

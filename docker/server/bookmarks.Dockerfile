@@ -19,5 +19,5 @@ RUN if [ -n "$APT_MIRROR" ]; then \
     && apt-get -o Acquire::Retries=5 install -y --no-install-recommends libpq5 ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 COPY --from=builder ./app/bookmarks /
-EXPOSE 80
+EXPOSE 8080
 CMD [ "/bookmarks" ]

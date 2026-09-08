@@ -6,6 +6,7 @@ edition.workspace = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+service-health = { workspace = true, features = ["auth"] }
 # http
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
 axum = { workspace = true, features = ["json"] }

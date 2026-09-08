@@ -4,6 +4,10 @@ on:
     branches:
       - main
     paths:
+      - .dockerignore
+      - docker/docker-bake.hcl
+      - docker/server/rust/**
+      - server/common/service-health/**
       - docker/server/bookmarks.Dockerfile
       - server/packages/bookmarks/**
       - server/common/middleware/**
@@ -31,9 +35,13 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Build and push
         id: docker_build
-        uses: docker/build-push-action@v6
+        uses: docker/bake-action@v7
+        env:
+          TAG: ${{ github.sha }}
         with:
+          source: .
+          files: docker/docker-bake.hcl
+          targets: bookmarks
           push: true
-          tags: suxiaoshao/bookmarks:latest
-          file: ./docker/server/bookmarks.Dockerfile
-          context: .
+          set: |
+            bookmarks.tags=suxiaoshao/bookmarks:latest,suxiaoshao/bookmarks:${{ github.sha }}

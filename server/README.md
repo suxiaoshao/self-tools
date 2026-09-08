@@ -43,6 +43,7 @@
 | `middleware`     | 按 Cargo feature 组合 CORS、HTTP trace 与 GraphQL trace        |
 | `novel_crawler`  | 起点、晋江等小说站点的抓取模型与实现                           |
 | `thrift`         | 认证 IDL、Volo 生成入口、导出类型和固定的 `auth:80` 客户端发现 |
+| `service-health` | 只读就绪检查、运行镜像中的显式 schema 迁移与版本校验           |
 | `xtask`          | 镜像构建、Compose 编排和本地证书等仓库开发工具                 |
 
 公共能力进入 `server/common/` 的前提是有多个明确消费者和稳定职责；不要仅为减少单个
@@ -97,6 +98,17 @@ diesel print-schema
 签名与数据库关键回归使用专用 `self_tools_auth_test` 库，先应用相同 migration，设置
 `AUTH_TEST_PG` 后运行 `cargo test -p auth persistent_sessions_and_signed_passkey_lifecycle -- --ignored`。
 该测试只允许指定名称的独立测试库，会清空其中三张认证表；不指向业务或实际认证数据库。
+
+## 部署入口与就绪检查
+
+五个服务支持 `--check-ready`，检查已经运行的本地服务并用退出码报告结果；不创建会话、注册凭据或迁移 schema。HTTP 服务的内部 `/health/ready` 只返回 204/503，不返回内部 cause。gateway 对该路径只允许 loopback 请求，避免通过外部路由转发到内部健康接口。
+
+- auth 的 `Ready` RPC 查询实际连接池和本镜像要求的 migration 版本；无认证状态变更。
+- login 检查 HTTP 入口和 auth；bookmarks/collections 检查实际 HTTP、数据库连接池/schema 和 auth。
+- gateway 检查自身 HTTP、三个 API upstream，以及 TLS 端口可连接。证书在正常启动时加载；探针不承担证书到期、完整 TLS 协议或宿主前端可用性验证。
+- auth/bookmarks/collections 支持 `--migrate`，读取各自数据库 URL，用嵌入 migration 在会话 advisory lock 下显式升级。已有未知 migration 时拒绝降级，不提供自动 down。正常启动和就绪检查均只读取 migration 记录；缺失、未应用或比镜像更新的 schema 拒绝就绪。
+
+共享实现位于 `common/service-health`；`migrations/` 为唯一版本事实源，build.rs 跟踪其改动。Diesel schema 生成仍使用服务目录中的 `diesel print-schema`。数据库迁移检查回归需要专用 `self_tools_health_test` 库和 `SERVICE_HEALTH_TEST_PG`，通过 `cargo test -p service-health --all-features schema_gate_is_read_only_and_migration_is_explicit -- --ignored` 显式运行。
 
 ## GraphQL 边界
 

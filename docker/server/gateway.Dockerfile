@@ -9,5 +9,5 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry,id=rust_registry \
 
 FROM debian:trixie-slim AS prod
 COPY --from=builder ./app/gateway /
-EXPOSE 80
+EXPOSE 80 443
 CMD ["/gateway"]

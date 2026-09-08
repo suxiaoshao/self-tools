@@ -6,6 +6,7 @@ on:
     branches:
       - main
     paths:
+      - .dockerignore
       - docker/server/rust/rust.Dockerfile
       - .github/workflows/rust_update.yaml
 jobs:

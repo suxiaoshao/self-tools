@@ -13,6 +13,7 @@ async-graphql-axum = "7.2.1"
 axum = "0.8.9"
 base64 = "0.22.1"
 diesel = "2.3.11"
+diesel_migrations = { version = "2.3.2", features = ["postgres"] }
 dotenv = "0.15.0"
 futures = "0.3.32"
 futures-util = "0.3.32"
@@ -31,6 +32,7 @@ url = "2.5.8"
 volo = "0.12.3"
 volo-thrift = "0.12.4"
 
+service-health = { path = "server/common/service-health" }
 graphql-common = { path = "server/common/graphql-common" }
 middleware = { path = "server/common/middleware" }
 novel_crawler = { path = "server/common/novel_crawler" }

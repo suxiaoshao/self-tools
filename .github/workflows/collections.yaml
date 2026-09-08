@@ -4,6 +4,10 @@ on:
     branches:
       - main
     paths:
+      - .dockerignore
+      - docker/docker-bake.hcl
+      - docker/server/rust/**
+      - server/common/service-health/**
       - docker/server/collections.Dockerfile
       - server/packages/collections/**
       - server/common/middleware/**
@@ -30,9 +34,13 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Build and push
         id: docker_build
-        uses: docker/build-push-action@v6
+        uses: docker/bake-action@v7
+        env:
+          TAG: ${{ github.sha }}
         with:
+          source: .
+          files: docker/docker-bake.hcl
+          targets: collections
           push: true
-          tags: suxiaoshao/collections:latest
-          file: ./docker/server/collections.Dockerfile
-          context: .
+          set: |
+            collections.tags=suxiaoshao/collections:latest,suxiaoshao/collections:${{ github.sha }}

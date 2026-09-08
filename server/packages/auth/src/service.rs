@@ -7,6 +7,17 @@ use thrift::auth::*;
 use volo_thrift::MaybeException;
 pub struct AuthImpl(pub Arc<Application>);
 impl AuthService for AuthImpl {
+    async fn ready(&self) -> Result<bool, volo_thrift::ServerError> {
+        Ok(self
+            .0
+            .run(|_, db| {
+                service_health::database::check(db, crate::MIGRATIONS)
+                    .map_err(|_| Error::Unavailable)
+            })
+            .await
+            .is_ok())
+    }
+
     async fn login_password(
         &self,
         ctx: Context,

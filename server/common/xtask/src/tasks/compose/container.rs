@@ -1,310 +1,347 @@
+use super::helpers::{is_running, parse_port_binding, parse_restart_policy, resolve_volume_bind};
+use super::{COMPOSE_PROJECT_LABEL, COMPOSE_SERVICE_LABEL, ComposeRuntime};
+use crate::{TaskResult, compose_types::ComposeService, context::load_env_file, error::XtaskError};
+use bollard::{
+    models::{
+        ContainerCreateBody, ContainerInspectResponse, EndpointSettings, HealthConfig, HostConfig,
+        ImageInspect, NetworkingConfig, PortBinding, RestartPolicy,
+    },
+    query_parameters::{
+        CreateContainerOptionsBuilder, RemoveContainerOptionsBuilder, StartContainerOptions,
+        StopContainerOptionsBuilder,
+    },
+};
 use std::collections::HashMap;
-
-use bollard::models::{
-    ContainerCreateBody, ContainerInspectResponse, EndpointSettings, HostConfig, NetworkingConfig,
-    PortBinding, RestartPolicy,
-};
-use bollard::query_parameters::{
-    CreateContainerOptionsBuilder, InspectContainerOptionsBuilder, RemoveContainerOptionsBuilder,
-    StartContainerOptions, StopContainerOptionsBuilder,
-};
 use tracing::{Level, event};
 
-use crate::TaskResult;
-use crate::compose_types::ComposeService;
-use crate::context::load_env_file;
-use crate::error::XtaskError;
+const LEGACY_SIGNATURE: &str = "self-tools.compose.signature";
 
-use super::helpers::{is_running, parse_port_binding, parse_restart_policy, resolve_volume_bind};
-use super::{COMPOSE_PROJECT_LABEL, COMPOSE_SERVICE_LABEL, CONFIG_SIGNATURE_LABEL, ComposeRuntime};
-
-pub(super) async fn ensure_service_running(
-    runtime: &ComposeRuntime<'_>,
-    service_name: &str,
-    service: &ComposeService,
-) -> TaskResult {
-    let container_name = service
-        .container_name
-        .clone()
-        .unwrap_or_else(|| format!("self-tools-{service_name}"));
-    let config_signature = build_config_signature(runtime, service_name, service).await?;
-
-    let inspect = runtime
-        .docker
-        .inspect_container(
-            &container_name,
-            Some(InspectContainerOptionsBuilder::new().build()),
-        )
-        .await;
-
-    match inspect {
-        Ok(details) => {
-            if !container_matches_signature(&details, &config_signature) {
-                recreate_container(
-                    runtime,
-                    service_name,
-                    service,
-                    &container_name,
-                    &details,
-                    &config_signature,
-                )
-                .await?;
-            } else if !is_running(&details) {
-                event!(Level::INFO, container = %container_name, "starting existing container");
-                runtime
-                    .docker
-                    .start_container(&container_name, None::<StartContainerOptions>)
-                    .await?;
-            }
-        }
-        Err(bollard::errors::Error::DockerResponseServerError {
-            status_code: 404, ..
-        }) => {
-            create_and_start_container(
-                runtime,
-                service_name,
-                service,
-                &container_name,
-                &config_signature,
-            )
-            .await?;
-        }
-        Err(err) => return Err(XtaskError::Docker(err)),
-    }
-
-    Ok(())
+// Intentionally not Debug: the desired/actual configuration contains credentials.
+pub(super) struct DesiredContainer {
+    pub name: String,
+    body: ContainerCreateBody,
 }
 
-async fn create_and_start_container(
+pub(super) async fn prepare(
     runtime: &ComposeRuntime<'_>,
-    service_name: &str,
+    name: &str,
     service: &ComposeService,
-    container_name: &str,
-    config_signature: &str,
-) -> TaskResult {
-    let image = service
+) -> Result<DesiredContainer, XtaskError> {
+    let image_name = service
         .image
         .as_deref()
         .ok_or_else(|| XtaskError::MissingImage {
-            service: service_name.to_string(),
+            service: name.into(),
         })?;
-
+    let image = runtime.docker.inspect_image(image_name).await?;
     let env = resolve_environment(runtime.env_from_file, runtime.compose_dir, service, |key| {
         std::env::var(key).ok()
     })?;
+    for key in &service.required_env {
+        if env.get(key).is_none_or(String::is_empty) {
+            return Err(XtaskError::MissingEnvironment {
+                service: name.into(),
+                key: key.clone(),
+            });
+        }
+    }
+    let desired = desired_container(runtime, name, service, image, env)?;
+    match runtime.docker.inspect_container(&desired.name, None).await {
+        Ok(details) => check_owner(runtime, name, &desired.name, &details)?,
+        Err(bollard::errors::Error::DockerResponseServerError {
+            status_code: 404, ..
+        }) => (),
+        Err(error) => return Err(error.into()),
+    }
+    Ok(desired)
+}
 
-    let mut env_list = env
-        .iter()
-        .map(|(k, v)| format!("{k}={v}"))
-        .collect::<Vec<_>>();
+fn desired_container(
+    runtime: &ComposeRuntime<'_>,
+    name: &str,
+    service: &ComposeService,
+    image: ImageInspect,
+    env: HashMap<String, String>,
+) -> Result<DesiredContainer, XtaskError> {
+    let container_name = service
+        .container_name
+        .clone()
+        .unwrap_or_else(|| format!("self-tools-{name}"));
+    let config = image.config.unwrap_or_default();
+    let mut merged_env = env_map(config.env.as_deref());
+    merged_env.extend(env);
+    let mut env_list: Vec<_> = merged_env
+        .into_iter()
+        .map(|(key, value)| format!("{key}={value}"))
+        .collect();
     env_list.sort();
-
-    let mut exposed_ports = Vec::new();
     let mut port_bindings: HashMap<String, Option<Vec<PortBinding>>> = HashMap::new();
-    for port in &service.ports {
-        let (host_port, container_port) = parse_port_binding(port);
-        let key = format!("{container_port}/tcp");
+    let mut exposed_ports = config.exposed_ports.unwrap_or_default();
+    for value in &service.ports {
+        let port = parse_port_binding(value)?;
+        let key = format!("{}/tcp", port.container_port);
         exposed_ports.push(key.clone());
-        port_bindings.insert(
-            key,
-            Some(vec![PortBinding {
-                host_ip: Some("0.0.0.0".to_string()),
-                host_port: Some(host_port),
-            }]),
-        );
+        port_bindings
+            .entry(key)
+            .or_insert_with(|| Some(vec![]))
+            .as_mut()
+            .unwrap()
+            .push(PortBinding {
+                host_ip: Some(port.host_ip),
+                host_port: Some(port.host_port),
+            });
     }
     exposed_ports.sort();
-
-    let mut binds = service
+    exposed_ports.dedup();
+    let mut binds: Vec<_> = service
         .volumes
         .iter()
-        .map(|volume| resolve_volume_bind(volume, runtime.compose))
-        .collect::<Vec<_>>();
+        .map(|v| resolve_volume_bind(v, runtime.compose))
+        .collect();
     binds.sort();
-
-    let host_config = HostConfig {
-        binds: (!binds.is_empty()).then_some(binds),
-        port_bindings: (!port_bindings.is_empty()).then_some(port_bindings),
-        network_mode: Some(runtime.network_name.to_string()),
-        restart_policy: service.restart.as_ref().map(|policy| RestartPolicy {
-            name: Some(parse_restart_policy(policy)),
-            maximum_retry_count: Some(0),
-        }),
-        ..Default::default()
-    };
-
     let mut labels = HashMap::new();
-    labels.insert(
-        CONFIG_SIGNATURE_LABEL.to_string(),
-        config_signature.to_string(),
-    );
-    labels.insert(
-        COMPOSE_PROJECT_LABEL.to_string(),
-        runtime.project_name.to_string(),
-    );
-    labels.insert(COMPOSE_SERVICE_LABEL.to_string(), service_name.to_string());
-
-    let mut endpoints = HashMap::new();
-    let mut aliases = vec![service_name.to_string()];
-    if container_name != service_name {
-        aliases.push(container_name.to_string());
+    labels.insert(COMPOSE_PROJECT_LABEL.into(), runtime.project_name.into());
+    labels.insert(COMPOSE_SERVICE_LABEL.into(), name.into());
+    let mut aliases = vec![name.to_owned()];
+    if container_name != name {
+        aliases.push(container_name.clone());
     }
-    endpoints.insert(
-        runtime.network_name.to_string(),
-        EndpointSettings {
-            aliases: Some(aliases),
+    let networking_config = NetworkingConfig {
+        endpoints_config: Some(HashMap::from([(
+            runtime.network_name.into(),
+            EndpointSettings {
+                aliases: Some(aliases),
+                ..Default::default()
+            },
+        )])),
+    };
+    let healthcheck = service
+        .healthcheck
+        .as_ref()
+        .map(|health| {
+            let invalid = || XtaskError::InvalidHealthcheck {
+                service: name.into(),
+            };
+            if health.test.first().map(String::as_str) != Some("CMD")
+                || health.test.len() < 2
+                || health.retries < 1
+            {
+                return Err(invalid());
+            }
+            Ok(HealthConfig {
+                test: Some(health.test.clone()),
+                interval: Some(duration_ns(&health.interval).ok_or_else(invalid)?),
+                timeout: Some(duration_ns(&health.timeout).ok_or_else(invalid)?),
+                retries: Some(health.retries),
+                start_period: Some(duration_ns(&health.start_period).ok_or_else(invalid)?),
+                ..Default::default()
+            })
+        })
+        .transpose()?
+        .or(config.healthcheck);
+    Ok(DesiredContainer {
+        name: container_name,
+        body: ContainerCreateBody {
+            // Resolve mutable tags before altering any container.
+            image: image.id,
+            env: Some(env_list),
+            cmd: config.cmd,
+            entrypoint: config.entrypoint,
+            user: config.user,
+            working_dir: config.working_dir,
+            healthcheck,
+            exposed_ports: Some(exposed_ports),
+            host_config: Some(HostConfig {
+                binds: Some(binds),
+                port_bindings: Some(port_bindings),
+                network_mode: Some(runtime.network_name.into()),
+                restart_policy: Some(RestartPolicy {
+                    name: Some(parse_restart_policy(
+                        service.restart.as_deref().unwrap_or("no"),
+                    )),
+                    maximum_retry_count: Some(0),
+                }),
+                ..Default::default()
+            }),
+            labels: Some(labels),
+            networking_config: Some(networking_config),
             ..Default::default()
         },
-    );
+    })
+}
 
-    event!(Level::INFO, container = %container_name, image, "creating container");
+fn duration_ns(value: &str) -> Option<i64> {
+    let (n, scale) = if let Some(n) = value.strip_suffix("ms") {
+        (n, 1_000_000)
+    } else {
+        (value.strip_suffix('s')?, 1_000_000_000)
+    };
+    n.parse::<i64>()
+        .ok()?
+        .checked_mul(scale)
+        .filter(|n| *n >= 1_000_000)
+}
+
+fn check_owner(
+    runtime: &ComposeRuntime<'_>,
+    name: &str,
+    container: &str,
+    details: &ContainerInspectResponse,
+) -> TaskResult {
+    let labels = details.config.as_ref().and_then(|c| c.labels.as_ref());
+    if labels
+        .and_then(|l| l.get(COMPOSE_PROJECT_LABEL))
+        .map(String::as_str)
+        != Some(runtime.project_name)
+        || labels
+            .and_then(|l| l.get(COMPOSE_SERVICE_LABEL))
+            .map(String::as_str)
+            != Some(name)
+    {
+        return Err(XtaskError::UnmanagedContainer {
+            name: container.into(),
+        });
+    }
+    Ok(())
+}
+
+pub(super) async fn ensure_service_running(
+    runtime: &ComposeRuntime<'_>,
+    desired: &DesiredContainer,
+) -> TaskResult {
+    match runtime.docker.inspect_container(&desired.name, None).await {
+        Ok(details) if matches_configuration(&details, desired) => {
+            if !is_running(&details) {
+                runtime
+                    .docker
+                    .start_container(&desired.name, None::<StartContainerOptions>)
+                    .await?;
+            }
+            return Ok(());
+        }
+        Ok(details) => {
+            // A running service might have been replaced since preflight.
+            let name = desired
+                .body
+                .labels
+                .as_ref()
+                .unwrap()
+                .get(COMPOSE_SERVICE_LABEL)
+                .unwrap();
+            check_owner(runtime, name, &desired.name, &details)?;
+            event!(Level::INFO, container = %desired.name, "configuration changed; recreating container (volumes retained)");
+            if is_running(&details) {
+                runtime
+                    .docker
+                    .stop_container(
+                        &desired.name,
+                        Some(StopContainerOptionsBuilder::new().build()),
+                    )
+                    .await?;
+            }
+            runtime
+                .docker
+                .remove_container(
+                    &desired.name,
+                    Some(RemoveContainerOptionsBuilder::new().build()),
+                )
+                .await?;
+        }
+        Err(bollard::errors::Error::DockerResponseServerError {
+            status_code: 404, ..
+        }) => (),
+        Err(error) => return Err(error.into()),
+    }
+    event!(Level::INFO, container = %desired.name, "creating container");
     runtime
         .docker
         .create_container(
             Some(
                 CreateContainerOptionsBuilder::new()
-                    .name(container_name)
+                    .name(&desired.name)
                     .build(),
             ),
-            ContainerCreateBody {
-                image: Some(image.to_string()),
-                env: (!env_list.is_empty()).then_some(env_list),
-                exposed_ports: (!exposed_ports.is_empty()).then_some(exposed_ports),
-                host_config: Some(host_config),
-                labels: Some(labels),
-                networking_config: Some(NetworkingConfig {
-                    endpoints_config: Some(endpoints),
-                }),
-                ..Default::default()
-            },
+            desired.body.clone(),
         )
         .await?;
-
     runtime
         .docker
-        .start_container(container_name, None::<StartContainerOptions>)
+        .start_container(&desired.name, None::<StartContainerOptions>)
         .await?;
-
     Ok(())
 }
 
-async fn recreate_container(
-    runtime: &ComposeRuntime<'_>,
-    service_name: &str,
-    service: &ComposeService,
-    container_name: &str,
-    details: &ContainerInspectResponse,
-    config_signature: &str,
-) -> TaskResult {
-    event!(
-        Level::INFO,
-        container = %container_name,
-        "container configuration changed, recreating"
-    );
-    if is_running(details) {
-        runtime
-            .docker
-            .stop_container(
-                container_name,
-                Some(StopContainerOptionsBuilder::new().build()),
-            )
-            .await?;
+fn env_map(env: Option<&[String]>) -> HashMap<String, String> {
+    env.unwrap_or_default()
+        .iter()
+        .filter_map(|pair| pair.split_once('='))
+        .map(|(k, v)| (k.into(), v.into()))
+        .collect()
+}
+fn sorted(values: Option<&[String]>) -> Vec<String> {
+    let mut values = values.unwrap_or_default().to_vec();
+    values.sort();
+    values
+}
+fn ports(
+    value: Option<&HashMap<String, Option<Vec<PortBinding>>>>,
+) -> Vec<(String, String, String)> {
+    let mut result = vec![];
+    for (port, bindings) in value.into_iter().flatten() {
+        for binding in bindings.iter().flatten() {
+            result.push((
+                port.clone(),
+                binding.host_ip.clone().unwrap_or_default(),
+                binding.host_port.clone().unwrap_or_default(),
+            ));
+        }
     }
-
-    runtime
-        .docker
-        .remove_container(
-            container_name,
-            Some(RemoveContainerOptionsBuilder::new().force(true).build()),
-        )
-        .await?;
-
-    create_and_start_container(
-        runtime,
-        service_name,
-        service,
-        container_name,
-        config_signature,
-    )
-    .await
+    result.sort();
+    result
 }
 
-fn container_matches_signature(details: &ContainerInspectResponse, expected: &str) -> bool {
-    details
-        .config
+fn matches_configuration(details: &ContainerInspectResponse, desired: &DesiredContainer) -> bool {
+    let Some(actual) = &details.config else {
+        return false;
+    };
+    let Some(host) = &details.host_config else {
+        return false;
+    };
+    let wanted = &desired.body;
+    let wanted_host = wanted.host_config.as_ref().unwrap();
+    let actual_labels = actual.labels.as_ref();
+    let labels_match = wanted
+        .labels
         .as_ref()
-        .and_then(|config| config.labels.as_ref())
-        .and_then(|labels| labels.get(CONFIG_SIGNATURE_LABEL))
-        .is_some_and(|actual| actual == expected)
+        .unwrap()
+        .iter()
+        .all(|(k, v)| actual_labels.and_then(|l| l.get(k)) == Some(v));
+    // Remove the old plaintext label even when all other values already match.
+    labels_match
+        && !actual_labels.is_some_and(|l| l.contains_key(LEGACY_SIGNATURE))
+        && details.image == wanted.image
+        && env_map(actual.env.as_deref()) == env_map(wanted.env.as_deref())
+        && actual.cmd == wanted.cmd
+        && actual.entrypoint == wanted.entrypoint
+        && actual.working_dir.as_deref().unwrap_or_default()
+            == wanted.working_dir.as_deref().unwrap_or_default()
+        && actual.user.as_deref().unwrap_or_default() == wanted.user.as_deref().unwrap_or_default()
+        && actual.healthcheck == wanted.healthcheck
+        && sorted(host.binds.as_deref()) == sorted(wanted_host.binds.as_deref())
+        && ports(host.port_bindings.as_ref()) == ports(wanted_host.port_bindings.as_ref())
+        && host.network_mode == wanted_host.network_mode
+        && host.restart_policy == wanted_host.restart_policy
 }
 
-async fn build_config_signature(
-    runtime: &ComposeRuntime<'_>,
-    service_name: &str,
-    service: &ComposeService,
-) -> Result<String, XtaskError> {
-    let image = service
-        .image
-        .as_deref()
-        .ok_or_else(|| XtaskError::MissingImage {
-            service: service_name.to_string(),
-        })?;
-    let image_id = runtime
-        .docker
-        .inspect_image(image)
-        .await?
-        .id
-        .unwrap_or_default();
-
-    let env = resolve_environment(runtime.env_from_file, runtime.compose_dir, service, |key| {
-        std::env::var(key).ok()
-    })?;
-
-    let mut env_pairs = env
-        .into_iter()
-        .map(|(k, v)| format!("{k}={v}"))
-        .collect::<Vec<_>>();
-    env_pairs.sort();
-
-    let mut ports = service
-        .ports
-        .iter()
-        .map(|port| {
-            let (host_port, container_port) = parse_port_binding(port);
-            format!("{host_port}:{container_port}")
-        })
-        .collect::<Vec<_>>();
-    ports.sort();
-
-    let mut binds = service
-        .volumes
-        .iter()
-        .map(|volume| resolve_volume_bind(volume, runtime.compose))
-        .collect::<Vec<_>>();
-    binds.sort();
-
-    let restart = service.restart.clone().unwrap_or_default();
-
-    Ok(format!(
-        "project={}|image={image}|image_id={image_id}|restart={restart}|network={}|env={}|ports={}|binds={}",
-        runtime.project_name,
-        runtime.network_name,
-        env_pairs.join(","),
-        ports.join(","),
-        binds.join(",")
-    ))
-}
-
-// Both container creation and its signature must use the same resolved values.
 fn resolve_environment(
     project_env: &HashMap<String, String>,
     compose_dir: &std::path::Path,
     service: &ComposeService,
     process_env: impl Fn(&str) -> Option<String>,
 ) -> Result<HashMap<String, String>, XtaskError> {
-    let mut env = project_env.clone();
-    for env_file in service.env_file.as_slice() {
-        env.extend(load_env_file(&compose_dir.join(env_file))?);
+    let mut env = HashMap::new();
+    for path in service.env_file.as_slice() {
+        env.extend(load_env_file(&compose_dir.join(path))?);
     }
     for (key, value) in &service.environment {
         let value = value
@@ -323,52 +360,192 @@ fn resolve_environment(
 mod tests {
     use super::*;
     use crate::compose_types::ComposeFile;
+    use bollard::models::ContainerConfig;
 
     #[test]
-    fn login_auth_origin_passthrough_preserves_missing_empty_and_custom_origin() {
+    #[ignore = "requires Docker and XTASK_DOCKER_TEST_IMAGE pointing to a PostgreSQL image"]
+    fn docker_configuration_stays_stable_without_secret_labels() {
+        let image = std::env::var("XTASK_DOCKER_TEST_IMAGE").expect("explicit test image required");
+        let suffix = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let name = format!("self-tools-compose-test-{suffix}");
+        crate::block_on(async {
+            let docker = bollard::Docker::connect_with_local_defaults()?;
+            let mut service = ComposeService {
+                image: Some(image),
+                container_name: Some(name.clone()),
+                environment: HashMap::from([(
+                    "POSTGRES_PASSWORD".into(),
+                    Some("fixture-password".into()),
+                )]),
+                healthcheck: Some(crate::compose_types::Healthcheck {
+                    test: vec![
+                        "CMD".into(),
+                        "pg_isready".into(),
+                        "-h".into(),
+                        "127.0.0.1".into(),
+                        "-U".into(),
+                        "postgres".into(),
+                    ],
+                    interval: "1s".into(),
+                    timeout: "2s".into(),
+                    retries: 5,
+                    start_period: "1s".into(),
+                }),
+                ..Default::default()
+            };
+            let compose = ComposeFile {
+                _version: None,
+                services: HashMap::new(),
+                volumes: HashMap::new(),
+            };
+            let project_env = HashMap::from([("UNDECLARED_SECRET".into(), "must-not-leak".into())]);
+            let runtime = ComposeRuntime {
+                docker: &docker,
+                compose: &compose,
+                env_from_file: &project_env,
+                compose_dir: std::path::Path::new("."),
+                network_name: &name,
+                project_name: &name,
+            };
+            let desired = prepare(&runtime, "postgres", &service).await?;
+            super::super::resources::ensure_network(&docker, &name, &name).await?;
+            ensure_service_running(&runtime, &desired).await?;
+            super::super::readiness::wait(&runtime, "postgres", &name, true).await?;
+            let details = docker.inspect_container(&name, None).await?;
+            assert!(
+                matches_configuration(&details, &desired),
+                "Docker defaults must not cause repeated replacement"
+            );
+            assert!(
+                !env_map(details.config.as_ref().unwrap().env.as_deref())
+                    .contains_key("UNDECLARED_SECRET")
+            );
+            assert!(
+                !details
+                    .config
+                    .as_ref()
+                    .unwrap()
+                    .labels
+                    .as_ref()
+                    .unwrap()
+                    .values()
+                    .any(|v| v.contains("fixture-password"))
+            );
+            ensure_service_running(&runtime, &desired).await?;
+            assert_eq!(docker.inspect_container(&name, None).await?.id, details.id);
+            service
+                .environment
+                .insert("POSTGRES_PASSWORD".into(), Some("rotated-fixture".into()));
+            let rotated = prepare(&runtime, "postgres", &service).await?;
+            assert!(!matches_configuration(&details, &rotated));
+            docker
+                .stop_container(&name, Some(StopContainerOptionsBuilder::new().build()))
+                .await?;
+            docker
+                .remove_container(
+                    &name,
+                    Some(RemoveContainerOptionsBuilder::new().v(true).build()),
+                )
+                .await?;
+            docker.remove_network(&name).await?;
+            Ok(())
+        })
+        .unwrap();
+    }
+
+    #[test]
+    fn environment_is_explicit_and_preserves_precedence_and_empty_values() {
+        let service: ComposeService = serde_yaml::from_str(
+            "environment:\n  INHERIT: null\n  EMPTY: null\n  FIXED: literal\n  MISSING: null\n",
+        )
+        .unwrap();
+        let project = HashMap::from([
+            ("INHERIT".into(), "project".into()),
+            ("SECRET".into(), "do-not-leak".into()),
+        ]);
+        let env = resolve_environment(&project, std::path::Path::new("."), &service, |key| {
+            (key == "EMPTY").then(String::new)
+        })
+        .unwrap();
+        assert_eq!(
+            env,
+            HashMap::from([
+                ("INHERIT".into(), "project".into()),
+                ("EMPTY".into(), "".into()),
+                ("FIXED".into(), "literal".into())
+            ])
+        );
         let compose: ComposeFile = serde_yaml::from_str(include_str!(
             "../../../../../../docker/compose/docker-compose.yml"
         ))
         .unwrap();
-        let login = &compose.services["login"];
-        let key = "AUTH_ORIGIN";
-        assert_eq!(login.environment.get(key), Some(&None));
-        assert!(login.env_file.as_slice().is_empty());
-        for value in [None, Some(""), Some("https://custom.example")] {
-            let project = value
-                .map(|v| (key.to_string(), v.to_string()))
-                .into_iter()
-                .collect();
-            let env =
-                resolve_environment(&project, std::path::Path::new("."), login, |_| None).unwrap();
-            assert_eq!(env.get(key).map(String::as_str), value);
+        for service in compose.services.values() {
+            assert!(service.env_file.as_slice().is_empty());
         }
+        let login = &compose.services["login"];
+        assert_eq!(login.environment.len(), 1);
+        assert_eq!(login.environment.get("AUTH_ORIGIN"), Some(&None));
     }
 
     #[test]
-    fn environment_precedence_preserves_explicit_values_and_shell_empty() {
-        let service: ComposeService = serde_yaml::from_str(
-            "environment:\n  INHERIT: null\n  EMPTY: null\n  FIXED: literal\n  CLEARED: ''\n  MISSING: null\n"
-        ).unwrap();
-        let project = ["INHERIT", "EMPTY", "FIXED", "CLEARED"]
-            .into_iter()
-            .map(|key| (key.to_string(), "project".to_string()))
-            .collect();
-        let env = resolve_environment(
-            &project,
-            std::path::Path::new("."),
-            &service,
-            |key| match key {
-                "EMPTY" => Some(String::new()),
-                "MISSING" => None,
-                _ => Some("shell".to_string()),
+    fn configuration_comparison_catches_secret_rotation_and_removes_legacy_exposure() {
+        let env = vec!["PASSWORD=first".into(), "PATH=/usr/bin".into()];
+        let host = HostConfig::default();
+        let labels = HashMap::from([(COMPOSE_PROJECT_LABEL.into(), "test".into())]);
+        let desired = DesiredContainer {
+            name: "test".into(),
+            body: ContainerCreateBody {
+                image: Some("sha256:one".into()),
+                env: Some(env.clone()),
+                host_config: Some(host.clone()),
+                labels: Some(labels.clone()),
+                ..Default::default()
             },
-        )
-        .unwrap();
-        assert_eq!(env["INHERIT"], "shell");
-        assert_eq!(env["EMPTY"], "");
-        assert_eq!(env["FIXED"], "literal");
-        assert_eq!(env["CLEARED"], "");
-        assert!(!env.contains_key("MISSING"));
+        };
+        let mut details = ContainerInspectResponse {
+            image: desired.body.image.clone(),
+            host_config: Some(host),
+            config: Some(ContainerConfig {
+                env: Some(env),
+                labels: Some(labels),
+                ..Default::default()
+            }),
+            ..Default::default()
+        };
+        assert!(matches_configuration(&details, &desired));
+        details
+            .config
+            .as_mut()
+            .unwrap()
+            .env
+            .as_mut()
+            .unwrap()
+            .push("OLD_UNDECLARED=secret".into());
+        assert!(!matches_configuration(&details, &desired));
+        details.config.as_mut().unwrap().env =
+            Some(vec!["PASSWORD=rotated".into(), "PATH=/usr/bin".into()]);
+        assert!(!matches_configuration(&details, &desired));
+        details.config.as_mut().unwrap().env = desired.body.env.clone();
+        details
+            .config
+            .as_mut()
+            .unwrap()
+            .labels
+            .as_mut()
+            .unwrap()
+            .insert(LEGACY_SIGNATURE.into(), "secret".into());
+        assert!(!matches_configuration(&details, &desired));
+        assert!(
+            !desired
+                .body
+                .labels
+                .as_ref()
+                .unwrap()
+                .values()
+                .any(|v| v.contains("first"))
+        );
     }
 }

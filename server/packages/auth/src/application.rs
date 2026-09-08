@@ -80,6 +80,12 @@ impl Application {
             .map_err(|_| {
                 anyhow::anyhow!("authentication database unavailable; apply migrations first")
             })?;
+        service_health::database::check(
+            &mut *pool
+                .get()
+                .map_err(|_| anyhow::anyhow!("authentication database unavailable"))?,
+            crate::MIGRATIONS,
+        )?;
         let user = repo::initialize(
             &mut *pool
                 .get()
