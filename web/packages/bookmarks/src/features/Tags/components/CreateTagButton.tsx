@@ -25,7 +25,7 @@ import {
   SelectValue,
 } from '@portal/components/ui/select';
 import { valibotResolver } from '@hookform/resolvers/valibot';
-import { object, picklist, string } from 'valibot';
+import { check, minLength, object, picklist, pipe, string, trim } from 'valibot';
 
 const CreateTag = graphql(`
   mutation createTag($name: String!, $site: NovelSite!, $siteId: String!) {
@@ -57,6 +57,7 @@ interface CreateTagButtonProps {
 }
 
 export default function CreateTagButton({ refetch }: CreateTagButtonProps) {
+  const t = useI18n();
   const write = useBookmarkWrite('/bookmarks/tags');
   const [createTag] = useMutation(CreateTag);
 
@@ -70,7 +71,12 @@ export default function CreateTagButton({ refetch }: CreateTagButtonProps) {
   } = useForm<FormData>({
     resolver: valibotResolver(
       object({
-        name: string(),
+        name: pipe(
+          string(),
+          trim(),
+          minLength(1, t('request_required')),
+          check((name) => Array.from(name).length <= 20, `${t('request_too_long')} (20)`),
+        ),
         site: picklist(['JJWXC', 'QIDIAN']),
         siteId: string(),
       }),
@@ -87,7 +93,6 @@ export default function CreateTagButton({ refetch }: CreateTagButtonProps) {
 
   // 控制 dialog
   const { open, handleClose, handleOpenChange } = useDialog();
-  const t = useI18n();
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger render={<Button />}>{t('add_tag')}</DialogTrigger>
