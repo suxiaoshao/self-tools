@@ -34,6 +34,21 @@ PostgreSQL 固定为 18.6-bookworm 及对应镜像 digest，使用外部卷 `pos
 
 TLS 证书目录只读挂载到 gateway。`xtask cert` 输出不自动接入该挂载。main upstream 默认是宿主 `3000` 的 portal，collections fallback 的 `3001` 是需要另行提供或覆盖的外部前置条件；服务健康不代表前端已经启动。
 
+## 可选追踪导出
+
+默认无需追踪后端，五个业务服务均启用 SDK 上下文和安全 JSON stdout 日志，可按 X-Request-ID 关联。
+[示例配置](compose/.env.example) 的 OTEL_EXPORTER_OTLP_TRACES_ENDPOINT 接收完整
+HTTP/protobuf traces URL（含 /v1/traces）；空值不创建 exporter。
+OTEL_EXPORTER_OTLP_TRACES_HEADERS 使用 SDK 的 key=value 逗号分隔格式，可包含认证信息，
+只发给 exporter，不打印。OTEL_EXPORTER_OTLP_TRACES_TIMEOUT 单位毫秒，默认 3000。
+OTEL_TRACES_SAMPLER 支持 parentbased_always_on（默认）、parentbased_always_off、
+parentbased_traceidratio；比例模式用 OTEL_TRACES_SAMPLER_ARG 指定 0–1。
+
+这些键只作为五服务的可选 environment，不属于 x-required-env，不影响 readiness；
+xtask 按现有 null 环境键规则读取，无值时不注入。不增加容器、端口、volume 或追踪后端。
+错误配置阻止服务启动，运行中导出故障不改变业务响应；批处理有界，停止时 SDK 最多等待 5 秒。
+集中调用树需要自行提供 OTLP 后端。
+
 ## 构建、迁移与部署
 
 `cargo run -p xtask -- build --tag <release>` 使用共享 `docker/docker-bake.hcl`、Buildx 和根 `.dockerignore` 构建，Rust builder 从仓库源码一并构建。CI 同时发布 latest 与提交 SHA 标签；部署回退应记录并使用明确的 image ID/digest 或提交标签，不依赖 latest 指向旧版本。Compose 的 image 字段是运行版本事实源。

@@ -47,24 +47,42 @@ pub fn validate_request(
     }
     Ok(())
 }
-pub fn cookie(headers: &HeaderMap, name: &str) -> Result<Option<String>, Rejected> {
+fn cookie(headers: &HeaderMap, name: &str) -> Result<Option<String>, Rejected> {
     let mut result = None;
     for header in headers.get_all("cookie") {
         for pair in header.to_str().map_err(|_| Rejected)?.split(';') {
-            let Some((key, value)) = pair.trim().split_once('=') else {
+            let pair = pair.trim();
+            let Some((key, value)) = pair.split_once('=') else {
+                if pair == name {
+                    return Err(Rejected);
+                }
                 continue;
             };
             if key != name {
                 continue;
             }
-            if result.is_some() || URL_SAFE_NO_PAD.decode(value).map_err(|_| Rejected)?.len() != 32
-            {
+            if result.is_some() {
                 return Err(Rejected);
             }
             result = Some(value.to_owned());
         }
     }
     Ok(result)
+}
+/// A session token is opaque here. The auth owner decides whether it authenticates;
+/// malformed credentials must not prevent a browser from logging in again.
+pub fn session_cookie(headers: &HeaderMap) -> Result<Option<String>, Rejected> {
+    cookie(headers, SESSION_COOKIE)
+}
+/// Ceremony binding is protocol state, so its canonical encoding remains mandatory.
+pub fn ceremony_cookie(headers: &HeaderMap) -> Result<Option<String>, Rejected> {
+    let token = cookie(headers, CEREMONY_COOKIE)?;
+    if let Some(token) = &token
+        && URL_SAFE_NO_PAD.decode(token).map_err(|_| Rejected)?.len() != 32
+    {
+        return Err(Rejected);
+    }
+    Ok(token)
 }
 pub fn set_cookie(name: &str, token: &str, max_age: i64) -> String {
     format!(
@@ -119,7 +137,7 @@ mod tests {
         assert!(validate_request(&h, &Method::POST, origin).is_err());
     }
     #[test]
-    fn cookies_are_canonical_and_unique() {
+    fn session_cookies_are_opaque_and_unique() {
         let token = URL_SAFE_NO_PAD.encode([7; 32]);
         let mut h = HeaderMap::new();
         h.insert(
@@ -128,7 +146,7 @@ mod tests {
                 .parse()
                 .unwrap(),
         );
-        assert_eq!(cookie(&h, SESSION_COOKIE).unwrap(), Some(token.clone()));
+        assert_eq!(session_cookie(&h).unwrap(), Some(token.clone()));
         assert_eq!(forwarded_cookies(&h, false, false).unwrap(), "theme=dark");
         assert!(
             !forwarded_cookies(&h, true, false)
@@ -139,11 +157,47 @@ mod tests {
             "cookie",
             format!("{SESSION_COOKIE}={token}").parse().unwrap(),
         );
-        assert!(cookie(&h, SESSION_COOKIE).is_err());
+        assert!(session_cookie(&h).is_err());
         h.insert(
             "cookie",
             format!("{SESSION_COOKIE}={token}=").parse().unwrap(),
         );
-        assert!(cookie(&h, SESSION_COOKIE).is_err());
+        assert_eq!(session_cookie(&h).unwrap(), Some(format!("{token}=")));
+        for raw in ["", "legacy.jwt.token", "abc", "===="] {
+            h.insert("cookie", format!("{SESSION_COOKIE}={raw}").parse().unwrap());
+            assert_eq!(session_cookie(&h).unwrap(), Some(raw.into()));
+            h.append(
+                "cookie",
+                format!("{SESSION_COOKIE}={token}").parse().unwrap(),
+            );
+            assert!(session_cookie(&h).is_err());
+        }
+        h.insert("cookie", SESSION_COOKIE.parse().unwrap());
+        assert!(session_cookie(&h).is_err());
+    }
+
+    #[test]
+    fn ceremony_cookies_remain_canonical_and_unique() {
+        let token = URL_SAFE_NO_PAD.encode([7; 32]);
+        let mut h = HeaderMap::new();
+        for raw in ["", "legacy.jwt.token", "abc", &format!("{token}=")] {
+            h.insert(
+                "cookie",
+                format!("{CEREMONY_COOKIE}={raw}").parse().unwrap(),
+            );
+            assert!(ceremony_cookie(&h).is_err());
+        }
+        h.insert(
+            "cookie",
+            format!("{CEREMONY_COOKIE}={token}").parse().unwrap(),
+        );
+        assert_eq!(ceremony_cookie(&h).unwrap(), Some(token.clone()));
+        h.append(
+            "cookie",
+            format!("{CEREMONY_COOKIE}={token}").parse().unwrap(),
+        );
+        assert!(ceremony_cookie(&h).is_err());
+        h.insert("cookie", CEREMONY_COOKIE.parse().unwrap());
+        assert!(ceremony_cookie(&h).is_err());
     }
 }

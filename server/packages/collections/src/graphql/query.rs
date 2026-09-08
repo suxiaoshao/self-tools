@@ -1,102 +1,91 @@
-/*
- * @Author: suxiaoshao suxiaoshao@gmail.com
- * @Date: 2024-01-06 01:30:13
- * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-02-20 16:24:41
- * @FilePath: /self-tools/server/packages/collections/src/graphql/query.rs
- */
-use super::{guard::AuthGuard, types::CollectionItemQuery};
-use crate::{
-    errors::{GraphqlError, GraphqlResult},
-    model::PgPool,
-    service::{
-        collection::{Collection, CollectionQueryRunner, ItemAndCollectionList},
-        item::{Item, ItemList, ItemQueryRunner, ItemRunner},
-    },
+use super::{
+    error::{detail, pool, read_error, with_conn},
+    guard::AuthGuard,
+    types::*,
 };
-use async_graphql::{Context, Object};
-use graphql_common::{Pagination, QueryStack, Queryable, TagMatch, TagMatchValidator};
-use tracing::{Level, event};
-
+use crate::service::{
+    collection::{Collection as CollectionService, CollectionQueryRunner},
+    item::{Item as ItemService, ItemQueryRunner, ItemRunner},
+};
+use async_graphql::{Context, Object, Result};
+use graphql_common::{Pagination, TagMatch};
+use service_query::{QueryStack, Queryable, TagFilter};
 pub(crate) struct QueryRoot;
-
 #[Object]
 impl QueryRoot {
-    /// 获取所有集合
     #[graphql(guard = "AuthGuard")]
-    async fn all_collections(&self, context: &Context<'_>) -> GraphqlResult<Vec<Collection>> {
-        let conn = &mut context
-            .data::<PgPool>()
-            .map_err(|_| {
-                event!(Level::WARN, "graphql context data PgPool 不存在");
-                GraphqlError::NotGraphqlContextData("PgPool")
-            })?
-            .get()?;
-        let directory = Collection::all_collections(conn)?;
-        Ok(directory)
+    async fn all_collections(&self, ctx: &Context<'_>) -> Result<Vec<Collection>> {
+        with_conn(ctx, CollectionService::all_collections)
+            .map(|v| v.into_iter().map(Collection).collect())
     }
-    /// 获取目录详情
     #[graphql(guard = "AuthGuard")]
-    async fn get_collection(&self, context: &Context<'_>, id: i64) -> GraphqlResult<Collection> {
-        let conn = &mut context
-            .data::<PgPool>()
-            .map_err(|_| {
-                event!(Level::WARN, "graphql context data PgPool 不存在");
-                GraphqlError::NotGraphqlContextData("PgPool")
-            })?
-            .get()?;
-        let collection = Collection::get(id, conn)?;
-        Ok(collection)
+    async fn get_collection(&self, ctx: &Context<'_>, id: i64) -> Result<Option<Collection>> {
+        with_conn(ctx, |conn| detail(CollectionService::get(id, conn))).map(|v| v.map(Collection))
     }
-    /// 获取记录详情
     #[graphql(guard = "AuthGuard")]
-    async fn get_item(&self, context: &Context<'_>, id: i64) -> GraphqlResult<Item> {
-        let conn = &mut context
-            .data::<PgPool>()
-            .map_err(|_| {
-                event!(Level::WARN, "graphql context data PgPool 不存在");
-                GraphqlError::NotGraphqlContextData("PgPool")
-            })?
-            .get()?;
-        let item = Item::get(id, conn)?;
-        Ok(item)
+    async fn get_item(&self, ctx: &Context<'_>, id: i64) -> Result<Option<Item>> {
+        with_conn(ctx, |conn| detail(ItemService::get(id, conn))).map(|v| v.map(Item))
     }
-    /// 获取集合下的集合和记录
     #[graphql(guard = "AuthGuard")]
     async fn collection_and_item(
         &self,
-        context: &Context<'_>,
+        ctx: &Context<'_>,
         query: CollectionItemQuery,
-    ) -> GraphqlResult<ItemAndCollectionList> {
-        let conn = context.data::<PgPool>().map_err(|_| {
-            event!(Level::WARN, "graphql context data PgPool 不存在");
-            GraphqlError::NotGraphqlContextData("PgPool")
-        })?;
-        let (collection_runner, item_runner) = tokio::try_join!(
+    ) -> Result<ItemAndCollectionList> {
+        let query = query.checked()?;
+        if let Some(id) = query.id {
+            crate::errors::validate_id(id, "query.id").map_err(read_error)?;
+        }
+        let conn = pool(ctx)?;
+        let (collections, items) = tokio::try_join!(
             CollectionQueryRunner::new(query, conn.clone()),
-            ItemQueryRunner::new(query, conn.clone()),
-        )?;
-        let runner = QueryStack::new(collection_runner).add_query(item_runner);
-        let (data, total) = tokio::try_join!(runner.query(query.pagination), runner.len())?;
-        Ok(ItemAndCollectionList::new(data, total))
+            ItemQueryRunner::new(query, conn.clone())
+        )
+        .map_err(read_error)?;
+        let runner = QueryStack::new(collections).add_query(items);
+        let (data, total) =
+            tokio::try_join!(runner.query(query.pagination), runner.len()).map_err(read_error)?;
+        Ok(ItemAndCollectionList::new(
+            data.into_iter().map(Into::into).collect(),
+            total,
+        ))
     }
-    /// 获取条目列表
     #[graphql(guard = "AuthGuard")]
     async fn query_items(
         &self,
-        context: &Context<'_>,
-        #[graphql(validator(custom = "TagMatchValidator"))] collection_match: Option<TagMatch>,
+        ctx: &Context<'_>,
+        collection_match: Option<TagMatch>,
         pagination: Pagination,
-    ) -> GraphqlResult<ItemList> {
-        let conn = context
-            .data::<PgPool>()
-            .map_err(|_| {
-                event!(Level::WARN, "graphql context data PgPool 不存在");
-                GraphqlError::NotGraphqlContextData("PgPool")
-            })?
-            .clone();
-        let runner = ItemRunner::new(collection_match, conn)?;
-        let (data, total) = tokio::try_join!(runner.query(pagination), runner.len())?;
-        Ok(ItemList::new(data, total))
+    ) -> Result<ItemList> {
+        let pagination = pagination.checked().map_err(|mut v| {
+            v.path.insert(0, "pagination".into());
+            graphql_common::invalid_fields(vec![v])
+        })?;
+        if let Some(filter) = &collection_match {
+            if filter.match_set.is_empty() {
+                return Err(graphql_common::invalid_fields(vec![
+                    service_errors::FieldViolation {
+                        path: vec!["collectionMatch".into(), "matchSet".into()],
+                        code: service_errors::ValidationCode::Required,
+                        min: Some(1),
+                        max: None,
+                    },
+                ]));
+            }
+            for id in &filter.match_set {
+                crate::errors::validate_id(*id, "collectionMatch.matchSet").map_err(read_error)?;
+            }
+        }
+        let runner = ItemRunner::new(
+            collection_match.map(|v| TagFilter {
+                match_set: v.match_set,
+                full_match: v.full_match,
+            }),
+            pool(ctx)?.clone(),
+        )
+        .map_err(read_error)?;
+        let (data, total) =
+            tokio::try_join!(runner.query(pagination), runner.len()).map_err(read_error)?;
+        Ok(ItemList::new(data.into_iter().map(Item).collect(), total))
     }
 }

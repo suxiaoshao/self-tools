@@ -6,6 +6,9 @@ edition.workspace = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+service-errors = { workspace = true, features = ["database"] }
+service-query.workspace = true
+telemetry.workspace = true
 service-health = { workspace = true, features = ["database", "auth"] }
 diesel_migrations.workspace = true
 # runtime
@@ -34,7 +37,7 @@ anyhow.workspace = true
 thiserror.workspace = true
 
 # cors
-middleware = { workspace = true, features = ["auth-http", "cors", "trace", "graphql-trace"] }
+middleware = { workspace = true, features = ["public-errors", "auth-http", "cors", "trace", "graphql-trace"] }
 
 # log
 tracing.workspace = true

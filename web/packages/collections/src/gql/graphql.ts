@@ -11,10 +11,14 @@ export type CollectionItemQuery = {
   updateTime?: TimeRange | null | undefined;
 };
 
+export type ConflictReason = 'COLLECTION_PATH_EXISTS' | 'MEMBERSHIP_EXISTS';
+
 export type Pagination = {
   page?: number;
   pageSize?: number;
 };
+
+export type ResourceKind = 'COLLECTION' | 'ITEM';
 
 export type TagMatch = {
   fullMatch: boolean;
@@ -25,6 +29,8 @@ export type TimeRange = {
   end: string;
   start: string;
 };
+
+export type ValidationCode = 'INVALID_FORMAT' | 'OUT_OF_RANGE' | 'REQUIRED' | 'TOO_LONG';
 
 export type AllCollectionsQueryVariables = Exact<{ [key: string]: never }>;
 
@@ -44,19 +50,35 @@ export type DeleteCollectionMutationVariables = Exact<{
   id: number;
 }>;
 
-export type DeleteCollectionMutation = { deleteCollection: { path: string } };
+export type DeleteCollectionMutation = {
+  deleteCollection:
+    | { __typename: 'ResourceDeleted'; resource: { kind: ResourceKind; id: number } }
+    | {
+        __typename: 'ValidationFailure';
+        issues: Array<{ path: Array<string>; code: ValidationCode; min: number | null; max: number | null }>;
+      };
+};
 
 export type DeleteItemMutationVariables = Exact<{
   id: number;
 }>;
 
-export type DeleteItemMutation = { deleteItem: { name: string } };
+export type DeleteItemMutation = {
+  deleteItem:
+    | { __typename: 'ResourceDeleted'; resource: { kind: ResourceKind; id: number } }
+    | {
+        __typename: 'ValidationFailure';
+        issues: Array<{ path: Array<string>; code: ValidationCode; min: number | null; max: number | null }>;
+      };
+};
 
 export type GetEditItemQueryVariables = Exact<{
   id: number;
 }>;
 
-export type GetEditItemQuery = { getItem: { name: string; content: string; collections: Array<{ id: number }> } };
+export type GetEditItemQuery = {
+  getItem: { name: string; content: string; collections: Array<{ id: number }> | null } | null;
+};
 
 export type UpdateCollectionMutationVariables = Exact<{
   id: number;
@@ -64,7 +86,16 @@ export type UpdateCollectionMutationVariables = Exact<{
   description?: string | null | undefined;
 }>;
 
-export type UpdateCollectionMutation = { updateCollection: { path: string } };
+export type UpdateCollectionMutation = {
+  updateCollection:
+    | { __typename: 'CollectionSaved'; collectionId: number }
+    | { __typename: 'Conflict'; reason: ConflictReason; resources: Array<{ kind: ResourceKind; id: number }> }
+    | { __typename: 'MissingResources'; resources: Array<{ kind: ResourceKind; id: number }> }
+    | {
+        __typename: 'ValidationFailure';
+        issues: Array<{ path: Array<string>; code: ValidationCode; min: number | null; max: number | null }>;
+      };
+};
 
 export type UpdateItemMutationVariables = Exact<{
   id: number;
@@ -72,14 +103,22 @@ export type UpdateItemMutationVariables = Exact<{
   content: string;
 }>;
 
-export type UpdateItemMutation = { updateItem: { id: number; name: string; content: string } };
+export type UpdateItemMutation = {
+  updateItem:
+    | { __typename: 'ItemSaved'; itemId: number }
+    | { __typename: 'MissingResources'; resources: Array<{ kind: ResourceKind; id: number }> }
+    | {
+        __typename: 'ValidationFailure';
+        issues: Array<{ path: Array<string>; code: ValidationCode; min: number | null; max: number | null }>;
+      };
+};
 
 export type GetCollectionAncestorsQueryVariables = Exact<{
   id: number;
 }>;
 
 export type GetCollectionAncestorsQuery = {
-  getCollection: { id: number; name: string; ancestors: Array<{ id: number; name: string }> };
+  getCollection: { id: number; name: string; ancestors: Array<{ id: number; name: string }> | null } | null;
 };
 
 export type CreateCollectionMutationVariables = Exact<{
@@ -88,7 +127,16 @@ export type CreateCollectionMutationVariables = Exact<{
   description?: string | null | undefined;
 }>;
 
-export type CreateCollectionMutation = { createCollection: { path: string } };
+export type CreateCollectionMutation = {
+  createCollection:
+    | { __typename: 'CollectionSaved'; collectionId: number }
+    | { __typename: 'Conflict'; reason: ConflictReason; resources: Array<{ kind: ResourceKind; id: number }> }
+    | { __typename: 'MissingResources'; resources: Array<{ kind: ResourceKind; id: number }> }
+    | {
+        __typename: 'ValidationFailure';
+        issues: Array<{ path: Array<string>; code: ValidationCode; min: number | null; max: number | null }>;
+      };
+};
 
 export type CreateItemMutationVariables = Exact<{
   collectionIds: Array<number> | number;
@@ -96,7 +144,15 @@ export type CreateItemMutationVariables = Exact<{
   content: string;
 }>;
 
-export type CreateItemMutation = { createItem: { name: string } };
+export type CreateItemMutation = {
+  createItem:
+    | { __typename: 'ItemSaved'; itemId: number }
+    | { __typename: 'MissingResources'; resources: Array<{ kind: ResourceKind; id: number }> }
+    | {
+        __typename: 'ValidationFailure';
+        issues: Array<{ path: Array<string>; code: ValidationCode; min: number | null; max: number | null }>;
+      };
+};
 
 export type CollectionAndItemsQueryVariables = Exact<{
   query: CollectionItemQuery;
@@ -125,7 +181,21 @@ export type AddCollectionForItemMutationVariables = Exact<{
   collectionId: number;
 }>;
 
-export type AddCollectionForItemMutation = { addCollectionForItem: { id: number } };
+export type AddCollectionForItemMutation = {
+  addCollectionForItem:
+    | {
+        __typename: 'CollectionMembershipChanged';
+        collectionId: number;
+        present: boolean;
+        resource: { kind: ResourceKind; id: number };
+      }
+    | { __typename: 'Conflict'; reason: ConflictReason; resources: Array<{ kind: ResourceKind; id: number }> }
+    | { __typename: 'MissingResources'; resources: Array<{ kind: ResourceKind; id: number }> }
+    | {
+        __typename: 'ValidationFailure';
+        issues: Array<{ path: Array<string>; code: ValidationCode; min: number | null; max: number | null }>;
+      };
+};
 
 export type GetItemQueryVariables = Exact<{
   id: number;
@@ -138,8 +208,8 @@ export type GetItemQuery = {
     content: string;
     createTime: string;
     updateTime: string;
-    collections: Array<{ id: number; name: string; path: string; description: string | null }>;
-  };
+    collections: Array<{ id: number; name: string; path: string; description: string | null }> | null;
+  } | null;
 };
 
 export type DeleteCollectionForItemMutationVariables = Exact<{
@@ -147,7 +217,19 @@ export type DeleteCollectionForItemMutationVariables = Exact<{
   itemId: number;
 }>;
 
-export type DeleteCollectionForItemMutation = { deleteCollectionForItem: { id: number } };
+export type DeleteCollectionForItemMutation = {
+  deleteCollectionForItem:
+    | {
+        __typename: 'CollectionMembershipChanged';
+        collectionId: number;
+        present: boolean;
+        resource: { kind: ResourceKind; id: number };
+      }
+    | {
+        __typename: 'ValidationFailure';
+        issues: Array<{ path: Array<string>; code: ValidationCode; min: number | null; max: number | null }>;
+      };
+};
 
 export type GetItemsQueryVariables = Exact<{
   collectionMatch?: TagMatch | null | undefined;
@@ -159,6 +241,22 @@ export type GetItemsQuery = {
     total: number;
     data: Array<{ id: number; name: string; content: string; createTime: string; updateTime: string }>;
   };
+};
+
+export type ReadItemStateQueryVariables = Exact<{
+  id: number;
+}>;
+
+export type ReadItemStateQuery = {
+  getItem: { id: number; name: string; content: string; collections: Array<{ id: number }> | null } | null;
+};
+
+export type ReadCollectionStateQueryVariables = Exact<{
+  id: number;
+}>;
+
+export type ReadCollectionStateQuery = {
+  getCollection: { id: number; name: string; description: string | null } | null;
 };
 
 export const AllCollectionsDocument = {
@@ -221,7 +319,51 @@ export const DeleteCollectionDocument = {
             ],
             selectionSet: {
               kind: 'SelectionSet',
-              selections: [{ kind: 'Field', name: { kind: 'Name', value: 'path' } }],
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'ResourceDeleted' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'resource' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'ValidationFailure' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'issues' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'path' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'min' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'max' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
             },
           },
         ],
@@ -258,7 +400,51 @@ export const DeleteItemDocument = {
             ],
             selectionSet: {
               kind: 'SelectionSet',
-              selections: [{ kind: 'Field', name: { kind: 'Name', value: 'name' } }],
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'ResourceDeleted' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'resource' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'ValidationFailure' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'issues' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'path' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'min' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'max' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
             },
           },
         ],
@@ -363,7 +549,80 @@ export const UpdateCollectionDocument = {
             ],
             selectionSet: {
               kind: 'SelectionSet',
-              selections: [{ kind: 'Field', name: { kind: 'Name', value: 'path' } }],
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'CollectionSaved' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [{ kind: 'Field', name: { kind: 'Name', value: 'collectionId' } }],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'ValidationFailure' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'issues' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'path' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'min' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'max' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'MissingResources' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'resources' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Conflict' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'reason' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'resources' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
             },
           },
         ],
@@ -421,9 +680,57 @@ export const UpdateItemDocument = {
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'content' } },
+                { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'ItemSaved' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [{ kind: 'Field', name: { kind: 'Name', value: 'itemId' } }],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'ValidationFailure' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'issues' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'path' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'min' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'max' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'MissingResources' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'resources' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
               ],
             },
           },
@@ -532,7 +839,80 @@ export const CreateCollectionDocument = {
             ],
             selectionSet: {
               kind: 'SelectionSet',
-              selections: [{ kind: 'Field', name: { kind: 'Name', value: 'path' } }],
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'CollectionSaved' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [{ kind: 'Field', name: { kind: 'Name', value: 'collectionId' } }],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'ValidationFailure' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'issues' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'path' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'min' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'max' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'MissingResources' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'resources' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Conflict' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'reason' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'resources' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
             },
           },
         ],
@@ -595,7 +975,59 @@ export const CreateItemDocument = {
             ],
             selectionSet: {
               kind: 'SelectionSet',
-              selections: [{ kind: 'Field', name: { kind: 'Name', value: 'name' } }],
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'ItemSaved' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [{ kind: 'Field', name: { kind: 'Name', value: 'itemId' } }],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'ValidationFailure' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'issues' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'path' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'min' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'max' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'MissingResources' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'resources' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
             },
           },
         ],
@@ -723,7 +1155,94 @@ export const AddCollectionForItemDocument = {
             ],
             selectionSet: {
               kind: 'SelectionSet',
-              selections: [{ kind: 'Field', name: { kind: 'Name', value: 'id' } }],
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'CollectionMembershipChanged' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'collectionId' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'resource' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                          ],
+                        },
+                      },
+                      { kind: 'Field', name: { kind: 'Name', value: 'present' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'ValidationFailure' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'issues' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'path' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'min' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'max' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'MissingResources' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'resources' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Conflict' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'reason' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'resources' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
             },
           },
         ],
@@ -826,7 +1345,53 @@ export const DeleteCollectionForItemDocument = {
             ],
             selectionSet: {
               kind: 'SelectionSet',
-              selections: [{ kind: 'Field', name: { kind: 'Name', value: 'id' } }],
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'CollectionMembershipChanged' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'collectionId' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'resource' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                          ],
+                        },
+                      },
+                      { kind: 'Field', name: { kind: 'Name', value: 'present' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'ValidationFailure' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'issues' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'path' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'min' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'max' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
             },
           },
         ],
@@ -897,3 +1462,93 @@ export const GetItemsDocument = {
     },
   ],
 } as unknown as DocumentNode<GetItemsQuery, GetItemsQueryVariables>;
+export const ReadItemStateDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'ReadItemState' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+          type: { kind: 'NonNullType', type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'getItem' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'id' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'content' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'collections' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [{ kind: 'Field', name: { kind: 'Name', value: 'id' } }],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ReadItemStateQuery, ReadItemStateQueryVariables>;
+export const ReadCollectionStateDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'ReadCollectionState' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+          type: { kind: 'NonNullType', type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'getCollection' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'id' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ReadCollectionStateQuery, ReadCollectionStateQueryVariables>;

@@ -486,7 +486,25 @@ mod tests {
             assert!(service.env_file.as_slice().is_empty());
         }
         let login = &compose.services["login"];
-        assert_eq!(login.environment.len(), 1);
+        assert_eq!(login.environment.len(), 6);
+        for name in ["web", "login", "auth", "bookmarks", "collections"] {
+            let service = &compose.services[name];
+            for key in [
+                "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT",
+                "OTEL_EXPORTER_OTLP_TRACES_HEADERS",
+                "OTEL_EXPORTER_OTLP_TRACES_TIMEOUT",
+                "OTEL_TRACES_SAMPLER",
+                "OTEL_TRACES_SAMPLER_ARG",
+            ] {
+                assert_eq!(service.environment.get(key), Some(&None));
+            }
+            let absent =
+                resolve_environment(&HashMap::new(), std::path::Path::new("."), service, |_| {
+                    None
+                })
+                .unwrap();
+            assert!(absent.keys().all(|key| !key.starts_with("OTEL_")));
+        }
         assert_eq!(login.environment.get("AUTH_ORIGIN"), Some(&None));
     }
 

@@ -148,7 +148,7 @@ Set-Cookie: __Host-st_ceremony=<binding-token>; Path=/; Secure; HttpOnly; SameSi
 Cache-Control: no-store
 ```
 
-session Cookie 只在登录时设置；实际闲置失效由服务器执行，活跃请求无需不断回写 Cookie。退出使用相同属性和 Max-Age=0。重复的同名 Cookie 或非规范 token 拒绝，不选择第一个绕过检查。
+session Cookie 只在登录时设置；实际闲置失效由服务器执行，活跃请求无需不断回写 Cookie。退出使用相同属性和 Max-Age=0。重复同名 Cookie 或目标 Cookie 结构损坏仍拒绝，不选择第一个绕过检查。session token 不可用时按未登录处理，正常登录可替换它；ceremony token 继续严格拒绝非规范值。具体恢复边界见 [#98 API 契约](../issue-98/api.md)。
 
 gateway 仅向三个指定 API upstream 传递所需认证 Cookie，其他前端、图片和遗留 upstream 移除这两个 Cookie；旧 Authorization 不再用于认证。auth 临时 Cookie 仅转发给 login。禁止这些 API 响应缓存；gateway 本身不验证 session。
 

@@ -8,6 +8,7 @@ use reqwest::{
     dns::{Addrs, Name, Resolve, Resolving},
 };
 use std::{io, net::SocketAddr, sync::Arc, time::Duration};
+use tracing::Instrument;
 
 pub(super) const MAX_IMAGE_BYTES: usize = 5 * 1024 * 1024;
 pub(super) const TOTAL_TIMEOUT: Duration = Duration::from_secs(10);
@@ -59,15 +60,20 @@ pub(super) async fn download_image(
     client: &Client,
     target: &ImageTarget,
 ) -> Result<ImagePayload, ImageProxyError> {
-    tokio::time::timeout(TOTAL_TIMEOUT, async {
-        let response = client
-            .get(target.url().clone())
-            .header(reqwest::header::ACCEPT_ENCODING, "identity")
-            .send()
-            .await
-            .map_err(network_error)?;
-        read_image(response).await
-    })
+    let span = tracing::info_span!(target:"telemetry","image.http",otel.kind="client");
+    tokio::time::timeout(
+        TOTAL_TIMEOUT,
+        async {
+            let response = client
+                .get(target.url().clone())
+                .header(reqwest::header::ACCEPT_ENCODING, "identity")
+                .send()
+                .await
+                .map_err(network_error)?;
+            read_image(response).await
+        }
+        .instrument(span),
+    )
     .await
     .map_err(|_| ImageProxyError::UpstreamTimeout)?
 }

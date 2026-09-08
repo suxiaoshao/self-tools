@@ -1,162 +1,38 @@
-use super::chapter::Chapter;
-use super::collection::Collection;
 use super::utils::{find_all_children, find_all_novel_by_collection};
-use super::{author::Author, tag::Tag};
 use crate::model::author::AuthorModel;
 use crate::model::chapter::{ChapterModel, NewChapter, UpdateChapterModel};
 use crate::model::collection_novel::CollectionNovelModel;
 use crate::model::novel::UpdateNovelModel;
-use crate::model::novel_comment::NovelCommentModel;
 use crate::model::read_record::{NewReadRecord, ReadRecordModel};
 use crate::model::{
     PgPool,
     novel::{NewNovel, NovelModel},
 };
 use crate::model::{collection::CollectionModel, schema::custom_type::NovelSite, tag::TagModel};
-use crate::service::novel_comment::NovelComment;
 use crate::{
-    errors::{GraphqlError, GraphqlResult},
+    errors::{AppError, AppResult},
     model::schema::custom_type::NovelStatus,
 };
-use async_graphql::{ComplexObject, Context, InputObject, SimpleObject};
+
 use diesel::PgConnection;
-use graphql_common::{DateTime, Queryable, TagMatch};
-use novel_crawler::{JJNovel, NovelFn, QDNovel};
+use novel_crawler::{ChapterFn, NovelFn};
+use service_query::{Queryable, TagFilter};
 use std::collections::HashSet;
 use time::OffsetDateTime;
-use tracing::{Level, event};
 
-#[derive(SimpleObject, Clone)]
-#[graphql(complex)]
+#[derive(Clone)]
 pub(crate) struct Novel {
     pub(crate) id: i64,
     pub(crate) name: String,
     pub(crate) avatar: String,
     pub(crate) description: String,
-    #[graphql(skip)]
     pub(crate) author_id: i64,
     pub(crate) novel_status: NovelStatus,
     pub(crate) site: NovelSite,
     pub(crate) site_id: String,
-    #[graphql(skip)]
     pub(crate) tags: Vec<i64>,
-    pub(crate) create_time: DateTime,
-    pub(crate) update_time: DateTime,
-}
-
-#[ComplexObject]
-impl Novel {
-    async fn author(&self, context: &Context<'_>) -> GraphqlResult<Author> {
-        let conn = &mut context
-            .data::<PgPool>()
-            .map_err(|_| {
-                event!(Level::WARN, "graphql context data PgPool 不存在");
-                GraphqlError::NotGraphqlContextData("PgPool")
-            })?
-            .get()?;
-        let author = Author::get(self.author_id, conn)?;
-        Ok(author)
-    }
-
-    async fn tags(&self, context: &Context<'_>) -> GraphqlResult<Vec<Tag>> {
-        let conn = &mut context
-            .data::<PgPool>()
-            .map_err(|_| {
-                event!(Level::WARN, "graphql context data PgPool 不存在");
-                GraphqlError::NotGraphqlContextData("PgPool")
-            })?
-            .get()?;
-        let tags = Tag::get_by_ids(&self.tags, conn)?;
-        Ok(tags)
-    }
-
-    /// 获取小说章节
-    async fn chapters(&self, context: &Context<'_>) -> GraphqlResult<Vec<super::chapter::Chapter>> {
-        let conn = &mut context
-            .data::<PgPool>()
-            .map_err(|_| {
-                event!(Level::WARN, "graphql context data PgPool 不存在");
-                GraphqlError::NotGraphqlContextData("PgPool")
-            })?
-            .get()?;
-        super::chapter::Chapter::get_by_novel_id(self.id, &self.site_id, conn)
-    }
-    async fn url(&self) -> String {
-        match self.site {
-            NovelSite::Jjwxc => JJNovel::get_url_from_id(&self.site_id),
-            NovelSite::Qidian => QDNovel::get_url_from_id(&self.site_id),
-        }
-    }
-    async fn word_count(&self, context: &Context<'_>) -> GraphqlResult<bigdecimal::BigDecimal> {
-        let conn = &mut context
-            .data::<PgPool>()
-            .map_err(|_| {
-                event!(Level::WARN, "graphql context data PgPool 不存在");
-                GraphqlError::NotGraphqlContextData("PgPool")
-            })?
-            .get()?;
-        let word_count = ChapterModel::get_word_count_by_novel_id(self.id, conn)?;
-        Ok(word_count)
-    }
-    ///  最新章节
-    async fn last_chapter(&self, context: &Context<'_>) -> GraphqlResult<Option<Chapter>> {
-        let conn = &mut context
-            .data::<PgPool>()
-            .map_err(|_| {
-                event!(Level::WARN, "graphql context data PgPool 不存在");
-                GraphqlError::NotGraphqlContextData("PgPool")
-            })?
-            .get()?;
-        let chapter = ChapterModel::get_last_chapter_by_novel_id(self.id, conn)?;
-        Ok(chapter.map(|x| Chapter::from(x, self.site_id.to_owned())))
-    }
-    /// 最老章节
-    async fn first_chapter(&self, context: &Context<'_>) -> GraphqlResult<Option<Chapter>> {
-        let conn = &mut context
-            .data::<PgPool>()
-            .map_err(|_| {
-                event!(Level::WARN, "graphql context data PgPool 不存在");
-                GraphqlError::NotGraphqlContextData("PgPool")
-            })?
-            .get()?;
-        let chapter = ChapterModel::get_first_chapter_by_novel_id(self.id, conn)?;
-        Ok(chapter.map(|x| Chapter::from(x, self.site_id.to_owned())))
-    }
-    /// 集合列表
-    async fn collections(&self, context: &Context<'_>) -> GraphqlResult<Vec<Collection>> {
-        let conn = &mut context
-            .data::<PgPool>()
-            .map_err(|_| {
-                event!(Level::WARN, "graphql context data PgPool 不存在");
-                GraphqlError::NotGraphqlContextData("PgPool")
-            })?
-            .get()?;
-        Collection::many_by_novel_id(self.id, conn)
-    }
-    /// 阅读百分比
-    async fn read_percentage(&self, context: &Context<'_>) -> GraphqlResult<f64> {
-        let conn = &mut context
-            .data::<PgPool>()
-            .map_err(|_| {
-                event!(Level::WARN, "graphql context data PgPool 不存在");
-                GraphqlError::NotGraphqlContextData("PgPool")
-            })?
-            .get()?;
-        let read_percentage = ReadRecordModel::read_percentage_by_novel_id(self.id, conn)?;
-        Ok(read_percentage)
-    }
-    /// 评论
-    async fn comments(&self, context: &Context<'_>) -> GraphqlResult<Option<NovelComment>> {
-        let conn = &mut context
-            .data::<PgPool>()
-            .map_err(|_| {
-                event!(Level::WARN, "graphql context data PgPool 不存在");
-                GraphqlError::NotGraphqlContextData("PgPool")
-            })?
-            .get()?;
-        let comments = NovelCommentModel::find_by_novel_id(self.id, conn)?;
-        Ok(comments.map(Into::into))
-    }
+    pub(crate) create_time: time::OffsetDateTime,
+    pub(crate) update_time: time::OffsetDateTime,
 }
 
 impl From<NovelModel> for Novel {
@@ -168,8 +44,8 @@ impl From<NovelModel> for Novel {
             avatar: value.avatar,
             description: value.description,
             tags: value.tags,
-            create_time: value.create_time.into(),
-            update_time: value.update_time.into(),
+            create_time: value.create_time,
+            update_time: value.update_time,
             novel_status: value.novel_status,
             site: value.site,
             site_id: value.site_id,
@@ -211,24 +87,35 @@ impl<'a, T: NovelFn> From<(&'a Novel, &'a T)> for UpdateNovelModel<'a> {
 
 impl Novel {
     /// 删除小说
-    pub(crate) fn delete(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
+    pub(crate) fn delete(id: i64, conn: &mut PgConnection) -> AppResult<i64> {
+        crate::errors::validate_id(id, "id")?;
+        super::write(conn, |conn| {
+            Self::delete_inner(id, conn)?;
+            Ok(id)
+        })
+    }
+    pub(crate) fn delete_inner(id: i64, conn: &mut PgConnection) -> AppResult<()> {
+        use crate::model::schema::{novel_comment, read_record};
+        use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
         if !NovelModel::exists(id, conn)? {
-            event!(Level::WARN, "小说不存在: {}", id);
-            return Err(GraphqlError::NotFound("小说", id));
+            return Ok(());
         }
-        let novel = conn.build_transaction().run::<_, GraphqlError, _>(|conn| {
-            let novel = NovelModel::delete(id, conn)?;
-            ChapterModel::delete_by_novel_id(id, conn)?;
-            CollectionNovelModel::delete_by_novel_id(id, conn)?;
-            Ok(novel.into())
-        })?;
-        Ok(novel)
+        diesel::delete(read_record::table.filter(read_record::novel_id.eq(id))).execute(conn)?;
+        diesel::delete(novel_comment::table.filter(novel_comment::novel_id.eq(id)))
+            .execute(conn)?;
+        CollectionNovelModel::delete_by_novel_id(id, conn)?;
+        ChapterModel::delete_by_novel_id(id, conn)?;
+        NovelModel::delete(id, conn)?;
+        Ok(())
     }
     /// 获取小说
-    pub(crate) fn get(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
+    pub(crate) fn get(id: i64, conn: &mut PgConnection) -> AppResult<Self> {
+        crate::errors::validate_id(id, "id")?;
         if !NovelModel::exists(id, conn)? {
-            event!(Level::WARN, "小说不存在: {}", id);
-            return Err(GraphqlError::NotFound("小说", id));
+            return Err(crate::errors::missing(
+                crate::errors::ResourceKind::Novel,
+                id,
+            ));
         }
         let novel = NovelModel::find_one(id, conn)?;
         Ok(novel.into())
@@ -236,33 +123,33 @@ impl Novel {
     /// update by crawler
     pub(crate) async fn update_by_crawler<T: novel_crawler::NovelFn>(
         &self,
-        conn: &mut PgConnection,
-    ) -> GraphqlResult<Self> {
-        let fetch_novel = T::get_novel_data(&self.site_id).await?;
-        let fetch_chapters = fetch_novel.chapters().await?;
-        let update_novel: UpdateNovelModel = (self, &fetch_novel).into();
-        conn.build_transaction().run::<_, GraphqlError, _>(|conn| {
-            // 更新小说
+        pool: PgPool,
+    ) -> AppResult<Self> {
+        let fetch_novel = T::get_novel_data(&self.site_id)
+            .await
+            .map_err(crate::errors::crawler_error)?;
+        let fetch_chapters = fetch_novel
+            .chapters()
+            .await
+            .map_err(crate::errors::crawler_error)?;
+        validate_crawler_chapters(&fetch_novel, &fetch_chapters)?;
+        if fetch_novel.id() != self.site_id {
+            return Err(service_errors::Fault::new(
+                service_errors::FaultKind::Protocol,
+                "crawler_identity",
+                novel_crawler::NovelError::ParseError,
+            )
+            .into());
+        }
+        let mut conn = pool.get()?;
+        super::write(&mut conn, |conn| {
+            let current = Self::get(self.id, conn)?;
+            let update_novel: UpdateNovelModel = (&current, &fetch_novel).into();
             let novel = update_novel.update(conn)?;
-
-            // 获取待更新章节，新章节，删除章节
-            let chapters = ChapterModel::get_by_novel_id(novel.id, conn)?;
-            let (update_chapters, new_chapters, delete_chapter_ids) =
-                UpdateChapterModel::from_novel(
-                    chapters.as_slice(),
-                    fetch_chapters.as_slice(),
-                    novel.id,
-                    novel.author_id,
-                );
-
-            // 更新章节
-            UpdateChapterModel::update_many(update_chapters.as_slice(), conn)?;
-            // 新增章节
-            NewChapter::create_many(new_chapters.as_slice(), conn)?;
-            // 删除章节
-            ChapterModel::delete_by_ids(delete_chapter_ids.as_slice(), conn)?;
+            sync_chapters(&novel, &fetch_chapters, conn)?;
             Ok(novel.into())
         })
+        .map_err(crate::errors::source_conflict)
     }
 }
 
@@ -270,16 +157,16 @@ impl Novel {
 impl Novel {
     /// 选择小说
     pub(crate) fn query(
-        collection_match: Option<TagMatch>,
-        tag_match: Option<TagMatch>,
+        collection_match: Option<TagFilter>,
+        tag_match: Option<TagFilter>,
         novel_status: Option<NovelStatus>,
         conn: &mut PgConnection,
-    ) -> GraphqlResult<Vec<Self>> {
-        if let Some(TagMatch { match_set, .. }) = &collection_match {
+    ) -> AppResult<Vec<Self>> {
+        if let Some(TagFilter { match_set, .. }) = &collection_match {
             // collection 不存在
             CollectionModel::exists_all(match_set, conn)?;
         }
-        if let Some(TagMatch { match_set, .. }) = &tag_match {
+        if let Some(TagFilter { match_set, .. }) = &tag_match {
             // tag 不存在
             TagModel::exists_all(match_set, conn)?;
         }
@@ -287,7 +174,7 @@ impl Novel {
             .into_iter()
             .map(Into::into)
             .collect();
-        if let Some(TagMatch {
+        if let Some(TagFilter {
             match_set,
             full_match,
         }) = collection_match
@@ -347,46 +234,56 @@ impl Novel {
         collection_id: i64,
         novel_id: i64,
         conn: &mut PgConnection,
-    ) -> GraphqlResult<Novel> {
-        if !CollectionModel::exists(collection_id, conn)? {
-            event!(Level::WARN, "目录不存在: {}", collection_id);
-            return Err(GraphqlError::NotFound("目录", collection_id));
-        }
-        if !NovelModel::exists(novel_id, conn)? {
-            event!(Level::WARN, "小说不存在: {}", novel_id);
-            return Err(GraphqlError::NotFound("小说", novel_id));
-        }
-        if CollectionNovelModel::exists(collection_id, novel_id, conn)? {
-            event!(Level::WARN, "小说集合关系存在: {}", novel_id);
-            return Err(GraphqlError::AlreadyExists(format!(
-                "{collection_id}/{novel_id}"
-            )));
-        }
-        CollectionNovelModel::save(collection_id, novel_id, conn)?;
-        let novel = NovelModel::find_one(novel_id, conn)?;
-        Ok(novel.into())
+    ) -> AppResult<()> {
+        use crate::errors::*;
+        validate_id(collection_id, "collectionId")?;
+        validate_id(novel_id, "novelId")?;
+        super::write(conn, |conn| {
+            let mut resources = vec![];
+            if !CollectionModel::exists(collection_id, conn)? {
+                resources.push(ResourceRef {
+                    kind: ResourceKind::Collection,
+                    id: collection_id,
+                });
+            }
+            if !NovelModel::exists(novel_id, conn)? {
+                resources.push(ResourceRef {
+                    kind: ResourceKind::Novel,
+                    id: novel_id,
+                });
+            }
+            if !resources.is_empty() {
+                return Err(service_errors::UseCaseError::Rejected(Rejection::Missing(
+                    resources,
+                )));
+            }
+            if CollectionNovelModel::exists(collection_id, novel_id, conn)? {
+                return Err(conflict(
+                    ConflictReason::Membership,
+                    vec![
+                        ResourceRef {
+                            kind: ResourceKind::Collection,
+                            id: collection_id,
+                        },
+                        ResourceRef {
+                            kind: ResourceKind::Novel,
+                            id: novel_id,
+                        },
+                    ],
+                ));
+            }
+            CollectionNovelModel::save(collection_id, novel_id, conn)
+        })
     }
     /// 删除
     pub(crate) fn delete_collection(
         collection_id: i64,
         novel_id: i64,
         conn: &mut PgConnection,
-    ) -> GraphqlResult<Novel> {
-        if !CollectionModel::exists(collection_id, conn)? {
-            event!(Level::WARN, "目录不存在: {}", collection_id);
-            return Err(GraphqlError::NotFound("目录", collection_id));
-        }
-        if !NovelModel::exists(novel_id, conn)? {
-            event!(Level::WARN, "小说不存在: {}", novel_id);
-            return Err(GraphqlError::NotFound("小说", novel_id));
-        }
-        if !CollectionNovelModel::exists(collection_id, novel_id, conn)? {
-            event!(Level::WARN, "小说集合关系不存在: {}", novel_id);
-            return Err(GraphqlError::NotFound("小说集合关系", collection_id));
-        }
-        CollectionNovelModel::delete(collection_id, novel_id, conn)?;
-        let novel = NovelModel::find_one(novel_id, conn)?;
-        Ok(novel.into())
+    ) -> AppResult<()> {
+        crate::errors::validate_id(collection_id, "collectionId")?;
+        crate::errors::validate_id(novel_id, "novelId")?;
+        CollectionNovelModel::delete(collection_id, novel_id, conn)
     }
 }
 
@@ -397,71 +294,114 @@ impl Novel {
         novel_id: i64,
         chapter_ids: &[i64],
         conn: &mut PgConnection,
-    ) -> GraphqlResult<usize> {
-        let chapter_sets = chapter_ids.iter().copied().collect::<HashSet<_>>();
-        let all_chapter_ids = ChapterModel::get_chapter_ids(novel_id, conn)?
-            .into_iter()
-            .collect::<HashSet<_>>();
-        let read_chapter_ids = ReadRecordModel::read_chapter_ids_by_novel_id(novel_id, conn)?
-            .into_iter()
-            .collect::<HashSet<_>>();
-        // 判断是否存在不存在的 chapter_id
-        let difference = chapter_sets
-            .difference(&all_chapter_ids)
-            .copied()
-            .collect::<Vec<_>>();
-        if !difference.is_empty() {
-            event!(Level::WARN, "输入中有不存在的章节:{:?}", difference);
-            return Err(GraphqlError::NotFoundChapterId(difference));
+    ) -> AppResult<ReadRecordsUpdated> {
+        use crate::errors::*;
+        validate_id(novel_id, "novelId")?;
+        let chapter_ids = checked_chapter_ids(chapter_ids)?;
+        if chapter_ids.is_empty() {
+            return Ok(ReadRecordsUpdated {
+                chapter_ids,
+                changed_count: 0,
+            });
         }
-        // 判断是否存在已经已读的章节
-        let intersection = read_chapter_ids
-            .intersection(&chapter_sets)
-            .copied()
-            .collect::<Vec<_>>();
-        if !intersection.is_empty() {
-            event!(Level::WARN, "输入中有已读的章节:{:?}", intersection);
-            return Err(GraphqlError::AlreadyReadChapterId(intersection));
-        }
-        let now = OffsetDateTime::now_utc();
-        let new_read_records = chapter_ids
-            .iter()
-            .map(|chapter_id| NewReadRecord::new(novel_id, *chapter_id, now))
-            .collect::<Vec<_>>();
-        NewReadRecord::create_many(&new_read_records, conn)
+        super::write(conn, |conn| {
+            if !NovelModel::exists(novel_id, conn)? {
+                return Err(missing(ResourceKind::Novel, novel_id));
+            }
+            let requested = chapter_ids.iter().copied().collect::<HashSet<_>>();
+            let all = ChapterModel::get_chapter_ids(novel_id, conn)?
+                .into_iter()
+                .collect::<HashSet<_>>();
+            let missing = requested
+                .difference(&all)
+                .map(|id| ResourceRef {
+                    kind: ResourceKind::Chapter,
+                    id: *id,
+                })
+                .collect::<Vec<_>>();
+            if !missing.is_empty() {
+                return Err(service_errors::UseCaseError::Rejected(Rejection::Missing(
+                    missing,
+                )));
+            }
+            let read = ReadRecordModel::read_chapter_ids_by_novel_id(novel_id, conn)?
+                .into_iter()
+                .collect::<HashSet<_>>();
+            let mut already = requested.intersection(&read).copied().collect::<Vec<_>>();
+            already.sort_unstable();
+            if !already.is_empty() {
+                return Err(service_errors::UseCaseError::Rejected(
+                    Rejection::AlreadyRead(already),
+                ));
+            }
+            let now = OffsetDateTime::now_utc();
+            let records = chapter_ids
+                .iter()
+                .map(|id| NewReadRecord::new(novel_id, *id, now))
+                .collect::<Vec<_>>();
+            let changed_count = NewReadRecord::create_many(&records, conn)? as i64;
+            Ok(ReadRecordsUpdated {
+                chapter_ids,
+                changed_count,
+            })
+        })
     }
     /// 删除阅读记录
     pub(crate) fn delete_read_records(
         chapter_ids: &[i64],
         conn: &mut PgConnection,
-    ) -> GraphqlResult<usize> {
-        ReadRecordModel::delete_by_chapter_ids(chapter_ids, conn)
+    ) -> AppResult<ReadRecordsUpdated> {
+        let chapter_ids = checked_chapter_ids(chapter_ids)?;
+        let changed_count = ReadRecordModel::delete_by_chapter_ids(&chapter_ids, conn)? as i64;
+        Ok(ReadRecordsUpdated {
+            chapter_ids,
+            changed_count,
+        })
     }
 }
 
-#[derive(InputObject)]
 pub(crate) struct CreateNovelInput {
-    name: String,
-    avatar: String,
-    description: String,
-    author_id: i64,
-    novel_status: NovelStatus,
-    site: NovelSite,
-    site_id: String,
-    tags: HashSet<i64>,
+    pub(crate) name: String,
+    pub(crate) avatar: String,
+    pub(crate) description: String,
+    pub(crate) author_id: i64,
+    pub(crate) novel_status: NovelStatus,
+    pub(crate) site: NovelSite,
+    pub(crate) site_id: String,
+    pub(crate) tags: HashSet<i64>,
 }
 
 impl CreateNovelInput {
-    pub(crate) fn create(self, conn: &mut PgConnection) -> GraphqlResult<Novel> {
-        // 作者不存在
-        if !AuthorModel::exists(self.author_id, conn)? {
-            event!(Level::WARN, "作者不存在: {}", self.author_id);
-            return Err(GraphqlError::NotFound("作者", self.author_id));
+    pub(crate) fn create(self, conn: &mut PgConnection) -> AppResult<Novel> {
+        use crate::errors::*;
+        validate_id(self.author_id, "data.authorId")?;
+        for id in &self.tags {
+            validate_id(*id, "data.tags")?;
         }
-        // tag 不存在
-        TagModel::exists_all(&self.tags, conn)?;
-        let new_novel = self.to_new_novel().create(conn)?;
-        Ok(new_novel.into())
+        super::write(conn, |conn| {
+            let mut resources = vec![];
+            if !AuthorModel::exists(self.author_id, conn)? {
+                resources.push(ResourceRef {
+                    kind: ResourceKind::Author,
+                    id: self.author_id,
+                });
+            }
+            for id in &self.tags {
+                if !TagModel::exists(*id, conn)? {
+                    resources.push(ResourceRef {
+                        kind: ResourceKind::Tag,
+                        id: *id,
+                    });
+                }
+            }
+            if !resources.is_empty() {
+                return Err(service_errors::UseCaseError::Rejected(Rejection::Missing(
+                    resources,
+                )));
+            }
+            Ok(self.to_new_novel().create(conn)?.into())
+        })
+        .map_err(source_conflict)
     }
     fn to_new_novel(&self) -> NewNovel<'_> {
         let now = time::OffsetDateTime::now_utc();
@@ -495,15 +435,13 @@ pub(crate) struct NovelRunner {
     data: Vec<Novel>,
 }
 
-graphql_common::list!(Novel);
-
 impl NovelRunner {
     pub(crate) fn new(
-        collection_match: Option<TagMatch>,
-        tag_match: Option<TagMatch>,
+        collection_match: Option<TagFilter>,
+        tag_match: Option<TagFilter>,
         novel_status: Option<NovelStatus>,
         conn: PgPool,
-    ) -> GraphqlResult<Self> {
+    ) -> AppResult<Self> {
         let conn = &mut conn.get()?;
         let data = Novel::query(collection_match, tag_match, novel_status, conn)?;
         Ok(Self { data })
@@ -513,28 +451,18 @@ impl NovelRunner {
 impl Queryable for NovelRunner {
     type Item = Novel;
 
-    type Error = GraphqlError;
+    type Error = AppError;
 
     async fn len(&self) -> Result<i64, Self::Error> {
         Ok(self.data.len() as i64)
     }
 
-    async fn query<P: graphql_common::Paginate>(
+    async fn query<P: service_query::Paginate>(
         &self,
         pagination: P,
     ) -> Result<Vec<Self::Item>, Self::Error> {
         let offset = pagination.offset();
-        let len = self.len().await?;
-        if len < offset {
-            event!(
-                Level::ERROR,
-                "偏移量超出范围 pagination: {:?} len: {} offset: {}",
-                pagination,
-                len,
-                offset
-            );
-            return Err(GraphqlError::PageSizeTooMore);
-        }
+
         let limit = pagination.limit();
         Ok(self
             .data
@@ -543,5 +471,84 @@ impl Queryable for NovelRunner {
             .take(limit as usize)
             .cloned()
             .collect())
+    }
+}
+
+pub(crate) struct ReadRecordsUpdated {
+    pub chapter_ids: Vec<i64>,
+    pub changed_count: i64,
+}
+fn checked_chapter_ids(ids: &[i64]) -> AppResult<Vec<i64>> {
+    for (index, id) in ids.iter().enumerate() {
+        crate::errors::validate_id(*id, &format!("chapterIds.{index}"))?;
+    }
+    let mut ids = ids.to_vec();
+    ids.sort_unstable();
+    ids.dedup();
+    Ok(ids)
+}
+
+pub(crate) fn validate_crawler_chapters<T: NovelFn>(
+    novel: &T,
+    chapters: &[T::Chapter],
+) -> AppResult<()> {
+    let mut ids = HashSet::new();
+    if chapters
+        .iter()
+        .any(|c| c.novel_id() != novel.id() || !ids.insert(c.chapter_id()))
+    {
+        return Err(service_errors::Fault::new(
+            service_errors::FaultKind::Protocol,
+            "crawler_chapter_identity",
+            novel_crawler::NovelError::ParseError,
+        )
+        .into());
+    }
+    Ok(())
+}
+pub(crate) fn sync_chapters<T: novel_crawler::ChapterFn>(
+    novel: &NovelModel,
+    fetch_chapters: &[T],
+    conn: &mut PgConnection,
+) -> AppResult<()> {
+    let chapters = ChapterModel::get_by_novel_id(novel.id, conn)?;
+    if fetch_chapters.is_empty() && !chapters.is_empty() {
+        return Err(service_errors::Fault::new(
+            service_errors::FaultKind::Protocol,
+            "crawler_empty_chapter_listing",
+            novel_crawler::NovelError::ParseError,
+        )
+        .into());
+    }
+    let (updates, inserts, deletes) =
+        UpdateChapterModel::from_novel(&chapters, fetch_chapters, novel.id, novel.author_id);
+    UpdateChapterModel::update_many(&updates, conn)?;
+    if !inserts.is_empty() {
+        NewChapter::create_many(&inserts, conn)?;
+    }
+    ReadRecordModel::delete_by_chapter_ids(&deletes, conn)?;
+    ChapterModel::delete_by_ids(&deletes, conn)?;
+    Ok(())
+}
+
+impl Novel {
+    pub(crate) async fn refresh(id: i64, pool: PgPool) -> AppResult<Self> {
+        crate::errors::validate_id(id, "novelId")?;
+        let value = {
+            let mut conn = pool.get()?;
+            Self::get(id, &mut conn)?
+        };
+        match value.site {
+            NovelSite::Qidian => {
+                value
+                    .update_by_crawler::<novel_crawler::QDNovel>(pool)
+                    .await
+            }
+            NovelSite::Jjwxc => {
+                value
+                    .update_by_crawler::<novel_crawler::JJNovel>(pool)
+                    .await
+            }
+        }
     }
 }

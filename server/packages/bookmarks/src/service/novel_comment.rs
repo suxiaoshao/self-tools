@@ -1,22 +1,20 @@
-use async_graphql::SimpleObject;
 use diesel::PgConnection;
-use graphql_common::DateTime;
+
 use time::OffsetDateTime;
-use tracing::{Level, event};
 
 use crate::{
-    errors::{GraphqlError, GraphqlResult},
+    errors::AppResult,
     model::{
         novel::NovelModel,
         novel_comment::{NewNovelComment, NovelCommentModel},
     },
 };
 
-#[derive(SimpleObject, Clone)]
+#[derive(Clone)]
 pub(crate) struct NovelComment {
-    content: String,
-    pub(crate) create_time: DateTime,
-    pub(crate) update_time: DateTime,
+    pub(crate) content: String,
+    pub(crate) create_time: time::OffsetDateTime,
+    pub(crate) update_time: time::OffsetDateTime,
 }
 
 impl From<NovelCommentModel> for NovelComment {
@@ -30,47 +28,53 @@ impl From<NovelCommentModel> for NovelComment {
     ) -> Self {
         Self {
             content,
-            create_time: create_time.into(),
-            update_time: update_time.into(),
+            create_time,
+            update_time,
         }
     }
 }
 
 impl NovelComment {
-    pub(crate) fn create(
-        novel_id: i64,
-        content: &str,
-        conn: &mut PgConnection,
-    ) -> GraphqlResult<Self> {
-        if NovelCommentModel::exist_by_novel_id(novel_id, conn)? {
-            event!(Level::WARN, "小说评论已存在:{}", novel_id);
-            return Err(GraphqlError::AlreadyExists(novel_id.to_string()));
-        }
-        let now = OffsetDateTime::now_utc();
-        let NovelModel { author_id, .. } = NovelModel::find_one(novel_id, conn)?;
-        let new_comment = NewNovelComment::new(novel_id, author_id, content, now, now);
-        let new_comment = new_comment.create(conn)?;
-        Ok(new_comment.into())
+    pub(crate) fn create(novel_id: i64, content: &str, conn: &mut PgConnection) -> AppResult<i64> {
+        use crate::errors::*;
+        validate_id(novel_id, "novelId")?;
+        super::write(conn, |conn| {
+            if !NovelModel::exists(novel_id, conn)? {
+                return Err(missing(ResourceKind::Novel, novel_id));
+            }
+            if NovelCommentModel::exist_by_novel_id(novel_id, conn)? {
+                return Err(conflict(
+                    ConflictReason::Comment,
+                    vec![ResourceRef {
+                        kind: ResourceKind::Comment,
+                        id: novel_id,
+                    }],
+                ));
+            }
+            let now = OffsetDateTime::now_utc();
+            let author_id = NovelModel::find_one(novel_id, conn)?.author_id;
+            NewNovelComment::new(novel_id, author_id, content, now, now).create(conn)?;
+            Ok(novel_id)
+        })
     }
-    pub(crate) fn delete(novel_id: i64, conn: &mut PgConnection) -> GraphqlResult<NovelComment> {
-        if !NovelCommentModel::exist_by_novel_id(novel_id, conn)? {
-            event!(Level::WARN, "小说评论不存在:{}", novel_id);
-            return Err(GraphqlError::NotFound("小说评论", novel_id));
-        }
-        let comment = NovelCommentModel::delete_by_novel_id(novel_id, conn)?;
-        Ok(comment.into())
+    pub(crate) fn delete(novel_id: i64, conn: &mut PgConnection) -> AppResult<i64> {
+        crate::errors::validate_id(novel_id, "novelId")?;
+        super::write(conn, |conn| {
+            if NovelCommentModel::exist_by_novel_id(novel_id, conn)? {
+                NovelCommentModel::delete_by_novel_id(novel_id, conn)?;
+            }
+            Ok(novel_id)
+        })
     }
-    pub(crate) fn update(
-        novel_id: i64,
-        content: &str,
-        conn: &mut PgConnection,
-    ) -> GraphqlResult<NovelComment> {
-        if !NovelCommentModel::exist_by_novel_id(novel_id, conn)? {
-            event!(Level::WARN, "小说评论不存在:{}", novel_id);
-            return Err(GraphqlError::NotFound("小说评论", novel_id));
-        }
-        let now = OffsetDateTime::now_utc();
-        let comment = NovelCommentModel::update(novel_id, content, now, conn)?;
-        Ok(comment.into())
+    pub(crate) fn update(novel_id: i64, content: &str, conn: &mut PgConnection) -> AppResult<i64> {
+        use crate::errors::*;
+        validate_id(novel_id, "novelId")?;
+        super::write(conn, |conn| {
+            if !NovelCommentModel::exist_by_novel_id(novel_id, conn)? {
+                return Err(missing(ResourceKind::Comment, novel_id));
+            }
+            NovelCommentModel::update(novel_id, content, OffsetDateTime::now_utc(), conn)?;
+            Ok(novel_id)
+        })
     }
 }

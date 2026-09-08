@@ -121,7 +121,14 @@ importers:
         specifier: ^4.1.10
         version: 4.1.10(@types/node@24.13.3)(jsdom@29.1.1)(vite@8.1.4(@types/node@24.13.3)(jiti@2.7.0)(yaml@2.9.0))
 
-  web/common/custom-graphql: {}
+  web/common/custom-graphql:
+    dependencies:
+      i18n:
+        specifier: workspace:^
+        version: link:../i18n
+      request-errors:
+        specifier: workspace:*
+        version: link:../request-errors
 
   web/common/custom-table:
     dependencies:
@@ -152,6 +159,12 @@ importers:
         specifier: ^17.0.9
         version: 17.0.9(i18next@26.3.6(typescript@7.0.2))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(typescript@7.0.2)
 
+  web/common/request-errors:
+    dependencies:
+      valibot:
+        specifier: 1.4.2
+        version: 1.4.2(typescript@7.0.2)
+
   web/common/time:
     dependencies:
       dayjs:
@@ -174,6 +187,9 @@ importers:
       i18n:
         specifier: workspace:^
         version: link:../../common/i18n
+      request-errors:
+        specifier: workspace:^
+        version: link:../../common/request-errors
       time:
         specifier: workspace:^
         version: link:../../common/time
@@ -207,6 +223,9 @@ importers:
       prismjs:
         specifier: ^1.30.0
         version: 1.30.0
+      request-errors:
+        specifier: workspace:*
+        version: link:../../common/request-errors
       time:
         specifier: workspace:^
         version: link:../../common/time
@@ -247,6 +266,9 @@ importers:
       next-themes:
         specifier: ^0.4.6
         version: 0.4.6(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      request-errors:
+        specifier: workspace:*
+        version: link:../../common/request-errors
       sonner:
         specifier: ^2.0.7
         version: 2.0.7(react-dom@19.2.7(react@19.2.7))(react@19.2.7)

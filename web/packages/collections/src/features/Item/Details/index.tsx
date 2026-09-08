@@ -1,4 +1,7 @@
-import { useMutation, useQuery } from '@apollo/client/react';
+import { attemptWrite, useWriteAction, WriteNotice, RequestNotice } from 'custom-graphql';
+import { itemResult, deleteResult } from '@collections/results';
+import { checkItem, checkDeleted } from '@collections/reconcile';
+import { useApolloClient, useMutation, useQuery } from '@apollo/client/react';
 import { graphql } from '@collections/gql';
 import { Delete, Edit, RefreshCcw, ChevronLeft } from 'lucide-react';
 import { useCallback } from 'react';
@@ -34,28 +37,39 @@ const GetItem = graphql(`
 `);
 
 export default function ItemDetails() {
+  const client = useApolloClient();
+  const deletion = useWriteAction();
   // fetch data
   const { itemId } = useParams();
-  const { data, loading, refetch } = useQuery(GetItem, { variables: { id: Number(itemId) } });
+  const { data, loading, refetch, error } = useQuery(GetItem, { variables: { id: Number(itemId) } });
 
   // title
   const t = useI18n();
   useTitle(t('item_detail_title', { itemName: data?.getItem?.name }));
   const navigate = useNavigate();
   const handleRefresh = useCallback(() => {
-    refetch();
+    void refetch().catch(() => undefined);
   }, [refetch]);
-  const items = useItemDetailItems(data, handleRefresh);
+  const items = useItemDetailItems(data, handleRefresh, error);
   const { open, handleClose, handleOpen, handleOpenChange } = useDialog();
   const [updateItem] = useMutation(UpdateItem);
   const itemAfterSubmit = async ({ name, content }: ItemFormData) => {
-    await updateItem({ variables: { id: Number(itemId), name, content } });
-    refetch();
+    const result = await attemptWrite(
+      () => updateItem({ variables: { id: Number(itemId), name, content } }),
+      (response) => itemResult(response.data?.updateItem),
+    );
+    if (result.status === 'saved') void refetch().catch(() => undefined);
+    return result;
   };
   const [deleteItem] = useMutation(DeleteItem);
   const handleDelete = async () => {
-    await deleteItem({ variables: { id: Number(itemId) } });
-    navigate(-1);
+    const result = await deletion.run(() =>
+      attemptWrite(
+        () => deleteItem({ variables: { id: Number(itemId) } }),
+        (response) => deleteResult(response.data?.deleteItem),
+      ),
+    );
+    if (result?.status === 'saved') navigate(-1);
   };
   return (
     <div className="flex flex-col size-full overflow-hidden pb-2">
@@ -68,6 +82,15 @@ export default function ItemDetails() {
           <RefreshCcw />
         </Button>
       </div>
+      <RequestNotice error={error} retry={refetch} />
+      <WriteNotice
+        outcome={deletion.outcome}
+        pending={deletion.pending}
+        check={async () => {
+          if (await deletion.check(() => checkDeleted(client, Number(itemId), 'Item'))) navigate(-1);
+        }}
+      />
+      {!loading && !error && data?.getItem === null && <p>{t('request_not_found')}</p>}
       <div className="flex-[1_1_0] overflow-y-auto pl-2 pr-2">
         <div className="flex flex-col gap-2">
           {data?.getItem && (
@@ -76,21 +99,38 @@ export default function ItemDetails() {
                 <CardTitle>{data.getItem.name}</CardTitle>
                 <CardAction>
                   <Dialog open={open} onOpenChange={handleOpenChange}>
-                    <Button variant="ghost" size="icon-lg" className="rounded-full" onClick={handleOpen}>
+                    <Button
+                      variant="ghost"
+                      size="icon-lg"
+                      className="rounded-full"
+                      disabled={!data.getItem.collections}
+                      onClick={handleOpen}
+                    >
                       <Edit />
                     </Button>
                     <ItemForm
                       loading={loading}
-                      initialValues={{
-                        collectionIds: data.getItem.collections.map(({ id }) => id),
-                        content: data.getItem.content,
-                        name: data.getItem.name,
-                      }}
+                      initialValues={
+                        data.getItem.collections
+                          ? {
+                              collectionIds: data.getItem.collections.map(({ id }) => id),
+                              content: data.getItem.content,
+                              name: data.getItem.name,
+                            }
+                          : undefined
+                      }
                       mode="edit"
                       handleClose={handleClose}
                       afterSubmit={itemAfterSubmit}
+                      checkResult={(data) => checkItem(client, Number(itemId), data)}
                     />
-                    <Button variant="ghost" size="icon-lg" className="rounded-full" onClick={handleDelete}>
+                    <Button
+                      variant="ghost"
+                      size="icon-lg"
+                      className="rounded-full"
+                      disabled={deletion.blocked}
+                      onClick={handleDelete}
+                    >
                       <Delete />
                     </Button>
                   </Dialog>

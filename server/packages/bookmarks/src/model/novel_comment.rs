@@ -1,4 +1,4 @@
-use crate::{errors::GraphqlResult, model::schema::novel_comment};
+use crate::{errors::AppResult, model::schema::novel_comment};
 use diesel::prelude::*;
 use time::OffsetDateTime;
 
@@ -28,7 +28,7 @@ impl NewNovelComment<'_> {
             update_time,
         }
     }
-    pub(crate) fn create(&self, conn: &mut PgConnection) -> GraphqlResult<NovelCommentModel> {
+    pub(crate) fn create(&self, conn: &mut PgConnection) -> AppResult<NovelCommentModel> {
         use crate::model::schema::novel_comment::dsl::*;
         let result = diesel::insert_into(novel_comment)
             .values(self)
@@ -52,7 +52,7 @@ impl NovelCommentModel {
     pub(crate) fn find_by_novel_id(
         novel_id: i64,
         conn: &mut PgConnection,
-    ) -> GraphqlResult<Option<Self>> {
+    ) -> AppResult<Option<Self>> {
         use crate::model::schema::novel_comment;
         let comment = novel_comment::table
             .filter(novel_comment::novel_id.eq(novel_id))
@@ -63,17 +63,14 @@ impl NovelCommentModel {
             Err(err) => Err(err.into()),
         }
     }
-    pub(crate) fn exist_by_novel_id(novel_id: i64, conn: &mut PgConnection) -> GraphqlResult<bool> {
+    pub(crate) fn exist_by_novel_id(novel_id: i64, conn: &mut PgConnection) -> AppResult<bool> {
         let data = diesel::select(diesel::dsl::exists(
             novel_comment::table.filter(novel_comment::novel_id.eq(novel_id)),
         ))
         .get_result(conn)?;
         Ok(data)
     }
-    pub(crate) fn delete_by_novel_id(
-        novel_id: i64,
-        conn: &mut PgConnection,
-    ) -> GraphqlResult<Self> {
+    pub(crate) fn delete_by_novel_id(novel_id: i64, conn: &mut PgConnection) -> AppResult<Self> {
         let data =
             diesel::delete(novel_comment::table.filter(novel_comment::novel_id.eq(novel_id)))
                 .get_result(conn)?;
@@ -84,7 +81,7 @@ impl NovelCommentModel {
         content: &str,
         now: OffsetDateTime,
         conn: &mut PgConnection,
-    ) -> GraphqlResult<NovelCommentModel> {
+    ) -> AppResult<NovelCommentModel> {
         let data =
             diesel::update(novel_comment::table.filter(novel_comment::novel_id.eq(novel_id)))
                 .set((

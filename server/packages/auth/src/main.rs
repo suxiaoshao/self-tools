@@ -7,17 +7,14 @@
  */
 use anyhow::anyhow;
 use std::net::SocketAddr;
-use tracing::{Level, event, level_filters::LevelFilter};
-use tracing_subscriber::{Layer, fmt, layer::SubscriberExt, util::SubscriberInitExt};
 
 use service::AuthImpl;
 
-use crate::middleware::LogLayer;
-
 mod application;
+mod domain;
+mod error;
 const MIGRATIONS: diesel_migrations::EmbeddedMigrations =
     diesel_migrations::embed_migrations!("migrations");
-mod middleware;
 mod passkey;
 mod repository;
 mod service;
@@ -42,19 +39,23 @@ async fn main() -> anyhow::Result<()> {
         }
         service_health::Mode::Serve => (),
     }
-    tracing_subscriber::registry()
-        .with(fmt::layer().with_filter(LevelFilter::INFO))
-        .init();
-    let addr = "0.0.0.0:80";
-    event!(Level::INFO, addr, "server start on 80");
+    let telemetry = telemetry::init("auth")?;
+    let result: anyhow::Result<()> = async {
+        tracing::info!(target: "telemetry", event = "service.started");
 
-    let addr: SocketAddr = "0.0.0.0:80".parse()?;
-    let addr = volo::net::Address::from(addr);
+        let addr: SocketAddr = "0.0.0.0:80".parse()?;
+        let addr = volo::net::Address::from(addr);
 
-    thrift::auth::AuthServiceServer::new(AuthImpl(application::Application::new()?))
-        .layer(LogLayer)
-        .run(addr)
-        .await
-        .map_err(|err| anyhow!("run fails:{}", err))?;
-    Ok(())
+        thrift::auth::AuthServiceServer::new(AuthImpl(application::Application::new()?))
+            .run(addr)
+            .await
+            .map_err(|err| anyhow!("run fails:{}", err))?;
+        Ok(())
+    }
+    .await;
+    let shutdown = tokio::task::spawn_blocking(move || telemetry.shutdown()).await;
+    if !matches!(shutdown, Ok(Ok(()))) {
+        eprintln!("telemetry shutdown incomplete");
+    }
+    result
 }

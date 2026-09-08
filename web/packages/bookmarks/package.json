@@ -14,6 +14,7 @@
     "custom-table": "workspace:^",
     "details": "workspace:^",
     "i18n": "workspace:^",
+    "request-errors": "workspace:^",
     "time": "workspace:^",
     "types": "workspace:^"
   }

@@ -1,3 +1,4 @@
+import { RequestNotice } from 'custom-graphql';
 import { useI18n } from 'i18n';
 import { type ComponentProps, useMemo } from 'react';
 import { match } from 'ts-pattern';
@@ -31,7 +32,7 @@ interface TagsSelectProps extends Omit<ComponentProps<'input'>, 'onChange' | 'va
 }
 
 export default function TagsSelect({ value, onChange, className, ...props }: TagsSelectProps) {
-  const { data: { allTags } = {}, loading } = useQuery(AllTags);
+  const { data: { allTags } = {}, loading, error } = useQuery(AllTags);
   const tags = useMemo(() => allTags ?? [], [allTags]);
   const selectedTags = useMemo(() => {
     if (!value || !allTags) return [];
@@ -41,41 +42,44 @@ export default function TagsSelect({ value, onChange, className, ...props }: Tag
   const anchor = useComboboxAnchor();
 
   return (
-    <Combobox<(typeof tags)[number], true>
-      multiple
-      items={tags}
-      itemToStringValue={(item) => item.name}
-      value={selectedTags}
-      onValueChange={(newValue) => {
-        onChange(newValue.map((item) => item.id));
-      }}
-    >
-      <ComboboxChips ref={anchor} className={className}>
-        <ComboboxValue>
-          {(values: (typeof tags)[number][]) => (
-            <>
-              {values.map((tag) => (
-                <ComboboxChip key={tag.id}>{tag.name}</ComboboxChip>
-              ))}
-              <ComboboxChipsInput placeholder={t('search')} {...props} />
-            </>
-          )}
-        </ComboboxValue>
-      </ComboboxChips>
-      <ComboboxContent anchor={anchor}>
-        <ComboboxEmpty>
-          {match(loading)
-            .with(true, () => t('loading'))
-            .otherwise(() => t('no_tags_found'))}
-        </ComboboxEmpty>
-        <ComboboxList>
-          {(item) => (
-            <ComboboxItem key={item.id} value={item}>
-              {item.name}
-            </ComboboxItem>
-          )}
-        </ComboboxList>
-      </ComboboxContent>
-    </Combobox>
+    <>
+      <RequestNotice error={error} />
+      <Combobox<(typeof tags)[number], true>
+        multiple
+        items={tags}
+        itemToStringValue={(item) => item.name}
+        value={selectedTags}
+        onValueChange={(newValue) => {
+          onChange(newValue.map((item) => item.id));
+        }}
+      >
+        <ComboboxChips ref={anchor} className={className}>
+          <ComboboxValue>
+            {(values: (typeof tags)[number][]) => (
+              <>
+                {values.map((tag) => (
+                  <ComboboxChip key={tag.id}>{tag.name}</ComboboxChip>
+                ))}
+                <ComboboxChipsInput disabled={!!error} placeholder={t('search')} {...props} />
+              </>
+            )}
+          </ComboboxValue>
+        </ComboboxChips>
+        <ComboboxContent anchor={anchor}>
+          <ComboboxEmpty>
+            {match(loading)
+              .with(true, () => t('loading'))
+              .otherwise(() => t('no_tags_found'))}
+          </ComboboxEmpty>
+          <ComboboxList>
+            {(item) => (
+              <ComboboxItem key={item.id} value={item}>
+                {item.name}
+              </ComboboxItem>
+            )}
+          </ComboboxList>
+        </ComboboxContent>
+      </Combobox>
+    </>
   );
 }

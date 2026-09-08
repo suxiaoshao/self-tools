@@ -1,3 +1,4 @@
+import useBookmarkWrite from '@bookmarks/useBookmarkWrite';
 import { useI18n } from 'i18n';
 import { useAllCollection } from '../collectionSlice';
 import useParentId from './useParentId';
@@ -10,7 +11,31 @@ import { Button } from '@portal/components/ui/button';
 const CreateCollection = graphql(`
   mutation createCollection($parentId: Int, $name: String!, $description: String) {
     createCollection(parentId: $parentId, name: $name, description: $description) {
-      path
+      __typename
+      ... on CollectionSaved {
+        collectionId
+      }
+      ... on ValidationFailure {
+        issues {
+          path
+          code
+          min
+          max
+        }
+      }
+      ... on MissingResources {
+        resources {
+          kind
+          id
+        }
+      }
+      ... on Conflict {
+        reason
+        resources {
+          kind
+          id
+        }
+      }
     }
   }
 `);
@@ -21,16 +46,24 @@ interface CreateCollectButtonProps {
 }
 
 export default function CreateCollectionButton({ refetch }: CreateCollectButtonProps) {
+  const write = useBookmarkWrite('/bookmarks/collections');
   const parentId = useParentId();
   const { fetchData } = useAllCollection();
 
   const [createCollection] = useMutation(CreateCollection);
 
   const onSubmit = async ({ name, description }: CollectionFormData) => {
-    await createCollection({ variables: { name, parentId, description } });
-    refetch();
+    if (
+      !(await write.execute(
+        async () => (await createCollection({ variables: { name, parentId, description } })).data?.createCollection,
+      ))
+    )
+      return;
+    void Promise.resolve()
+      .then(() => refetch())
+      .catch(() => undefined);
     handleClose();
-    await fetchData();
+    void fetchData();
   };
   // 控制 dialog
   const { open, handleClose, handleOpen, handleOpenChange } = useDialog();
@@ -39,7 +72,13 @@ export default function CreateCollectionButton({ refetch }: CreateCollectButtonP
   return (
     <>
       <Button onClick={handleOpen}>{t('add_collection')}</Button>
-      <CollectionForm afterSubmit={onSubmit} onOpenChange={handleOpenChange} open={open} />
+      <CollectionForm
+        notice={write.notice}
+        disabled={write.blocked}
+        afterSubmit={onSubmit}
+        onOpenChange={handleOpenChange}
+        open={open}
+      />
     </>
   );
 }

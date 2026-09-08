@@ -16,6 +16,8 @@
     ".agents/skills/shadcn",
     "**/build/web",
     "**/target",
+    "web/packages/bookmarks/schema.graphql",
+    "web/packages/collections/schema.graphql",
     "dist",
     "dist-ssr",
     "postgrestools.jsonc"

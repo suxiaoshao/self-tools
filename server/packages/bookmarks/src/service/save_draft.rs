@@ -1,332 +1,251 @@
-use std::collections::HashMap;
-
-use async_graphql::InputObject;
-use diesel::PgConnection;
-use graphql_common::DateTime;
-use time::OffsetDateTime;
-use tracing::{Level, event};
-
 use crate::{
-    errors::{GraphqlError, GraphqlResult},
+    errors::*,
     model::{
         author::{AuthorModel, UpdateAuthorModel},
         chapter::NewChapter,
-        novel::{NewNovel, NovelModel},
+        novel::NewNovel,
         schema::custom_type::{NovelSite, NovelStatus},
-        tag::{NewTag, TagModel},
+        tag::TagModel,
     },
-    service::novel::Novel,
+    service::{author::Author, novel::Novel},
 };
-
-use super::author::Author;
-
-#[derive(InputObject, Clone, Eq, PartialEq, Debug)]
+use diesel::PgConnection;
+use std::collections::HashSet;
+use time::OffsetDateTime;
+#[derive(Clone, Eq, PartialEq, Debug)]
 pub(crate) struct SaveDraftAuthor {
-    id: String,
-    site: NovelSite,
-    name: String,
-    description: String,
-    image: String,
-    novels: Vec<SaveNovelInfo>,
+    pub(crate) id: String,
+    pub(crate) site: NovelSite,
+    pub(crate) name: String,
+    pub(crate) description: String,
+    pub(crate) image: String,
+    pub(crate) novels: Vec<SaveNovelInfo>,
 }
 
-impl SaveDraftAuthor {
-    pub(crate) fn save(self, conn: &mut PgConnection) -> GraphqlResult<Author> {
-        let SaveDraftAuthor {
-            id,
-            site,
-            name,
-            description,
-            image,
-            novels,
-            ..
-        } = self;
-        if AuthorModel::exists_by_site_id(&id, site, conn)? {
-            event!(
-                Level::ERROR,
-                "作者已存在 site_id:{id},site:{site},name:{name}"
-            );
-            return Err(GraphqlError::AlreadyExists(name));
-        }
-        let author = conn
-            .build_transaction()
-            .run::<Author, GraphqlError, _>(|conn| {
-                let now = OffsetDateTime::now_utc();
-                // 保存作者
-                let author = Author::create(&name, &image, &description, site, &id, conn)?;
-
-                // 保存 tag
-                let all_tags = TagModel::many_site_id_by_site(site, conn)?;
-                let new_tags = novels
-                    .iter()
-                    .flat_map(|x| &x.tags)
-                    .filter_map(|SaveTagInfo { id, name }| {
-                        if all_tags.contains_key(id) {
-                            None
-                        } else {
-                            Some((
-                                id,
-                                NewTag {
-                                    name,
-                                    site,
-                                    site_id: id,
-                                    create_time: now,
-                                    update_time: now,
-                                },
-                            ))
-                        }
-                    })
-                    .collect::<HashMap<_, _>>()
-                    .into_values()
-                    .collect::<Vec<_>>();
-                NewTag::save_many(&new_tags, conn)?;
-                let all_tags = TagModel::many_site_id_by_site(site, conn)?;
-
-                // 保存小说
-                let new_novels = novels
-                    .iter()
-                    .map(
-                        |SaveNovelInfo {
-                             id,
-                             site,
-                             name,
-                             description,
-                             image,
-                             novel_status,
-                             tags,
-                             ..
-                         }| {
-                            let tags = tags
-                                .iter()
-                                .filter_map(|SaveTagInfo { id, .. }| all_tags.get(id).copied())
-                                .collect();
-                            NewNovel {
-                                name,
-                                avatar: image,
-                                description,
-                                author_id: author.id,
-                                novel_status: *novel_status,
-                                site: *site,
-                                site_id: id,
-                                tags,
-                                create_time: now,
-                                update_time: now,
-                            }
-                        },
-                    )
-                    .collect::<Vec<_>>();
-                let new_novels = NewNovel::create_many(&new_novels, conn)?;
-
-                // 保存章节
-                let new_novels = new_novels
-                    .into_iter()
-                    .map(|novel| (novel.site_id, novel.id))
-                    .collect::<HashMap<String, i64>>();
-                let mut new_chapters = vec![];
-                for novel in novels.iter() {
-                    let SaveNovelInfo { id, chapters, .. } = novel;
-                    let novel_id = match new_novels.get(id) {
-                        Some(data) => data,
-                        None => {
-                            event!(Level::ERROR, "site id:{} 没保存到", id);
-                            return Err(GraphqlError::SavaDraftError("chapter-novel"));
-                        }
-                    };
-                    for SaveChapterInfo {
-                        name,
-                        id,
-                        time,
-                        word_count,
-                        ..
-                    } in chapters.iter()
-                    {
-                        let new_chapter = NewChapter {
-                            title: name,
-                            site,
-                            site_id: id,
-                            content: None,
-                            time: (*time).into(),
-                            word_count: *word_count as i64,
-                            novel_id: *novel_id,
-                            author_id: author.id,
-                            create_time: now,
-                            update_time: now,
-                        };
-                        new_chapters.push(new_chapter);
-                    }
-                }
-                NewChapter::create_many(&new_chapters, conn)?;
-                Ok(author)
-            })?;
-        Ok(author)
-    }
-}
-
-#[derive(InputObject, Clone, Eq, PartialEq, Debug)]
+#[derive(Clone, Eq, PartialEq, Debug)]
 pub(crate) struct SaveNovelInfo {
-    id: String,
-    site: NovelSite,
-    name: String,
-    description: String,
-    image: String,
-    chapters: Vec<SaveChapterInfo>,
-    tags: Vec<SaveTagInfo>,
-    novel_status: NovelStatus,
+    pub(crate) id: String,
+    pub(crate) site: NovelSite,
+    pub(crate) name: String,
+    pub(crate) description: String,
+    pub(crate) image: String,
+    pub(crate) chapters: Vec<SaveChapterInfo>,
+    pub(crate) tags: Vec<SaveTagInfo>,
+    pub(crate) novel_status: NovelStatus,
 }
 
-#[derive(InputObject, Clone, Eq, PartialEq, Debug)]
+#[derive(Clone, Eq, PartialEq, Debug)]
 pub(crate) struct SaveChapterInfo {
-    id: String,
-    name: String,
-    time: DateTime,
-    word_count: u32,
+    pub(crate) id: String,
+    pub(crate) name: String,
+    pub(crate) time: time::OffsetDateTime,
+    pub(crate) word_count: u32,
 }
 
-#[derive(InputObject, Clone, Eq, PartialEq, Debug)]
+#[derive(Clone, Eq, PartialEq, Debug)]
 pub(crate) struct SaveTagInfo {
-    id: String,
-    name: String,
+    pub(crate) id: String,
+    pub(crate) name: String,
 }
 
-#[derive(InputObject, Clone, Eq, PartialEq, Debug)]
+#[derive(Clone, Eq, PartialEq, Debug)]
 pub(crate) struct SaveDraftNovel {
-    id: String,
-    site: NovelSite,
-    name: String,
-    description: String,
-    image: String,
-    chapters: Vec<SaveChapterInfo>,
-    tags: Vec<SaveTagInfo>,
-    novel_status: NovelStatus,
-    author: SaveAuthorInfo,
+    pub(crate) id: String,
+    pub(crate) site: NovelSite,
+    pub(crate) name: String,
+    pub(crate) description: String,
+    pub(crate) image: String,
+    pub(crate) chapters: Vec<SaveChapterInfo>,
+    pub(crate) tags: Vec<SaveTagInfo>,
+    pub(crate) novel_status: NovelStatus,
+    pub(crate) author: SaveAuthorInfo,
 }
 
-impl SaveDraftNovel {
-    pub(crate) fn save(self, conn: &mut PgConnection) -> GraphqlResult<Novel> {
-        let SaveDraftNovel {
-            id,
-            site,
-            name,
-            description,
-            image,
-            chapters,
-            tags,
-            novel_status,
-            author,
-        } = self;
-        if NovelModel::exists_by_site_id(&id, site, conn)? {
-            event!(
-                Level::ERROR,
-                "小说已存在 site_id:{id},site:{site},name:{name}"
-            );
-            return Err(GraphqlError::AlreadyExists(name));
+#[derive(Clone, Eq, PartialEq, Debug)]
+pub(crate) struct SaveAuthorInfo {
+    pub(crate) id: String,
+    pub(crate) site: NovelSite,
+    pub(crate) name: String,
+    pub(crate) description: String,
+    pub(crate) image: String,
+}
+fn validate_tags(tags: &[SaveTagInfo], path: &str) -> AppResult<()> {
+    for (index, tag) in tags.iter().enumerate() {
+        if tag.name.chars().count() > 20 {
+            return Err(invalid(
+                &format!("{path}.{index}.name"),
+                service_errors::ValidationCode::TooLong,
+            ));
         }
-        let author_id = AuthorModel::get_id_by_site_id(&author.id, self.site, conn)?;
-        let novel = conn
-            .build_transaction()
-            .run::<Novel, GraphqlError, _>(|conn| {
-                let now = OffsetDateTime::now_utc();
-                // 保存作者信息
-                let author = match author_id {
-                    Some(author_id) => {
-                        let update_author = UpdateAuthorModel {
-                            id: author_id,
-                            name: Some(&author.name),
-                            avatar: Some(&author.image),
-                            description: Some(&author.description),
-                            update_time: now,
-                        };
-                        update_author.update(conn)?
-                    }
-                    None => AuthorModel::create(
-                        &author.name,
-                        &author.image,
-                        site,
-                        &author.id,
-                        &author.description,
-                        conn,
-                    )?,
-                };
-                // 保存 tag
-                let all_tags = TagModel::many_site_id_by_site(site, conn)?;
-                let new_tags = tags
-                    .iter()
-                    .filter_map(|SaveTagInfo { id, name }| {
-                        if all_tags.contains_key(id) {
-                            None
-                        } else {
-                            Some((
-                                id,
-                                NewTag {
-                                    name,
-                                    site,
-                                    site_id: id,
-                                    create_time: now,
-                                    update_time: now,
-                                },
-                            ))
-                        }
-                    })
-                    .collect::<HashMap<_, _>>()
-                    .into_values()
-                    .collect::<Vec<_>>();
-                NewTag::save_many(&new_tags, conn)?;
-                let all_tags = TagModel::many_site_id_by_site(site, conn)?;
-
-                // 保存小说
-                let tags = tags
-                    .iter()
-                    .filter_map(|SaveTagInfo { id, .. }| all_tags.get(id).copied())
-                    .collect();
-                let new_novel = NewNovel {
-                    name: &name,
-                    avatar: &image,
-                    description: &description,
+    }
+    Ok(())
+}
+fn validate_chapters(chapters: &[SaveChapterInfo], path: &str) -> AppResult<()> {
+    let mut ids = HashSet::new();
+    for (index, chapter) in chapters.iter().enumerate() {
+        if !ids.insert(&chapter.id) {
+            return Err(invalid(
+                &format!("{path}.{index}.id"),
+                service_errors::ValidationCode::InvalidFormat,
+            ));
+        }
+        if chapter.name.chars().count() > 255 {
+            return Err(invalid(
+                &format!("{path}.{index}.name"),
+                service_errors::ValidationCode::TooLong,
+            ));
+        }
+    }
+    Ok(())
+}
+pub(crate) fn save_tags(
+    site: NovelSite,
+    tags: &[SaveTagInfo],
+    conn: &mut PgConnection,
+) -> AppResult<Vec<i64>> {
+    let mut existing = TagModel::many_site_id_by_site(site, conn)?;
+    let mut result = vec![];
+    for tag in tags {
+        let id = match existing.get(&tag.id) {
+            Some(id) => *id,
+            None => {
+                let value = TagModel::create(&tag.name, site, &tag.id, conn)?;
+                existing.insert(tag.id.clone(), value.id);
+                value.id
+            }
+        };
+        if !result.contains(&id) {
+            result.push(id);
+        }
+    }
+    Ok(result)
+}
+fn save_chapters(
+    chapters: &[SaveChapterInfo],
+    site: NovelSite,
+    novel_id: i64,
+    author_id: i64,
+    conn: &mut PgConnection,
+) -> AppResult<()> {
+    let now = OffsetDateTime::now_utc();
+    let chapters = chapters
+        .iter()
+        .map(|c| NewChapter {
+            title: &c.name,
+            site,
+            site_id: &c.id,
+            content: None,
+            time: c.time,
+            word_count: i64::from(c.word_count),
+            novel_id,
+            author_id,
+            create_time: now,
+            update_time: now,
+        })
+        .collect::<Vec<_>>();
+    if !chapters.is_empty() {
+        NewChapter::create_many(&chapters, conn)?;
+    }
+    Ok(())
+}
+impl SaveDraftAuthor {
+    pub(crate) fn save(self, conn: &mut PgConnection) -> AppResult<Author> {
+        let mut ids = HashSet::new();
+        for (index, novel) in self.novels.iter().enumerate() {
+            if novel.site != self.site {
+                return Err(invalid(
+                    &format!("author.novels.{index}.site"),
+                    service_errors::ValidationCode::InvalidFormat,
+                ));
+            }
+            if !ids.insert(&novel.id) {
+                return Err(invalid(
+                    &format!("author.novels.{index}.id"),
+                    service_errors::ValidationCode::InvalidFormat,
+                ));
+            }
+            validate_chapters(&novel.chapters, &format!("author.novels.{index}.chapters"))?;
+            validate_tags(&novel.tags, &format!("author.novels.{index}.tags"))?;
+        }
+        super::write(conn, |conn| {
+            let author = Author::create(
+                &self.name,
+                &self.image,
+                &self.description,
+                self.site,
+                &self.id,
+                conn,
+            )?;
+            let now = OffsetDateTime::now_utc();
+            for novel in &self.novels {
+                let tags = save_tags(self.site, &novel.tags, conn)?;
+                let inserted = NewNovel {
+                    name: &novel.name,
+                    avatar: &novel.image,
+                    description: &novel.description,
                     author_id: author.id,
-                    novel_status,
-                    site,
-                    site_id: &id,
+                    novel_status: novel.novel_status,
+                    site: self.site,
+                    site_id: &novel.id,
                     tags,
                     create_time: now,
                     update_time: now,
-                };
-                let new_novel = new_novel.create(conn)?;
-
-                // 保存章节
-                let new_chapters = chapters
-                    .iter()
-                    .map(
-                        |SaveChapterInfo {
-                             id,
-                             name,
-                             time,
-                             word_count,
-                         }| NewChapter {
-                            novel_id: new_novel.id,
-                            create_time: now,
-                            update_time: now,
-                            site,
-                            site_id: id,
-                            time: (*time).into(),
-                            word_count: *word_count as i64,
-                            author_id: author.id,
-                            title: name,
-                            content: None,
-                        },
-                    )
-                    .collect::<Vec<_>>();
-                NewChapter::create_many(&new_chapters, conn)?;
-                Ok(new_novel.into())
-            })?;
-        Ok(novel)
+                }
+                .create(conn)?;
+                save_chapters(&novel.chapters, self.site, inserted.id, author.id, conn)?;
+            }
+            Ok(author)
+        })
+        .map_err(source_conflict)
     }
 }
-
-#[derive(InputObject, Clone, Eq, PartialEq, Debug)]
-pub(crate) struct SaveAuthorInfo {
-    id: String,
-    site: NovelSite,
-    name: String,
-    description: String,
-    image: String,
+impl SaveDraftNovel {
+    pub(crate) fn save(self, conn: &mut PgConnection) -> AppResult<Novel> {
+        if self.site != self.author.site {
+            return Err(invalid(
+                "novel.author.site",
+                service_errors::ValidationCode::InvalidFormat,
+            ));
+        }
+        validate_chapters(&self.chapters, "novel.chapters")?;
+        validate_tags(&self.tags, "novel.tags")?;
+        super::write(conn, |conn| {
+            let now = OffsetDateTime::now_utc();
+            let author = match AuthorModel::get_id_by_site_id(&self.author.id, self.site, conn)? {
+                Some(id) => UpdateAuthorModel {
+                    id,
+                    name: Some(&self.author.name),
+                    avatar: Some(&self.author.image),
+                    description: Some(&self.author.description),
+                    update_time: now,
+                }
+                .update(conn)?,
+                None => AuthorModel::create(
+                    &self.author.name,
+                    &self.author.image,
+                    self.site,
+                    &self.author.id,
+                    &self.author.description,
+                    conn,
+                )?,
+            };
+            let tags = save_tags(self.site, &self.tags, conn)?;
+            let novel = NewNovel {
+                name: &self.name,
+                avatar: &self.image,
+                description: &self.description,
+                author_id: author.id,
+                novel_status: self.novel_status,
+                site: self.site,
+                site_id: &self.id,
+                tags,
+                create_time: now,
+                update_time: now,
+            }
+            .create(conn)?;
+            save_chapters(&self.chapters, self.site, novel.id, author.id, conn)?;
+            Ok(novel.into())
+        })
+        .map_err(source_conflict)
+    }
 }

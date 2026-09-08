@@ -1,3 +1,4 @@
+import useBookmarkWrite from '@bookmarks/useBookmarkWrite';
 /*
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-01-06 01:30:13
@@ -27,7 +28,31 @@ import { Input } from '@portal/components/ui/input';
 const CreateAuthor = graphql(`
   mutation createAuthor($avatar: String!, $description: String!, $name: String!, $site: NovelSite!, $siteId: String!) {
     createAuthor(avatar: $avatar, description: $description, name: $name, site: $site, siteId: $siteId) {
-      id
+      __typename
+      ... on AuthorSaved {
+        authorId
+      }
+      ... on ValidationFailure {
+        issues {
+          path
+          code
+          min
+          max
+        }
+      }
+      ... on MissingResources {
+        resources {
+          kind
+          id
+        }
+      }
+      ... on Conflict {
+        reason
+        resources {
+          kind
+          id
+        }
+      }
     }
   }
 `);
@@ -37,6 +62,7 @@ interface CreateAuthorButtonProps {
 }
 
 export default function CreateAuthorButton({ refetch }: CreateAuthorButtonProps) {
+  const write = useBookmarkWrite('/bookmarks/authors');
   const [createAuthor] = useMutation(CreateAuthor);
   // 表单控制
   type FormData = CreateAuthorMutationVariables;
@@ -44,8 +70,10 @@ export default function CreateAuthorButton({ refetch }: CreateAuthorButtonProps)
   // 控制 dialog
   const { handleClose, open, handleOpenChange } = useDialog();
   const onSubmit: SubmitHandler<FormData> = async (data) => {
-    await createAuthor({ variables: { ...data } });
-    refetch();
+    if (!(await write.execute(async () => (await createAuthor({ variables: { ...data } })).data?.createAuthor))) return;
+    void Promise.resolve()
+      .then(() => refetch())
+      .catch(() => undefined);
     handleClose();
   };
 
@@ -68,8 +96,15 @@ export default function CreateAuthorButton({ refetch }: CreateAuthorButtonProps)
               <Input required {...register('avatar', { required: true })} />
             </Field>
             <Field>
-              <FieldLabel>{t('link')}</FieldLabel>
-              <Input required {...register('site', { required: true })} />
+              <FieldLabel>{t('novel_site')}</FieldLabel>
+              <select {...register('site', { required: true })}>
+                <option value="JJWXC">{t('jjwxc')}</option>
+                <option value="QIDIAN">{t('qidian')}</option>
+              </select>
+            </Field>
+            <Field>
+              <FieldLabel>{t('request_source_id')}</FieldLabel>
+              <Input required {...register('siteId', { required: true })} />
             </Field>
             <Field>
               <FieldLabel>{t('description')}</FieldLabel>
@@ -77,9 +112,10 @@ export default function CreateAuthorButton({ refetch }: CreateAuthorButtonProps)
             </Field>
           </FieldGroup>
         </form>
+        {write.notice}
         <DialogFooter>
           <DialogClose render={<Button variant="secondary" />}>{t('cancel')}</DialogClose>
-          <Button type="submit" form="create-author-form">
+          <Button disabled={write.blocked} type="submit" form="create-author-form">
             {t('submit')}
           </Button>
         </DialogFooter>

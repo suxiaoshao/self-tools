@@ -12,7 +12,7 @@ use diesel::{
     r2d2::{ConnectionManager, Pool},
 };
 
-use crate::errors::GraphqlResult;
+use crate::errors::AppResult;
 
 pub(crate) mod author;
 pub(crate) mod chapter;
@@ -25,8 +25,10 @@ pub(crate) mod tag;
 
 pub(crate) type PgPool = Pool<ConnectionManager<PgConnection>>;
 
-pub(crate) fn get_pool() -> GraphqlResult<PgPool> {
-    let database_url = env::var("BOOKMARKS_PG")?;
+pub(crate) fn get_pool() -> AppResult<PgPool> {
+    let database_url = env::var("BOOKMARKS_PG").map_err(|e| {
+        service_errors::Fault::new(service_errors::FaultKind::Internal, "database_config", e)
+    })?;
     let manager = ConnectionManager::<PgConnection>::new(database_url);
 
     let pool = Pool::builder()

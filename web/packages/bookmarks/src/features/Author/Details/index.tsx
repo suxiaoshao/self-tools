@@ -1,3 +1,5 @@
+import { RequestNotice, hasQueryFailure } from 'custom-graphql';
+import useBookmarkWrite from '@bookmarks/useBookmarkWrite';
 /*
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-02-29 06:28:45
@@ -69,19 +71,46 @@ const GetAuthor = graphql(`
 const UpdateAuthor = graphql(`
   mutation updateAuthorByCrawler($authorId: Int!) {
     updateAuthorByCrawler(authorId: $authorId) {
-      id
+      __typename
+      ... on AuthorSaved {
+        authorId
+      }
+      ... on ValidationFailure {
+        issues {
+          path
+          code
+          min
+          max
+        }
+      }
+      ... on MissingResources {
+        resources {
+          kind
+          id
+        }
+      }
+      ... on Conflict {
+        reason
+        resources {
+          kind
+          id
+        }
+      }
     }
   }
 `);
 
 export default function AuthorDetails() {
+  const write = useBookmarkWrite('/bookmarks/authors');
   const t = useI18n();
   const { authorId } = useParams();
-  const { data, loading, refetch } = useQuery(GetAuthor, { variables: { id: Number(authorId) } });
+  const { data, loading, refetch, error } = useQuery(GetAuthor, { variables: { id: Number(authorId) } });
   useTitle(t('author_detail', { authorName: data?.getAuthor?.name }));
   const navigate = useNavigate();
   const handleRefresh = useCallback(() => {
-    refetch();
+    void Promise.resolve()
+      .then(() => refetch())
+      .catch(() => undefined);
   }, [refetch]);
   const goToSourceSite = useCallback(() => {
     if (data?.getAuthor?.url) {
@@ -90,12 +119,22 @@ export default function AuthorDetails() {
   }, [data?.getAuthor?.url]);
   const [updateAuthor, { loading: updateLoading }] = useMutation(UpdateAuthor);
   const handleUpdateAuthor = useCallback(async () => {
-    await updateAuthor({ variables: { authorId: Number(authorId) } });
+    if (
+      !(await write.execute(
+        async () => (await updateAuthor({ variables: { authorId: Number(authorId) } })).data?.updateAuthorByCrawler,
+      ))
+    )
+      return;
     toast.success(t('update_by_crawler_success'));
-    refetch();
-  }, [authorId, refetch, updateAuthor, t]);
+    void Promise.resolve()
+      .then(() => refetch())
+      .catch(() => undefined);
+  }, [authorId, refetch, updateAuthor, t, write]);
   return (
     <div className="flex flex-col size-full p-4 gap-2 pb-0 pt-2">
+      <RequestNotice error={error} retry={refetch} />
+      {!loading && data?.getAuthor === null && !hasQueryFailure(error, ['getAuthor']) && <p>{t('request_missing')}</p>}
+      {write.notice}
       <div className="flex w-full">
         <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
           <ChevronLeft />
@@ -122,7 +161,12 @@ export default function AuthorDetails() {
                 <Tooltip>
                   <TooltipTrigger
                     render={
-                      <Button variant="ghost" size="icon" disabled={updateLoading} onClick={handleUpdateAuthor} />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        disabled={write.blocked || updateLoading}
+                        onClick={handleUpdateAuthor}
+                      />
                     }
                   >
                     <Download />
@@ -140,7 +184,7 @@ export default function AuthorDetails() {
             <CardContent>{data.getAuthor.description}</CardContent>
           </Card>
           <div className="flex-[1_1_0] overflow-y-auto grid gap-4 pb-4 grid-cols-[repeat(auto-fill,minmax(--spacing(80),1fr))] grid-rows-[masonry] auto-rows-max items-start display-[masonry]">
-            {data?.getAuthor.novels.map(
+            {data?.getAuthor.novels?.map(
               ({ id, avatar, name, description, url, novelStatus, wordCount, lastChapter, firstChapter }) => (
                 <Card key={id}>
                   <Item className="pt-0 px-6">

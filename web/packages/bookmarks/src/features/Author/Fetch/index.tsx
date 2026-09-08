@@ -1,3 +1,5 @@
+import { RequestNotice } from 'custom-graphql';
+import useBookmarkWrite from '@bookmarks/useBookmarkWrite';
 /*
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-03-01 17:53:40
@@ -83,22 +85,47 @@ const FetchAuthor = graphql(`
 const SaveDraftAuthor = graphql(`
   mutation saveDraftAuthor($author: SaveDraftAuthor!) {
     saveDraftAuthor(author: $author) {
-      id
+      __typename
+      ... on AuthorSaved {
+        authorId
+      }
+      ... on ValidationFailure {
+        issues {
+          path
+          code
+          min
+          max
+        }
+      }
+      ... on MissingResources {
+        resources {
+          kind
+          id
+        }
+      }
+      ... on Conflict {
+        reason
+        resources {
+          kind
+          id
+        }
+      }
     }
   }
 `);
 
 export default function AuthorFetch() {
+  const write = useBookmarkWrite('/bookmarks/authors');
   // title
   const t = useI18n();
   useTitle(t('author_crawler'));
 
   // fetch
   type FormData = FetchAuthorQueryVariables;
-  const [fn, { data, loading }] = useLazyQuery(FetchAuthor);
+  const [fn, { data, loading, error }] = useLazyQuery(FetchAuthor);
   const { handleSubmit, register, control } = useForm<FormData>();
   const onSubmit = handleSubmit((data) => {
-    fn({ variables: data });
+    void fn({ variables: data }).catch(() => undefined);
   });
   const author = data?.fetchAuthor;
 
@@ -106,6 +133,8 @@ export default function AuthorFetch() {
   const [saveDraftAuthor, { loading: saveLoading }] = useMutation(SaveDraftAuthor);
   return (
     <form className="flex flex-col size-full p-4 gap-4" onSubmit={onSubmit}>
+      <RequestNotice error={error} />
+      {write.notice}
       <Card className="gap-0">
         <CardHeader>
           <CardTitle>{t('filter')}</CardTitle>
@@ -122,10 +151,17 @@ export default function AuthorFetch() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    disabled={!author || saveLoading}
+                    disabled={write.blocked || !author || saveLoading}
                     onClick={async () => {
                       if (author) {
-                        await saveDraftAuthor({ variables: { author: convertFetchToDraftAuthor(author) } });
+                        if (
+                          !(await write.execute(
+                            async () =>
+                              (await saveDraftAuthor({ variables: { author: convertFetchToDraftAuthor(author) } })).data
+                                ?.saveDraftAuthor,
+                          ))
+                        )
+                          return;
                         toast.success(t('save_draft_success'));
                       }
                     }}

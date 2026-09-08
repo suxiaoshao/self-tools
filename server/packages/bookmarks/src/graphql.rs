@@ -13,11 +13,15 @@ use crate::model::PgPool;
 
 use self::{mutation::MutationRoot, query::QueryRoot};
 
+mod enums;
+mod error;
 mod guard;
-mod mutation;
+mod input;
+pub(crate) mod mutation;
+mod objects;
 mod output;
-mod query;
-mod validator;
+pub(crate) mod query;
+mod results;
 pub(crate) type RootSchema = Schema<QueryRoot, MutationRoot, EmptySubscription>;
 
 pub(crate) fn get_schema(pool: PgPool) -> RootSchema {
@@ -25,4 +29,10 @@ pub(crate) fn get_schema(pool: PgPool) -> RootSchema {
         .extension(Logger)
         .data(pool)
         .finish()
+}
+
+pub(crate) fn schema_sdl() -> String {
+    Schema::build(QueryRoot, MutationRoot, EmptySubscription)
+        .finish()
+        .sdl()
 }

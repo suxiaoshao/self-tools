@@ -1,4 +1,4 @@
-use crate::application::{Error, Result};
+use crate::application::{Error, Rejection, Result};
 use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
 use hmac::{Hmac, Mac};
 use sha2::{Digest, Sha256};
@@ -10,15 +10,15 @@ pub fn now() -> i64 {
 }
 pub fn token() -> Result<String> {
     let mut bytes = [0; 32];
-    getrandom::fill(&mut bytes).map_err(|_| Error::Unavailable)?;
+    getrandom::fill(&mut bytes).map_err(|source| crate::error::fault("session_entropy", source))?;
     Ok(URL_SAFE_NO_PAD.encode(bytes))
 }
 pub fn hash(token: &str) -> Result<Vec<u8>> {
     let bytes = URL_SAFE_NO_PAD
         .decode(token)
-        .map_err(|_| Error::Unauthenticated)?;
+        .map_err(|_| Error::Rejected(Rejection::Unauthenticated))?;
     if bytes.len() != 32 {
-        return Err(Error::Unauthenticated);
+        return Err(Error::Rejected(Rejection::Unauthenticated));
     }
     Ok(Sha256::digest(token.as_bytes()).to_vec())
 }

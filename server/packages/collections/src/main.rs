@@ -19,16 +19,17 @@ use std::net::SocketAddr;
 use middleware::{get_cors, trace_layer};
 use router::get_router;
 use tokio::net::TcpListener;
-use tracing::{Level, event, metadata::LevelFilter};
-use tracing_subscriber::{
-    Layer, fmt, prelude::__tracing_subscriber_SubscriberExt, util::SubscriberInitExt,
-};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    if std::env::args().skip(1).eq(["--export-schema"]) {
+        print!("{}", graphql::schema_sdl());
+        return Ok(());
+    }
     match service_health::mode(true)? {
         service_health::Mode::Help => {
             service_health::help(true);
+            println!("  --export-schema  Export GraphQL SDL without connecting to services");
             return Ok(());
         }
         service_health::Mode::CheckReady => {
@@ -39,20 +40,28 @@ async fn main() -> anyhow::Result<()> {
         }
         service_health::Mode::Serve => (),
     }
-    tracing_subscriber::registry()
-        .with(fmt::layer().with_filter(LevelFilter::INFO))
-        .init();
-    // 设置跨域
-    let cors = get_cors()?;
-    let app = get_router()
-        .map_err(|_x| anyhow::anyhow!("VarError"))?
-        .layer(cors)
-        .layer(trace_layer());
+    let telemetry = telemetry::init("collections")?;
+    let result: anyhow::Result<()> = async {
+        // 设置跨域
+        let cors = get_cors()?;
+        let app = get_router()?.layer(cors).layer(trace_layer());
 
-    let addr = "0.0.0.0:8080";
-    event!(Level::INFO, addr, "server start");
-    let addr: SocketAddr = addr.parse()?;
-    let listener = TcpListener::bind(addr).await?;
-    axum::serve(listener, app).await?;
-    Ok(())
+        let addr = "0.0.0.0:8080";
+        tracing::info!(target: "telemetry", event = "service.started");
+        let addr: SocketAddr = addr.parse()?;
+        let listener = TcpListener::bind(addr).await?;
+        axum::serve(listener, app)
+            .with_graceful_shutdown(middleware::shutdown_signal())
+            .await?;
+        Ok(())
+    }
+    .await;
+    let shutdown = tokio::task::spawn_blocking(move || telemetry.shutdown()).await;
+    if !matches!(shutdown, Ok(Ok(()))) {
+        eprintln!("telemetry shutdown incomplete");
+    }
+    result
 }
+
+#[cfg(test)]
+mod tests;

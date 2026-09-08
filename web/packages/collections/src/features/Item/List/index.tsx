@@ -1,3 +1,4 @@
+import { RequestNotice } from 'custom-graphql';
 import useTitle from '@bookmarks/hooks/useTitle';
 import { graphql } from '@collections/gql';
 import type { GetItemsQuery, GetItemsQueryVariables } from '@collections/gql/graphql';
@@ -7,16 +8,15 @@ import {
   type CustomColumnDefArray,
   CustomTable,
   getCoreRowModel,
-  TableActions,
   useCustomTable,
   usePage,
   usePageWithTotal,
 } from 'custom-table';
 import { Controller, useForm } from 'react-hook-form';
-import { useMutation, useQuery } from '@apollo/client/react';
+import { useQuery } from '@apollo/client/react';
 import { Link } from 'react-router';
 import { useMemo } from 'react';
-import { DeleteItem } from '@collections/features/Collection/components/Actions';
+import { DeleteItemAction } from '@collections/features/Collection/components/Actions';
 import { convertFormToVariables } from './utils';
 import CollectionMultiSelect from '@collections/components/CollectionMultiSelect';
 import { format } from 'time';
@@ -60,11 +60,14 @@ export default function ItemList() {
     },
   });
   const form = watch();
-  const { data: { queryItems: { data, total } = {} } = {}, refetch } = useQuery(GetItems, {
+  const {
+    data: { queryItems: { data, total } = {} } = {},
+    refetch,
+    error,
+  } = useQuery(GetItems, {
     variables: convertFormToVariables(form, pageState),
   });
   const page = usePageWithTotal(pageState, total);
-  const [deleteItem] = useMutation(DeleteItem);
   const columns = useMemo<CustomColumnDefArray<Data>>(
     () =>
       [
@@ -90,28 +93,13 @@ export default function ItemList() {
           id: 'updateTime',
           cell: (context) => context.getValue(),
         }),
-        columnHelper.accessor(
-          ({ id }) => (
-            <TableActions>
-              {() => [
-                {
-                  text: t('delete'),
-                  onClick: async () => {
-                    await deleteItem({ variables: { id } });
-                    await refetch();
-                  },
-                },
-              ]}
-            </TableActions>
-          ),
-          {
-            header: t('actions'),
-            id: 'action',
-            cell: (context) => context.getValue(),
-          },
-        ),
+        columnHelper.accessor(({ id }) => <DeleteItemAction id={id} refetch={refetch} />, {
+          header: t('actions'),
+          id: 'action',
+          cell: (context) => context.getValue(),
+        }),
       ] as CustomColumnDefArray<Data>,
-    [deleteItem, refetch, t],
+    [refetch, t],
   );
   const tableInstance = useCustomTable(
     useMemo(() => ({ columns, data: data ?? [], getCoreRowModel: getCoreRowModel() }), [columns, data]),
@@ -148,6 +136,7 @@ export default function ItemList() {
             </Field>
           </CardContent>
         </Card>
+        <RequestNotice error={error} retry={refetch} />
         <CustomTable className="overflow-hidden flex-none max-h-none" tableInstance={tableInstance} page={page} />
       </div>
     </div>

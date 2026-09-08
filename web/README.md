@@ -9,8 +9,9 @@
 | `packages/portal`       | 唯一的 Vite 应用入口与组合根；负责全局 Provider、顶层路由、登录、主题、导航和共享 UI 源码。 |
 | `packages/bookmarks`    | 书签业务模块；默认导出实现 `MicroConfig` 的 `BookmarkConfig`，由 `portal` 组合。            |
 | `packages/collections`  | 收藏业务模块；默认导出实现 `MicroConfig` 的 `CollectionConfig`，由 `portal` 组合。          |
+| `common/request-errors` | HTTP 公共错误运行时解码、请求失败分类与结果未知判定。                                       |
 | `common/types`          | 跨包类型，以及 `MicroConfig`、菜单和路由接入契约。                                          |
-| `common/custom-graphql` | Apollo Client 创建、同源 Cookie 请求、认证失效通知和错误处理。                              |
+| `common/custom-graphql` | Apollo Client、同源 Cookie/认证边界、按路径的查询故障与写入反馈。                           |
 | `common/custom-table`   | TanStack Table 的表格、分页和 column helper 封装。                                          |
 | `common/details`        | 详情页展示组件和类型。                                                                      |
 | `common/edit`           | Monaco Editor 封装及其样式入口。                                                            |
@@ -46,6 +47,16 @@ portal/src/main.tsx
 
 schema、operation 或 codegen 配置变化时，在受影响的 package 运行 `generate`，检查生成 diff，再执行适用的前端验证。若后端 schema 同时变化，应同步更新客户端的 `schema.graphql`，避免前后端各自保留不同契约。
 
+查询使用 `errorPolicy: all` 并显式处理 data/error；mutation 使用 `none`，成功 resolve 后由功能包
+根据生成类型的 `__typename` 穷尽投影。共享层不弹全局业务 toast，也不显示服务端 message。
+写入成功后的刷新属于独立读取；结果未知保留输入并禁用直接重放，已知标识的操作可只读核对，
+新建结果缺少可靠标识时保留未确认状态并提供列表入口。认证 generation 变化会使旧请求结果失效。
+
+bookmarks 全部 mutation 使用生成的 union 分支；已知标识的操作按当前目标只读核对。
+批量阅读记录保留已成功阶段，后续失败不重放前一阶段。新建和抓取缺少可靠完成标记时提供列表入口。
+主字段/关联的 null 与 error 分开处理，部分失败保留其他内容；表单内和页面分别显示安全提示，
+不使用全局错误 toast。
+
 ## shadcn/ui 与样式所有权
 
 `packages/portal/components.json` 是本仓库 shadcn CLI 配置，组件源码位于 `packages/portal/src/components/ui/`，全局样式入口为 `packages/portal/src/styles/globals.css`。这些组件是仓库拥有并可定制的源码，不应把 registry 版本视为可以无差别覆盖的副本。
@@ -69,7 +80,7 @@ anonymous、authenticated 和 unavailable。登录页以 Passkey 为主，密码
 Base64URL 转换集中在 Auth service，不把原始 Credential 对象直接 JSON.stringify。
 未支持、取消、无 Passkey 时可使用密码，不自动反复唤起认证。
 
-共享 `custom-graphql` 只对 HTTP 401 通知 portal，通过请求代次避免旧 401 清除新登录。
+共享 custom-graphql 只对通过契约校验的 UNAUTHENTICATED 通知 portal，通过请求代次避免旧请求清除新登录。
 登录/退出/重新初始化时中止旧业务请求、清 Apollo cache，并清两个集合树的内存投影；
 受保护路由随代次卸载。403、503、业务错误和密码错误不触发全局退出。
 安全操作只允许一个 pending 流程，卸载/取消中止等待；已到达服务器的变更仍需刷新状态确认。

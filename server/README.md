@@ -39,7 +39,10 @@
 
 | crate            | 职责                                                           |
 | ---------------- | -------------------------------------------------------------- |
-| `graphql-common` | GraphQL 标量、分页、查询组合与校验等共享能力                   |
+| `service-errors` | 与协议无关的业务拒绝/故障、输入问题与公开错误代码              |
+| `service-query`  | 校验后的分页范围、查询组合与纯查询条件                         |
+| `telemetry`      | OpenTelemetry SDK 生命周期、可信传播与白名单 JSON 日志         |
+| `graphql-common` | GraphQL 标量、输入 adapter、公开错误和校验结果投影             |
 | `middleware`     | 按 Cargo feature 组合 CORS、HTTP trace 与 GraphQL trace        |
 | `novel_crawler`  | 起点、晋江等小说站点的抓取模型与实现                           |
 | `thrift`         | 认证 IDL、Volo 生成入口、导出类型和固定的 `auth:80` 客户端发现 |
@@ -78,6 +81,9 @@ Passkey 完整库数据存 PostgreSQL；challenge 只在 auth 内存中保留 5 
 GraphQL POST 携带 `X-Self-Tools-Request: 1`；修改请求还要求精确 Origin 和 JSON Content-Type。
 `AUTH_ORIGIN` 在 auth/login/两个 GraphQL 服务中一致，默认 `https://sushao.top`；
 WebAuthn RP ID 默认由其 host 推导，可显式用 `AUTH_RP_ID` 指定由库校验的 RP。
+HTTP 层校验 Cookie 结构与唯一性，auth 统一判定 session token：不可用值按未登录处理，
+查询 session 返回 null，受保护操作返回 401；密码/Passkey 登录可替换无效旧 Cookie，退出仍成功。
+重复 Cookie、来源违规及损坏的 ceremony 绑定继续严格拒绝。查询 session 不写回 Cookie。
 login 不授予跨域 CORS；`CORS_ALLOWED_ORIGINS` 不能替代认证 API 的同源校验。
 HTTP/RPC 的完整端点与错误码见 [认证设计](../docs/dev/issue-96/README.md#http-api)。
 
@@ -122,10 +128,43 @@ POST 必须通过精确 Origin、自定义 header 与 session 检查；401/403/5
 
 前端的 `web/packages/bookmarks/schema.graphql` 与
 `web/packages/collections/schema.graphql` 是客户端代码生成使用的本地 schema
-快照，各包 `generate` script 只读取该快照与前端 operation。仓库当前没有注册把
-Rust schema 自动导出到这些文件的脚本。因此服务端 GraphQL contract 变化时，需要
-显式更新对应前端 schema 快照，再运行该前端包已有的 `generate` script，并检查
-`src/gql/` diff；不要手改生成的客户端文件。
+快照，各包 generate script 只读取该快照与前端 operation。两个服务均支持
+`cargo run -p <collections|bookmarks> -- --export-schema`，无需数据库或 auth；更新对应
+schema.graphql 后运行 `pnpm --filter <collections|bookmarks> generate`。
+快照回归断言与 Rust schema 一致。
+不要手改 `src/gql/` 生成文件。
+
+collections 的 model/service 仅使用应用类型；GraphQL adapter 投影写入标识和业务拒绝。
+目录层级变更、条目和关联写入在事务内按固定表顺序取得写锁，避免缺少父目录外键时出现
+悬空目录，以及 exists 检查后的并发删除造成错误分类。事务拒绝保持 Err；正常超末页为空列表。
+专用数据库回归：先以 `COLLECTIONS_PG` 执行 `--migrate`，再以相同 URL 设置
+`COLLECTIONS_TEST_PG`，运行 `cargo test -p collections collections_transactions_and_typed_results -- --ignored`。
+此测试清空专用库中的 collections 表，不得指定个人业务库。
+
+bookmarks 的 model/service 只使用应用类型。草稿、多表删除、目录操作和批量阅读记录在事务中
+提交，业务拒绝保持 Err 并回滚。先用 BOOKMARKS_PG 执行 --migrate，再以相同 URL 设置
+BOOKMARKS_TEST_PG，运行 `cargo test -p bookmarks bookmarks_transactions_and_typed_results -- --ignored`。
+该测试清空专用库的 bookmarks 表，不能使用个人业务库。
+
+## 安全错误与 tracing
+
+service-errors 拥有 UseCaseError、保留 source 的 Fault 和公开故障分类；领域拥有业务拒绝。
+HTTP/GraphQL 只输出受控 code、requestId 和结构化详情，不能从 source 构造响应。
+28 个 GraphQL mutation 使用 SDL union，系统故障走 errors；详情缺失为 null，关联故障保留
+其他可用字段。完整合同见 [浏览器 API](../docs/dev/issue-98/api.md)。service-query 拥有纯分页/查询类型。
+
+五个服务统一使用 telemetry SDK 和白名单 JSON 日志。gateway 建立公网 root，内部 HTTP/Thrift
+校验载体并建立独立 server/client span；GraphQL span 在入口认证后创建，与 auth RPC client
+同属 HTTP server 的子级。requestId 在同一入口请求中一致。日志不含 body、用户输入、凭据、
+完整 URL 或原始 source；无 exporter 仍可关联 stdout。HTTP body/RPC future 提前结束记 interrupted。
+HTTP 服务处理 SIGINT/SIGTERM 后排空请求并执行有界 SDK shutdown；auth 使用 Volo 的停止流程。
+
+真实 SDK/RPC 集成回归：迁移后的专用 AUTH_TEST_PG 下运行
+`cargo test -p auth gateway_http_graphql_and_real_auth_rpc_share_trace -- --ignored`，
+使用临时 loopback Thrift listener 验证成功、部分 GraphQL 故障和远端故障的父子关系。
+`cargo test -p telemetry real_otlp_protobuf_and_failure_isolation` 使用临时本地 OTLP 接收器
+验证 HTTP/protobuf、无 exporter、超时隔离及敏感字段过滤。
+可选配置见 [Docker README](../docker/README.md#可选追踪导出)。
 
 ## 数据库、migration 与 Diesel schema
 
@@ -152,7 +191,7 @@ bookmarks 的 `GET /fetch-content?url=...` 仅代理起点和晋江已核验的�
 
 代理公开访问，不接受登录凭据作为授权输入，也不向上游转发请求头。只连接经校验的公网地址，禁止重定向、环境代理和自动重试；要求部署环境支持正常 DNS 与直连 HTTPS。连接超时 3 秒、全程 10 秒、单图最多 5 MiB。单进程最多 16 个下载，全局令牌桶容量 32、每秒补充 8 个；多副本分别计算。完整收集后根据文件签名返回 JPEG/PNG/GIF/WebP，不解码或转码，不支持 SVG/HTML。该预算限制下载缓冲和上游请求，不是进程总内存或带宽硬配额。
 
-失败返回空 body，429 携带 `Retry-After: 1`；上游响应头、错误正文、Cookie 和原始错误不透传。成功图片缓存一小时，失败不缓存。bookmarks 图片日志仅包含来源类别、状态、耗时等有限字段；gateway 的该路径日志也隐藏 query。GraphQL 原有日志策略另行维护。
+失败返回空 body，429 携带 `Retry-After: 1`；上游响应头、错误正文、Cookie 和原始错误不透传。成功图片缓存一小时，失败不缓存。图片下载建立 image.http span；HTTP 完成日志遵循统一安全字段规则，不记录目标 URL 或 query。
 
 bookmarks、collections 的图片或其他遗留跨域入口使用共享 `CORS_ALLOWED_ORIGINS`：
 

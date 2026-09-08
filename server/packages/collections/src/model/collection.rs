@@ -1,13 +1,8 @@
 use super::schema::collection;
-use crate::{
-    errors::{GraphqlError, GraphqlResult},
-    graphql::types::TimeRange,
-    model::schema::collection_item,
-};
+use crate::{errors::AppResult, model::schema::collection_item, service::input::TimeRange};
 use diesel::prelude::*;
 use std::collections::{HashMap, HashSet};
 use time::OffsetDateTime;
-use tracing::{Level, event};
 
 #[derive(Queryable)]
 #[cfg_attr(test, derive(Debug))]
@@ -40,7 +35,7 @@ impl CollectionModel {
         parent_id: Option<i64>,
         description: Option<String>,
         conn: &mut PgConnection,
-    ) -> GraphqlResult<Self> {
+    ) -> AppResult<Self> {
         let now = time::OffsetDateTime::now_utc();
         let new_collection = NewCollection {
             name,
@@ -57,32 +52,22 @@ impl CollectionModel {
         Ok(new_collection)
     }
     /// 判断目录是否存在
-    pub(crate) fn exists(id: i64, conn: &mut PgConnection) -> GraphqlResult<bool> {
+    pub(crate) fn exists(id: i64, conn: &mut PgConnection) -> AppResult<bool> {
         let exists = diesel::select(diesel::dsl::exists(
             collection::table.filter(collection::id.eq(id)),
         ))
         .get_result(conn)?;
         Ok(exists)
     }
-    /// 判断目录是否存在
-    pub(crate) fn exists_many(ids: &[i64], conn: &mut PgConnection) -> GraphqlResult<bool> {
-        let agg_ids = collection::table
-            .select(collection::id)
-            .load::<i64>(conn)?
-            .into_iter()
-            .collect::<HashSet<i64>>();
-        let ids = ids.iter().copied().collect::<HashSet<i64>>();
-        Ok(agg_ids.is_superset(&ids))
-    }
     /// 查找目录
-    pub(crate) fn find_one(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
+    pub(crate) fn find_one(id: i64, conn: &mut PgConnection) -> AppResult<Self> {
         let collection = collection::table
             .filter(collection::id.eq(id))
             .first(conn)?;
         Ok(collection)
     }
     /// 删除目录
-    pub(crate) fn delete(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
+    pub(crate) fn delete(id: i64, conn: &mut PgConnection) -> AppResult<Self> {
         let collection =
             diesel::delete(collection::table.filter(collection::id.eq(id))).get_result(conn)?;
         Ok(collection)
@@ -94,7 +79,7 @@ impl CollectionModel {
         description: Option<&str>,
         path: &str,
         conn: &mut PgConnection,
-    ) -> GraphqlResult<Self> {
+    ) -> AppResult<Self> {
         let now = time::OffsetDateTime::now_utc();
         let collection = diesel::update(collection::table.find(id))
             .set((
@@ -107,13 +92,15 @@ impl CollectionModel {
         Ok(collection)
     }
     /// 判断集合是否全部存在
-    pub(crate) fn exists_all(tag_ids: &HashSet<i64>, conn: &mut PgConnection) -> GraphqlResult<()> {
+    pub(crate) fn exists_all(tag_ids: &HashSet<i64>, conn: &mut PgConnection) -> AppResult<()> {
         let database_tags = CollectionModel::get_list(conn)?;
         let database_tags: HashSet<i64> = database_tags.into_iter().map(|tag| tag.id).collect();
         for id in tag_ids {
             if !database_tags.contains(id) {
-                event!(Level::ERROR, "集合不存在: {}", id);
-                return Err(GraphqlError::NotFound("集合", *id));
+                return Err(crate::errors::missing(
+                    crate::errors::ResourceKind::Collection,
+                    *id,
+                ));
             }
         }
         Ok(())
@@ -123,7 +110,7 @@ impl CollectionModel {
 /// path 相关
 impl CollectionModel {
     /// 是否存在该路径
-    pub(crate) fn exists_by_path(path: &str, conn: &mut PgConnection) -> GraphqlResult<bool> {
+    pub(crate) fn exists_by_path(path: &str, conn: &mut PgConnection) -> AppResult<bool> {
         let exists = diesel::select(diesel::dsl::exists(
             collection::table.filter(collection::path.eq(path)),
         ))
@@ -138,7 +125,7 @@ impl CollectionModel {
     pub(crate) fn list_parent(
         parent_id: Option<i64>,
         conn: &mut PgConnection,
-    ) -> GraphqlResult<Vec<Self>> {
+    ) -> AppResult<Vec<Self>> {
         match parent_id {
             Some(parent_id) => {
                 let collections = collection::table
@@ -162,7 +149,7 @@ impl CollectionModel {
         offset: i64,
         limit: i64,
         conn: &mut PgConnection,
-    ) -> GraphqlResult<Vec<Self>> {
+    ) -> AppResult<Vec<Self>> {
         match (parent_id, create_time, update_time) {
             (None, None, None) => {
                 let collections = collection::table
@@ -244,7 +231,7 @@ impl CollectionModel {
         create_time: Option<TimeRange>,
         update_time: Option<TimeRange>,
         conn: &mut PgConnection,
-    ) -> GraphqlResult<i64> {
+    ) -> AppResult<i64> {
         match (parent_id, create_time, update_time) {
             (None, None, None) => {
                 let count = collection::table
@@ -319,7 +306,7 @@ impl CollectionModel {
     pub(crate) fn get_collections_by_item_id(
         item_id: i64,
         conn: &mut PgConnection,
-    ) -> GraphqlResult<Vec<CollectionModel>> {
+    ) -> AppResult<Vec<CollectionModel>> {
         let collections = collection::table
             .inner_join(collection_item::table)
             .filter(collection_item::item_id.eq(item_id))
@@ -331,12 +318,12 @@ impl CollectionModel {
 /// alll
 impl CollectionModel {
     /// 获取所有目录
-    pub(crate) fn get_list(conn: &mut PgConnection) -> GraphqlResult<Vec<Self>> {
+    pub(crate) fn get_list(conn: &mut PgConnection) -> AppResult<Vec<Self>> {
         let collections = collection::table.load(conn)?;
         Ok(collections)
     }
     /// 获取所有目录映射
-    pub(crate) fn get_map(conn: &mut PgConnection) -> GraphqlResult<HashMap<i64, Vec<i64>>> {
+    pub(crate) fn get_map(conn: &mut PgConnection) -> AppResult<HashMap<i64, Vec<i64>>> {
         let all_collections = collection::table
             .select((collection::id, collection::parent_id))
             .get_results::<(i64, Option<i64>)>(conn)?;

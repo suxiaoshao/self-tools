@@ -6,11 +6,16 @@ edition.workspace = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+tokio = { workspace = true, optional = true, features = ["signal"] }
+graphql-common = { workspace = true, optional = true }
+service-errors = { workspace = true, optional = true }
+serde_json = { workspace = true, optional = true }
 # auth
 base64 = { workspace = true, optional = true }
 
 # trace
-rand = { workspace = true, optional = true }
+telemetry = { workspace = true, optional = true }
+axum = { workspace = true, optional = true }
 tower = { version = "0.5.3", optional = true }
 tracing = { workspace = true, optional = true }
 futures = { workspace = true, optional = true }
@@ -27,13 +32,26 @@ url = { workspace = true, optional = true }
 async-graphql = { workspace = true, optional = true }
 
 [dev-dependencies]
+tracing-subscriber.workspace = true
 tower = { version = "0.5.3", features = ["util"] }
 tokio = { workspace = true, features = ["macros", "rt"] }
 axum.workspace = true
 anyhow.workspace = true
 
 [features]
+public-errors = ["axum", "telemetry", "service-errors", "serde_json"]
 auth-http = ["http", "url", "base64"]
-trace = ["rand", "tower", "http", "tracing", "futures", "http-body", "pin-project-lite", "futures-util"]
+trace = [
+  "tokio",
+  "telemetry",
+  "axum",
+  "tower",
+  "http",
+  "tracing",
+  "futures",
+  "http-body",
+  "pin-project-lite",
+  "futures-util",
+]
 cors = ["http", "tower-http", "url"]
-graphql-trace = ["tracing", "async-graphql"]
+graphql-trace = ["tracing", "async-graphql", "telemetry", "service-errors", "graphql-common", "serde_json"]

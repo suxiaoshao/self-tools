@@ -1,11 +1,10 @@
 use std::collections::{HashMap, HashSet};
 
-use crate::errors::{GraphqlError, GraphqlResult};
+use crate::errors::AppResult;
 
 use super::schema::{custom_type::NovelSite, tag};
 use diesel::{connection::DefaultLoadingMode, prelude::*};
 use time::OffsetDateTime;
-use tracing::{Level, event};
 
 #[derive(Queryable)]
 pub(crate) struct TagModel {
@@ -25,7 +24,7 @@ impl TagModel {
         site: NovelSite,
         site_id: &str,
         conn: &mut PgConnection,
-    ) -> GraphqlResult<Self> {
+    ) -> AppResult<Self> {
         let now = time::OffsetDateTime::now_utc();
         let new_tag = NewTag {
             name,
@@ -41,29 +40,31 @@ impl TagModel {
         Ok(new_tag)
     }
     /// 是否存在
-    pub(crate) fn exists(id: i64, conn: &mut PgConnection) -> GraphqlResult<bool> {
+    pub(crate) fn exists(id: i64, conn: &mut PgConnection) -> AppResult<bool> {
         let exists = diesel::select(diesel::dsl::exists(tag::table.filter(tag::id.eq(id))))
             .get_result(conn)?;
         Ok(exists)
     }
     /// 删除标签
-    pub(crate) fn delete(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
+    pub(crate) fn delete(id: i64, conn: &mut PgConnection) -> AppResult<Self> {
         let deleted = diesel::delete(tag::table.filter(tag::id.eq(id))).get_result(conn)?;
         Ok(deleted)
     }
     /// 获取标签列表
-    pub(crate) fn get_by_ids(ids: &[i64], conn: &mut PgConnection) -> GraphqlResult<Vec<Self>> {
+    pub(crate) fn get_by_ids(ids: &[i64], conn: &mut PgConnection) -> AppResult<Vec<Self>> {
         let tags = tag::table.filter(tag::id.eq_any(ids)).load::<Self>(conn)?;
         Ok(tags)
     }
     /// 判断标签是否全部存在
-    pub(crate) fn exists_all(tag_ids: &HashSet<i64>, conn: &mut PgConnection) -> GraphqlResult<()> {
+    pub(crate) fn exists_all(tag_ids: &HashSet<i64>, conn: &mut PgConnection) -> AppResult<()> {
         let database_tags = TagModel::get_list(conn)?;
         let database_tags: HashSet<i64> = database_tags.into_iter().map(|tag| tag.id).collect();
         for id in tag_ids {
             if !database_tags.contains(id) {
-                event!(Level::ERROR, "标签不存在: {}", id);
-                return Err(GraphqlError::NotFound("标签", *id));
+                return Err(crate::errors::missing(
+                    crate::errors::ResourceKind::Tag,
+                    *id,
+                ));
             }
         }
         Ok(())
@@ -72,7 +73,7 @@ impl TagModel {
     pub(crate) fn many_site_id_by_site(
         site: NovelSite,
         conn: &mut PgConnection,
-    ) -> GraphqlResult<HashMap<String, i64>> {
+    ) -> AppResult<HashMap<String, i64>> {
         let data = tag::table
             .select((tag::site_id, tag::id))
             .filter(tag::site.eq(site))
@@ -85,12 +86,12 @@ impl TagModel {
 /// all
 impl TagModel {
     /// 获取所有标签
-    pub(crate) fn get_list(conn: &mut PgConnection) -> GraphqlResult<Vec<Self>> {
+    pub(crate) fn get_list(conn: &mut PgConnection) -> AppResult<Vec<Self>> {
         let tags = tag::table.load(conn)?;
         Ok(tags)
     }
     /// 获取标签数量
-    pub(crate) fn count(conn: &mut PgConnection) -> GraphqlResult<i64> {
+    pub(crate) fn count(conn: &mut PgConnection) -> AppResult<i64> {
         let count = tag::table.count().get_result(conn)?;
         Ok(count)
     }
@@ -99,7 +100,7 @@ impl TagModel {
         offset: i64,
         limit: i64,
         conn: &mut PgConnection,
-    ) -> GraphqlResult<Vec<Self>> {
+    ) -> AppResult<Vec<Self>> {
         let tags = tag::table.offset(offset).limit(limit).load(conn)?;
         Ok(tags)
     }
@@ -113,16 +114,4 @@ pub(crate) struct NewTag<'a> {
     pub(crate) site_id: &'a str,
     pub(crate) create_time: OffsetDateTime,
     pub(crate) update_time: OffsetDateTime,
-}
-
-impl NewTag<'_> {
-    pub(crate) fn save_many(
-        data: &[Self],
-        conn: &mut PgConnection,
-    ) -> GraphqlResult<Vec<TagModel>> {
-        let result = diesel::insert_into(tag::table)
-            .values(data)
-            .get_results(conn)?;
-        Ok(result)
-    }
 }

@@ -1,3 +1,6 @@
+import { checkNovelState } from '@bookmarks/reconcile';
+import { useApolloClient } from '@apollo/client/react';
+import useBookmarkWrite from '@bookmarks/useBookmarkWrite';
 import { useMutation } from '@apollo/client/react';
 import { graphql } from '@bookmarks/gql';
 import type { CreateCommentMutationVariables } from '@bookmarks/gql/graphql';
@@ -31,6 +34,30 @@ const CreateComment = graphql(`
   mutation CreateComment($novelId: Int!, $content: String!) {
     addCommentForNovel(novelId: $novelId, content: $content) {
       __typename
+      ... on CommentSaved {
+        novelId
+      }
+      ... on ValidationFailure {
+        issues {
+          path
+          code
+          min
+          max
+        }
+      }
+      ... on MissingResources {
+        resources {
+          kind
+          id
+        }
+      }
+      ... on Conflict {
+        reason
+        resources {
+          kind
+          id
+        }
+      }
     }
   }
 `);
@@ -39,6 +66,30 @@ const UpdateComment = graphql(`
   mutation UpdateComment($novelId: Int!, $content: String!) {
     updateCommentForNovel(novelId: $novelId, content: $content) {
       __typename
+      ... on CommentSaved {
+        novelId
+      }
+      ... on ValidationFailure {
+        issues {
+          path
+          code
+          min
+          max
+        }
+      }
+      ... on MissingResources {
+        resources {
+          kind
+          id
+        }
+      }
+      ... on Conflict {
+        reason
+        resources {
+          kind
+          id
+        }
+      }
     }
   }
 `);
@@ -51,6 +102,8 @@ interface CommentEditProps {
 }
 
 export default function CommentEdit({ novelId, refetch, mode, initContent }: CommentEditProps) {
+  const client = useApolloClient();
+  const write = useBookmarkWrite('/bookmarks/novel');
   const t = useI18n();
   const { open, handleClose, handleOpenChange } = useDialog();
   const [createComment, { loading }] = useMutation(CreateComment);
@@ -63,12 +116,38 @@ export default function CommentEdit({ novelId, refetch, mode, initContent }: Com
   });
   const onSubmit = async (data: Omit<CreateCommentMutationVariables, 'novelId'>) => {
     if (mode === 'update') {
-      await updateComment({ variables: { ...data, novelId } });
+      if (
+        !(await write.execute(
+          async () => (await updateComment({ variables: { ...data, novelId } })).data?.updateCommentForNovel,
+          {
+            verify: () => checkNovelState(client, novelId, { comment: data.content }),
+            confirmed: () => {
+              handleClose();
+              refetch();
+            },
+          },
+        ))
+      )
+        return;
     } else {
-      await createComment({ variables: { ...data, novelId } });
+      if (
+        !(await write.execute(
+          async () => (await createComment({ variables: { ...data, novelId } })).data?.addCommentForNovel,
+          {
+            verify: () => checkNovelState(client, novelId, { comment: data.content }),
+            confirmed: () => {
+              handleClose();
+              refetch();
+            },
+          },
+        ))
+      )
+        return;
     }
     handleClose();
-    refetch();
+    void Promise.resolve()
+      .then(() => refetch())
+      .catch(() => undefined);
   };
 
   return (
@@ -105,9 +184,10 @@ export default function CommentEdit({ novelId, refetch, mode, initContent }: Com
               )}
             />
           </FieldGroup>
+          {write.notice}
           <DialogFooter>
             <DialogClose render={<Button variant="secondary" />}>{t('cancel')}</DialogClose>
-            <Button type="submit" disabled={loading || updateLoading}>
+            <Button type="submit" disabled={write.blocked || loading || updateLoading}>
               {(loading || updateLoading) && <Spinner />}
               {t('submit')}
             </Button>

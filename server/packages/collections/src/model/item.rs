@@ -1,4 +1,4 @@
-use crate::{errors::GraphqlResult, graphql::types::TimeRange, model::schema::collection_item};
+use crate::{errors::AppResult, model::schema::collection_item, service::input::TimeRange};
 
 use super::schema::item;
 use diesel::prelude::*;
@@ -25,11 +25,7 @@ struct NewItem<'a> {
 /// id 相关
 impl ItemModel {
     /// 创建记录
-    pub(crate) fn create(
-        name: &str,
-        content: &str,
-        conn: &mut PgConnection,
-    ) -> GraphqlResult<Self> {
+    pub(crate) fn create(name: &str, content: &str, conn: &mut PgConnection) -> AppResult<Self> {
         let now = time::OffsetDateTime::now_utc();
         let new_item = NewItem {
             name,
@@ -43,17 +39,17 @@ impl ItemModel {
         Ok(new_item)
     }
     /// 删除记录
-    pub(crate) fn delete(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
+    pub(crate) fn delete(id: i64, conn: &mut PgConnection) -> AppResult<Self> {
         let item = diesel::delete(item::table.filter(item::id.eq(id))).get_result(conn)?;
         Ok(item)
     }
     /// 查找记录
-    pub(crate) fn find_one(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
+    pub(crate) fn find_one(id: i64, conn: &mut PgConnection) -> AppResult<Self> {
         let item = item::table.filter(item::id.eq(id)).first::<Self>(conn)?;
         Ok(item)
     }
     /// 判断是否存在
-    pub(crate) fn exists(id: i64, conn: &mut PgConnection) -> GraphqlResult<bool> {
+    pub(crate) fn exists(id: i64, conn: &mut PgConnection) -> AppResult<bool> {
         let exists = diesel::select(diesel::dsl::exists(item::table.find(id))).get_result(conn)?;
         Ok(exists)
     }
@@ -63,7 +59,7 @@ impl ItemModel {
         name: &str,
         content: &str,
         conn: &mut PgConnection,
-    ) -> GraphqlResult<Self> {
+    ) -> AppResult<Self> {
         let now = time::OffsetDateTime::now_utc();
         let item = diesel::update(item::table.find(id))
             .set((
@@ -79,7 +75,7 @@ impl ItemModel {
         &self,
         collection_ids: &[i64],
         conn: &mut PgConnection,
-    ) -> GraphqlResult<usize> {
+    ) -> AppResult<usize> {
         let values = collection_ids
             .iter()
             .map(|collection_id| {
@@ -106,7 +102,7 @@ impl ItemModel {
         offset: i64,
         limit: i64,
         conn: &mut PgConnection,
-    ) -> GraphqlResult<Vec<Self>> {
+    ) -> AppResult<Vec<Self>> {
         match (create_time, update_time) {
             (None, None) => {
                 let data = item::table
@@ -156,7 +152,7 @@ impl ItemModel {
         create_time: Option<TimeRange>,
         update_time: Option<TimeRange>,
         conn: &mut PgConnection,
-    ) -> GraphqlResult<i64> {
+    ) -> AppResult<i64> {
         match (create_time, update_time) {
             (None, None) => {
                 let count = item::table
@@ -201,7 +197,7 @@ impl ItemModel {
 /// all
 impl ItemModel {
     /// all
-    pub fn all(conn: &mut PgConnection) -> GraphqlResult<Vec<Self>> {
+    pub fn all(conn: &mut PgConnection) -> AppResult<Vec<Self>> {
         let items = item::table.load(conn)?;
         Ok(items)
     }

@@ -1,3 +1,5 @@
+import { RequestNotice } from 'custom-graphql';
+import useBookmarkWrite from '@bookmarks/useBookmarkWrite';
 /*
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-03-01 17:53:40
@@ -84,7 +86,31 @@ const FetchNovel = graphql(`
 const SaveDraftNovel = graphql(`
   mutation saveDraftNovel($novel: SaveDraftNovel!) {
     saveDraftNovel(novel: $novel) {
-      id
+      __typename
+      ... on NovelSaved {
+        novelId
+      }
+      ... on ValidationFailure {
+        issues {
+          path
+          code
+          min
+          max
+        }
+      }
+      ... on MissingResources {
+        resources {
+          kind
+          id
+        }
+      }
+      ... on Conflict {
+        reason
+        resources {
+          kind
+          id
+        }
+      }
     }
   }
 `);
@@ -93,14 +119,15 @@ type ChapterData = FetchNovelQuery['fetchNovel']['chapters'][number];
 const columnHelper = createCustomColumnHelper<ChapterData>();
 
 export default function NovelFetch() {
+  const write = useBookmarkWrite('/bookmarks/novel');
   const t = useI18n();
   useTitle(t('novel_crawler'));
   // fetch
   type FormData = FetchNovelQueryVariables;
-  const [fn, { data, loading }] = useLazyQuery(FetchNovel);
+  const [fn, { data, loading, error }] = useLazyQuery(FetchNovel);
   const { handleSubmit, register, control } = useForm<FormData>();
   const onSubmit = handleSubmit((data) => {
-    fn({ variables: data });
+    void fn({ variables: data }).catch(() => undefined);
   });
   const novel = data?.fetchNovel;
   const [saveDraftNovel, { loading: saveLoading }] = useMutation(SaveDraftNovel);
@@ -193,6 +220,8 @@ export default function NovelFetch() {
   );
   return (
     <form className="flex flex-col size-full p-4 gap-4" onSubmit={onSubmit}>
+      <RequestNotice error={error} />
+      {write.notice}
       <Card>
         <CardHeader>
           <CardTitle>{t('filter')}</CardTitle>
@@ -210,10 +239,17 @@ export default function NovelFetch() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      disabled={!novel || saveLoading}
+                      disabled={write.blocked || !novel || saveLoading}
                       onClick={async () => {
                         if (novel) {
-                          await saveDraftNovel({ variables: { novel: convertFetchToDraftNovel(novel) } });
+                          if (
+                            !(await write.execute(
+                              async () =>
+                                (await saveDraftNovel({ variables: { novel: convertFetchToDraftNovel(novel) } })).data
+                                  ?.saveDraftNovel,
+                            ))
+                          )
+                            return;
                           toast.success(t('save_draft_success'));
                         }
                       }}

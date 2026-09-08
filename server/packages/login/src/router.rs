@@ -10,14 +10,11 @@ use axum::{
 use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
 use middleware::auth_http::{self, CEREMONY_COOKIE, SESSION_COOKIE};
 use serde_json::{Value, json};
+use service_errors::{Fault, FaultKind, PublicCode};
 use thrift::auth::*;
-use volo_thrift::MaybeException;
 macro_rules! rpc {
     ($call:expr) => {
-        match $call.await? {
-            MaybeException::Ok(v) => v,
-            MaybeException::Exception(e) => return Err(e.into()),
-        }
+        $call.await?
     };
 }
 pub(crate) fn get_router() -> anyhow::Result<Router> {
@@ -37,10 +34,10 @@ pub(crate) fn get_router() -> anyhow::Result<Router> {
         .route("/api/auth/{*path}", any(handle))
         .with_state(origin))
 }
-fn text<'a>(body: &'a Value, key: &str) -> Result<&'a str, ApiError> {
+fn text<'a>(body: &'a Value, key: &'static str) -> Result<&'a str, ApiError> {
     body.get(key)
         .and_then(Value::as_str)
-        .ok_or_else(ApiError::invalid)
+        .ok_or_else(|| ApiError::invalid_field(key))
 }
 fn timestamp(value: i64) -> String {
     time::OffsetDateTime::from_unix_timestamp(value)
@@ -59,7 +56,7 @@ fn passkey_view(v: PasskeyInfo) -> Value {
 }
 fn options_view(v: Options) -> Result<Value, ApiError> {
     Ok(
-        json!({"ceremonyId":v.ceremony_id.as_str(),"publicKey":serde_json::from_str::<Value>(v.public_key_json.as_str()).map_err(|_|ApiError::unavailable())?.get("publicKey").ok_or_else(ApiError::unavailable)?}),
+        json!({"ceremonyId":v.ceremony_id.as_str(),"publicKey":serde_json::from_str::<Value>(v.public_key_json.as_str()).map_err(|_|ApiError::protocol())?.get("publicKey").ok_or_else(ApiError::protocol)?}),
     )
 }
 async fn handle(State(origin): State<String>, req: Request) -> Result<Response, ApiError> {
@@ -67,20 +64,9 @@ async fn handle(State(origin): State<String>, req: Request) -> Result<Response, 
     let path = req.uri().path().trim_start_matches("/api/auth/").to_owned();
     auth_http::validate_request(req.headers(), &method, &origin)
         .map_err(|_| ApiError::rejected())?;
-    let session =
-        auth_http::cookie(req.headers(), SESSION_COOKIE).map_err(|_| ApiError::rejected())?;
-    let binding =
-        auth_http::cookie(req.headers(), CEREMONY_COOKIE).map_err(|_| ApiError::rejected())?;
-    let ctx = Context {
-        session_token: session.map(Into::into),
-        trace_id: req
-            .headers()
-            .get("trace-id")
-            .and_then(|v| v.to_str().ok())
-            .unwrap_or_default()
-            .to_owned()
-            .into(),
-    };
+    let session = auth_http::session_cookie(req.headers()).map_err(|_| ApiError::rejected())?;
+    let binding = auth_http::ceremony_cookie(req.headers()).map_err(|_| ApiError::rejected())?;
+    let ctx = thrift::context(session);
     let bytes = to_bytes(req.into_body(), 64 * 1024)
         .await
         .map_err(|_| ApiError::invalid())?;
@@ -93,14 +79,12 @@ async fn handle(State(origin): State<String>, req: Request) -> Result<Response, 
     let mut cookies = Vec::new();
     let mut status = StatusCode::OK;
     let data = match (method.as_str(), path.as_str()) {
-        ("GET", "session") => match client.check(ctx).await? {
-            MaybeException::Ok(v) => session_view(v),
-            MaybeException::Exception(AuthServiceCheckException::Err(e))
-                if e.code == FailureCode::UNAUTHENTICATED =>
-            {
+        ("GET", "session") => match client.check(ctx).await {
+            Ok(value) => session_view(value),
+            Err(thrift::RpcError::Rejected(error)) if error.code == PublicCode::Unauthenticated => {
                 Value::Null
             }
-            MaybeException::Exception(e) => return Err(e.into()),
+            Err(error) => return Err(error.into()),
         },
         ("POST", "password/login") => {
             let result = rpc!(client.login_password(
@@ -136,7 +120,9 @@ async fn handle(State(origin): State<String>, req: Request) -> Result<Response, 
                 Some(v) => v,
                 None => {
                     let mut bytes = [0; 32];
-                    getrandom::fill(&mut bytes).map_err(|_| ApiError::unavailable())?;
+                    getrandom::fill(&mut bytes).map_err(|source| {
+                        Fault::new(FaultKind::Internal, "browser_binding", source)
+                    })?;
                     URL_SAFE_NO_PAD.encode(bytes)
                 }
             };
@@ -159,7 +145,7 @@ async fn handle(State(origin): State<String>, req: Request) -> Result<Response, 
             let ceremony = CeremonyContext {
                 context: ctx,
                 browser_binding: binding
-                    .ok_or(ApiError(StatusCode::BAD_REQUEST, "CEREMONY_INVALID", None))?
+                    .ok_or(ApiError::new(PublicCode::CeremonyInvalid))?
                     .into(),
                 ceremony_id: Some(text(&body, "ceremonyId")?.to_owned().into()),
             };
@@ -194,14 +180,15 @@ async fn handle(State(origin): State<String>, req: Request) -> Result<Response, 
             text(&body, "name")?.to_owned().into()
         ))),
         ("DELETE", p) if p.starts_with("passkeys/") => {
-            if rpc!(client.delete_passkey(ctx, p.trim_start_matches("passkeys/").to_owned().into()))
-            {
+            let result = rpc!(
+                client.delete_passkey(ctx, p.trim_start_matches("passkeys/").to_owned().into())
+            );
+            if result.session_invalidated {
                 cookies.push(auth_http::set_cookie(SESSION_COOKIE, "", 0));
             }
-            status = StatusCode::NO_CONTENT;
-            Value::Null
+            json!({"id": result.id.as_str(), "sessionInvalidated": result.session_invalidated})
         }
-        _ => return Err(ApiError(StatusCode::NOT_FOUND, "NOT_FOUND", None)),
+        _ => return Err(ApiError::new(PublicCode::NotFound)),
     };
     let mut response = if status == StatusCode::NO_CONTENT {
         status.into_response()
@@ -214,7 +201,7 @@ async fn handle(State(origin): State<String>, req: Request) -> Result<Response, 
     for cookie in cookies {
         response.headers_mut().append(
             "set-cookie",
-            cookie.parse().map_err(|_| ApiError::unavailable())?,
+            cookie.parse().map_err(|_| ApiError::protocol())?,
         );
     }
     Ok(response)

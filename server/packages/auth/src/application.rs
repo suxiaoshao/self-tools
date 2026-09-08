@@ -1,56 +1,21 @@
+use crate::domain::{
+    CeremonyContext, Context, DeletePasskeyResult, LoginResult, Options, PasskeyInfo, Session,
+};
+pub use crate::error::{Error, Rejection, Result};
+use crate::error::{fault, invalid, poisoned};
 use crate::{
     passkey::{Budget, Ceremonies, Ceremony, Purpose, State},
     repository::{self as repo, DbPool},
     session,
 };
 use diesel::{prelude::*, r2d2::ConnectionManager};
+use service_errors::{Fault, FaultKind};
 use std::{
     sync::{Arc, Mutex},
     time::{Duration, Instant},
 };
-use thrift::auth::{CeremonyContext, Context, LoginResult, Options, PasskeyInfo, Session};
 use uuid::Uuid;
 use webauthn_rs::prelude::*;
-#[derive(Debug, thiserror::Error)]
-pub enum Error {
-    #[error("unauthenticated")]
-    Unauthenticated,
-    #[error("recent authentication required")]
-    ReauthRequired,
-    #[error("authentication failed")]
-    AuthenticationFailed,
-    #[error("ceremony invalid")]
-    CeremonyInvalid,
-    #[error("no passkey")]
-    NoPasskey,
-    #[error("passkey exists")]
-    PasskeyExists,
-    #[error("invalid request")]
-    InvalidRequest,
-    #[error("not found")]
-    NotFound,
-    #[error("rate limited")]
-    RateLimited,
-    #[error("authentication unavailable")]
-    Unavailable,
-}
-pub type Result<T> = std::result::Result<T, Error>;
-impl From<diesel::result::Error> for Error {
-    fn from(err: diesel::result::Error) -> Self {
-        if matches!(
-            err,
-            diesel::result::Error::DatabaseError(
-                diesel::result::DatabaseErrorKind::UniqueViolation,
-                _
-            )
-        ) {
-            Self::PasskeyExists
-        } else {
-            tracing::error!("authentication database operation failed");
-            Self::Unavailable
-        }
-    }
-}
 pub struct Application {
     pool: DbPool,
     slots: Arc<tokio::sync::Semaphore>,
@@ -135,23 +100,25 @@ impl Application {
             .clone()
             .acquire_owned()
             .await
-            .map_err(|_| Error::Unavailable)?;
+            .map_err(|source| Fault::new(FaultKind::Task, "authentication_slots", source))?;
         let this = self.clone();
+        let span = tracing::Span::current();
         tokio::task::spawn_blocking(move || {
+            let _guard = span.enter();
             let _permit = permit;
-            let mut db = this.pool.get().map_err(|_| Error::Unavailable)?;
+            let mut db = this
+                .pool
+                .get()
+                .map_err(|source| Fault::new(FaultKind::Pool, "authentication_database", source))?;
             db.transaction::<_, Error, _>(|db| f(&this, db))
         })
         .await
-        .map_err(|_| Error::Unavailable)?
+        .map_err(|source| Fault::new(FaultKind::Task, "authentication_task", source))?
     }
     fn password(&self, username: &str, password: &str) -> Result<()> {
-        self.passwords
-            .lock()
-            .map_err(|_| Error::Unavailable)?
-            .take()?;
+        self.passwords.lock().map_err(|_| poisoned())?.take()?;
         if !session::verify(&self.secret, &self.fingerprint, username, password) {
-            return Err(Error::AuthenticationFailed);
+            return Err(Error::Rejected(Rejection::AuthenticationFailed));
         }
         Ok(())
     }
@@ -197,10 +164,10 @@ impl Application {
         name: Option<&str>,
     ) -> Result<Options> {
         if ctx.ceremony_id.is_some() {
-            return Err(Error::InvalidRequest);
+            return Err(Error::Rejected(Rejection::InvalidRequest(Vec::new())));
         }
-        let binding =
-            session::hash(ctx.browser_binding.as_str()).map_err(|_| Error::CeremonyInvalid)?;
+        let binding = session::hash(ctx.browser_binding.as_str())
+            .map_err(|_| Error::Rejected(Rejection::CeremonyInvalid))?;
         let hash = if purpose == Purpose::Login {
             None
         } else {
@@ -210,13 +177,14 @@ impl Application {
         };
         self.ceremonies
             .lock()
-            .map_err(|_| Error::Unavailable)?
+            .map_err(|_| poisoned())?
             .budget
             .take()?;
         let rows = repo::keys(db)?;
         let keys = rows.iter().map(|k| k.key()).collect::<Result<Vec<_>>>()?;
         let (options, state) = if purpose == Purpose::Register {
-            let name = valid_name(name.ok_or(Error::InvalidRequest)?)?;
+            let name =
+                valid_name(name.ok_or(Error::Rejected(Rejection::InvalidRequest(Vec::new())))?)?;
             let (options, state) = self
                 .webauthn
                 .start_passkey_registration(
@@ -225,21 +193,23 @@ impl Application {
                     &self.username,
                     Some(keys.iter().map(|k| k.cred_id().clone()).collect()),
                 )
-                .map_err(|_| Error::Unavailable)?;
+                .map_err(|source| fault("webauthn_options", source))?;
             (
-                serde_json::to_string(&options).map_err(|_| Error::Unavailable)?,
+                serde_json::to_string(&options)
+                    .map_err(|source| fault("webauthn_options", source))?,
                 State::Register(state, name),
             )
         } else {
             if keys.is_empty() {
-                return Err(Error::NoPasskey);
+                return Err(Error::Rejected(Rejection::NoPasskey));
             }
             let (options, state) = self
                 .webauthn
                 .start_passkey_authentication(&keys)
-                .map_err(|_| Error::Unavailable)?;
+                .map_err(|source| fault("webauthn_options", source))?;
             (
-                serde_json::to_string(&options).map_err(|_| Error::Unavailable)?,
+                serde_json::to_string(&options)
+                    .map_err(|source| fault("webauthn_options", source))?,
                 State::Authenticate(
                     state,
                     rows.into_iter().map(|r| (r.id, r.credential)).collect(),
@@ -249,7 +219,7 @@ impl Application {
         let id = self
             .ceremonies
             .lock()
-            .map_err(|_| Error::Unavailable)?
+            .map_err(|_| poisoned())?
             .insert(Ceremony {
                 purpose,
                 session: hash,
@@ -258,8 +228,8 @@ impl Application {
                 expires: Instant::now() + Duration::from_secs(300),
             })?;
         Ok(Options {
-            ceremony_id: id.into(),
-            public_key_json: options.into(),
+            ceremony_id: id,
+            public_key_json: options,
         })
     }
     fn consume(
@@ -268,26 +238,22 @@ impl Application {
         ctx: &CeremonyContext,
         purpose: Purpose,
     ) -> Result<State> {
-        let binding =
-            session::hash(ctx.browser_binding.as_str()).map_err(|_| Error::CeremonyInvalid)?;
+        let binding = session::hash(ctx.browser_binding.as_str())
+            .map_err(|_| Error::Rejected(Rejection::CeremonyInvalid))?;
         let hash = if purpose == Purpose::Login {
             None
         } else {
             Some(session_hash(&ctx.context)?)
         };
-        let state = self
-            .ceremonies
-            .lock()
-            .map_err(|_| Error::Unavailable)?
-            .consume(
-                ctx.ceremony_id
-                    .as_ref()
-                    .ok_or(Error::CeremonyInvalid)?
-                    .as_str(),
-                &binding,
-                hash.as_deref(),
-                purpose,
-            )?;
+        let state = self.ceremonies.lock().map_err(|_| poisoned())?.consume(
+            ctx.ceremony_id
+                .as_ref()
+                .ok_or(Error::Rejected(Rejection::CeremonyInvalid))?
+                .as_str(),
+            &binding,
+            hash.as_deref(),
+            purpose,
+        )?;
         if let Some(hash) = hash {
             repo::check(db, &hash, purpose == Purpose::Register)?;
         }
@@ -301,39 +267,43 @@ impl Application {
         json: &str,
     ) -> Result<Uuid> {
         let State::Authenticate(state, snapshots) = self.consume(db, ctx, purpose)? else {
-            return Err(Error::CeremonyInvalid);
+            return Err(Error::Rejected(Rejection::CeremonyInvalid));
         };
-        let credential: PublicKeyCredential =
-            serde_json::from_str(json).map_err(|_| Error::InvalidRequest)?;
+        let credential: PublicKeyCredential = serde_json::from_str(json).map_err(|_| {
+            invalid(
+                "credentialJson",
+                service_errors::ValidationCode::InvalidFormat,
+            )
+        })?;
         let result = self
             .webauthn
             .finish_passkey_authentication(&credential, &state)
-            .map_err(|_| Error::AuthenticationFailed)?;
+            .map_err(|_| Error::Rejected(Rejection::AuthenticationFailed))?;
         // Lock and compare the full persisted credential before applying the result. A
         // concurrent update requires a fresh ceremony, so stale counters cannot win.
         for (id, snapshot) in snapshots {
-            let snapshot_key: Passkey =
-                serde_json::from_value(snapshot.clone()).map_err(|_| Error::Unavailable)?;
+            let snapshot_key: Passkey = serde_json::from_value(snapshot.clone())
+                .map_err(|source| fault("passkey_snapshot", source))?;
             if snapshot_key.cred_id() != result.cred_id() {
                 continue;
             }
             let row = repo::key(db, id).map_err(|e| {
-                if matches!(e, Error::NotFound) {
-                    Error::AuthenticationFailed
+                if matches!(e, Error::Rejected(Rejection::NotFound(_))) {
+                    Error::Rejected(Rejection::AuthenticationFailed)
                 } else {
                     e
                 }
             })?;
             if row.credential != snapshot {
-                return Err(Error::CeremonyInvalid);
+                return Err(Error::Rejected(Rejection::CeremonyInvalid));
             }
             let mut key = row.key()?;
             key.update_credential(&result)
-                .ok_or(Error::AuthenticationFailed)?;
+                .ok_or(Error::Rejected(Rejection::AuthenticationFailed))?;
             repo::update_key(db, id, &key)?;
             return Ok(id);
         }
-        Err(Error::AuthenticationFailed)
+        Err(Error::Rejected(Rejection::AuthenticationFailed))
     }
     pub fn finish_login(
         &self,
@@ -365,14 +335,18 @@ impl Application {
         json: &str,
     ) -> Result<PasskeyInfo> {
         let State::Register(state, name) = self.consume(db, ctx, Purpose::Register)? else {
-            return Err(Error::CeremonyInvalid);
+            return Err(Error::Rejected(Rejection::CeremonyInvalid));
         };
-        let credential: RegisterPublicKeyCredential =
-            serde_json::from_str(json).map_err(|_| Error::InvalidRequest)?;
+        let credential: RegisterPublicKeyCredential = serde_json::from_str(json).map_err(|_| {
+            invalid(
+                "credentialJson",
+                service_errors::ValidationCode::InvalidFormat,
+            )
+        })?;
         let key = self
             .webauthn
             .finish_passkey_registration(&credential, &state)
-            .map_err(|_| Error::AuthenticationFailed)?;
+            .map_err(|_| Error::Rejected(Rejection::AuthenticationFailed))?;
         let id = Uuid::new_v4();
         repo::insert_key(db, id, self.user, &key, &name)?;
         Ok(repo::key(db, id)?.view())
@@ -385,41 +359,74 @@ impl Application {
         name: &str,
     ) -> Result<PasskeyInfo> {
         repo::check(db, &session_hash(ctx)?, true)?;
-        let id = Uuid::parse_str(id).map_err(|_| Error::InvalidRequest)?;
+        let id = Uuid::parse_str(id)
+            .map_err(|_| invalid("id", service_errors::ValidationCode::InvalidFormat))?;
         let name = valid_name(name)?;
         repo::key(db, id)?;
         repo::rename_key(db, id, &name)?;
         Ok(repo::key(db, id)?.view())
     }
-    pub fn delete_passkey(&self, db: &mut PgConnection, ctx: &Context, id: &str) -> Result<bool> {
+    pub fn delete_passkey(
+        &self,
+        db: &mut PgConnection,
+        ctx: &Context,
+        id: &str,
+    ) -> Result<DeletePasskeyResult> {
         let hash = session_hash(ctx)?;
         repo::check(db, &hash, true)?;
-        let id = Uuid::parse_str(id).map_err(|_| Error::InvalidRequest)?;
-        repo::key(db, id)?;
-        repo::delete_key(db, id)?;
+        let id = Uuid::parse_str(id)
+            .map_err(|_| invalid("id", service_errors::ValidationCode::InvalidFormat))?;
+        if !repo::delete_key(db, id)? {
+            return Ok(DeletePasskeyResult {
+                id: id.to_string(),
+                session_invalidated: false,
+            });
+        }
         match repo::check(db, &hash, false) {
-            Ok(_) => Ok(false),
-            Err(Error::Unauthenticated) => Ok(true),
+            Ok(_) => Ok(DeletePasskeyResult {
+                id: id.to_string(),
+                session_invalidated: false,
+            }),
+            Err(Error::Rejected(Rejection::Unauthenticated)) => Ok(DeletePasskeyResult {
+                id: id.to_string(),
+                session_invalidated: true,
+            }),
             Err(e) => Err(e),
         }
     }
 }
 fn optional_hash(ctx: &Context) -> Result<Option<Vec<u8>>> {
-    ctx.session_token
-        .as_ref()
-        .map(|s| session::hash(s.as_str()))
-        .transpose()
+    match ctx.session_token.as_deref().map(session::hash).transpose() {
+        // A broken old credential cannot authenticate or identify a session to revoke.
+        // Login authenticates independently; required-session operations reject None.
+        Err(Error::Rejected(Rejection::Unauthenticated)) => Ok(None),
+        result => result,
+    }
 }
 fn session_hash(ctx: &Context) -> Result<Vec<u8>> {
-    optional_hash(ctx)?.ok_or(Error::Unauthenticated)
+    optional_hash(ctx)?.ok_or(Error::Rejected(Rejection::Unauthenticated))
 }
 fn valid_name(name: &str) -> Result<String> {
     let name = name.trim();
-    if !(1..=64).contains(&name.chars().count()) {
-        return Err(Error::InvalidRequest);
+    if name.is_empty() {
+        return Err(invalid("name", service_errors::ValidationCode::Required));
+    }
+    if name.chars().count() > 64 {
+        return Err(
+            Rejection::InvalidRequest(vec![service_errors::FieldViolation {
+                path: vec!["name".into()],
+                code: service_errors::ValidationCode::TooLong,
+                min: None,
+                max: Some(64),
+            }])
+            .into(),
+        );
     }
     Ok(name.into())
 }
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod trace_tests;

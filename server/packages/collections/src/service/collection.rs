@@ -1,218 +1,158 @@
-use async_graphql::*;
-use diesel::{Connection, PgConnection};
-use graphql_common::{DateTime, Paginate, Queryable};
-use tracing::{Level, event};
-
 use crate::{
-    errors::{GraphqlError, GraphqlResult},
-    graphql::types::{CollectionItemQuery, ItemAndCollection},
+    errors::*,
     model::{PgPool, collection::CollectionModel, collection_item::CollectionItemModel},
+    service::input::{CollectionItemQuery, ItemAndCollection},
 };
-
-#[derive(SimpleObject)]
-#[graphql(complex)]
+use diesel::{Connection, PgConnection, RunQueryDsl};
+use service_query::{Paginate, Queryable};
+use time::OffsetDateTime;
+#[derive(Clone)]
 pub(crate) struct Collection {
-    pub(crate) id: i64,
-    pub(crate) name: String,
-    pub(crate) path: String,
-    pub(crate) parent_id: Option<i64>,
-    pub(crate) description: Option<String>,
-    pub(crate) create_time: DateTime,
-    pub(crate) update_time: DateTime,
+    pub id: i64,
+    pub name: String,
+    pub path: String,
+    pub parent_id: Option<i64>,
+    pub description: Option<String>,
+    pub create_time: OffsetDateTime,
+    pub update_time: OffsetDateTime,
 }
-#[ComplexObject]
-impl Collection {
-    /// 获取祖先列表
-    async fn ancestors(&self, context: &Context<'_>) -> GraphqlResult<Vec<Collection>> {
-        let conn = &mut context
-            .data::<PgPool>()
-            .map_err(|_| {
-                event!(Level::WARN, "graphql context data PgPool 不存在");
-                GraphqlError::NotGraphqlContextData("PgPool")
-            })?
-            .get()?;
-        let ancestors = Collection::get_ancestors(self.id, conn)?;
-        Ok(ancestors)
-    }
-}
-
 impl From<CollectionModel> for Collection {
-    fn from(model: CollectionModel) -> Self {
+    fn from(v: CollectionModel) -> Self {
         Self {
-            name: model.name,
-            id: model.id,
-            path: model.path,
-            parent_id: model.parent_id,
-            description: model.description,
-            create_time: model.create_time.into(),
-            update_time: model.update_time.into(),
+            id: v.id,
+            name: v.name,
+            path: v.path,
+            parent_id: v.parent_id,
+            description: v.description,
+            create_time: v.create_time,
+            update_time: v.update_time,
         }
     }
 }
-
+/// Serialize hierarchy changes: parent_id has no foreign key and paths must change atomically.
+fn lock_tree(conn: &mut PgConnection) -> AppResult<()> {
+    diesel::sql_query("LOCK TABLE collection IN SHARE ROW EXCLUSIVE MODE").execute(conn)?;
+    Ok(())
+}
 impl Collection {
-    /// 创建目录
-    pub(crate) fn create(
+    pub fn create(
         name: &str,
         parent_id: Option<i64>,
         description: Option<String>,
         conn: &mut PgConnection,
-    ) -> GraphqlResult<Self> {
-        match parent_id {
-            None => {
-                let collection_path = format!("/{name}/");
-                // 子目录已存在
-                if CollectionModel::exists_by_path(&collection_path, conn)? {
-                    event!(Level::WARN, "目录已存在: {}", collection_path);
-                    return Err(GraphqlError::AlreadyExists(collection_path));
-                }
-                let collection =
-                    CollectionModel::create(name, &collection_path, None, description, conn)?;
-                Ok(collection.into())
-            }
-
-            Some(id) => {
-                // 父目录不存在
-                if !CollectionModel::exists(id, conn)? {
-                    event!(Level::WARN, "父目录不存在: {}", id);
-                    return Err(GraphqlError::NotFound("父目录", id));
-                }
-                let CollectionModel {
-                    path: parent_path, ..
-                } = CollectionModel::find_one(id, conn)?;
-                let collection_path = format!("{parent_path}{name}/");
-                // 子目录已存在
-                if CollectionModel::exists_by_path(&collection_path, conn)? {
-                    event!(Level::WARN, "目录已存在: {}", collection_path);
-                    return Err(GraphqlError::AlreadyExists(collection_path));
-                }
-                let collection =
-                    CollectionModel::create(name, &collection_path, parent_id, description, conn)?;
-                Ok(collection.into())
-            }
+    ) -> AppResult<Self> {
+        validate_name(name)?;
+        if let Some(id) = parent_id {
+            validate_id(id, "parentId")?;
         }
-    }
-    /// 获取所有 collections
-    pub(crate) fn all_collections(conn: &mut PgConnection) -> GraphqlResult<Vec<Self>> {
-        let data = CollectionModel::get_list(conn)?;
-        Ok(data.into_iter().map(From::from).collect())
-    }
-}
-
-/// id 相关
-impl Collection {
-    /// 删除目录
-    pub(crate) fn delete(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
         conn.transaction(|conn| {
-            let collection = Self::delete_inner(id, conn)?;
-            Ok(collection)
+            lock_tree(conn)?;
+            let path = match parent_id {
+                None => format!("/{name}/"),
+                Some(id) => format!("{}{name}/", Self::get(id, conn)?.path),
+            };
+            if CollectionModel::exists_by_path(&path, conn)? {
+                return Err(conflict(ConflictReason::CollectionPathExists, vec![]));
+            }
+            Ok(CollectionModel::create(name, &path, parent_id, description, conn)?.into())
+        })
+        .map_err(path_conflict)
+    }
+    pub fn all_collections(conn: &mut PgConnection) -> AppResult<Vec<Self>> {
+        Ok(CollectionModel::get_list(conn)?
+            .into_iter()
+            .map(Into::into)
+            .collect())
+    }
+    pub fn get(id: i64, conn: &mut PgConnection) -> AppResult<Self> {
+        validate_id(id, "id")?;
+        if !CollectionModel::exists(id, conn)? {
+            return Err(missing(ResourceKind::Collection, id));
+        }
+        Ok(CollectionModel::find_one(id, conn)?.into())
+    }
+    pub fn delete(id: i64, conn: &mut PgConnection) -> AppResult<i64> {
+        validate_id(id, "id")?;
+        conn.transaction(|conn| {
+            lock_tree(conn)?;
+            Self::delete_inner(id, conn)?;
+            Ok(id)
         })
     }
-    /// 删除目录
-    fn delete_inner(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
-        // 目录不存在
+    fn delete_inner(id: i64, conn: &mut PgConnection) -> AppResult<()> {
         if !CollectionModel::exists(id, conn)? {
-            event!(Level::WARN, "目录不存在: {}", id);
-            return Err(GraphqlError::NotFound("目录", id));
+            return Ok(());
         }
-        // 删除关系
+        for child in CollectionModel::list_parent(Some(id), conn)? {
+            Self::delete_inner(child.id, conn)?;
+        }
         CollectionItemModel::delete_by_collection_id(id, conn)?;
-        let collection = CollectionModel::delete(id, conn)?;
-        //递归删除子目录
-        CollectionModel::list_parent(Some(id), conn)?
-            .into_iter()
-            .try_for_each(|CollectionModel { id, .. }| Collection::delete(id, conn).map(|_| ()))?;
-        Ok(collection.into())
+        CollectionModel::delete(id, conn)?;
+        Ok(())
     }
-    /// 获取祖先目录列表
-    pub(crate) fn get_ancestors(id: i64, conn: &mut PgConnection) -> GraphqlResult<Vec<Self>> {
-        //  判断目录是否存在
-        if !CollectionModel::exists(id, conn)? {
-            event!(Level::WARN, "目录不存在: {}", id);
-            return Err(GraphqlError::NotFound("目录", id));
+    pub fn get_ancestors(id: i64, conn: &mut PgConnection) -> AppResult<Vec<Self>> {
+        let mut parent = Self::get(id, conn)?.parent_id;
+        let mut result = vec![];
+        let mut seen = std::collections::HashSet::from([id]);
+        while let Some(id) = parent {
+            if !seen.insert(id) {
+                return Err(service_errors::Fault::internal("collection_ancestors").into());
+            }
+            let item = Self::get(id, conn)?;
+            parent = item.parent_id;
+            result.push(item);
         }
-        let collection = CollectionModel::find_one(id, conn)?;
-        let mut collections = Vec::new();
-        let mut parent_id = collection.parent_id;
-        while let Some(id) = parent_id {
-            let collection = CollectionModel::find_one(id, conn)?;
-            parent_id = collection.parent_id;
-            collections.push(collection.into());
-        }
-        collections.reverse();
-        Ok(collections)
+        result.reverse();
+        Ok(result)
     }
-    /// 获取集合详情
-    pub(crate) fn get(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
-        //  判断目录是否存在
-        if !CollectionModel::exists(id, conn)? {
-            event!(Level::WARN, "目录不存在: {}", id);
-            return Err(GraphqlError::NotFound("目录", id));
-        }
-        let collection = CollectionModel::find_one(id, conn)?;
-        Ok(collection.into())
-    }
-    /// 修改集合
-    pub(crate) fn update(
+    pub fn update(
         id: i64,
         name: &str,
         description: Option<&str>,
         conn: &mut PgConnection,
-    ) -> GraphqlResult<Self> {
-        //  判断目录是否存在
-        if !CollectionModel::exists(id, conn)? {
-            event!(Level::WARN, "目录不存在: {}", id);
-            return Err(GraphqlError::NotFound("目录", id));
-        }
-        //
-        let CollectionModel {
-            parent_id,
-            path: old_path,
-            ..
-        } = CollectionModel::find_one(id, conn)?;
-        // 目标子目录是否存在
-        let path = match parent_id {
-            None => {
-                let collection_path = format!("/{name}/");
-                // 子目录已存在
-                if CollectionModel::exists_by_path(&collection_path, conn)?
-                    && collection_path != old_path
-                {
-                    event!(Level::WARN, "目录已存在: {}", collection_path);
-                    return Err(GraphqlError::AlreadyExists(collection_path));
-                }
-                collection_path
+    ) -> AppResult<Self> {
+        validate_id(id, "id")?;
+        validate_name(name)?;
+        conn.transaction(|conn| {
+            lock_tree(conn)?;
+            let old = Self::get(id, conn)?;
+            let path = match old.parent_id {
+                None => format!("/{name}/"),
+                Some(parent) => format!("{}{name}/", Self::get(parent, conn)?.path),
+            };
+            if path != old.path && CollectionModel::exists_by_path(&path, conn)? {
+                return Err(conflict(ConflictReason::CollectionPathExists, vec![]));
             }
-            Some(id) => {
-                let CollectionModel {
-                    path: parent_path, ..
-                } = CollectionModel::find_one(id, conn)?;
-                let collection_path = format!("{parent_path}{name}/");
-                // 子目录已存在
-                if CollectionModel::exists_by_path(&collection_path, conn)?
-                    && collection_path != old_path
-                {
-                    event!(Level::WARN, "目录已存在: {}", collection_path);
-                    return Err(GraphqlError::AlreadyExists(collection_path));
+            let updated = CollectionModel::update(id, name, description, &path, conn)?;
+            if old.path != path {
+                // Compare literal prefixes in Rust; user '%' and '_' must not become SQL wildcards.
+                for child in CollectionModel::get_list(conn)? {
+                    if child.id != id
+                        && let Some(suffix) = child.path.strip_prefix(&old.path)
+                    {
+                        CollectionModel::update(
+                            child.id,
+                            &child.name,
+                            child.description.as_deref(),
+                            &format!("{path}{suffix}"),
+                            conn,
+                        )?;
+                    }
                 }
-                collection_path
             }
-        };
-        let collection = CollectionModel::update(id, name, description, &path, conn)?;
-        Ok(collection.into())
+            Ok(updated.into())
+        })
+        .map_err(path_conflict)
     }
 }
-
 pub(crate) struct CollectionQueryRunner {
     query: CollectionItemQuery,
     count: i64,
     conn: PgPool,
 }
 
-graphql_common::list!(ItemAndCollection);
-
 impl CollectionQueryRunner {
-    pub(crate) async fn new(query: CollectionItemQuery, conn: PgPool) -> GraphqlResult<Self> {
+    pub(crate) async fn new(query: CollectionItemQuery, conn: PgPool) -> AppResult<Self> {
         let conn_temp = &mut conn.get()?;
         let CollectionItemQuery {
             id,
@@ -224,8 +164,7 @@ impl CollectionQueryRunner {
         if let Some(id) = id
             && !CollectionModel::exists(id, conn_temp)?
         {
-            event!(Level::WARN, "目录不存在: {}", id);
-            return Err(GraphqlError::NotFound("目录", id));
+            return Err(missing(ResourceKind::Collection, id));
         }
         let count = CollectionModel::get_count_by_parent(id, create_time, update_time, conn_temp)?;
         Ok(Self { query, count, conn })
@@ -236,7 +175,7 @@ impl CollectionQueryRunner {
 impl Queryable for CollectionQueryRunner {
     type Item = ItemAndCollection;
 
-    type Error = GraphqlError;
+    type Error = AppError;
 
     async fn len(&self) -> Result<i64, Self::Error> {
         Ok(self.count)
@@ -247,29 +186,17 @@ impl Queryable for CollectionQueryRunner {
             id,
             create_time,
             update_time,
-            pagination: source_pagination,
+            ..
         } = self.query;
         let offset = pagination.offset();
-        let len = self.len().await?;
-        if len < offset {
-            event!(
-                Level::ERROR,
-                "全记录查询时页码太大 pagination: {:?} len: {} offset: {} offset_pagination: {:?}",
-                source_pagination,
-                len,
-                offset,
-                pagination
-            );
-            return Err(GraphqlError::PageSizeTooMore);
-        }
+
         let limit = pagination.limit();
         let conn = &mut self.conn.get()?;
         //  判断父目录是否存在
         if let Some(id) = id
             && !CollectionModel::exists(id, conn)?
         {
-            event!(Level::WARN, "目录不存在: {}", id);
-            return Err(GraphqlError::NotFound("目录", id));
+            return Err(missing(ResourceKind::Collection, id));
         }
         let collections = CollectionModel::list_parent_with_page(
             id,

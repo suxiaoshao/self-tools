@@ -18,6 +18,7 @@
     "markdown-to-jsx": "^9.8.2",
     "prism-themes": "^1.9.0",
     "prismjs": "^1.30.0",
+    "request-errors": "workspace:*",
     "time": "workspace:^",
     "types": "workspace:^"
   },

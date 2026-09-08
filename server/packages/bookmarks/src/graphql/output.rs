@@ -12,10 +12,7 @@ use novel_crawler::{
     QDNovel, QDTag, TagFn,
 };
 
-use crate::{
-    errors::GraphqlResult,
-    model::schema::custom_type::{NovelSite, NovelStatus},
-};
+use crate::graphql::enums::{NovelSite, NovelStatus};
 
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub(crate) enum DraftAuthorInfo {
@@ -49,14 +46,18 @@ impl DraftAuthorInfo {
             DraftAuthorInfo::Jjwxc(inner) => inner.image().to_owned(),
         }
     }
-    async fn novels(&self) -> GraphqlResult<Vec<DraftNovelInfo>> {
+    async fn novels(&self) -> async_graphql::Result<Vec<DraftNovelInfo>> {
         match self {
             DraftAuthorInfo::Qidian(inner) => {
-                let data = inner.novels().await?;
+                let data = inner.novels().await.map_err(|error| {
+                    super::error::read_error(crate::errors::crawler_error(error))
+                })?;
                 Ok(data.into_iter().map(DraftNovelInfo::Qidian).collect())
             }
             DraftAuthorInfo::Jjwxc(inner) => {
-                let data = inner.novels().await?;
+                let data = inner.novels().await.map_err(|error| {
+                    super::error::read_error(crate::errors::crawler_error(error))
+                })?;
                 Ok(data.into_iter().map(DraftNovelInfo::Jjwxc).collect())
             }
         }
@@ -76,13 +77,21 @@ impl DraftAuthorInfo {
 }
 
 impl DraftAuthorInfo {
-    pub(crate) async fn new(id: String, novel_site: NovelSite) -> GraphqlResult<Self> {
+    pub(crate) async fn new(id: String, novel_site: NovelSite) -> async_graphql::Result<Self> {
         match novel_site {
             NovelSite::Qidian => Ok(DraftAuthorInfo::Qidian(
-                novel_crawler::QDAuthor::get_author_data(&id).await?,
+                novel_crawler::QDAuthor::get_author_data(&id)
+                    .await
+                    .map_err(|error| {
+                        super::error::read_error(crate::errors::crawler_error(error))
+                    })?,
             )),
             NovelSite::Jjwxc => Ok(DraftAuthorInfo::Jjwxc(
-                novel_crawler::JJAuthor::get_author_data(&id).await?,
+                novel_crawler::JJAuthor::get_author_data(&id)
+                    .await
+                    .map_err(|error| {
+                        super::error::read_error(crate::errors::crawler_error(error))
+                    })?,
             )),
         }
     }
@@ -120,26 +129,34 @@ impl DraftNovelInfo {
             DraftNovelInfo::Jjwxc(inner) => inner.image().to_owned(),
         }
     }
-    async fn chapters(&self) -> GraphqlResult<Vec<DraftChapterInfo>> {
+    async fn chapters(&self) -> async_graphql::Result<Vec<DraftChapterInfo>> {
         match self {
             DraftNovelInfo::Qidian(inner) => {
-                let data = inner.chapters().await?;
+                let data = inner.chapters().await.map_err(|error| {
+                    super::error::read_error(crate::errors::crawler_error(error))
+                })?;
                 Ok(data.into_iter().map(DraftChapterInfo::Qidian).collect())
             }
             DraftNovelInfo::Jjwxc(inner) => {
-                let data = inner.chapters().await?;
+                let data = inner.chapters().await.map_err(|error| {
+                    super::error::read_error(crate::errors::crawler_error(error))
+                })?;
                 Ok(data.into_iter().map(DraftChapterInfo::Jjwxc).collect())
             }
         }
     }
-    async fn author(&self) -> GraphqlResult<DraftAuthorInfo> {
+    async fn author(&self) -> async_graphql::Result<DraftAuthorInfo> {
         match self {
             DraftNovelInfo::Qidian(inner) => {
-                let data = inner.author().await?;
+                let data = inner.author().await.map_err(|error| {
+                    super::error::read_error(crate::errors::crawler_error(error))
+                })?;
                 Ok(DraftAuthorInfo::Qidian(data))
             }
             DraftNovelInfo::Jjwxc(inner) => {
-                let data = inner.author().await?;
+                let data = inner.author().await.map_err(|error| {
+                    super::error::read_error(crate::errors::crawler_error(error))
+                })?;
                 Ok(DraftAuthorInfo::Jjwxc(data))
             }
         }
@@ -173,13 +190,21 @@ impl DraftNovelInfo {
 }
 
 impl DraftNovelInfo {
-    pub(crate) async fn new(id: String, novel_site: NovelSite) -> GraphqlResult<Self> {
+    pub(crate) async fn new(id: String, novel_site: NovelSite) -> async_graphql::Result<Self> {
         match novel_site {
             NovelSite::Qidian => Ok(DraftNovelInfo::Qidian(
-                novel_crawler::QDNovel::get_novel_data(&id).await?,
+                novel_crawler::QDNovel::get_novel_data(&id)
+                    .await
+                    .map_err(|error| {
+                        super::error::read_error(crate::errors::crawler_error(error))
+                    })?,
             )),
             NovelSite::Jjwxc => Ok(DraftNovelInfo::Jjwxc(
-                novel_crawler::JJNovel::get_novel_data(&id).await?,
+                novel_crawler::JJNovel::get_novel_data(&id)
+                    .await
+                    .map_err(|error| {
+                        super::error::read_error(crate::errors::crawler_error(error))
+                    })?,
             )),
         }
     }

@@ -4,6 +4,8 @@ type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
 /** Internal type. DO NOT USE DIRECTLY. */
 export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
 import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
+export type ConflictReason = 'COLLECTION_PATH_EXISTS' | 'COMMENT_EXISTS' | 'MEMBERSHIP_EXISTS' | 'SOURCE_ID_EXISTS';
+
 export type CreateNovelInput = {
   authorId: number;
   avatar: string;
@@ -23,6 +25,8 @@ export type Pagination = {
   page?: number;
   pageSize?: number;
 };
+
+export type ResourceKind = 'AUTHOR' | 'CHAPTER' | 'COLLECTION' | 'COMMENT' | 'NOVEL' | 'TAG';
 
 export type SaveAuthorInfo = {
   description: string;
@@ -81,6 +85,8 @@ export type TagMatch = {
   matchSet: Array<number>;
 };
 
+export type ValidationCode = 'INVALID_FORMAT' | 'OUT_OF_RANGE' | 'REQUIRED' | 'TOO_LONG';
+
 export type SearchAuthorQueryVariables = Exact<{
   searchName?: string | null | undefined;
 }>;
@@ -116,18 +122,27 @@ export type GetAuthorQuery = {
       description: string;
       novelStatus: NovelStatus;
       url: string;
-      wordCount: string;
+      wordCount: string | null;
       lastChapter: { time: string } | null;
       firstChapter: { time: string } | null;
-    }>;
-  };
+    }> | null;
+  } | null;
 };
 
 export type UpdateAuthorByCrawlerMutationVariables = Exact<{
   authorId: number;
 }>;
 
-export type UpdateAuthorByCrawlerMutation = { updateAuthorByCrawler: { id: number } };
+export type UpdateAuthorByCrawlerMutation = {
+  updateAuthorByCrawler:
+    | { __typename: 'AuthorSaved'; authorId: number }
+    | { __typename: 'Conflict'; reason: ConflictReason; resources: Array<{ kind: ResourceKind; id: number }> }
+    | { __typename: 'MissingResources'; resources: Array<{ kind: ResourceKind; id: number }> }
+    | {
+        __typename: 'ValidationFailure';
+        issues: Array<{ path: Array<string>; code: ValidationCode; min: number | null; max: number | null }>;
+      };
+};
 
 export type FetchAuthorQueryVariables = Exact<{
   id: string;
@@ -169,7 +184,16 @@ export type SaveDraftAuthorMutationVariables = Exact<{
   author: SaveDraftAuthor;
 }>;
 
-export type SaveDraftAuthorMutation = { saveDraftAuthor: { id: number } };
+export type SaveDraftAuthorMutation = {
+  saveDraftAuthor:
+    | { __typename: 'AuthorSaved'; authorId: number }
+    | { __typename: 'Conflict'; reason: ConflictReason; resources: Array<{ kind: ResourceKind; id: number }> }
+    | { __typename: 'MissingResources'; resources: Array<{ kind: ResourceKind; id: number }> }
+    | {
+        __typename: 'ValidationFailure';
+        issues: Array<{ path: Array<string>; code: ValidationCode; min: number | null; max: number | null }>;
+      };
+};
 
 export type CreateAuthorMutationVariables = Exact<{
   avatar: string;
@@ -179,7 +203,16 @@ export type CreateAuthorMutationVariables = Exact<{
   siteId: string;
 }>;
 
-export type CreateAuthorMutation = { createAuthor: { id: number } };
+export type CreateAuthorMutation = {
+  createAuthor:
+    | { __typename: 'AuthorSaved'; authorId: number }
+    | { __typename: 'Conflict'; reason: ConflictReason; resources: Array<{ kind: ResourceKind; id: number }> }
+    | { __typename: 'MissingResources'; resources: Array<{ kind: ResourceKind; id: number }> }
+    | {
+        __typename: 'ValidationFailure';
+        issues: Array<{ path: Array<string>; code: ValidationCode; min: number | null; max: number | null }>;
+      };
+};
 
 export type GetAuthorsQueryVariables = Exact<{
   pagination: Pagination;
@@ -205,7 +238,14 @@ export type DeleteAuthorMutationVariables = Exact<{
   id: number;
 }>;
 
-export type DeleteAuthorMutation = { deleteAuthor: { id: number } };
+export type DeleteAuthorMutation = {
+  deleteAuthor:
+    | { __typename: 'ResourceDeleted'; resource: { kind: ResourceKind; id: number } }
+    | {
+        __typename: 'ValidationFailure';
+        issues: Array<{ path: Array<string>; code: ValidationCode; min: number | null; max: number | null }>;
+      };
+};
 
 export type AllCollectionsQueryVariables = Exact<{ [key: string]: never }>;
 
@@ -226,14 +266,21 @@ export type GetCollectionAncestorsQueryVariables = Exact<{
 }>;
 
 export type GetCollectionAncestorsQuery = {
-  getCollection: { id: number; name: string; ancestors: Array<{ id: number; name: string }> };
+  getCollection: { id: number; name: string; ancestors: Array<{ id: number; name: string }> | null } | null;
 };
 
 export type DeleteCollectionMutationVariables = Exact<{
   id: number;
 }>;
 
-export type DeleteCollectionMutation = { deleteCollection: number };
+export type DeleteCollectionMutation = {
+  deleteCollection:
+    | { __typename: 'ResourceDeleted'; resource: { kind: ResourceKind; id: number } }
+    | {
+        __typename: 'ValidationFailure';
+        issues: Array<{ path: Array<string>; code: ValidationCode; min: number | null; max: number | null }>;
+      };
+};
 
 export type UpdateCollectionMutationVariables = Exact<{
   id: number;
@@ -242,7 +289,16 @@ export type UpdateCollectionMutationVariables = Exact<{
   description?: string | null | undefined;
 }>;
 
-export type UpdateCollectionMutation = { updateCollection: { __typename: 'Collection' } };
+export type UpdateCollectionMutation = {
+  updateCollection:
+    | { __typename: 'CollectionSaved'; collectionId: number }
+    | { __typename: 'Conflict'; reason: ConflictReason; resources: Array<{ kind: ResourceKind; id: number }> }
+    | { __typename: 'MissingResources'; resources: Array<{ kind: ResourceKind; id: number }> }
+    | {
+        __typename: 'ValidationFailure';
+        issues: Array<{ path: Array<string>; code: ValidationCode; min: number | null; max: number | null }>;
+      };
+};
 
 export type CreateCollectionMutationVariables = Exact<{
   parentId?: number | null | undefined;
@@ -250,7 +306,16 @@ export type CreateCollectionMutationVariables = Exact<{
   description?: string | null | undefined;
 }>;
 
-export type CreateCollectionMutation = { createCollection: { path: string } };
+export type CreateCollectionMutation = {
+  createCollection:
+    | { __typename: 'CollectionSaved'; collectionId: number }
+    | { __typename: 'Conflict'; reason: ConflictReason; resources: Array<{ kind: ResourceKind; id: number }> }
+    | { __typename: 'MissingResources'; resources: Array<{ kind: ResourceKind; id: number }> }
+    | {
+        __typename: 'ValidationFailure';
+        issues: Array<{ path: Array<string>; code: ValidationCode; min: number | null; max: number | null }>;
+      };
+};
 
 export type GetCollectionsQueryVariables = Exact<{
   parentId?: number | null | undefined;
@@ -264,6 +329,7 @@ export type GetCollectionsQuery = {
       name: string;
       id: number;
       path: string;
+      parentId: number | null;
       createTime: string;
       updateTime: string;
       description: string | null;
@@ -276,34 +342,82 @@ export type AddCollectionForNovelMutationVariables = Exact<{
   collectionId: number;
 }>;
 
-export type AddCollectionForNovelMutation = { addCollectionForNovel: { id: number } };
+export type AddCollectionForNovelMutation = {
+  addCollectionForNovel:
+    | {
+        __typename: 'CollectionMembershipChanged';
+        collectionId: number;
+        present: boolean;
+        resource: { kind: ResourceKind; id: number };
+      }
+    | { __typename: 'Conflict'; reason: ConflictReason; resources: Array<{ kind: ResourceKind; id: number }> }
+    | { __typename: 'MissingResources'; resources: Array<{ kind: ResourceKind; id: number }> }
+    | {
+        __typename: 'ValidationFailure';
+        issues: Array<{ path: Array<string>; code: ValidationCode; min: number | null; max: number | null }>;
+      };
+};
 
 export type AddReadRecordMutationVariables = Exact<{
   novelId: number;
   chapterIds: Array<number> | number;
 }>;
 
-export type AddReadRecordMutation = { addReadRecordsForChapter: number };
+export type AddReadRecordMutation = {
+  addReadRecordsForChapter:
+    | { __typename: 'ChaptersAlreadyRead'; chapterIds: Array<number> }
+    | { __typename: 'MissingResources'; resources: Array<{ kind: ResourceKind; id: number }> }
+    | { __typename: 'ReadRecordsUpdated'; chapterIds: Array<number>; changedCount: number }
+    | {
+        __typename: 'ValidationFailure';
+        issues: Array<{ path: Array<string>; code: ValidationCode; min: number | null; max: number | null }>;
+      };
+};
 
 export type DeleteReadRecordMutationVariables = Exact<{
   chapterIds: Array<number> | number;
 }>;
 
-export type DeleteReadRecordMutation = { deleteReadRecordsForChapter: number };
+export type DeleteReadRecordMutation = {
+  deleteReadRecordsForChapter:
+    | { __typename: 'ReadRecordsUpdated'; chapterIds: Array<number>; changedCount: number }
+    | {
+        __typename: 'ValidationFailure';
+        issues: Array<{ path: Array<string>; code: ValidationCode; min: number | null; max: number | null }>;
+      };
+};
 
 export type CreateCommentMutationVariables = Exact<{
   novelId: number;
   content: string;
 }>;
 
-export type CreateCommentMutation = { addCommentForNovel: { __typename: 'NovelComment' } };
+export type CreateCommentMutation = {
+  addCommentForNovel:
+    | { __typename: 'CommentSaved'; novelId: number }
+    | { __typename: 'Conflict'; reason: ConflictReason; resources: Array<{ kind: ResourceKind; id: number }> }
+    | { __typename: 'MissingResources'; resources: Array<{ kind: ResourceKind; id: number }> }
+    | {
+        __typename: 'ValidationFailure';
+        issues: Array<{ path: Array<string>; code: ValidationCode; min: number | null; max: number | null }>;
+      };
+};
 
 export type UpdateCommentMutationVariables = Exact<{
   novelId: number;
   content: string;
 }>;
 
-export type UpdateCommentMutation = { updateCommentForNovel: { __typename: 'NovelComment' } };
+export type UpdateCommentMutation = {
+  updateCommentForNovel:
+    | { __typename: 'CommentSaved'; novelId: number }
+    | { __typename: 'Conflict'; reason: ConflictReason; resources: Array<{ kind: ResourceKind; id: number }> }
+    | { __typename: 'MissingResources'; resources: Array<{ kind: ResourceKind; id: number }> }
+    | {
+        __typename: 'ValidationFailure';
+        issues: Array<{ path: Array<string>; code: ValidationCode; min: number | null; max: number | null }>;
+      };
+};
 
 export type GetNovelQueryVariables = Exact<{
   id: number;
@@ -319,7 +433,7 @@ export type GetNovelQuery = {
     updateTime: string;
     novelStatus: NovelStatus;
     url: string;
-    wordCount: string;
+    wordCount: string | null;
     site: NovelSite;
     chapters: Array<{
       id: number;
@@ -330,34 +444,62 @@ export type GetNovelQuery = {
       wordCount: number;
       time: string;
       isRead: boolean;
-    }>;
-    author: { avatar: string; description: string; id: number; name: string; site: NovelSite };
+    }> | null;
+    author: { avatar: string; description: string; id: number; name: string; site: NovelSite } | null;
     lastChapter: { time: string } | null;
     firstChapter: { time: string } | null;
-    tags: Array<{ url: string; name: string; id: number }>;
-    collections: Array<{ name: string; id: number; description: string | null; path: string }>;
+    tags: Array<{ url: string; name: string; id: number }> | null;
+    collections: Array<{ name: string; id: number; description: string | null; path: string }> | null;
     comments: { content: string } | null;
-  };
+  } | null;
 };
 
 export type UpdateNovelByCrawlerMutationVariables = Exact<{
   novelId: number;
 }>;
 
-export type UpdateNovelByCrawlerMutation = { updateNovelByCrawler: { id: number } };
+export type UpdateNovelByCrawlerMutation = {
+  updateNovelByCrawler:
+    | { __typename: 'Conflict'; reason: ConflictReason; resources: Array<{ kind: ResourceKind; id: number }> }
+    | { __typename: 'MissingResources'; resources: Array<{ kind: ResourceKind; id: number }> }
+    | { __typename: 'NovelSaved'; novelId: number }
+    | {
+        __typename: 'ValidationFailure';
+        issues: Array<{ path: Array<string>; code: ValidationCode; min: number | null; max: number | null }>;
+      };
+};
 
 export type DeleteCommentForNovelMutationVariables = Exact<{
   novelId: number;
 }>;
 
-export type DeleteCommentForNovelMutation = { deleteCommentForNovel: { __typename: 'NovelComment' } };
+export type DeleteCommentForNovelMutation = {
+  deleteCommentForNovel:
+    | { __typename: 'ResourceDeleted'; resource: { kind: ResourceKind; id: number } }
+    | {
+        __typename: 'ValidationFailure';
+        issues: Array<{ path: Array<string>; code: ValidationCode; min: number | null; max: number | null }>;
+      };
+};
 
 export type DeleteCollectionForNovelMutationVariables = Exact<{
   novelId: number;
   collectionId: number;
 }>;
 
-export type DeleteCollectionForNovelMutation = { deleteCollectionForNovel: { id: number } };
+export type DeleteCollectionForNovelMutation = {
+  deleteCollectionForNovel:
+    | {
+        __typename: 'CollectionMembershipChanged';
+        collectionId: number;
+        present: boolean;
+        resource: { kind: ResourceKind; id: number };
+      }
+    | {
+        __typename: 'ValidationFailure';
+        issues: Array<{ path: Array<string>; code: ValidationCode; min: number | null; max: number | null }>;
+      };
+};
 
 export type FetchNovelQueryVariables = Exact<{
   id: string;
@@ -383,13 +525,31 @@ export type SaveDraftNovelMutationVariables = Exact<{
   novel: SaveDraftNovel;
 }>;
 
-export type SaveDraftNovelMutation = { saveDraftNovel: { id: number } };
+export type SaveDraftNovelMutation = {
+  saveDraftNovel:
+    | { __typename: 'Conflict'; reason: ConflictReason; resources: Array<{ kind: ResourceKind; id: number }> }
+    | { __typename: 'MissingResources'; resources: Array<{ kind: ResourceKind; id: number }> }
+    | { __typename: 'NovelSaved'; novelId: number }
+    | {
+        __typename: 'ValidationFailure';
+        issues: Array<{ path: Array<string>; code: ValidationCode; min: number | null; max: number | null }>;
+      };
+};
 
 export type CreateNovelMutationVariables = Exact<{
   data: CreateNovelInput;
 }>;
 
-export type CreateNovelMutation = { createNovel: { id: number } };
+export type CreateNovelMutation = {
+  createNovel:
+    | { __typename: 'Conflict'; reason: ConflictReason; resources: Array<{ kind: ResourceKind; id: number }> }
+    | { __typename: 'MissingResources'; resources: Array<{ kind: ResourceKind; id: number }> }
+    | { __typename: 'NovelSaved'; novelId: number }
+    | {
+        __typename: 'ValidationFailure';
+        issues: Array<{ path: Array<string>; code: ValidationCode; min: number | null; max: number | null }>;
+      };
+};
 
 export type GetNovelsQueryVariables = Exact<{
   collectionMatch?: TagMatch | null | undefined;
@@ -418,7 +578,14 @@ export type DeleteNovelMutationVariables = Exact<{
   id: number;
 }>;
 
-export type DeleteNovelMutation = { deleteNovel: { id: number } };
+export type DeleteNovelMutation = {
+  deleteNovel:
+    | { __typename: 'ResourceDeleted'; resource: { kind: ResourceKind; id: number } }
+    | {
+        __typename: 'ValidationFailure';
+        issues: Array<{ path: Array<string>; code: ValidationCode; min: number | null; max: number | null }>;
+      };
+};
 
 export type CreateTagMutationVariables = Exact<{
   name: string;
@@ -426,7 +593,15 @@ export type CreateTagMutationVariables = Exact<{
   siteId: string;
 }>;
 
-export type CreateTagMutation = { createTag: { name: string; id: number } };
+export type CreateTagMutation = {
+  createTag:
+    | { __typename: 'Conflict'; reason: ConflictReason; resources: Array<{ kind: ResourceKind; id: number }> }
+    | { __typename: 'TagSaved'; tagId: number }
+    | {
+        __typename: 'ValidationFailure';
+        issues: Array<{ path: Array<string>; code: ValidationCode; min: number | null; max: number | null }>;
+      };
+};
 
 export type GetTagsQueryVariables = Exact<{
   pagination: Pagination;
@@ -443,7 +618,45 @@ export type DeleteTagMutationVariables = Exact<{
   id: number;
 }>;
 
-export type DeleteTagMutation = { deleteTag: { id: number } };
+export type DeleteTagMutation = {
+  deleteTag:
+    | { __typename: 'ResourceDeleted'; resource: { kind: ResourceKind; id: number } }
+    | {
+        __typename: 'ValidationFailure';
+        issues: Array<{ path: Array<string>; code: ValidationCode; min: number | null; max: number | null }>;
+      };
+};
+
+export type ReadBookmarkNovelStateQueryVariables = Exact<{
+  id: number;
+}>;
+
+export type ReadBookmarkNovelStateQuery = {
+  getNovel: {
+    id: number;
+    comments: { content: string } | null;
+    collections: Array<{ id: number }> | null;
+    chapters: Array<{ id: number; isRead: boolean }> | null;
+  } | null;
+};
+
+export type ReadBookmarkCollectionStateQueryVariables = Exact<{
+  id: number;
+}>;
+
+export type ReadBookmarkCollectionStateQuery = {
+  getCollection: { id: number; name: string; description: string | null; parentId: number | null } | null;
+};
+
+export type ReadBookmarkAuthorStateQueryVariables = Exact<{
+  id: number;
+}>;
+
+export type ReadBookmarkAuthorStateQuery = { getAuthor: { id: number } | null };
+
+export type ReadBookmarkTagsStateQueryVariables = Exact<{ [key: string]: never }>;
+
+export type ReadBookmarkTagsStateQuery = { allTags: Array<{ id: number }> };
 
 export const SearchAuthorDocument = {
   kind: 'Document',
@@ -622,7 +835,80 @@ export const UpdateAuthorByCrawlerDocument = {
             ],
             selectionSet: {
               kind: 'SelectionSet',
-              selections: [{ kind: 'Field', name: { kind: 'Name', value: 'id' } }],
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'AuthorSaved' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [{ kind: 'Field', name: { kind: 'Name', value: 'authorId' } }],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'ValidationFailure' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'issues' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'path' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'min' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'max' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'MissingResources' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'resources' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Conflict' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'reason' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'resources' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
             },
           },
         ],
@@ -758,7 +1044,80 @@ export const SaveDraftAuthorDocument = {
             ],
             selectionSet: {
               kind: 'SelectionSet',
-              selections: [{ kind: 'Field', name: { kind: 'Name', value: 'id' } }],
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'AuthorSaved' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [{ kind: 'Field', name: { kind: 'Name', value: 'authorId' } }],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'ValidationFailure' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'issues' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'path' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'min' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'max' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'MissingResources' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'resources' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Conflict' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'reason' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'resources' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
             },
           },
         ],
@@ -835,7 +1194,80 @@ export const CreateAuthorDocument = {
             ],
             selectionSet: {
               kind: 'SelectionSet',
-              selections: [{ kind: 'Field', name: { kind: 'Name', value: 'id' } }],
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'AuthorSaved' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [{ kind: 'Field', name: { kind: 'Name', value: 'authorId' } }],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'ValidationFailure' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'issues' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'path' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'min' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'max' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'MissingResources' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'resources' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Conflict' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'reason' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'resources' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
             },
           },
         ],
@@ -928,7 +1360,51 @@ export const DeleteAuthorDocument = {
             ],
             selectionSet: {
               kind: 'SelectionSet',
-              selections: [{ kind: 'Field', name: { kind: 'Name', value: 'id' } }],
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'ResourceDeleted' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'resource' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'ValidationFailure' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'issues' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'path' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'min' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'max' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
             },
           },
         ],
@@ -1045,6 +1521,54 @@ export const DeleteCollectionDocument = {
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
               },
             ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'ResourceDeleted' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'resource' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'ValidationFailure' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'issues' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'path' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'min' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'max' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
           },
         ],
       },
@@ -1110,7 +1634,80 @@ export const UpdateCollectionDocument = {
             ],
             selectionSet: {
               kind: 'SelectionSet',
-              selections: [{ kind: 'Field', name: { kind: 'Name', value: '__typename' } }],
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'CollectionSaved' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [{ kind: 'Field', name: { kind: 'Name', value: 'collectionId' } }],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'ValidationFailure' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'issues' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'path' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'min' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'max' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'MissingResources' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'resources' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Conflict' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'reason' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'resources' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
             },
           },
         ],
@@ -1167,7 +1764,80 @@ export const CreateCollectionDocument = {
             ],
             selectionSet: {
               kind: 'SelectionSet',
-              selections: [{ kind: 'Field', name: { kind: 'Name', value: 'path' } }],
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'CollectionSaved' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [{ kind: 'Field', name: { kind: 'Name', value: 'collectionId' } }],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'ValidationFailure' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'issues' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'path' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'min' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'max' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'MissingResources' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'resources' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Conflict' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'reason' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'resources' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
             },
           },
         ],
@@ -1224,6 +1894,7 @@ export const GetCollectionsDocument = {
                       { kind: 'Field', name: { kind: 'Name', value: 'name' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'path' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'parentId' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'createTime' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'updateTime' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'description' } },
@@ -1278,7 +1949,94 @@ export const AddCollectionForNovelDocument = {
             ],
             selectionSet: {
               kind: 'SelectionSet',
-              selections: [{ kind: 'Field', name: { kind: 'Name', value: 'id' } }],
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'CollectionMembershipChanged' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'collectionId' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'resource' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                          ],
+                        },
+                      },
+                      { kind: 'Field', name: { kind: 'Name', value: 'present' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'ValidationFailure' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'issues' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'path' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'min' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'max' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'MissingResources' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'resources' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Conflict' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'reason' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'resources' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
             },
           },
         ],
@@ -1329,6 +2087,73 @@ export const AddReadRecordDocument = {
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'chapterIds' } },
               },
             ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'ReadRecordsUpdated' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'chapterIds' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'changedCount' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'ValidationFailure' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'issues' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'path' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'min' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'max' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'MissingResources' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'resources' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'ChaptersAlreadyRead' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [{ kind: 'Field', name: { kind: 'Name', value: 'chapterIds' } }],
+                  },
+                },
+              ],
+            },
           },
         ],
       },
@@ -1368,6 +2193,45 @@ export const DeleteReadRecordDocument = {
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'chapterIds' } },
               },
             ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'ReadRecordsUpdated' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'chapterIds' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'changedCount' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'ValidationFailure' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'issues' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'path' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'min' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'max' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
           },
         ],
       },
@@ -1413,7 +2277,80 @@ export const CreateCommentDocument = {
             ],
             selectionSet: {
               kind: 'SelectionSet',
-              selections: [{ kind: 'Field', name: { kind: 'Name', value: '__typename' } }],
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'CommentSaved' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [{ kind: 'Field', name: { kind: 'Name', value: 'novelId' } }],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'ValidationFailure' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'issues' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'path' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'min' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'max' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'MissingResources' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'resources' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Conflict' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'reason' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'resources' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
             },
           },
         ],
@@ -1460,7 +2397,80 @@ export const UpdateCommentDocument = {
             ],
             selectionSet: {
               kind: 'SelectionSet',
-              selections: [{ kind: 'Field', name: { kind: 'Name', value: '__typename' } }],
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'CommentSaved' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [{ kind: 'Field', name: { kind: 'Name', value: 'novelId' } }],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'ValidationFailure' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'issues' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'path' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'min' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'max' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'MissingResources' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'resources' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Conflict' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'reason' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'resources' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
             },
           },
         ],
@@ -1626,7 +2636,80 @@ export const UpdateNovelByCrawlerDocument = {
             ],
             selectionSet: {
               kind: 'SelectionSet',
-              selections: [{ kind: 'Field', name: { kind: 'Name', value: 'id' } }],
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'NovelSaved' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [{ kind: 'Field', name: { kind: 'Name', value: 'novelId' } }],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'ValidationFailure' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'issues' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'path' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'min' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'max' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'MissingResources' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'resources' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Conflict' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'reason' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'resources' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
             },
           },
         ],
@@ -1663,7 +2746,51 @@ export const DeleteCommentForNovelDocument = {
             ],
             selectionSet: {
               kind: 'SelectionSet',
-              selections: [{ kind: 'Field', name: { kind: 'Name', value: '__typename' } }],
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'ResourceDeleted' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'resource' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'ValidationFailure' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'issues' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'path' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'min' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'max' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
             },
           },
         ],
@@ -1710,7 +2837,53 @@ export const DeleteCollectionForNovelDocument = {
             ],
             selectionSet: {
               kind: 'SelectionSet',
-              selections: [{ kind: 'Field', name: { kind: 'Name', value: 'id' } }],
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'CollectionMembershipChanged' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'collectionId' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'resource' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                          ],
+                        },
+                      },
+                      { kind: 'Field', name: { kind: 'Name', value: 'present' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'ValidationFailure' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'issues' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'path' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'min' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'max' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
             },
           },
         ],
@@ -1843,7 +3016,80 @@ export const SaveDraftNovelDocument = {
             ],
             selectionSet: {
               kind: 'SelectionSet',
-              selections: [{ kind: 'Field', name: { kind: 'Name', value: 'id' } }],
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'NovelSaved' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [{ kind: 'Field', name: { kind: 'Name', value: 'novelId' } }],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'ValidationFailure' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'issues' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'path' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'min' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'max' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'MissingResources' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'resources' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Conflict' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'reason' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'resources' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
             },
           },
         ],
@@ -1880,7 +3126,80 @@ export const CreateNovelDocument = {
             ],
             selectionSet: {
               kind: 'SelectionSet',
-              selections: [{ kind: 'Field', name: { kind: 'Name', value: 'id' } }],
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'NovelSaved' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [{ kind: 'Field', name: { kind: 'Name', value: 'novelId' } }],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'ValidationFailure' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'issues' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'path' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'min' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'max' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'MissingResources' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'resources' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Conflict' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'reason' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'resources' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
             },
           },
         ],
@@ -2004,7 +3323,51 @@ export const DeleteNovelDocument = {
             ],
             selectionSet: {
               kind: 'SelectionSet',
-              selections: [{ kind: 'Field', name: { kind: 'Name', value: 'id' } }],
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'ResourceDeleted' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'resource' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'ValidationFailure' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'issues' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'path' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'min' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'max' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
             },
           },
         ],
@@ -2062,8 +3425,58 @@ export const CreateTagDocument = {
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'TagSaved' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [{ kind: 'Field', name: { kind: 'Name', value: 'tagId' } }],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'ValidationFailure' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'issues' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'path' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'min' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'max' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Conflict' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'reason' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'resources' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
               ],
             },
           },
@@ -2155,7 +3568,51 @@ export const DeleteTagDocument = {
             ],
             selectionSet: {
               kind: 'SelectionSet',
-              selections: [{ kind: 'Field', name: { kind: 'Name', value: 'id' } }],
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'ResourceDeleted' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'resource' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'ValidationFailure' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'issues' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'path' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'min' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'max' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
             },
           },
         ],
@@ -2163,3 +3620,171 @@ export const DeleteTagDocument = {
     },
   ],
 } as unknown as DocumentNode<DeleteTagMutation, DeleteTagMutationVariables>;
+export const ReadBookmarkNovelStateDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'ReadBookmarkNovelState' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+          type: { kind: 'NonNullType', type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'getNovel' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'id' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'comments' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [{ kind: 'Field', name: { kind: 'Name', value: 'content' } }],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'collections' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [{ kind: 'Field', name: { kind: 'Name', value: 'id' } }],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'chapters' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'isRead' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ReadBookmarkNovelStateQuery, ReadBookmarkNovelStateQueryVariables>;
+export const ReadBookmarkCollectionStateDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'ReadBookmarkCollectionState' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+          type: { kind: 'NonNullType', type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'getCollection' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'id' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'parentId' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ReadBookmarkCollectionStateQuery, ReadBookmarkCollectionStateQueryVariables>;
+export const ReadBookmarkAuthorStateDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'ReadBookmarkAuthorState' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+          type: { kind: 'NonNullType', type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'getAuthor' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'id' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [{ kind: 'Field', name: { kind: 'Name', value: 'id' } }],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ReadBookmarkAuthorStateQuery, ReadBookmarkAuthorStateQueryVariables>;
+export const ReadBookmarkTagsStateDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'ReadBookmarkTagsState' },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'allTags' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [{ kind: 'Field', name: { kind: 'Name', value: 'id' } }],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ReadBookmarkTagsStateQuery, ReadBookmarkTagsStateQueryVariables>;

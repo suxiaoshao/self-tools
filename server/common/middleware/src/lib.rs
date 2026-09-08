@@ -21,3 +21,8 @@ pub use trace::*;
 
 #[cfg(feature = "auth-http")]
 pub mod auth_http;
+
+#[cfg(feature = "public-errors")]
+mod public_error;
+#[cfg(feature = "public-errors")]
+pub use public_error::HttpError;

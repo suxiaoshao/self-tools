@@ -5,12 +5,11 @@
  * @LastEditTime: 2024-05-24 16:20:32
  * @FilePath: /self-tools/server/packages/bookmarks/src/model/schema/custom_type.rs
  */
-use async_graphql::Enum;
+
 use std::{
     fmt::{self, Display, Formatter},
     io::Write,
 };
-use tracing::{Level, event};
 
 use diesel::{
     QueryId,
@@ -20,7 +19,7 @@ use diesel::{
     serialize::{self, IsNull, Output, ToSql},
 };
 
-#[derive(Debug, FromSqlRow, AsExpression, QueryId, Enum, Copy, Clone, Eq, PartialEq)]
+#[derive(Debug, FromSqlRow, AsExpression, QueryId, Copy, Clone, Eq, PartialEq)]
 #[diesel(sql_type = super::sql_types::NovelStatus)]
 pub(crate) enum NovelStatus {
     Ongoing,
@@ -68,14 +67,7 @@ impl FromSql<super::sql_types::NovelStatus, Pg> for NovelStatus {
             b"ongoing" => Ok(NovelStatus::Ongoing),
             b"completed" => Ok(NovelStatus::Completed),
             b"paused" => Ok(NovelStatus::Paused),
-            _ => {
-                event!(
-                    Level::ERROR,
-                    "Unrecognized enum variant {:x?}",
-                    bytes.as_bytes()
-                );
-                Err("Unrecognized enum variant".into())
-            }
+            _ => Err("Unrecognized enum variant".into()),
         }
     }
 }
@@ -90,7 +82,7 @@ impl From<novel_crawler::NovelStatus> for NovelStatus {
     }
 }
 
-#[derive(Debug, FromSqlRow, AsExpression, QueryId, Enum, Copy, Clone, Eq, PartialEq)]
+#[derive(Debug, FromSqlRow, AsExpression, QueryId, Copy, Clone, Eq, PartialEq)]
 #[diesel(sql_type = super::sql_types::NovelSite)]
 pub enum NovelSite {
     Qidian,
@@ -121,14 +113,7 @@ impl FromSql<super::sql_types::NovelSite, Pg> for NovelSite {
         match bytes.as_bytes() {
             b"qidian" => Ok(NovelSite::Qidian),
             b"jjwxc" => Ok(NovelSite::Jjwxc),
-            _ => {
-                event!(
-                    Level::ERROR,
-                    "Unrecognized enum variant {:x?}",
-                    bytes.as_bytes()
-                );
-                Err("Unrecognized enum variant".into())
-            }
+            _ => Err("Unrecognized enum variant".into()),
         }
     }
 }

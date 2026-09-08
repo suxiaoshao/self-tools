@@ -1,146 +1,64 @@
-use async_graphql::ErrorExtensionValues;
-use axum::{Json, response::IntoResponse};
-use diesel::r2d2;
-use std::{env::VarError, sync::Arc};
-
-#[derive(Debug)]
-pub(crate) enum GraphqlError {
-    /// 数据库连接池
-    R2d2(String),
-    /// 数据库操作错误
-    Diesel(String),
-    /// 没有认证
-    Unauthenticated,
-    /// 资源不存在
-    NotFound(&'static str, i64),
-    /// 资源不存在
-    NotFoundMany(&'static str, Vec<i64>),
-    /// 已存在
-    AlreadyExists(String),
-    PageSizeTooMore,
-    /// thrift 错误
-    Thrift(String),
-    ClientError(String),
-    VarError(VarError),
-    NotGraphqlContextData(&'static str),
+//! Application failures contain domain data and typed causes, never GraphQL values.
+use service_errors::{FieldViolation, UseCaseError, UseCaseResult};
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum ResourceKind {
+    Collection,
+    Item,
 }
-
-impl IntoResponse for GraphqlError {
-    fn into_response(self) -> axum::response::Response {
-        Json(serde_json::json!({
-            "data": null,
-            "errors":[{
-                "message": self.message(),
-                "extensions": {
-                    "code": self.code(),
-                    "source":format!("{self:#?}")
-                }
-            }]
-        }))
-        .into_response()
-    }
+#[derive(Debug, Clone)]
+pub(crate) struct ResourceRef {
+    pub kind: ResourceKind,
+    pub id: i64,
 }
-
-impl GraphqlError {
-    pub(crate) fn message(&self) -> String {
-        match self {
-            GraphqlError::R2d2(_) => "数据库连接错误".to_string(),
-            GraphqlError::Diesel(data) => format!("数据库错误:{data}"),
-            GraphqlError::Unauthenticated => "未登录".to_string(),
-            GraphqlError::NotFound(tag, id) => format!(r#"{tag}"{id}"不存在"#),
-            GraphqlError::AlreadyExists(name) => format!("{name}已存在"),
-            GraphqlError::PageSizeTooMore => "页码太大".to_string(),
-            GraphqlError::Thrift(data) => format!("thrift 错误:{data}"),
-            GraphqlError::ClientError(data) => format!("thrift client错误:{data}"),
-            GraphqlError::VarError(err) => format!("env error:{err}"),
-            GraphqlError::NotGraphqlContextData(tag) => format!("graphql context data:{tag}不存在"),
-            GraphqlError::NotFoundMany(tag, items) => {
-                format!(r#"{tag}"{:?}"不存在"#, items)
-            }
-        }
-    }
-    pub(crate) fn code(&self) -> &str {
-        match self {
-            GraphqlError::R2d2(_) => "FailedPrecondition",
-            GraphqlError::Diesel(_) => "Internal",
-            GraphqlError::Unauthenticated => "Unauthenticated",
-            GraphqlError::NotFound(..) | GraphqlError::AlreadyExists(_) => "InvalidArgument",
-            GraphqlError::PageSizeTooMore => "InvalidArgument",
-            GraphqlError::Thrift(_) => "Thrift",
-            GraphqlError::ClientError(_) => "ThriftClient",
-            GraphqlError::VarError(_) => "VarError",
-            GraphqlError::NotGraphqlContextData(_) => "NotGraphqlContextData",
-            GraphqlError::NotFoundMany(_, _) => "NotFoundMany",
-        }
-    }
+#[derive(Debug, Clone, Copy)]
+pub(crate) enum ConflictReason {
+    CollectionPathExists,
+    MembershipExists,
 }
-
-impl Clone for GraphqlError {
-    fn clone(&self) -> Self {
-        match self {
-            GraphqlError::R2d2(data) => Self::R2d2(data.clone()),
-            GraphqlError::Diesel(data) => Self::Diesel(data.clone()),
-            GraphqlError::Unauthenticated => Self::Unauthenticated,
-            GraphqlError::NotFound(tag, id) => Self::NotFound(tag, *id),
-            GraphqlError::AlreadyExists(name) => Self::AlreadyExists(name.clone()),
-            GraphqlError::PageSizeTooMore => Self::PageSizeTooMore,
-            GraphqlError::Thrift(data) => Self::Thrift(data.clone()),
-            GraphqlError::ClientError(data) => Self::ClientError(data.clone()),
-            GraphqlError::VarError(data) => Self::VarError(data.clone()),
-            GraphqlError::NotGraphqlContextData(data) => Self::NotGraphqlContextData(data),
-            GraphqlError::NotFoundMany(tag, data) => Self::NotFoundMany(tag, data.clone()),
-        }
-    }
+#[derive(Debug, thiserror::Error)]
+pub(crate) enum Rejection {
+    #[error("validation failed")]
+    Validation(Vec<FieldViolation>),
+    #[error("resources missing")]
+    Missing(Vec<ResourceRef>),
+    #[error("conflict")]
+    Conflict(ConflictReason, Vec<ResourceRef>),
 }
-
-impl From<r2d2::PoolError> for GraphqlError {
-    fn from(error: r2d2::PoolError) -> Self {
-        Self::R2d2(error.to_string())
-    }
+pub(crate) type AppError = UseCaseError<Rejection>;
+pub(crate) type AppResult<T> = UseCaseResult<T, Rejection>;
+pub(crate) fn missing(kind: ResourceKind, id: i64) -> AppError {
+    UseCaseError::Rejected(Rejection::Missing(vec![ResourceRef { kind, id }]))
 }
-
-impl From<diesel::result::Error> for GraphqlError {
-    fn from(error: diesel::result::Error) -> Self {
-        Self::Diesel(error.to_string())
-    }
+pub(crate) fn conflict(reason: ConflictReason, resources: Vec<ResourceRef>) -> AppError {
+    UseCaseError::Rejected(Rejection::Conflict(reason, resources))
 }
-
-impl From<volo_thrift::error::ClientError> for GraphqlError {
-    fn from(value: volo_thrift::error::ClientError) -> Self {
-        match value {
-            volo_thrift::ClientError::Application(x) => Self::Thrift(x.to_string()),
-            volo_thrift::ClientError::Transport(x) => Self::Thrift(x.to_string()),
-            volo_thrift::ClientError::Protocol(x) => Self::Thrift(x.to_string()),
-            volo_thrift::ClientError::Biz(x) => Self::Thrift(x.to_string()),
-        }
+pub(crate) fn validate_id(id: i64, path: &str) -> AppResult<()> {
+    if id <= 0 {
+        return Err(UseCaseError::Rejected(Rejection::Validation(vec![
+            FieldViolation {
+                path: path.split('.').map(str::to_owned).collect(),
+                code: service_errors::ValidationCode::OutOfRange,
+                min: Some(1),
+                max: None,
+            },
+        ])));
     }
+    Ok(())
 }
-
-impl From<thrift::ClientError> for GraphqlError {
-    fn from(value: thrift::ClientError) -> Self {
-        Self::ClientError(value.to_string())
-    }
+pub(crate) fn validate_name(name: &str) -> AppResult<()> {
+    service_errors::directory_name(name, "name")
+        .map_err(|v| UseCaseError::Rejected(Rejection::Validation(vec![v])))
 }
-
-pub(crate) type GraphqlResult<T> = Result<T, GraphqlError>;
-
-impl From<GraphqlError> for async_graphql::Error {
-    fn from(value: GraphqlError) -> async_graphql::Error {
-        let mut extensions = ErrorExtensionValues::default();
-        extensions.set("source", format!("{value:#?}"));
-        let code = value.code();
-        extensions.set("code", code);
-
-        async_graphql::Error {
-            message: value.message(),
-            source: Some(Arc::new(value)),
-            extensions: Some(extensions),
-        }
+/// Map only this operation's known unique constraint after transaction rollback.
+pub(crate) fn path_conflict(error: AppError) -> AppError {
+    if let UseCaseError::Fault(fault) = &error
+        && let Some(diesel::result::Error::DatabaseError(
+            diesel::result::DatabaseErrorKind::UniqueViolation,
+            info,
+        )) = fault.source.downcast_ref::<diesel::result::Error>()
+        && info.constraint_name() == Some("collection_path_key")
+    {
+        return conflict(ConflictReason::CollectionPathExists, vec![]);
     }
-}
-
-impl From<VarError> for GraphqlError {
-    fn from(value: VarError) -> Self {
-        Self::VarError(value)
-    }
+    error
 }

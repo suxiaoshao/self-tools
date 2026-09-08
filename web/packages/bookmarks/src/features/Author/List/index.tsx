@@ -1,3 +1,7 @@
+import { RequestNotice } from 'custom-graphql';
+import { checkDeleted } from '@bookmarks/reconcile';
+import { useApolloClient } from '@apollo/client/react';
+import useBookmarkWrite from '@bookmarks/useBookmarkWrite';
 import { RefreshCcw } from 'lucide-react';
 import {
   createCustomColumnHelper,
@@ -45,7 +49,21 @@ const GetAuthors = graphql(`
 const DeleteAuthor = graphql(`
   mutation deleteAuthor($id: Int!) {
     deleteAuthor(id: $id) {
-      id
+      __typename
+      ... on ResourceDeleted {
+        resource {
+          kind
+          id
+        }
+      }
+      ... on ValidationFailure {
+        issues {
+          path
+          code
+          min
+          max
+        }
+      }
     }
   }
 `);
@@ -54,11 +72,19 @@ type TableItem = GetAuthorsQuery['queryAuthors']['data'][0];
 
 const columnHelper = createCustomColumnHelper<TableItem>();
 export default function AuthorList() {
+  const client = useApolloClient();
+  const write = useBookmarkWrite('/bookmarks/authors');
   // fetch
   const pageState = usePage();
-  const { data: { queryAuthors: { data, total } = {} } = {}, refetch } = useQuery(GetAuthors, {
+  const {
+    data: queryData,
+    refetch,
+    error,
+  } = useQuery(GetAuthors, {
     variables: { pagination: { page: pageState.pageIndex, pageSize: pageState.pageSize } },
   });
+  const data = queryData?.queryAuthors?.data;
+  const total = queryData?.queryAuthors?.total;
   const page = usePageWithTotal(pageState, total);
 
   const [deleteAuthor] = useMutation(DeleteAuthor);
@@ -128,8 +154,16 @@ export default function AuthorList() {
                 {
                   text: t('delete'),
                   onClick: async () => {
-                    await deleteAuthor({ variables: { id } });
-                    await refetch();
+                    if (
+                      !(await write.execute(
+                        async () => (await deleteAuthor({ variables: { id } })).data?.deleteAuthor,
+                        { verify: () => checkDeleted(client, id, 'Author'), confirmed: refetch },
+                      ))
+                    )
+                      return;
+                    void Promise.resolve()
+                      .then(() => refetch())
+                      .catch(() => undefined);
                   },
                 },
               ]}
@@ -142,7 +176,7 @@ export default function AuthorList() {
           },
         ),
       ] as CustomColumnDefArray<TableItem>,
-    [deleteAuthor, refetch, t],
+    [deleteAuthor, refetch, t, write, client],
   );
   const tableOptions = useMemo<CustomTableOptions<TableItem>>(
     () => ({ columns, data: data ?? [], getCoreRowModel: getCoreRowModel() }),
@@ -152,6 +186,8 @@ export default function AuthorList() {
 
   return (
     <div className="flex flex-col size-full p-4">
+      <RequestNotice error={error} />
+      {write.notice}
       <div className="flex-[0_0_auto] mb-4 flex">
         <CreateAuthorButton refetch={refetch} />
         <Button className="ml-2">

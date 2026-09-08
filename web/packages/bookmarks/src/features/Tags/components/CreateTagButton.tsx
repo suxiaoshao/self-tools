@@ -1,3 +1,4 @@
+import useBookmarkWrite from '@bookmarks/useBookmarkWrite';
 import { Controller, type SubmitHandler, useForm } from 'react-hook-form';
 import { useI18n } from 'i18n';
 import { graphql } from '@bookmarks/gql';
@@ -24,13 +25,30 @@ import {
   SelectValue,
 } from '@portal/components/ui/select';
 import { valibotResolver } from '@hookform/resolvers/valibot';
-import { object, picklist, string } from 'valibot';
+import { check, minLength, object, picklist, pipe, string, trim } from 'valibot';
 
 const CreateTag = graphql(`
   mutation createTag($name: String!, $site: NovelSite!, $siteId: String!) {
     createTag(name: $name, site: $site, siteId: $siteId) {
-      name
-      id
+      __typename
+      ... on TagSaved {
+        tagId
+      }
+      ... on ValidationFailure {
+        issues {
+          path
+          code
+          min
+          max
+        }
+      }
+      ... on Conflict {
+        reason
+        resources {
+          kind
+          id
+        }
+      }
     }
   }
 `);
@@ -39,6 +57,8 @@ interface CreateTagButtonProps {
 }
 
 export default function CreateTagButton({ refetch }: CreateTagButtonProps) {
+  const t = useI18n();
+  const write = useBookmarkWrite('/bookmarks/tags');
   const [createTag] = useMutation(CreateTag);
 
   // 表单控制
@@ -51,21 +71,28 @@ export default function CreateTagButton({ refetch }: CreateTagButtonProps) {
   } = useForm<FormData>({
     resolver: valibotResolver(
       object({
-        name: string(),
+        name: pipe(
+          string(),
+          trim(),
+          minLength(1, t('request_required')),
+          check((name) => Array.from(name).length <= 20, `${t('request_too_long')} (20)`),
+        ),
         site: picklist(['JJWXC', 'QIDIAN']),
         siteId: string(),
       }),
     ),
   });
   const onSubmit: SubmitHandler<FormData> = async ({ name, site, siteId }) => {
-    await createTag({ variables: { name, site, siteId } });
-    refetch();
+    if (!(await write.execute(async () => (await createTag({ variables: { name, site, siteId } })).data?.createTag)))
+      return;
+    void Promise.resolve()
+      .then(() => refetch())
+      .catch(() => undefined);
     handleClose();
   };
 
   // 控制 dialog
   const { open, handleClose, handleOpenChange } = useDialog();
-  const t = useI18n();
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger render={<Button />}>{t('add_tag')}</DialogTrigger>
@@ -107,9 +134,12 @@ export default function CreateTagButton({ refetch }: CreateTagButtonProps) {
             </Field>
           </FieldGroup>
 
+          {write.notice}
           <DialogFooter>
             <DialogClose render={<Button variant="secondary" />}>{t('cancel')}</DialogClose>
-            <Button type="submit">{t('submit')}</Button>
+            <Button disabled={write.blocked} type="submit">
+              {t('submit')}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

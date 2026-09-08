@@ -4,36 +4,22 @@
  * @LastEditors: suxiaoshao suxiaoshao@gmail.com
  * @LastEditTime: 2024-03-27 05:32:19
  */
-use async_graphql::{ComplexObject, SimpleObject};
+
 use diesel::PgConnection;
-use graphql_common::DateTime;
-use novel_crawler::{JJTag, QDTag, TagFn};
-use tracing::{Level, event};
 
 use crate::{
-    errors::{GraphqlError, GraphqlResult},
+    errors::{AppError, AppResult},
     model::{PgPool, schema::custom_type::NovelSite, tag::TagModel},
 };
 
-#[derive(SimpleObject, Eq, PartialEq)]
-#[graphql(complex)]
+#[derive(Eq, PartialEq)]
 pub(crate) struct Tag {
     pub(crate) id: i64,
     pub(crate) name: String,
     pub(crate) site: NovelSite,
     pub(crate) site_id: String,
-    pub(crate) create_time: DateTime,
-    pub(crate) update_time: DateTime,
-}
-
-#[ComplexObject]
-impl Tag {
-    async fn url(&self) -> String {
-        match self.site {
-            NovelSite::Jjwxc => JJTag::get_url_from_id(&self.site_id),
-            NovelSite::Qidian => QDTag::get_url_from_id(&self.site_id),
-        }
-    }
+    pub(crate) create_time: time::OffsetDateTime,
+    pub(crate) update_time: time::OffsetDateTime,
 }
 
 impl From<TagModel> for Tag {
@@ -43,8 +29,8 @@ impl From<TagModel> for Tag {
             name: value.name,
             site: value.site,
             site_id: value.site_id,
-            create_time: value.create_time.into(),
-            update_time: value.update_time.into(),
+            create_time: value.create_time,
+            update_time: value.update_time,
         }
     }
 }
@@ -57,22 +43,30 @@ impl Tag {
         site: NovelSite,
         site_id: &str,
         conn: &mut PgConnection,
-    ) -> GraphqlResult<Self> {
-        let new_tag = TagModel::create(name, site, site_id, conn)?;
-        Ok(new_tag.into())
+    ) -> AppResult<Self> {
+        let name = normalized_name(name)?;
+        super::write(conn, |conn| {
+            Ok(TagModel::create(name, site, site_id, conn)?.into())
+        })
+        .map_err(crate::errors::source_conflict)
     }
     /// 删除标签
-    pub(crate) fn delete(id: i64, conn: &mut PgConnection) -> GraphqlResult<Self> {
-        // 标签不存在
-        if !TagModel::exists(id, conn)? {
-            event!(Level::ERROR, "标签不存在: {}", id);
-            return Err(GraphqlError::NotFound("标签", id));
-        }
-        let deleted_tag = TagModel::delete(id, conn)?;
-        Ok(deleted_tag.into())
+    pub(crate) fn delete(id: i64, conn: &mut PgConnection) -> AppResult<i64> {
+        crate::errors::validate_id(id, "id")?;
+        super::write(conn, |conn| {
+            if TagModel::exists(id, conn)? {
+                use diesel::RunQueryDsl;
+                // Tags are stored in an array without an FK; maintain the relation on deletion.
+                diesel::sql_query("UPDATE novel SET tags=array_remove(tags,$1) WHERE $1=ANY(tags)")
+                    .bind::<diesel::sql_types::BigInt, _>(id)
+                    .execute(conn)?;
+                TagModel::delete(id, conn)?;
+            }
+            Ok(id)
+        })
     }
     /// 获取标签列表
-    pub(crate) fn get_by_ids(ids: &[i64], conn: &mut PgConnection) -> GraphqlResult<Vec<Self>> {
+    pub(crate) fn get_by_ids(ids: &[i64], conn: &mut PgConnection) -> AppResult<Vec<Self>> {
         let tags = TagModel::get_by_ids(ids, conn)?;
         Ok(tags.into_iter().map(|x| x.into()).collect())
     }
@@ -81,7 +75,7 @@ impl Tag {
 /// all
 impl Tag {
     /// 获取所有标签
-    pub(crate) fn all(conn: &mut PgConnection) -> GraphqlResult<Vec<Self>> {
+    pub(crate) fn all(conn: &mut PgConnection) -> AppResult<Vec<Self>> {
         let tags = TagModel::get_list(conn)?;
         Ok(tags.into_iter().map(|x| x.into()).collect())
     }
@@ -92,44 +86,93 @@ pub(crate) struct TagRunner {
     count: i64,
 }
 
-graphql_common::list!(Tag);
-
 impl TagRunner {
-    pub(crate) fn new(conn: PgPool) -> GraphqlResult<Self> {
+    pub(crate) fn new(conn: PgPool) -> AppResult<Self> {
         let conn_temp = &mut conn.get()?;
         let count = TagModel::count(conn_temp)?;
         Ok(Self { conn, count })
     }
 }
 
-impl graphql_common::Queryable for TagRunner {
+impl service_query::Queryable for TagRunner {
     type Item = Tag;
 
-    type Error = GraphqlError;
+    type Error = AppError;
 
     async fn len(&self) -> Result<i64, Self::Error> {
         Ok(self.count)
     }
 
-    async fn query<P: graphql_common::Paginate>(
+    async fn query<P: service_query::Paginate>(
         &self,
         pagination: P,
     ) -> Result<Vec<Self::Item>, Self::Error> {
         let offset = pagination.offset();
-        let len = self.len().await?;
-        if len < offset {
-            event!(
-                Level::ERROR,
-                "偏移量超出范围 pagination: {:?} len: {} offset: {}",
-                pagination,
-                len,
-                offset
-            );
-            return Err(GraphqlError::PageSizeTooMore);
-        }
+
         let limit = pagination.limit();
         let conn = &mut self.conn.get()?;
         let tags = TagModel::get_list_by_pagination(offset, limit, conn)?;
         Ok(tags.into_iter().map(|tag| tag.into()).collect())
+    }
+}
+
+/// Manual tag names may be a single character; only surrounding whitespace is removed.
+fn normalized_name(name: &str) -> AppResult<&str> {
+    let name = name.trim();
+    if name.is_empty() {
+        return Err(crate::errors::invalid(
+            "name",
+            service_errors::ValidationCode::Required,
+        ));
+    }
+    if name.chars().count() > 20 {
+        return Err(service_errors::UseCaseError::Rejected(
+            crate::errors::Rejection::Validation(vec![service_errors::FieldViolation {
+                path: vec!["name".into()],
+                code: service_errors::ValidationCode::TooLong,
+                min: None,
+                max: Some(20),
+            }]),
+        ));
+    }
+    Ok(name)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::normalized_name;
+    use crate::errors::Rejection;
+    use service_errors::{UseCaseError, ValidationCode};
+
+    #[test]
+    fn tag_name_requires_content_and_preserves_single_character_tags() {
+        for name in ["", " ", "\t\n\u{3000}\u{a0}"] {
+            let Err(UseCaseError::Rejected(Rejection::Validation(issues))) = normalized_name(name)
+            else {
+                panic!("blank tag must be a validation rejection");
+            };
+            assert_eq!(issues.len(), 1);
+            assert_eq!(issues[0].path, ["name"]);
+            assert_eq!(issues[0].code, ValidationCode::Required);
+        }
+        for name in ["甜", "虐", "燃", "a", "🔥"] {
+            assert_eq!(normalized_name(name).unwrap(), name);
+        }
+        assert_eq!(normalized_name(" \t甜\u{3000}").unwrap(), "甜");
+        assert_eq!(normalized_name("  slow burn  ").unwrap(), "slow burn");
+    }
+
+    #[test]
+    fn tag_name_limit_counts_characters_after_trimming() {
+        let limit = "🔥".repeat(20);
+        assert_eq!(normalized_name(&format!(" {limit} ")).unwrap(), limit);
+        let Err(UseCaseError::Rejected(Rejection::Validation(issues))) =
+            normalized_name(&"🔥".repeat(21))
+        else {
+            panic!("long tag must be a validation rejection");
+        };
+        assert_eq!(issues[0].path, ["name"]);
+        assert_eq!(issues[0].code, ValidationCode::TooLong);
+        assert_eq!(issues[0].max, Some(20));
     }
 }
