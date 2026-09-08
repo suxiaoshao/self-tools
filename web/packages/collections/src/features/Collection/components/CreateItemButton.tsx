@@ -1,6 +1,6 @@
 import { attemptWrite } from 'custom-graphql';
 import { itemResult } from '@collections/results';
-import ItemForm, { type ItemFormData } from '../../Item/Components/ItemForm';
+import ItemForm, { type ItemCreateData } from '../../Item/Components/ItemForm';
 import useDialog from '@collections/hooks/useDialog';
 import { useI18n } from 'i18n';
 import { graphql } from '@collections/gql';
@@ -44,7 +44,7 @@ interface CreateItemButtonProps extends ComponentProps<typeof Button> {
 export default function CreateItemButton({ refetch, collectionIds, className, ...props }: CreateItemButtonProps) {
   const [createItem] = useMutation(CreateItem);
 
-  const afterSubmit = async ({ name, content, collectionIds }: ItemFormData) => {
+  const afterSubmit = async ({ name, content, collectionIds }: ItemCreateData) => {
     const result = await attemptWrite(
       () => createItem({ variables: { name, collectionIds, content } }),
       (response) => itemResult(response.data?.createItem),
@@ -63,12 +63,14 @@ export default function CreateItemButton({ refetch, collectionIds, className, ..
       <Button variant="secondary" className={className} onClick={handleOpen} {...props}>
         {t('add_item')}
       </Button>
-      <ItemForm
-        mode="create"
-        afterSubmit={afterSubmit}
-        handleClose={handleClose}
-        initialValues={{ content: '', name: '', collectionIds }}
-      />
+      {open && (
+        <ItemForm
+          mode="create"
+          afterSubmit={afterSubmit}
+          handleClose={handleClose}
+          initialValues={{ content: '', name: '', collectionIds }}
+        />
+      )}
     </Dialog>
   );
 }

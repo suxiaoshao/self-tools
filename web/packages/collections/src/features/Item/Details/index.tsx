@@ -1,6 +1,6 @@
 import { attemptWrite, useWriteAction, WriteNotice, RequestNotice } from 'custom-graphql';
-import { itemResult, deleteResult } from '@collections/results';
-import { checkItem, checkDeleted } from '@collections/reconcile';
+import { deleteResult } from '@collections/results';
+import { checkDeleted } from '@collections/reconcile';
 import { useApolloClient, useMutation, useQuery } from '@apollo/client/react';
 import { graphql } from '@collections/gql';
 import { Delete, Edit, RefreshCcw, ChevronLeft } from 'lucide-react';
@@ -11,8 +11,8 @@ import { useI18n } from 'i18n';
 import useItemDetailItems from './useItemDetailItems';
 import useTitle from '@bookmarks/hooks/useTitle';
 import useDialog from '@collections/hooks/useDialog';
-import ItemForm, { type ItemFormData } from '../Components/ItemForm';
-import { DeleteItem, UpdateItem } from '@collections/features/Collection/components/Actions';
+import EditItemForm from '../Components/EditItemForm';
+import { DeleteItem } from '@collections/features/Collection/components/Actions';
 import { Dialog } from '@portal/components/ui/dialog';
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from '@portal/components/ui/card';
 import { Skeleton } from '@portal/components/ui/skeleton';
@@ -52,15 +52,6 @@ export default function ItemDetails() {
   }, [refetch]);
   const items = useItemDetailItems(data, handleRefresh, error);
   const { open, handleClose, handleOpen, handleOpenChange } = useDialog();
-  const [updateItem] = useMutation(UpdateItem);
-  const itemAfterSubmit = async ({ name, content }: ItemFormData) => {
-    const result = await attemptWrite(
-      () => updateItem({ variables: { id: Number(itemId), name, content } }),
-      (response) => itemResult(response.data?.updateItem),
-    );
-    if (result.status === 'saved') void refetch().catch(() => undefined);
-    return result;
-  };
   const [deleteItem] = useMutation(DeleteItem);
   const handleDelete = async () => {
     const result = await deletion.run(() =>
@@ -99,31 +90,12 @@ export default function ItemDetails() {
                 <CardTitle>{data.getItem.name}</CardTitle>
                 <CardAction>
                   <Dialog open={open} onOpenChange={handleOpenChange}>
-                    <Button
-                      variant="ghost"
-                      size="icon-lg"
-                      className="rounded-full"
-                      disabled={!data.getItem.collections}
-                      onClick={handleOpen}
-                    >
+                    <Button variant="ghost" size="icon-lg" className="rounded-full" onClick={handleOpen}>
                       <Edit />
                     </Button>
-                    <ItemForm
-                      loading={loading}
-                      initialValues={
-                        data.getItem.collections
-                          ? {
-                              collectionIds: data.getItem.collections.map(({ id }) => id),
-                              content: data.getItem.content,
-                              name: data.getItem.name,
-                            }
-                          : undefined
-                      }
-                      mode="edit"
-                      handleClose={handleClose}
-                      afterSubmit={itemAfterSubmit}
-                      checkResult={(data) => checkItem(client, Number(itemId), data)}
-                    />
+                    {open && (
+                      <EditItemForm key={itemId} id={Number(itemId)} handleClose={handleClose} refresh={refetch} />
+                    )}
                     <Button
                       variant="ghost"
                       size="icon-lg"

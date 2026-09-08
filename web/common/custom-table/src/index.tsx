@@ -1,6 +1,5 @@
-'use no memo';
-import { type Table as TableType, flexRender } from '@tanstack/react-table';
-import type { CustomColumnDef } from './useCustomTable';
+import { useReactTable, flexRender } from '@tanstack/react-table';
+import type { CustomColumnDef, CustomTableOptions } from './columns';
 import type { PageWithTotal } from './usePage';
 import { match } from 'ts-pattern';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@portal/components/ui/table';
@@ -9,19 +8,22 @@ import type { ComponentProps } from 'react';
 import TablePagination from './TablePagination';
 
 export interface CustomTableProps<D extends object> extends Omit<ComponentProps<'table'>, 'ref'> {
-  tableInstance: TableType<D>;
+  options: CustomTableOptions<D>;
   page?: PageWithTotal;
   containerProps?: ComponentProps<'div'>;
 }
 
 export function CustomTable<D extends object>({
-  tableInstance,
+  options,
   page,
   containerProps,
   className,
   ...tableProps
 }: CustomTableProps<D>) {
-  const { getHeaderGroups, getRowModel } = tableInstance;
+  'use no memo';
+  // TanStack mutates a stable table instance. Keep it inside this render boundary;
+  // callers pass immutable options so compiler memoization observes data changes.
+  const { getHeaderGroups, getRowModel } = useReactTable(options);
   return (
     <div
       className={cn('grow shrink-0 basis-0 flex flex-col max-h-full overflow-y-auto', className)}
@@ -94,13 +96,12 @@ export { usePage, usePageWithTotal, type PageState } from './usePage';
 export { TableActions } from './TableActions';
 export {
   createCustomColumnHelper,
-  useCustomTable,
   type CustomColumnDef,
   type CustomColumnDefArray,
   type CustomColumnHelper,
   type CustomExtendsType,
   type CustomTableOptions,
-} from './useCustomTable';
+} from './columns';
 
 export { default as TablePagination } from './TablePagination';
 

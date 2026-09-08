@@ -7,7 +7,6 @@ import {
   type CustomTableProps,
   createCustomColumnHelper,
   getCoreRowModel,
-  useCustomTable,
 } from 'custom-table';
 import { format } from 'time';
 import ChapterTableAction from './ChapterTableAction';
@@ -15,7 +14,7 @@ import ChapterBatchUpdate from './ChapterBatchUpdate';
 
 type Data = NonNullable<NonNullable<GetNovelQuery['getNovel']>['chapters']>[0];
 
-interface ChaptersProps extends Omit<CustomTableProps<Data>, 'tableInstance'> {
+interface ChaptersProps extends Omit<CustomTableProps<Data>, 'options'> {
   chapters: Data[];
   refetch: () => void;
   novelId: number;
@@ -61,8 +60,9 @@ export default function Chapters({ chapters, refetch, novelId, ...props }: Chapt
       ] as CustomColumnDefArray<Data>,
     [t, refetch, chapters, novelId],
   );
-  const tableInstance = useCustomTable(
-    useMemo(() => ({ columns, data: chapters, getCoreRowModel: getCoreRowModel() }), [columns, chapters]),
+  const tableOptions = useMemo(
+    () => ({ columns, data: chapters, getCoreRowModel: getCoreRowModel() }),
+    [columns, chapters],
   );
-  return <CustomTable className="h-[600px] flex-none overscroll-none" tableInstance={tableInstance} {...props} />;
+  return <CustomTable className="h-[600px] flex-none overscroll-none" options={tableOptions} {...props} />;
 }

@@ -46,17 +46,9 @@ export function registerAuthBoundary(boundary: AuthBoundary): () => void {
   };
 }
 let stateVersion = 0;
-const resetAuthenticated = new Set<() => void>();
 export const authenticatedStateVersion = () => stateVersion;
-export function registerAuthenticatedReset(reset: () => void): () => void {
-  resetAuthenticated.add(reset);
-  return () => {
-    resetAuthenticated.delete(reset);
-  };
-}
 export function clearAuthenticatedState(): void {
   stateVersion += 1;
-  for (const reset of resetAuthenticated) reset();
   for (const controller of requests) controller.abort();
   requests.clear();
   for (const client of clients) void client.clearStore().catch(() => undefined);

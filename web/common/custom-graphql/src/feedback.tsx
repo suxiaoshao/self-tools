@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useI18n } from 'i18n';
 import { isUnconfirmed, RequestError, type FieldViolation, type RequestFailure } from 'request-errors';
 import { authenticatedStateVersion, graphQLFailures } from './index';
@@ -40,34 +40,41 @@ export async function attemptWrite<T>(
   }
 }
 export function useWriteAction() {
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
   const [outcome, setOutcome] = useState<WriteOutcome>();
   const [pending, setPending] = useState(false);
   const busy = useRef(false);
   const uncertain = useRef(false);
   const version = useRef(authenticatedStateVersion());
   const run = async (request: () => Promise<WriteOutcome>) => {
-    if (busy.current || uncertain.current) return undefined;
+    if (!mounted.current || busy.current || uncertain.current) return undefined;
     busy.current = true;
     setPending(true);
     version.current = authenticatedStateVersion();
     try {
       const result = await attemptWrite(request, (result) => result);
-      if (version.current !== authenticatedStateVersion()) return undefined;
+      if (!mounted.current || version.current !== authenticatedStateVersion()) return undefined;
       uncertain.current = result.status === 'failed' && result.unconfirmed;
       setOutcome(result);
       return result;
     } finally {
       busy.current = false;
-      setPending(false);
+      if (mounted.current) setPending(false);
     }
   };
   const check = async (read: () => Promise<boolean>) => {
-    if (busy.current || version.current !== authenticatedStateVersion()) return false;
+    if (!mounted.current || busy.current || version.current !== authenticatedStateVersion()) return false;
     busy.current = true;
     setPending(true);
     try {
       const confirmed = await read();
-      if (version.current !== authenticatedStateVersion()) return false;
+      if (!mounted.current || version.current !== authenticatedStateVersion()) return false;
       if (confirmed) {
         uncertain.current = false;
         setOutcome({ status: 'saved' });
@@ -78,7 +85,7 @@ export function useWriteAction() {
     } finally {
       // The original uncertainty remains; a failed read never confirms a write.
       busy.current = false;
-      setPending(false);
+      if (mounted.current) setPending(false);
     }
   };
   return { outcome, pending, blocked: pending || (outcome?.status === 'failed' && outcome.unconfirmed), run, check };

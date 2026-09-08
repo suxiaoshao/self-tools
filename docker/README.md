@@ -53,6 +53,8 @@ xtask 按现有 null 环境键规则读取，无值时不注入。不增加容�
 
 `cargo run -p xtask -- build --tag <release>` 使用共享 `docker/docker-bake.hcl`、Buildx 和根 `.dockerignore` 构建，Rust builder 从仓库源码一并构建。CI 同时发布 latest 与提交 SHA 标签；部署回退应记录并使用明确的 image ID/digest 或提交标签，不依赖 latest 指向旧版本。Compose 的 image 字段是运行版本事实源。
 
+五个服务共享的 Cargo registry 和 target 缓存使用 `sharing=locked`，避免 Buildx 并行构建时同时解包依赖或写入编译产物。
+
 部署前准备专用数据库/角色及连接配置。三个服务镜像都支持显式迁移，以下命令需要正确镜像、数据库容器和 Compose 网络已存在：
 
 ```bash

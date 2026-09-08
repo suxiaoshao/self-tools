@@ -5,11 +5,12 @@
  * @LastEditTime: 2024-01-23 00:25:08
  * @FilePath: /self-tools/web/packages/bookmarks/src/components/CollectionSelect/index.tsx
  */
+import { RequestNotice } from 'custom-graphql';
 import {
   type AllCollectionItem,
   CollectionLoadingState,
   useAllCollection,
-} from '@bookmarks/features/Collections/collectionSlice';
+} from '@bookmarks/features/Collections/collectionQuery';
 import { Plus, X } from 'lucide-react';
 import { useI18n } from 'i18n';
 import React, {
@@ -46,14 +47,13 @@ interface CollectionMultiSelectProps extends Omit<ComponentProps<'div'>, 'name' 
 
 function CollectionMultiSelect({ onChange, value, className, ref, ...props }: CollectionMultiSelectProps) {
   const { value: allCollection, fetchData } = useAllCollection();
-  const t = useI18n();
   const content = useMemo(
     () =>
       match(allCollection)
         .with({ tag: CollectionLoadingState.init }, () => null)
         .with({ tag: CollectionLoadingState.error }, ({ value }) => (
           <div>
-            {value.toString()} <Button onClick={fetchData}>{t('refresh')}</Button>
+            <RequestNotice error={value} retry={fetchData} />
           </div>
         ))
         .with({ tag: CollectionLoadingState.loading }, () => <Spinner />)
@@ -61,7 +61,7 @@ function CollectionMultiSelect({ onChange, value, className, ref, ...props }: Co
           <InnerCollectionSelect onChange={onChange} value={value} allCollections={allCollections} />
         ))
         .otherwise(() => null),
-    [allCollection, value, fetchData, onChange, t],
+    [allCollection, value, fetchData, onChange],
   );
   const [sourceRef, setSourceRef] = React.useState<HTMLDivElement | null>(null);
   useImperativeHandle<HTMLDivElement | null, HTMLDivElement | null>(ref, () => sourceRef, [sourceRef]);
