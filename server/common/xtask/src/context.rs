@@ -1,6 +1,6 @@
 use std::{
     collections::HashMap,
-    fs, io,
+    fs,
     path::{Path, PathBuf},
 };
 
@@ -11,8 +11,6 @@ use nom::{
     combinator::{all_consuming, opt, rest},
     sequence::{delimited, separated_pair, terminated},
 };
-use tar::Builder as TarBuilder;
-use walkdir::WalkDir;
 
 use crate::error::XtaskError;
 
@@ -70,45 +68,6 @@ fn env_assignment_parser(input: &str) -> IResult<&str, (&str, &str)> {
 
 fn env_key_parser(input: &str) -> IResult<&str, &str> {
     take_while1(|c: char| c != '=' && !c.is_whitespace()).parse(input)
-}
-
-pub fn build_context_tar(root: &Path) -> Result<Vec<u8>, XtaskError> {
-    let mut archive = TarBuilder::new(Vec::new());
-
-    for entry in WalkDir::new(root)
-        .follow_links(false)
-        .into_iter()
-        .filter_entry(|entry| !should_skip(entry.path(), root))
-    {
-        let entry = entry.map_err(io::Error::other)?;
-        let path = entry.path();
-
-        if path == root {
-            continue;
-        }
-
-        let rel = path.strip_prefix(root).map_err(io::Error::other)?;
-
-        if path.is_file() {
-            archive.append_path_with_name(path, rel)?;
-        } else if path.is_dir() {
-            archive.append_dir(rel, path)?;
-        }
-    }
-
-    archive.finish()?;
-    archive.into_inner().map_err(XtaskError::Io)
-}
-
-fn should_skip(path: &Path, root: &Path) -> bool {
-    path.strip_prefix(root)
-        .ok()
-        .and_then(|rel| rel.components().next())
-        .map(|component| {
-            let part = component.as_os_str().to_string_lossy();
-            part == ".git" || part == "target"
-        })
-        .unwrap_or(false)
 }
 
 #[cfg(test)]

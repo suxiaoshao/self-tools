@@ -3,7 +3,7 @@ use std::path::Path;
 
 use bollard::Docker;
 use bollard::models::{NetworkCreateRequest, VolumeCreateRequest};
-use bollard::query_parameters::ListVolumesOptionsBuilder;
+use bollard::query_parameters::{ListContainersOptionsBuilder, ListVolumesOptionsBuilder};
 use tracing::{Level, event};
 
 use crate::TaskResult;
@@ -35,6 +35,48 @@ pub(super) async fn ensure_named_volumes(
         .into_iter()
         .map(|volume| volume.name)
         .collect::<HashSet<_>>();
+
+    for (key, volume) in &compose.volumes {
+        let name = volume.name.as_deref().unwrap_or(key);
+        if volume.external && !existing.contains(name) {
+            return Err(crate::error::XtaskError::MissingVolume { name: name.into() });
+        }
+        if volume.exclusive {
+            let allowed: HashSet<_> = compose
+                .services
+                .iter()
+                .filter(|(_, service)| {
+                    service
+                        .volumes
+                        .iter()
+                        .any(|bind| bind.starts_with(&format!("{key}:")))
+                })
+                .map(|(name, service)| {
+                    service
+                        .container_name
+                        .clone()
+                        .unwrap_or_else(|| format!("self-tools-{name}"))
+                })
+                .collect();
+            let filters = HashMap::from([("volume".to_string(), vec![name.to_string()])]);
+            let running = docker
+                .list_containers(Some(
+                    ListContainersOptionsBuilder::new()
+                        .filters(&filters)
+                        .build(),
+                ))
+                .await?;
+            if running.iter().any(|container| {
+                !container.names.as_ref().is_some_and(|names| {
+                    names
+                        .iter()
+                        .any(|n| allowed.contains(n.trim_start_matches('/')))
+                })
+            }) {
+                return Err(crate::error::XtaskError::VolumeInUse { name: name.into() });
+            }
+        }
+    }
 
     for (key, volume) in &compose.volumes {
         let name = volume.name.clone().unwrap_or_else(|| key.to_string());

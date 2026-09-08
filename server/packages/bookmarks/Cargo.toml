@@ -6,6 +6,8 @@ edition.workspace = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+service-health = { workspace = true, features = ["database", "auth"] }
+diesel_migrations.workspace = true
 # runtime
 tokio = { workspace = true, features = ["macros", "rt-multi-thread", "net", "time", "sync"] }
 

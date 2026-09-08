@@ -5,7 +5,7 @@ use axum::{
     extract::{Request, State},
     http::{Method, StatusCode},
     response::{IntoResponse, Response},
-    routing::any,
+    routing::{any, get},
 };
 use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
 use middleware::auth_http::{self, CEREMONY_COOKIE, SESSION_COOKIE};
@@ -24,6 +24,16 @@ pub(crate) fn get_router() -> anyhow::Result<Router> {
     let origin =
         auth_http::configured_origin().map_err(|_| anyhow::anyhow!("invalid AUTH_ORIGIN"))?;
     Ok(Router::new()
+        .route(
+            "/health/ready",
+            get(|| async {
+                if service_health::auth_ready().await {
+                    StatusCode::NO_CONTENT
+                } else {
+                    StatusCode::SERVICE_UNAVAILABLE
+                }
+            }),
+        )
         .route("/api/auth/{*path}", any(handle))
         .with_state(origin))
 }

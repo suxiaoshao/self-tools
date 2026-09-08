@@ -1,8 +1,35 @@
-**/.idea
-**/node_modules
-**/.DS_Store
-**/dist
-**/dist-ssr
+# One input policy for Docker CLI, Buildx CI, and xtask build.
+**
+!Cargo.toml
+!Cargo.lock
+!.cargo/config.toml
+!server/**/Cargo.toml
+!server/**/build.rs
+!server/**/src/**
+!server/**/migrations/**
+!server/**/idl/**
+!server/**/volo.yml
+!server/**/fixtures/**
+!docker/server/**
+# xtask's compile-time Compose fixture.
+!docker/compose/docker-compose.yml
+
+# Even under an allowed source directory, local state is never build input.
+**/.git
+**/.env
+**/.env.*
 **/*.local
+**/certs
+**/*.pem
+**/*.key
+**/*.p12
+**/*.pfx
+**/*.crt
+**/*.dump
+**/*.backup
+**/node_modules
 **/target
-**/*.pnpm-debug.log
+**/dist
+**/__pycache__
+**/.DS_Store
+**/.idea

@@ -1,68 +1,48 @@
 # xtask
 
-`xtask` 是本仓库面向 Docker 的开发编排工具。它从仓库根目录解析固定资源，并通过 Docker API 完成镜像构建、Compose 状态收敛和本地证书生成。
+`xtask` 是仓库的构建、容器编排和本地证书工具。`build` 调用 Docker CLI/Buildx；`compose` 使用 Docker API。CLI 参数以 `cargo run -p xtask -- <subcommand> --help` 与 [`src/main.rs`](src/main.rs) 为准。
 
-## 事实源
-
-- CLI 入口与参数：[`src/main.rs`](src/main.rs) 和 `cargo run -p xtask -- --help`
-- 任务分派：[`src/lib.rs`](src/lib.rs)
-- 行为实现：[`src/tasks/`](src/tasks/)
-- Compose 输入：[`../../../docker/compose/docker-compose.yml`](../../../docker/compose/docker-compose.yml)
-
-参数和默认值可能变化，不在本文复制完整选项表。使用下列命令查看当前接口：
+## 构建
 
 ```bash
-cargo run -p xtask -- --help
-cargo run -p xtask -- <subcommand> --help
+cargo run -p xtask -- build --tag my-release
 ```
 
-## 子命令边界
+默认 tag 为 `latest`。本地与 CI 共用 `docker/docker-bake.hcl`，从仓库源码构建 Rust builder 和五个服务，需要本机 Docker CLI 与 Buildx。根 `.dockerignore` 是本地和 CI 唯一的输入过滤规则，先由 Buildx 过滤再上传，不自行归档仓库。规则采用默认排除，允许 Cargo/源码/IDL/migration/必要构建资源，并排除允许目录中的 `.env`、私钥、证书和本地输出。
 
-### `build`
+代理与 Debian mirror 通过显式参数传入；loopback 代理转换为容器可访问的地址。不接受含凭据的代理或 mirror 地址，secret 不能通过 build args 传递；CLI 自身的宿主代理与传给构建容器的地址分开。`build` 只构建/加载镜像，不启动业务服务。
 
-- 以仓库根目录作为 Docker build context，使用 `docker/server/*.Dockerfile` 依次构建服务镜像。
-- 支持通过显式 CLI 参数传入代理与 Debian mirror；本机 loopback 代理会转换为 Docker build 可访问的主机名。
-- 只构建镜像，不创建网络、volume 或容器，也不启动服务。
-
-### `compose`
-
-- 读取 `docker/compose/docker-compose.yml`，并在存在时读取 `docker/compose/.env`。
-- 当前实现会先把这份 `.env` 复制给每一个受管理容器，再叠加服务声明的 `env_file` 和 `environment`。这与 Docker Compose CLI 的服务级 `env_file` 边界不同；在实现修正前，应把 `.env` 中的每个值都视为会暴露给全部容器。
-- `environment` 映射支持字符串与 null：字符串直接覆盖，null 优先读取同名进程环境变量，其次项目 `.env`，均缺失则移除该键；空字符串保留。容器创建和配置签名共用此解析逻辑。不支持 `${…}` 插值。
-- 按 `depends_on` 解析服务顺序，确保命名 volume、默认 network 和容器处于声明状态。
-- 容器配置或镜像签名变化时会重建容器；已有但停止的容器会被启动。
-- 不构建或拉取镜像。运行前必须确保 Compose 引用的镜像可用；本地源码变化通常需要先执行 `build`。
-
-### `cert`
-
-- 生成本地 CA、站点证书和私钥，并写入所选输出目录。
-- 只负责生成文件，不会导入系统信任、修改 hosts、调整 gateway 配置或挂载证书。
-- 默认输出目录与当前 Compose 的证书挂载位置不同；用于本地 gateway 前，需显式配置 volume 以及 `GATEWAY_TLS_CERT`、`GATEWAY_TLS_KEY`。
-
-### `lint`
-
-当前是保留的空实现，不执行 Rust lint，不能作为验证入口。Rust 代码验证使用仓库根目录的 Cargo 命令；若将来实现该子命令，应同步更新本文和验证政策。
-
-## 常见工作流
-
-构建当前源码对应的服务镜像，再收敛容器状态：
+## 编排
 
 ```bash
-cargo run -p xtask -- build
 cargo run -p xtask -- compose
 ```
 
-生成本地证书：
+输入为 [`docker/compose/docker-compose.yml`](../../../docker/compose/docker-compose.yml)。运行前必须已具备指定镜像、迁移后的数据库卷和正确 schema；不自动拉镜像或运行 migration。
+
+- 项目 `.env` 仅为显式声明的变量供值。服务环境从自己的 `env_file` 开始，再应用 `environment`；仓库 Compose 使用逐键 `environment`，没有整份共享 env_file。null 优先读取进程环境，再读项目文件；缺失不注入、空字符串保留。不支持 `${…}` 插值。
+- `x-required-env` 检查必填非空变量。镜像、配置、归属、依赖和外部卷检查通过后才修改容器。不存在的 external volume 拒绝自动创建；`x-exclusive` 卷如果仍被其他运行容器占用则拒绝部署。
+- 只替换具有匹配项目/服务 label 的受管容器。在内存比较 image ID、实际环境、命令、healthcheck、挂载、端口、网络和 restart policy；不把密码或密码哈希写入 label。旧明文 signature label、旧额外环境变量会触发重建清除。
+- 端口支持 `host-port:container-port` 和 `IPv4:host-port:container-port`，保留 host IP；其他形式报错，不能默默绑定所有接口。卷名和挂载依据 Compose，不删除持久卷。
+- 支持列表依赖和详细 `service_started` / `service_healthy`。healthcheck 使用 CMD 数组，时间支持整数 s/ms。未知字段/条件拒绝解析。按依赖启动，并等待当前服务的健康状态；不把 running 当作 healthy。
+- 每次等待最多 90 秒，停止、重启循环、unhealthy 或超时均失败，且停止后续依赖服务的部署。可显式用 `--retries` 重试；最终保留具体失败原因。此命令不提供持续自愈或零停机更新。
+
+替换容器会停止旧进程。失败时保留 volume，不自动执行 migration down；回退须选定旧镜像且 schema 兼容。数据库升级和切换说明见 [Docker README](../../../docker/README.md)。
+
+## PostgreSQL 大版本迁移
+
+```bash
+cargo run -p xtask -- migrate-postgres --user postgres --backup-dir /absolute/private/path/pg18-backup
+```
+
+默认预览，不访问 Docker。执行须显式添加 `--execute --writers-stopped`，要求 Unix、Docker CLI，以及已存在的备份父目录。Rust 负责容器/新卷与私密文件编排，容器内 `pg_dumpall` / `psql` 负责 SQL 导出恢复；保留源库，不自动切换。停写、认证、验证和回退约束见 [迁移说明](../../../docker/postgres-migration.md)。
+
+## 证书
 
 ```bash
 cargo run -p xtask -- cert --out-dir docker/compose/certs
 ```
 
-Docker、Compose、证书挂载和域名解析的前置条件见 [`../../../docker/README.md`](../../../docker/README.md)。
+仅生成 CA/站点证书和私钥，不导入系统信任、不修改 hosts、不改 gateway 挂载。生成位置与实际证书挂载可能不同，应显式配置 `GATEWAY_TLS_CERT` / `GATEWAY_TLS_KEY`。
 
-## 修改与验证
-
-- 新增或调整任务时，同步更新受影响的 CLI 定义、`Task` 分派、实现和本文。
-- `compose` 只支持 [`src/compose_types.rs`](src/compose_types.rs) 建模的 Compose 字段；扩展 `docker-compose.yml` 前先确认解析与运行语义。
-- 包级验证入口为 `cargo test -p xtask` 和 `cargo clippy -p xtask`。实际 Docker 子命令用于受控测试无法证明的关键行为或用户要求的部署验收；按根 `AGENTS.md` 确定阶段，不能仅因 daemon 可用就构建或重建容器。
-- 不要用 `--no-verify` 或跳过失败检查；外部环境阻止验证时，明确记录未验证边界。
+`lint` 是保留的空入口，不能用于验证。修改 CLI、Compose 解析和行为时同步接口与文档；Rust 使用受影响的 `cargo test -p xtask` / `cargo clippy -p xtask`。Docker 配置稳定性回归需显式提供 `XTASK_DOCKER_TEST_IMAGE`（本地 PostgreSQL image ID），再运行 `cargo test -p xtask docker_configuration_stays_stable_without_secret_labels -- --ignored`；测试创建独立容器/网络，成功后清理。

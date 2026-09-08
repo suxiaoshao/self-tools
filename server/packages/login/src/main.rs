@@ -19,6 +19,17 @@ mod router;
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    match service_health::mode(false)? {
+        service_health::Mode::Help => {
+            service_health::help(false);
+            return Ok(());
+        }
+        service_health::Mode::CheckReady => {
+            return service_health::probe_http("127.0.0.1:8000").await;
+        }
+        service_health::Mode::Migrate => unreachable!(),
+        service_health::Mode::Serve => (),
+    }
     tracing_subscriber::registry()
         .with(fmt::layer().with_filter(LevelFilter::INFO))
         .init();

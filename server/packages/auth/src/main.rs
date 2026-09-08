@@ -15,6 +15,8 @@ use service::AuthImpl;
 use crate::middleware::LogLayer;
 
 mod application;
+const MIGRATIONS: diesel_migrations::EmbeddedMigrations =
+    diesel_migrations::embed_migrations!("migrations");
 mod middleware;
 mod passkey;
 mod repository;
@@ -23,6 +25,23 @@ mod session;
 
 #[volo::main]
 async fn main() -> anyhow::Result<()> {
+    match service_health::mode(true)? {
+        service_health::Mode::Help => {
+            service_health::help(true);
+            return Ok(());
+        }
+        service_health::Mode::CheckReady => {
+            anyhow::ensure!(
+                service_health::local_auth_ready().await,
+                "auth is not ready"
+            );
+            return Ok(());
+        }
+        service_health::Mode::Migrate => {
+            return service_health::database::migrate("AUTH_PG", MIGRATIONS);
+        }
+        service_health::Mode::Serve => (),
+    }
     tracing_subscriber::registry()
         .with(fmt::layer().with_filter(LevelFilter::INFO))
         .init();

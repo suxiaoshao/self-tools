@@ -80,6 +80,12 @@ impl Application {
             .map_err(|_| {
                 anyhow::anyhow!("authentication database unavailable; apply migrations first")
             })?;
+        service_health::database::check(
+            &mut *pool
+                .get()
+                .map_err(|_| anyhow::anyhow!("authentication database unavailable"))?,
+            crate::MIGRATIONS,
+        )?;
         let user = repo::initialize(
             &mut *pool
                 .get()
@@ -116,6 +122,10 @@ impl Application {
             passwords: Mutex::new(Budget::new(10)),
         }))
     }
+    pub async fn ready(&self) -> bool {
+        service_health::database::ready(self.pool.clone(), crate::MIGRATIONS).await
+    }
+
     pub async fn run<T: Send + 'static>(
         self: &Arc<Self>,
         f: impl FnOnce(&Self, &mut PgConnection) -> Result<T> + Send + 'static,

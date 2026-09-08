@@ -31,6 +31,21 @@ fn main() -> Result<()> {
         .init();
 
     let config = GatewayConfig::from_env();
+    match service_health::mode(false)
+        .map_err(|_| pingora::Error::new(pingora::ErrorType::InternalError))?
+    {
+        service_health::Mode::Serve => (),
+        service_health::Mode::Help => {
+            service_health::help(false);
+            return Ok(());
+        }
+        service_health::Mode::CheckReady => {
+            service_health::probe_gateway(&config.listen_http, &config.listen_https)
+                .map_err(|_| pingora::Error::new(pingora::ErrorType::ConnectError))?;
+            return Ok(());
+        }
+        service_health::Mode::Migrate => unreachable!(),
+    }
     let routes = build_routes(&config);
 
     let mut server = Server::new(None)?;

@@ -6,7 +6,7 @@ use tracing::{Level, event, metadata::LevelFilter};
 use tracing_subscriber::{
     Layer, fmt, prelude::__tracing_subscriber_SubscriberExt, util::SubscriberInitExt,
 };
-use xtask::{BuildOptions, Task, run};
+use xtask::{BuildOptions, MigrationOptions, Task, run};
 
 #[derive(Debug, Parser)]
 #[command(name = "xtask")]
@@ -17,7 +17,11 @@ struct Cli {
 
 #[derive(Debug, Subcommand)]
 enum Commands {
+    /// Stage a PostgreSQL 16 -> 18 logical migration into a new isolated volume.
+    MigratePostgres(MigrationOptions),
     Build {
+        #[arg(long, default_value = "latest")]
+        tag: String,
         #[arg(long = "http-proxy", value_name = "URL")]
         http_proxy: Option<String>,
         #[arg(long = "https-proxy", value_name = "URL")]
@@ -47,12 +51,15 @@ fn main() {
 
     let cli = Cli::parse();
     let task = match cli.command {
+        Commands::MigratePostgres(options) => Task::MigratePostgres(options),
         Commands::Build {
+            tag,
             http_proxy,
             https_proxy,
             no_proxy,
             debian_mirror_url,
         } => Task::Build(BuildOptions {
+            tag,
             http_proxy,
             https_proxy,
             no_proxy,
@@ -66,12 +73,12 @@ fn main() {
         },
     };
 
-    event!(Level::INFO, ?task, "xtask start");
+    event!(Level::INFO, "xtask start");
 
     if let Err(err) = run(task.clone()) {
         event!(Level::ERROR, error = %err, "xtask failed");
         process::exit(1);
     }
 
-    event!(Level::INFO, ?task, "xtask done");
+    event!(Level::INFO, "xtask done");
 }

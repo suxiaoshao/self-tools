@@ -18,6 +18,9 @@ pub(crate) fn get_pool() -> GraphqlResult<PgPool> {
     let database_url = env::var("COLLECTIONS_PG")?;
     let manager = ConnectionManager::<PgConnection>::new(database_url);
 
-    let pool = Pool::builder().test_on_check_out(true).build(manager)?;
+    let pool = Pool::builder()
+        .connection_timeout(std::time::Duration::from_secs(5))
+        .test_on_check_out(true)
+        .build(manager)?;
     Ok(pool)
 }

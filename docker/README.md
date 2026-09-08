@@ -14,11 +14,11 @@
 | 服务          | 镜像/职责                                  | 依赖与持久化                                                 |
 | ------------- | ------------------------------------------ | ------------------------------------------------------------ |
 | `web`         | `suxiaoshao/gateway`，暴露 HTTP/HTTPS 入口 | 依赖 `login`、`bookmarks`、`collections`，挂载宿主机证书目录 |
-| `postgres`    | PostgreSQL                                 | 使用命名 volume `postgres`                                   |
-| `auth`        | Thrift 认证服务                            | 依赖 `postgres`，读取 `.env`                                 |
+| `postgres`    | PostgreSQL                                 | 使用外部 volume `postgres18-data`                            |
+| `auth`        | Thrift 认证服务                            | 依赖 `postgres`，仅注入所需配置                              |
 | `login`       | HTTP 登录服务                              | 依赖 `auth`                                                  |
-| `bookmarks`   | GraphQL 服务                               | 依赖 `auth`、`postgres`，读取 `.env`                         |
-| `collections` | GraphQL 服务                               | 依赖 `auth`、`postgres`，读取 `.env`                         |
+| `bookmarks`   | GraphQL 服务                               | 依赖 `auth`、`postgres`，仅注入所需配置                      |
+| `collections` | GraphQL 服务                               | 依赖 `auth`、`postgres`，仅注入所需配置                      |
 
 协议、监听端口、服务发现和数据库变量由 [`../server/README.md`](../server/README.md) 说明；gateway 的 host/path 路由由 [`../server/packages/gateway/README.md`](../server/packages/gateway/README.md) 说明。
 
@@ -26,30 +26,40 @@ auth 运行镜像安装 `libpq5`、`libssl3t64` 与 `ca-certificates`，供 Post
 
 bookmarks 运行镜像安装 `libpq5` 与 `ca-certificates`：前者提供 PostgreSQL 客户端库，后者提供图片 HTTPS client 所需的系统信任根；缺少 CA 证书会使 client 初始化失败并阻止服务启动。
 
-## 配置与本地状态
+## 配置与数据库
 
-- `compose/.env` 是本机配置且被 Git 忽略。直接使用 Docker Compose CLI 时，YAML 中的 `env_file` 和 `environment` 决定服务级注入；当前 `xtask compose` 则会把该文件的全部值注入每个受管理容器。不要提交凭据或在文档中保存真实值，并在修正 `xtask` 行为前按更宽的暴露范围评估敏感信息。
-- login 通过 `environment` 的 null 单键声明透传 `AUTH_ORIGIN`，不加载整份共享环境文件。auth/bookmarks/collections 沿用 `env_file`，四个服务须使用相同 Origin；未设置时默认 `https://sushao.top`。认证 API 不使用 CORS 配置。
-- auth 使用新建的独立数据库 `AUTH_PG`。先按 [后端说明](../server/README.md#管理员会话与通行密钥) 显式应用 auth migration，再协调启动五个服务和前端；不修改两个业务数据库及既有 volume。旧 JWT 和内存 Passkey 失效，升级后重新登录和注册。
-- Compose 当前把宿主机 `/private/etc/letsencrypt` 挂载到容器 `/etc/letsencrypt`；gateway 默认从该容器目录下读取证书。
-- `xtask cert` 默认写入 `compose/certs`，该目录也被 Git 忽略，但不会被当前 Compose 自动挂载。使用生成证书时需要同步调整 volume 和 gateway 证书路径配置。
-- `postgres` 数据保存在命名 volume 中。修改 volume 名称、挂载点或数据库初始化策略前，必须明确已有数据的迁移与回滚方式。
-- gateway 的 main upstream 默认通过 `host.docker.internal:3000` 访问 portal；collections fallback 指向 `host.docker.internal:3001`，但当前 workspace 没有提供对应的开发脚本或 Vite 入口，属于必须由外部环境提供或显式覆盖的遗留前置条件。本地 DNS、域名和端口仍需由运行环境提供。
+复制 [示例配置](compose/.env.example) 到 `compose/.env` 后填写自己的值。文件只作为配置来源，各容器由 YAML 的 `environment` 逐键选择；gateway/login 不接收数据库或管理员密码。Compose 的变量和 xtask 的 `x-required-env` 声明是服务需求的事实源。不要在 build args、label 或 Git 中保存凭据。
 
-## 运行方式
+PostgreSQL 固定为 18.6-bookworm 及对应镜像 digest，使用外部卷 `postgres18-data` 挂载到 `/var/lib/postgresql`，PGDATA 为 `/var/lib/postgresql/18/docker`。宿主端口仅绑定 `127.0.0.1:5432`；容器内使用 `postgres:5432`。升级旧 16 实例须使用 [迁移命令](postgres-migration.md) 先恢复到新卷，不能将 18 镜像用于旧数据目录。原 `postgres` 卷保留，不自动改名或删除。
 
-优先使用 [`xtask`](../server/common/xtask/README.md) 作为仓库工作流入口：
+TLS 证书目录只读挂载到 gateway。`xtask cert` 输出不自动接入该挂载。main upstream 默认是宿主 `3000` 的 portal，collections fallback 的 `3001` 是需要另行提供或覆盖的外部前置条件；服务健康不代表前端已经启动。
+
+## 构建、迁移与部署
+
+`cargo run -p xtask -- build --tag <release>` 使用共享 `docker/docker-bake.hcl`、Buildx 和根 `.dockerignore` 构建，Rust builder 从仓库源码一并构建。CI 同时发布 latest 与提交 SHA 标签；部署回退应记录并使用明确的 image ID/digest 或提交标签，不依赖 latest 指向旧版本。Compose 的 image 字段是运行版本事实源。
+
+部署前准备专用数据库/角色及连接配置。三个服务镜像都支持显式迁移，以下命令需要正确镜像、数据库容器和 Compose 网络已存在：
 
 ```bash
-cargo run -p xtask -- build
+docker compose -f docker/compose/docker-compose.yml run --rm --no-deps auth /auth --migrate
+docker compose -f docker/compose/docker-compose.yml run --rm --no-deps bookmarks /bookmarks --migrate
+docker compose -f docker/compose/docker-compose.yml run --rm --no-deps collections /collections --migrate
 cargo run -p xtask -- compose
 ```
 
-`build` 生成镜像，`compose` 读取现有镜像并收敛 network、volume 和容器；两者不是等价命令。直接执行 `docker compose` 只适合明确需要 Compose CLI 原生行为的任务，并应以 [`compose/docker-compose.yml`](compose/docker-compose.yml) 为配置入口。
+迁移嵌入运行镜像，源码在服务各自的 `migrations/`；普通启动只检查 schema，不自动改表。首次环境可先用 Compose 启动 postgres，再显式迁移。执行编排前先停止迁移命令创建的 staging PostgreSQL，避免同时打开同一数据卷。
+
+`xtask compose` 预检所有配置和镜像，检查外部数据卷，再按 postgres → auth → API/login → gateway 等待就绪。healthcheck 失败或超时返回非零，阻止继续部署依赖它的服务；不自动删除 volume 或回退 schema。健康接口与 CLI 的检查范围见 [后端说明](../server/README.md#部署入口与就绪检查)。直接使用 Docker Compose CLI 时，同样依赖 YAML 的 healthcheck / depends_on；xtask 的扩展预检不由 Docker Compose CLI 执行。
+
+更新会短暂停止受影响容器。回退先停写并核对 schema 兼容，再恢复旧镜像；新数据库接收写入后不能直接切回旧卷。需要恢复备份时先保留故障现场，按 [迁移说明](postgres-migration.md) 处理。
 
 ## 修改与验证
 
-- 服务镜像变化时，同步检查对应 Dockerfile、`xtask build` 的镜像清单、Compose image 和 CI 发布工作流。
+- 服务镜像变化时，同步检查对应 Dockerfile、`docker-bake.hcl` 的镜像清单、Compose image 和 CI 发布工作流。
 - 服务依赖、env、port 或 volume 变化时，同步检查 Compose、`xtask` 的解析能力、gateway/服务配置及文档。
 - TLS 或域名变化时，同步检查 gateway 路由、证书路径、挂载和本地信任；生成证书不等于完成系统信任配置。
 - 是否实际构建或编排取决于本轮验证与交付范围，遵循根 `AGENTS.md`；需要执行时先确认 Docker daemon 等前置条件。必要的外部验证无法运行时，说明具体未验证范围，不为可选场景持续排障。
+
+## PostgreSQL 大版本迁移辅助
+
+[迁移命令说明](postgres-migration.md) 提供 16 → 18 的独立备份/恢复入口，默认预览；不会自动修改当前 Compose 或切换运行数据库。

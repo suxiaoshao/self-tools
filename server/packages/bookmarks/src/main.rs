@@ -6,6 +6,8 @@
  * @FilePath: /self-tools/server/packages/bookmarks/src/main.rs
  */
 mod errors;
+const MIGRATIONS: diesel_migrations::EmbeddedMigrations =
+    diesel_migrations::embed_migrations!("migrations");
 mod graphql;
 mod model;
 mod router;
@@ -24,6 +26,19 @@ use crate::router::get_router;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    match service_health::mode(true)? {
+        service_health::Mode::Help => {
+            service_health::help(true);
+            return Ok(());
+        }
+        service_health::Mode::CheckReady => {
+            return service_health::probe_http("127.0.0.1:8080").await;
+        }
+        service_health::Mode::Migrate => {
+            return service_health::database::migrate("BOOKMARKS_PG", MIGRATIONS);
+        }
+        service_health::Mode::Serve => (),
+    }
     tracing_subscriber::registry()
         .with(fmt::layer().with_filter(LevelFilter::INFO))
         .init();

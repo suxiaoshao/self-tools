@@ -99,6 +99,10 @@ Compose volume 的容器内路径一致。
 收敛 network、volume 和 container，但不构建镜像。修改 gateway 的镜像、端口、证书
 挂载或依赖时，应同时检查 Dockerfile、Compose、xtask 拓扑解析和本 README。
 
+## 就绪检查
+
+`/gateway --check-ready` 请求本地 HTTP `/health/ready`，确认 login/bookmarks/collections 的内部就绪接口通过，再检查 TLS 监听端口可连接。该路径只允许 loopback 请求，外部请求返回 404，不透传给业务服务。探针不携带认证 Cookie，不改变会话，不依赖宿主前端或外部小说站点；它不替代证书有效期和完整 TLS 交互验证。
+
 ## 修改与验证
 
 - route/config/proxy 变化：使用 `cargo test -p gateway` 与 `cargo clippy -p gateway`

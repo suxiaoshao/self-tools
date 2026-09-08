@@ -4,6 +4,10 @@ on:
     branches:
       - main
     paths:
+      - .dockerignore
+      - docker/docker-bake.hcl
+      - docker/server/rust/**
+      - server/common/service-health/**
       - docker/server/login.Dockerfile
       - server/packages/login/**
       - server/common/thrift/**
@@ -30,9 +34,13 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Build and push
         id: docker_build
-        uses: docker/build-push-action@v6
+        uses: docker/bake-action@v7
+        env:
+          TAG: ${{ github.sha }}
         with:
+          source: .
+          files: docker/docker-bake.hcl
+          targets: login
           push: true
-          tags: suxiaoshao/login:latest
-          file: ./docker/server/login.Dockerfile
-          context: .
+          set: |
+            login.tags=suxiaoshao/login:latest,suxiaoshao/login:${{ github.sha }}

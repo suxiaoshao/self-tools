@@ -1,0 +1,19 @@
+[package]
+name = "service-health"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+tokio = { workspace = true, features = ["rt", "time", "net", "io-util"] }
+diesel = { workspace = true, features = ["postgres", "r2d2"], optional = true }
+diesel_migrations = { workspace = true, optional = true }
+thrift = { workspace = true, optional = true }
+
+[features]
+database = ["dep:diesel", "dep:diesel_migrations"]
+auth = ["dep:thrift"]
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt"] }
+serde_yaml = "0.9.34"

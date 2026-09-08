@@ -4,6 +4,8 @@ version.workspace = true
 edition.workspace = true
 
 [dependencies]
+service-health.workspace = true
+tokio = { workspace = true, features = ["rt", "time", "macros"] }
 async-trait = "0.1.89"
 http.workspace = true
 rand.workspace = true

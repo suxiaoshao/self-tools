@@ -6,11 +6,10 @@ use nom::{
     bytes::complete::{tag, take_till, take_till1},
     character::complete::{char, one_of, satisfy},
     combinator::{all_consuming, opt, recognize, rest},
-    multi::separated_list1,
     sequence::{pair, preceded},
 };
 
-use crate::compose_types::ComposeFile;
+use crate::{compose_types::ComposeFile, error::XtaskError};
 
 pub(super) fn resolve_volume_bind(volume: &str, compose: &ComposeFile) -> String {
     let Some((source, target, options)) = split_volume_spec(volume) else {
@@ -84,23 +83,32 @@ fn bind_mount_source_parser(input: &str) -> IResult<&str, &str> {
     .parse(input)
 }
 
-pub(super) fn parse_port_binding(input: &str) -> (String, String) {
-    let Ok((_, parts)) = all_consuming(parse_port_segments).parse(input) else {
-        return ("".to_string(), "".to_string());
-    };
-
-    if parts.len() == 1 {
-        let value = parts[0].to_string();
-        return (value.clone(), value);
-    }
-
-    let host = parts[parts.len() - 2].to_string();
-    let container = parts[parts.len() - 1].to_string();
-    (host, container)
+#[derive(Debug, PartialEq, Eq)]
+pub(super) struct PublishedPort {
+    pub host_ip: String,
+    pub host_port: String,
+    pub container_port: String,
 }
 
-fn parse_port_segments(input: &str) -> IResult<&str, Vec<&str>> {
-    separated_list1(char(':'), take_till1(|c| c == ':')).parse(input)
+pub(super) fn parse_port_binding(input: &str) -> Result<PublishedPort, XtaskError> {
+    let parts: Vec<_> = input.split(':').collect();
+    let (host_ip, host, container) = match parts.as_slice() {
+        [host, container] => ("0.0.0.0", *host, *container),
+        [ip, host, container] if ip.parse::<std::net::Ipv4Addr>().is_ok() => {
+            (*ip, *host, *container)
+        }
+        _ => return Err(XtaskError::InvalidPort),
+    };
+    for value in [host, container] {
+        if value.parse::<u16>().ok().filter(|v| *v > 0).is_none() {
+            return Err(XtaskError::InvalidPort);
+        }
+    }
+    Ok(PublishedPort {
+        host_ip: host_ip.into(),
+        host_port: host.into(),
+        container_port: container.into(),
+    })
 }
 
 pub(super) fn parse_restart_policy(value: &str) -> RestartPolicyNameEnum {
@@ -145,6 +153,7 @@ mod tests {
     #[test]
     fn resolve_volume_bind_preserves_windows_bind_mount() {
         let compose = ComposeFile {
+            _version: None,
             services: HashMap::new(),
             volumes: HashMap::new(),
         };
@@ -165,9 +174,12 @@ mod tests {
             "postgres".to_string(),
             ComposeVolume {
                 name: Some("postgres_data".to_string()),
+                external: false,
+                exclusive: false,
             },
         );
         let compose = ComposeFile {
+            _version: None,
             services: HashMap::new(),
             volumes,
         };
@@ -176,18 +188,23 @@ mod tests {
     }
 
     #[test]
-    fn parse_port_binding_supports_single_and_pair_and_triplet() {
-        assert_eq!(
-            parse_port_binding("80"),
-            ("80".to_string(), "80".to_string())
-        );
-        assert_eq!(
-            parse_port_binding("8080:80"),
-            ("8080".to_string(), "80".to_string())
-        );
-        assert_eq!(
-            parse_port_binding("127.0.0.1:8080:80"),
-            ("8080".to_string(), "80".to_string())
-        );
+    fn published_port_keeps_host_ip_and_rejects_unsupported_forms() {
+        let port = parse_port_binding("127.0.0.1:5432:5432").unwrap();
+        assert_eq!(port.host_ip, "127.0.0.1");
+        assert_eq!(port.host_port, "5432");
+        assert_eq!(port.container_port, "5432");
+        assert_eq!(parse_port_binding("8080:80").unwrap().host_ip, "0.0.0.0");
+        for input in [
+            "80",
+            "",
+            "bad:80:80",
+            "0:80",
+            "99999:80",
+            "127.0.0.1::80",
+            "[::1]:5432:5432",
+            "53:53/udp",
+        ] {
+            assert!(parse_port_binding(input).is_err());
+        }
     }
 }

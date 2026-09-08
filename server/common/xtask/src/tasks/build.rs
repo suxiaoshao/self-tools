@@ -1,8 +1,3 @@
-use bollard::{
-    Docker, body_full,
-    query_parameters::{BuildImageOptionsBuilder, BuilderVersion},
-};
-use futures_util::TryStreamExt;
 use nom::{
     Parser,
     bytes::complete::take_till1,
@@ -10,52 +5,39 @@ use nom::{
     combinator::{all_consuming, rest},
     sequence::separated_pair,
 };
-use std::collections::HashMap;
+use std::{collections::HashMap, process::Command};
 use tracing::{Level, event};
 use url::Url;
 
-use crate::{
-    BuildOptions, TaskResult,
-    context::{build_context_tar, workspace_root},
-};
+use crate::{BuildOptions, TaskResult, context::workspace_root, error::XtaskError};
 
-pub async fn run(options: BuildOptions) -> TaskResult {
+pub fn run(options: BuildOptions) -> TaskResult {
     let root = workspace_root();
-    let docker = Docker::connect_with_local_defaults()?;
-    let context = build_context_tar(&root)?;
+    // Buildx owns .dockerignore processing before anything is sent to Docker.
+    // Do not reconstruct or upload a tar of the unfiltered workspace.
 
-    let builds = [
-        (
-            "./docker/server/collections.Dockerfile",
-            "suxiaoshao/collections",
-        ),
-        ("./docker/server/auth.Dockerfile", "suxiaoshao/auth"),
-        ("./docker/server/login.Dockerfile", "suxiaoshao/login"),
-        (
-            "./docker/server/bookmarks.Dockerfile",
-            "suxiaoshao/bookmarks",
-        ),
-        ("./docker/server/gateway.Dockerfile", "suxiaoshao/gateway"),
-    ];
     let build_args = collect_build_args(&options);
+    if build_args.values().any(|value| value.contains('@')) {
+        return Err(XtaskError::CredentialBuildArgument);
+    }
 
-    for (index, (dockerfile, image)) in builds.into_iter().enumerate() {
-        event!(Level::INFO, dockerfile, image, "building image");
-
-        let session = format!("xtask-build-{index}");
-        let options = BuildImageOptionsBuilder::new()
-            .dockerfile(dockerfile.trim_start_matches("./"))
-            .t(image)
-            .rm(true)
-            .buildargs(&build_args)
-            .version(BuilderVersion::BuilderBuildKit)
-            .session(&session)
-            .build();
-
-        docker
-            .build_image(options, None, Some(body_full(context.clone().into())))
-            .try_collect::<Vec<_>>()
-            .await?;
+    event!(Level::INFO, tag = options.tag, "building service images");
+    let mut command = Command::new("docker");
+    command.current_dir(&root).env("TAG", &options.tag).args([
+        "buildx",
+        "bake",
+        "--file",
+        "docker/docker-bake.hcl",
+        "--load",
+    ]);
+    // Keep the host CLI proxy separate from the rewritten container proxy.
+    for (key, value) in &build_args {
+        command.arg("--set").arg(format!("*.args.{key}={value}"));
+    }
+    if !command.status()?.success() {
+        return Err(XtaskError::BuildFailed {
+            image: "service images".into(),
+        });
     }
 
     Ok(())
@@ -183,6 +165,7 @@ mod tests {
             https_proxy: Some("http://127.0.0.1:7890".to_string()),
             no_proxy: Some("localhost,127.0.0.1".to_string()),
             debian_mirror_url: Some("http://mirrors.tuna.tsinghua.edu.cn".to_string()),
+            tag: "test".into(),
         };
 
         let args = collect_build_args(&options);
