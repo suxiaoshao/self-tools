@@ -1,0 +1,19 @@
+{
+  "name": "collection-tree",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "^5.4.0",
+    "hooks": "workspace:*",
+    "i18n": "workspace:*",
+    "lucide-react": "^1.24.0",
+    "react": "^19.2.7",
+    "react-hook-form": "^7.81.0",
+    "ui": "workspace:*",
+    "valibot": "1.4.2"
+  }
+}

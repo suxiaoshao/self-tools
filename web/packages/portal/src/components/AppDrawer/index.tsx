@@ -9,10 +9,11 @@
 import { Home } from 'lucide-react';
 import { Outlet } from 'react-router';
 import RouterItems from './RouterItem';
-import { I18nDrawerItem, useI18n } from 'i18n';
-import DrawerMenu from '../../features/Menu';
-import { AuthDrawerItem } from '../../features/Auth';
-import { ThemeDrawerItem } from '../../features/Theme';
+import { useI18n } from 'i18n';
+import { I18nDrawerItem } from '../../features/language';
+import DrawerMenu from '../../features/menu/index';
+import { AuthDrawerItem } from '../../features/auth/index';
+import { ThemeDrawerItem } from '../../features/theme';
 import {
   Sidebar,
   SidebarContent,
@@ -21,8 +22,8 @@ import {
   SidebarGroupLabel,
   SidebarMenu,
   SidebarProvider,
-} from '../ui/sidebar';
-import { Toaster } from '../ui/sonner';
+} from 'ui/components/sidebar';
+import { Toaster } from 'ui/components/sonner';
 
 export default function AppDrawer() {
   const t = useI18n();

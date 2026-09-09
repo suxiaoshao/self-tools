@@ -12,6 +12,8 @@
   },
   "dependencies": {
     "i18next": "^26.3.6",
-    "react-i18next": "^17.0.9"
+    "react": "^19.2.7",
+    "react-i18next": "^17.0.9",
+    "zustand": "5.0.14"
   }
 }

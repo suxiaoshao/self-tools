@@ -59,19 +59,6 @@ export type DeleteCollectionMutation = {
       };
 };
 
-export type DeleteItemMutationVariables = Exact<{
-  id: number;
-}>;
-
-export type DeleteItemMutation = {
-  deleteItem:
-    | { __typename: 'ResourceDeleted'; resource: { kind: ResourceKind; id: number } }
-    | {
-        __typename: 'ValidationFailure';
-        issues: Array<{ path: Array<string>; code: ValidationCode; min: number | null; max: number | null }>;
-      };
-};
-
 export type UpdateCollectionMutationVariables = Exact<{
   id: number;
   name: string;
@@ -87,14 +74,6 @@ export type UpdateCollectionMutation = {
         __typename: 'ValidationFailure';
         issues: Array<{ path: Array<string>; code: ValidationCode; min: number | null; max: number | null }>;
       };
-};
-
-export type GetCollectionAncestorsQueryVariables = Exact<{
-  id: number;
-}>;
-
-export type GetCollectionAncestorsQuery = {
-  getCollection: { id: number; name: string; ancestors: Array<{ id: number; name: string }> | null } | null;
 };
 
 export type CreateCollectionMutationVariables = Exact<{
@@ -114,6 +93,14 @@ export type CreateCollectionMutation = {
       };
 };
 
+export type ReadCollectionStateQueryVariables = Exact<{
+  id: number;
+}>;
+
+export type ReadCollectionStateQuery = {
+  getCollection: { id: number; name: string; description: string | null } | null;
+};
+
 export type CreateItemMutationVariables = Exact<{
   collectionIds: Array<number> | number;
   name: string;
@@ -128,28 +115,6 @@ export type CreateItemMutation = {
         __typename: 'ValidationFailure';
         issues: Array<{ path: Array<string>; code: ValidationCode; min: number | null; max: number | null }>;
       };
-};
-
-export type CollectionAndItemsQueryVariables = Exact<{
-  query: CollectionItemQuery;
-}>;
-
-export type CollectionAndItemsQuery = {
-  collectionAndItem: {
-    total: number;
-    data: Array<
-      | {
-          __typename: 'Collection';
-          name: string;
-          id: number;
-          path: string;
-          createTime: string;
-          updateTime: string;
-          description: string | null;
-        }
-      | { __typename: 'Item'; name: string; id: number; updateTime: string; createTime: string }
-    >;
-  };
 };
 
 export type GetEditItemQueryVariables = Exact<{
@@ -238,6 +203,19 @@ export type GetItemsQuery = {
   queryItems: { total: number; data: Array<{ id: number; name: string; createTime: string; updateTime: string }> };
 };
 
+export type DeleteItemMutationVariables = Exact<{
+  id: number;
+}>;
+
+export type DeleteItemMutation = {
+  deleteItem:
+    | { __typename: 'ResourceDeleted'; resource: { kind: ResourceKind; id: number } }
+    | {
+        __typename: 'ValidationFailure';
+        issues: Array<{ path: Array<string>; code: ValidationCode; min: number | null; max: number | null }>;
+      };
+};
+
 export type ReadItemStateQueryVariables = Exact<{
   id: number;
 }>;
@@ -246,12 +224,34 @@ export type ReadItemStateQuery = {
   getItem: { id: number; name: string; content: string; collections: Array<{ id: number }> | null } | null;
 };
 
-export type ReadCollectionStateQueryVariables = Exact<{
+export type GetCollectionAncestorsQueryVariables = Exact<{
   id: number;
 }>;
 
-export type ReadCollectionStateQuery = {
-  getCollection: { id: number; name: string; description: string | null } | null;
+export type GetCollectionAncestorsQuery = {
+  getCollection: { id: number; name: string; ancestors: Array<{ id: number; name: string }> | null } | null;
+};
+
+export type CollectionAndItemsQueryVariables = Exact<{
+  query: CollectionItemQuery;
+}>;
+
+export type CollectionAndItemsQuery = {
+  collectionAndItem: {
+    total: number;
+    data: Array<
+      | {
+          __typename: 'Collection';
+          name: string;
+          id: number;
+          path: string;
+          createTime: string;
+          updateTime: string;
+          description: string | null;
+        }
+      | { __typename: 'Item'; name: string; id: number; updateTime: string; createTime: string }
+    >;
+  };
 };
 
 export const AllCollectionsDocument = {
@@ -366,87 +366,6 @@ export const DeleteCollectionDocument = {
     },
   ],
 } as unknown as DocumentNode<DeleteCollectionMutation, DeleteCollectionMutationVariables>;
-export const DeleteItemDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'mutation',
-      name: { kind: 'Name', value: 'deleteItem' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
-          type: { kind: 'NonNullType', type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } } },
-        },
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'deleteItem' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'id' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
-              },
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
-                {
-                  kind: 'InlineFragment',
-                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'ResourceDeleted' } },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'resource' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                          ],
-                        },
-                      },
-                    ],
-                  },
-                },
-                {
-                  kind: 'InlineFragment',
-                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'ValidationFailure' } },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'issues' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'path' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'code' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'min' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'max' } },
-                          ],
-                        },
-                      },
-                    ],
-                  },
-                },
-              ],
-            },
-          },
-        ],
-      },
-    },
-  ],
-} as unknown as DocumentNode<DeleteItemMutation, DeleteItemMutationVariables>;
 export const UpdateCollectionDocument = {
   kind: 'Document',
   definitions: [
@@ -577,57 +496,6 @@ export const UpdateCollectionDocument = {
     },
   ],
 } as unknown as DocumentNode<UpdateCollectionMutation, UpdateCollectionMutationVariables>;
-export const GetCollectionAncestorsDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'getCollectionAncestors' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
-          type: { kind: 'NonNullType', type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } } },
-        },
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'getCollection' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'id' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
-              },
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'ancestors' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                    ],
-                  },
-                },
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-              ],
-            },
-          },
-        ],
-      },
-    },
-  ],
-} as unknown as DocumentNode<GetCollectionAncestorsQuery, GetCollectionAncestorsQueryVariables>;
 export const CreateCollectionDocument = {
   kind: 'Document',
   definitions: [
@@ -758,6 +626,47 @@ export const CreateCollectionDocument = {
     },
   ],
 } as unknown as DocumentNode<CreateCollectionMutation, CreateCollectionMutationVariables>;
+export const ReadCollectionStateDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'ReadCollectionState' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+          type: { kind: 'NonNullType', type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'getCollection' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'id' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ReadCollectionStateQuery, ReadCollectionStateQueryVariables>;
 export const CreateItemDocument = {
   kind: 'Document',
   definitions: [
@@ -873,87 +782,6 @@ export const CreateItemDocument = {
     },
   ],
 } as unknown as DocumentNode<CreateItemMutation, CreateItemMutationVariables>;
-export const CollectionAndItemsDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'collectionAndItems' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'query' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'CollectionItemQuery' } },
-          },
-        },
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'collectionAndItem' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'query' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'query' } },
-              },
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'data' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'InlineFragment',
-                        typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Collection' } },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'path' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'createTime' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'updateTime' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'description' } },
-                            { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
-                          ],
-                        },
-                      },
-                      {
-                        kind: 'InlineFragment',
-                        typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Item' } },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'updateTime' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'createTime' } },
-                            { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
-                          ],
-                        },
-                      },
-                    ],
-                  },
-                },
-                { kind: 'Field', name: { kind: 'Name', value: 'total' } },
-              ],
-            },
-          },
-        ],
-      },
-    },
-  ],
-} as unknown as DocumentNode<CollectionAndItemsQuery, CollectionAndItemsQueryVariables>;
 export const GetEditItemDocument = {
   kind: 'Document',
   definitions: [
@@ -1449,6 +1277,87 @@ export const GetItemsDocument = {
     },
   ],
 } as unknown as DocumentNode<GetItemsQuery, GetItemsQueryVariables>;
+export const DeleteItemDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'deleteItem' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+          type: { kind: 'NonNullType', type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'deleteItem' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'id' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'ResourceDeleted' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'resource' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'ValidationFailure' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'issues' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'path' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'min' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'max' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<DeleteItemMutation, DeleteItemMutationVariables>;
 export const ReadItemStateDocument = {
   kind: 'Document',
   definitions: [
@@ -1498,13 +1407,13 @@ export const ReadItemStateDocument = {
     },
   ],
 } as unknown as DocumentNode<ReadItemStateQuery, ReadItemStateQueryVariables>;
-export const ReadCollectionStateDocument = {
+export const GetCollectionAncestorsDocument = {
   kind: 'Document',
   definitions: [
     {
       kind: 'OperationDefinition',
       operation: 'query',
-      name: { kind: 'Name', value: 'ReadCollectionState' },
+      name: { kind: 'Name', value: 'getCollectionAncestors' },
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
@@ -1528,9 +1437,19 @@ export const ReadCollectionStateDocument = {
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'ancestors' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                    ],
+                  },
+                },
                 { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'description' } },
               ],
             },
           },
@@ -1538,4 +1457,85 @@ export const ReadCollectionStateDocument = {
       },
     },
   ],
-} as unknown as DocumentNode<ReadCollectionStateQuery, ReadCollectionStateQueryVariables>;
+} as unknown as DocumentNode<GetCollectionAncestorsQuery, GetCollectionAncestorsQueryVariables>;
+export const CollectionAndItemsDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'collectionAndItems' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'query' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'CollectionItemQuery' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'collectionAndItem' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'query' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'query' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'data' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Collection' } },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'path' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'createTime' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'updateTime' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+                            { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Item' } },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'updateTime' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'createTime' } },
+                            { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'total' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<CollectionAndItemsQuery, CollectionAndItemsQueryVariables>;

@@ -20,7 +20,7 @@
 | 两服务 `application/repository/{author,tag,collection,item}.rs` 中实际分页入口                                                                                                                | 按唯一 id 排序；混合列表保持集合优先，两类分别稳定排序。                  |
 | [bookmarks objects](../../../server/packages/bookmarks/src/graphql/objects.rs)、[collections output](../../../server/packages/collections/src/graphql/types/output.rs)                        | 关联字段通过请求级 loader 调用 application 批量读取。                     |
 | 两服务 `src/graphql.rs` 与 `graphql-common::cost`                                                                                                                                             | resolver 执行前校验深度、复杂度、字段出现数和根字段数。                   |
-| [Item 列表](../../../web/packages/collections/src/features/Item/List/index.tsx)                                                                                                               | 列表不再选择正文；编辑入口继续通过独立 getEditItem 读取。                 |
+| [Item 列表](../../../web/packages/collections/src/features/item/list/index.tsx)                                                                                                               | 列表不再选择正文；编辑入口继续通过独立 getEditItem 读取。                 |
 | bookmarks Novel 列表/详情、Author 列表                                                                                                                                                        | 已删除重复 description 和未消费的 url；重复字段精简不计为响应字节优化。   |
 
 只读扫描两个前端包中 52 个手写 operation（排除生成物及测试）得到最大字段深度 4、最大字段出现数 42。以所有列表统一乘 100 的保守静态估算，fetchAuthor 约 100,909、getNovel 约 1,527；这是阈值设计依据，不是 async-graphql 实测成本或性能基准。实施时用真实 schema validation 固化兼容回归。

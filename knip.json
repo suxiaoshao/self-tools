@@ -3,9 +3,12 @@
   "ignoreDependencies": ["ts-node"],
   "ignoreIssues": {
     "**/src/gql/**": ["exports", "types"],
-    "**/src/components/ui/**": ["exports", "types"],
-    "web/packages/bookmarks/codegen.ts": ["unlisted"],
-    "web/packages/collections/codegen.ts": ["unlisted"]
+    "web/common/ui/src/components/**": ["exports", "types"]
   },
-  "ignoreFiles": ["changelog.config.js"]
+  "ignoreFiles": ["changelog.config.js"],
+  "workspaces": {
+    ".": {
+      "entry": ["graphql.config.ts"]
+    }
+  }
 }

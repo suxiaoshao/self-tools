@@ -8,15 +8,15 @@
 import App from './App';
 import type { Menu, MicroConfig } from 'types';
 import type { ReactNode } from 'react';
-import NovelList from './features/Novel/List';
-import Tags from './features/Tags';
-import AuthorList from './features/Author/List';
-import Collections from './features/Collections';
+import { NovelList } from './features/novel';
+import Tags from './features/tags/index';
+import { AuthorList } from './features/author';
+import Collections from './features/collection/index';
 import { Route } from 'react-router';
-import NovelDetails from './features/Novel/Details';
-import AuthorDetails from './features/Author/Details';
-import NovelFetch from './features/Novel/Fetch';
-import AuthorFetch from './features/Author/Fetch';
+import { NovelDetails } from './features/novel';
+import { AuthorDetails } from './features/author';
+import { NovelFetch } from './features/novel';
+import { AuthorFetch } from './features/author';
 
 export default class BookmarkConfig implements MicroConfig {
   getName() {

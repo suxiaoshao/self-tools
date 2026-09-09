@@ -1,0 +1,279 @@
+import { RequestNotice, hasQueryFailure } from 'custom-graphql';
+import useBookmarkWrite from '@bookmarks/useBookmarkWrite';
+import { useMutation, useQuery } from '@apollo/client/react';
+import { graphql } from '@bookmarks/gql/index';
+import { useTitle } from 'hooks';
+import { getImageUrl } from '@bookmarks/utils/image';
+import { getLabelKeyByNovelStatus } from '@bookmarks/utils/novelStatus';
+import { Avatar, AvatarFallback, AvatarImage } from 'ui/components/avatar';
+import { Badge } from 'ui/components/badge';
+import { Button } from 'ui/components/button';
+import { Card, CardContent } from 'ui/components/card';
+import { Item, ItemActions, ItemContent, ItemDescription, ItemMedia, ItemTitle } from 'ui/components/item';
+import { Skeleton } from 'ui/components/skeleton';
+import { Tooltip, TooltipContent, TooltipTrigger } from 'ui/components/tooltip';
+import { Details, type DetailsItem } from 'details';
+import { useI18n } from 'i18n';
+import {
+  ChevronLeft,
+  CircleCheck,
+  CirclePause,
+  Download,
+  Loader,
+  RefreshCcw,
+  SquareArrowOutUpRight,
+} from 'lucide-react';
+import { useCallback } from 'react';
+import { Link, useNavigate, useParams } from 'react-router';
+import { toast } from 'sonner';
+import { format } from 'time';
+import { P, match } from 'ts-pattern';
+
+const GetAuthor = graphql(`
+  query getAuthor($id: Int!) {
+    getAuthor(id: $id) {
+      novels {
+        id
+        name
+        avatar
+        createTime
+        updateTime
+        description
+        novelStatus
+        url
+        lastChapter {
+          time
+        }
+        firstChapter {
+          time
+        }
+        wordCount
+      }
+      id
+      site
+      name
+      createTime
+      updateTime
+      avatar
+      description
+      url
+    }
+  }
+`);
+
+const UpdateAuthor = graphql(`
+  mutation updateAuthorByCrawler($authorId: Int!) {
+    updateAuthorByCrawler(authorId: $authorId) {
+      __typename
+      ... on AuthorSaved {
+        authorId
+      }
+      ... on ValidationFailure {
+        issues {
+          path
+          code
+          min
+          max
+        }
+      }
+      ... on MissingResources {
+        resources {
+          kind
+          id
+        }
+      }
+      ... on Conflict {
+        reason
+        resources {
+          kind
+          id
+        }
+      }
+    }
+  }
+`);
+
+export default function AuthorDetails() {
+  const write = useBookmarkWrite('/bookmarks/authors');
+  const t = useI18n();
+  const { authorId } = useParams();
+  const { data, loading, refetch, error } = useQuery(GetAuthor, { variables: { id: Number(authorId) } });
+  useTitle(t('author_detail', { authorName: data?.getAuthor?.name }));
+  const navigate = useNavigate();
+  const handleRefresh = useCallback(() => {
+    void Promise.resolve()
+      .then(() => refetch())
+      .catch(() => undefined);
+  }, [refetch]);
+  const goToSourceSite = useCallback(() => {
+    if (data?.getAuthor?.url) {
+      window.open(data.getAuthor.url, '_blank');
+    }
+  }, [data?.getAuthor?.url]);
+  const [updateAuthor, { loading: updateLoading }] = useMutation(UpdateAuthor);
+  const handleUpdateAuthor = useCallback(async () => {
+    if (
+      !(await write.execute(
+        async () => (await updateAuthor({ variables: { authorId: Number(authorId) } })).data?.updateAuthorByCrawler,
+      ))
+    )
+      return;
+    toast.success(t('update_by_crawler_success'));
+    void Promise.resolve()
+      .then(() => refetch())
+      .catch(() => undefined);
+  }, [authorId, refetch, updateAuthor, t, write]);
+  return (
+    <div className="flex flex-col size-full p-4 gap-2 pb-0 pt-2">
+      <RequestNotice error={error} retry={refetch} />
+      {!loading && data?.getAuthor === null && !hasQueryFailure(error, ['getAuthor']) && <p>{t('request_missing')}</p>}
+      {write.notice}
+      <div className="flex w-full">
+        <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+          <ChevronLeft />
+        </Button>
+        <div className="grow" />
+        <Button variant="ghost" size="icon" onClick={handleRefresh}>
+          <RefreshCcw />
+        </Button>
+      </div>
+      {data?.getAuthor && (
+        <>
+          <Card>
+            <Item className="pt-0 px-6">
+              <ItemMedia>
+                <Avatar className="size-10">
+                  <AvatarImage src={getImageUrl(data.getAuthor.avatar)} />
+                  <AvatarFallback>{data.getAuthor.name[0]}</AvatarFallback>
+                </Avatar>
+              </ItemMedia>
+              <ItemContent>
+                <ItemTitle>{data.getAuthor.name}</ItemTitle>
+              </ItemContent>
+              <ItemActions>
+                <Tooltip>
+                  <TooltipTrigger
+                    render={
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        disabled={write.blocked || updateLoading}
+                        onClick={handleUpdateAuthor}
+                      />
+                    }
+                  >
+                    <Download />
+                  </TooltipTrigger>
+                  <TooltipContent>{t('update_by_crawler')}</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger render={<Button variant="ghost" size="icon" onClick={goToSourceSite} />}>
+                    <SquareArrowOutUpRight />
+                  </TooltipTrigger>
+                  <TooltipContent>{t('go_to_source_site')}</TooltipContent>
+                </Tooltip>
+              </ItemActions>
+            </Item>
+            <CardContent>{data.getAuthor.description}</CardContent>
+          </Card>
+          <div className="flex-[1_1_0] overflow-y-auto grid gap-4 pb-4 grid-cols-[repeat(auto-fill,minmax(--spacing(80),1fr))] grid-rows-[masonry] auto-rows-max items-start display-[masonry]">
+            {data?.getAuthor.novels?.map(
+              ({ id, avatar, name, description, url, novelStatus, wordCount, lastChapter, firstChapter }) => (
+                <Card key={id}>
+                  <Item className="pt-0 px-6">
+                    <ItemMedia>
+                      <Avatar className="size-10">
+                        <AvatarImage src={getImageUrl(avatar)} />
+                        <AvatarFallback>{name[0]}</AvatarFallback>
+                      </Avatar>
+                    </ItemMedia>
+                    <ItemContent>
+                      <ItemTitle>
+                        <Link className="text-primary underline-offset-4 hover:underline" to={`/bookmarks/novel/${id}`}>
+                          {name}
+                        </Link>
+                      </ItemTitle>
+                      <ItemDescription>
+                        {match(novelStatus)
+                          .with('ONGOING', () => (
+                            <Badge variant="outline" className="text-muted-foreground px-1.5">
+                              <Loader className="fill-yellow-500 dark:fill-yellow-400" />
+                              {t('ongoing')}
+                            </Badge>
+                          ))
+                          .with('COMPLETED', () => (
+                            <Badge variant="outline" className="text-muted-foreground px-1.5">
+                              <CircleCheck className="fill-green-500 dark:fill-green-400" />
+                              {t('completed')}
+                            </Badge>
+                          ))
+                          .with('PAUSED', () => (
+                            <Badge variant="outline" className="text-muted-foreground px-1.5">
+                              <CirclePause className="fill-red-500 dark:fill-red-400" />
+                              {t('paused')}
+                            </Badge>
+                          ))
+                          .exhaustive()}
+                      </ItemDescription>
+                    </ItemContent>
+                    <ItemActions>
+                      <Tooltip>
+                        <TooltipTrigger
+                          render={<Button variant="ghost" size="icon" onClick={() => window.open(url, '_blank')} />}
+                        >
+                          <SquareArrowOutUpRight />
+                        </TooltipTrigger>
+                        <TooltipContent>{t('go_to_source_site')}</TooltipContent>
+                      </Tooltip>
+                    </ItemActions>
+                  </Item>
+                  <CardContent className="flex flex-col gap-2">
+                    <p>{description}</p>
+                    <Details
+                      fullSpan={2}
+                      items={
+                        [
+                          {
+                            label: t('novel_status'),
+                            value: t(getLabelKeyByNovelStatus(novelStatus)),
+                          },
+                          {
+                            label: t('word_count'),
+                            value: wordCount,
+                          },
+                          {
+                            label: t('last_update_time'),
+                            value: match(lastChapter?.time)
+                              .with(P.string, (data) => format(data))
+                              .otherwise(() => '-'),
+                          },
+                          {
+                            label: t('first_chapter_time'),
+                            value: match(firstChapter?.time)
+                              .with(P.string, (data) => format(data))
+                              .otherwise(() => '-'),
+                          },
+                        ] satisfies DetailsItem[]
+                      }
+                    />
+                  </CardContent>
+                </Card>
+              ),
+            )}
+          </div>
+        </>
+      )}
+      {loading && (
+        <Card>
+          <CardContent className="flex items-center gap-4">
+            <Skeleton className="h-12 w-12 rounded-full" />
+            <div className="flex flex-col gap-2">
+              <Skeleton className="h-4 w-[250px]" />
+              <Skeleton className="h-4 w-[200px]" />
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}

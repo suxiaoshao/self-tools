@@ -1,0 +1,34 @@
+import type { GetNovelsQueryVariables } from '@bookmarks/gql/graphql';
+import { match, P } from 'ts-pattern';
+import type { PageState } from 'custom-table';
+
+export function convertFormToVariables(
+  { collectionMatch, novelStatus, tagMatch }: Omit<GetNovelsQueryVariables, 'pagination'>,
+  pageState: PageState,
+): GetNovelsQueryVariables {
+  return {
+    collectionMatch: match(collectionMatch)
+      .with(
+        {
+          fullMatch: P.nonNullable,
+          matchSet: P.when((matchSet) => matchSet?.length > 0),
+        },
+        ({ fullMatch, matchSet }) => ({ fullMatch, matchSet }),
+      )
+      .otherwise(() => undefined),
+    novelStatus,
+    tagMatch: match(tagMatch)
+      .with(
+        {
+          fullMatch: P.nonNullable,
+          matchSet: P.when((matchSet) => matchSet?.length > 0),
+        },
+        ({ fullMatch, matchSet }) => ({ fullMatch, matchSet }),
+      )
+      .otherwise(() => undefined),
+    pagination: {
+      page: pageState.pageIndex,
+      pageSize: pageState.pageSize,
+    },
+  };
+}

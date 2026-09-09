@@ -9,7 +9,7 @@ import { RequestNotice } from 'custom-graphql';
 import { useI18n } from 'i18n';
 import { type ComponentProps, useMemo } from 'react';
 import { getImageUrl } from '@bookmarks/utils/image';
-import { graphql } from '@bookmarks/gql';
+import { graphql } from '@bookmarks/gql/index';
 import { useQuery } from '@apollo/client/react';
 import { match } from 'ts-pattern';
 import {
@@ -20,8 +20,8 @@ import {
   ComboboxItem,
   ComboboxList,
   useComboboxAnchor,
-} from '@portal/components/ui/combobox';
-import { Avatar, AvatarImage } from '@portal/components/ui/avatar';
+} from 'ui/components/combobox';
+import { Avatar, AvatarImage } from 'ui/components/avatar';
 
 const SearchAuthor = graphql(`
   query searchAuthor($searchName: String) {

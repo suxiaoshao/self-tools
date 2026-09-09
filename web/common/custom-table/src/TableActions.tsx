@@ -1,11 +1,11 @@
-import { Button } from '@portal/components/ui/button';
+import { Button } from 'ui/components/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@portal/components/ui/dropdown-menu';
+} from 'ui/components/dropdown-menu';
 import { MoreHorizontal } from 'lucide-react';
 import type { ReactNode, JSX } from 'react';
 import { match, P } from 'ts-pattern';

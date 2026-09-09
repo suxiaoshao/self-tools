@@ -5,7 +5,7 @@
  * @LastEditTime: 2024-01-14 02:43:21
  * @FilePath: /self-tools/web/packages/collections/src/App.tsx
  */
-import { CollectionsProvider } from './features/Collection/collectionQuery';
+import { CollectionsProvider } from './entities/collection';
 import { Outlet } from 'react-router';
 import { ApolloProvider } from '@apollo/client/react';
 import { getClient } from 'custom-graphql';

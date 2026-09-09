@@ -1,0 +1,20 @@
+{
+  "name": "markdown",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.tsx"
+  },
+  "dependencies": {
+    "markdown-to-jsx": "^9.8.2",
+    "prism-themes": "^1.9.0",
+    "prismjs": "^1.30.0",
+    "react": "^19.2.7",
+    "ts-pattern": "^5.9.0",
+    "ui": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/prismjs": "^1.26.6"
+  }
+}

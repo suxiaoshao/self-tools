@@ -6,17 +6,14 @@
  * @FilePath: /self-tools/web/packages/portal/src/components/AppRouter.tsx
  */
 import { Routes, Route } from 'react-router';
-import AppDrawer from './AppDrawer';
-import Home from '../features/Home';
-import Login, { useLogin } from '../features/Auth';
-import SessionGate from '../features/Auth/SessionGate';
-import Security from '../features/Auth/Security';
-import { useAuthStore } from '../features/Auth/authSlice';
-import { microConfigs } from '@portal/micro';
+import AppDrawer from './AppDrawer/index';
+import Home from '../features/home/index';
+import Login, { useLogin, SessionGate, Security, useAuthStore } from '../features/auth';
+import { microConfigs } from '@portal/micro/index';
 import type { Menu } from 'types';
 import { match } from 'ts-pattern';
 import { useI18n } from 'i18n';
-import ErrorPage from '../components/Error';
+import ErrorPage from './Error/index';
 
 function MenuRouter({ path }: Menu) {
   return match(path)

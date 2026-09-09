@@ -6,7 +6,7 @@
  * @FilePath: /tauri/Users/weijie.su/Documents/code/self/self-tools/web/common/edit/src/init.ts
  */
 import { editor } from 'monaco-editor';
-import './index.css';
+import 'ui/fonts.css';
 import monankai from '../node_modules/monaco-themes/themes/Dracula.json';
 // oxlint-disable-next-line import/default
 import EditorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useI18n } from 'i18n';
 import { isUnconfirmed, RequestError, type FieldViolation, type RequestFailure } from 'request-errors';
-import { authenticatedStateVersion, graphQLFailures } from './index';
+import { authenticatedStateVersion, graphQLFailures } from './client';
 
 /** UI projections of generated domain results; these are not wire types. */
 export type RejectionNotice =

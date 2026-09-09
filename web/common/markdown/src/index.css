@@ -1,0 +1,8 @@
+@import url('ui/fonts.css');
+pre[class*='language-'],
+code[class*='language-'] {
+  font-family: 'JetBrains Mono', monospace;
+  font-variant-ligatures: contextual;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: 'liga', 'calt';
+}

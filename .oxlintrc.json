@@ -7,15 +7,16 @@
     "correctness": "error"
   },
   "rules": {
-    "typescript/no-floating-promises": "off"
+    "typescript/no-floating-promises": "off",
+    "import/no-cycle": "error"
   },
   "plugins": ["eslint", "typescript", "unicorn", "oxc", "react", "import", "jsx-a11y", "vitest"],
   "ignorePatterns": [
     "changelog.config.js",
     "*.d.ts",
-    "**/components/ui/**/*",
+    "web/common/ui/src/components/**/*",
     "**/src/gql/**/*",
-    "web/packages/portal/src/hooks/use-mobile.ts"
+    "web/common/ui/src/hooks/use-mobile.ts"
   ],
   "overrides": [
     {
@@ -28,6 +29,50 @@
       "files": ["**/*.test.{ts,tsx}", "web/config/test/**/*.ts"],
       "env": {
         "vitest": true
+      }
+    },
+    {
+      "files": ["web/common/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": ["@portal/*", "@bookmarks/*", "@collections/*", "portal", "bookmarks", "collections"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["web/packages/bookmarks/src/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": ["@portal/*", "@collections/*", "portal", "collections"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["web/packages/collections/src/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": ["@portal/*", "@bookmarks/*", "portal", "bookmarks"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["web/packages/portal/src/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": ["@bookmarks/*", "@collections/*"]
+          }
+        ]
       }
     }
   ],
