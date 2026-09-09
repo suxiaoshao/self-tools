@@ -10,6 +10,7 @@ use crate::errors::AppResult;
 pub(in crate::application) mod collection;
 pub(in crate::application) mod collection_item;
 pub(in crate::application) mod item;
+pub(in crate::application) mod query;
 pub(in crate::application) mod schema;
 
 pub(in crate::application) type PgPool = Pool<ConnectionManager<PgConnection>>;
@@ -31,3 +32,5 @@ pub(in crate::application) fn get_pool() -> AppResult<PgPool> {
         .build(manager)?;
     Ok(pool)
 }
+
+pub(in crate::application) mod read;

@@ -78,7 +78,10 @@ async fn collections_transactions_and_typed_results() {
         &mut conn,
     )
     .unwrap();
-    assert_eq!(Item::collections(item.id, &mut conn).unwrap().len(), 1);
+    assert_eq!(
+        model::read::item_collections(&[item.id], &mut conn).unwrap()[&item.id].len(),
+        1
+    );
     assert!(matches!(
         Item::create(
             "missing".into(),
@@ -102,7 +105,13 @@ async fn collections_transactions_and_typed_results() {
     Item::delete_collection(99999, item.id, &mut conn).unwrap();
     Collection::delete(parent.id, &mut conn).unwrap();
     Collection::delete(parent.id, &mut conn).unwrap();
-    assert!(Item::collections(item.id, &mut conn).unwrap().is_empty());
+    assert!(
+        model::read::item_collections(&[item.id], &mut conn)
+            .unwrap()
+            .remove(&item.id)
+            .unwrap()
+            .is_empty()
+    );
     assert!(Collection::get(child.id, &mut conn).is_err());
     Item::delete(item.id, &mut conn).unwrap();
     Item::delete(item.id, &mut conn).unwrap();
@@ -179,3 +188,12 @@ async fn collections_transactions_and_typed_results() {
         );
     }
 }
+
+mod browser_operations {
+    include!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/../../common/graphql-common/test-support/browser_operations.rs"
+    ));
+}
+
+mod query_cost;

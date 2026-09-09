@@ -6,7 +6,8 @@ use super::schema::{custom_type::NovelSite, tag};
 use diesel::{connection::DefaultLoadingMode, prelude::*};
 use time::OffsetDateTime;
 
-#[derive(Queryable)]
+#[derive(Queryable, QueryableByName)]
+#[diesel(table_name = tag)]
 pub(in crate::application) struct TagModel {
     pub(in crate::application) id: i64,
     pub(in crate::application) name: String,
@@ -50,21 +51,17 @@ impl TagModel {
         let deleted = diesel::delete(tag::table.filter(tag::id.eq(id))).get_result(conn)?;
         Ok(deleted)
     }
-    /// 获取标签列表
-    pub(in crate::application) fn get_by_ids(
-        ids: &[i64],
-        conn: &mut PgConnection,
-    ) -> AppResult<Vec<Self>> {
-        let tags = tag::table.filter(tag::id.eq_any(ids)).load::<Self>(conn)?;
-        Ok(tags)
-    }
     /// 判断标签是否全部存在
     pub(in crate::application) fn exists_all(
         tag_ids: &HashSet<i64>,
         conn: &mut PgConnection,
     ) -> AppResult<()> {
-        let database_tags = TagModel::get_list(conn)?;
-        let database_tags: HashSet<i64> = database_tags.into_iter().map(|tag| tag.id).collect();
+        let database_tags: HashSet<i64> = tag::table
+            .filter(tag::id.eq_any(tag_ids))
+            .select(tag::id)
+            .load::<i64>(conn)?
+            .into_iter()
+            .collect();
         for id in tag_ids {
             if !database_tags.contains(id) {
                 return Err(crate::errors::missing(
@@ -107,7 +104,11 @@ impl TagModel {
         limit: i64,
         conn: &mut PgConnection,
     ) -> AppResult<Vec<Self>> {
-        let tags = tag::table.offset(offset).limit(limit).load(conn)?;
+        let tags = tag::table
+            .order(tag::id.asc())
+            .offset(offset)
+            .limit(limit)
+            .load(conn)?;
         Ok(tags)
     }
 }

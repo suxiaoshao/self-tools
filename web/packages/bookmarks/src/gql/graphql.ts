@@ -229,7 +229,6 @@ export type GetAuthorsQuery = {
       updateTime: string;
       avatar: string;
       description: string;
-      url: string;
     }>;
   };
 };
@@ -1318,7 +1317,6 @@ export const GetAuthorsDocument = {
                       { kind: 'Field', name: { kind: 'Name', value: 'updateTime' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'avatar' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'description' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'url' } },
                     ],
                   },
                 },
@@ -2514,7 +2512,6 @@ export const GetNovelDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'description' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'createTime' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'updateTime' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'description' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'novelStatus' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'url' } },
                 {
@@ -3278,7 +3275,6 @@ export const GetNovelsDocument = {
                       { kind: 'Field', name: { kind: 'Name', value: 'description' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'createTime' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'updateTime' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'description' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'novelStatus' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'avatar' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'site' } },

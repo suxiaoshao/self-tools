@@ -1,7 +1,4 @@
-use crate::{
-    application::repository::schema::{chapter, read_record},
-    errors::AppResult,
-};
+use crate::{application::repository::schema::read_record, errors::AppResult};
 use diesel::prelude::*;
 use time::OffsetDateTime;
 
@@ -45,27 +42,6 @@ pub(in crate::application) struct ReadRecordModel {
 }
 
 impl ReadRecordModel {
-    pub(in crate::application) fn read_percentage_by_novel_id(
-        novel_id: i64,
-        conn: &mut PgConnection,
-    ) -> AppResult<f64> {
-        let total_chapters: i64 = chapter::table
-            .filter(chapter::novel_id.eq(novel_id))
-            .count()
-            .get_result(conn)?;
-
-        let read_chapters = read_record::table
-            .filter(read_record::novel_id.eq(novel_id))
-            .filter(read_record::read_time.is_not_null())
-            .count()
-            .get_result::<i64>(conn)?;
-
-        Ok(if total_chapters == 0 {
-            0.0
-        } else {
-            (read_chapters as f64 / total_chapters as f64) * 100.0
-        })
-    }
     /// 获取某个 novel 下所有已阅读的章节 id
     pub(in crate::application) fn read_chapter_ids_by_novel_id(
         novel_id: i64,

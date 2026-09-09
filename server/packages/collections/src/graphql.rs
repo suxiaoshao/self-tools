@@ -15,15 +15,24 @@ use std::sync::Arc;
 use self::{mutation::MutationRoot, query::QueryRoot};
 
 mod error;
+mod loaders;
 pub(crate) mod mutation;
 pub(crate) mod query;
 pub(crate) mod types;
 pub(crate) type RootSchema = Schema<QueryRoot, MutationRoot, EmptySubscription>;
 mod guard;
 
-pub(crate) fn get_schema(application: Arc<Application>) -> RootSchema {
+pub(crate) fn schema_builder()
+-> async_graphql::SchemaBuilder<QueryRoot, MutationRoot, EmptySubscription> {
     Schema::build(QueryRoot, MutationRoot, EmptySubscription)
         .extension(Logger)
+        .extension(graphql_common::cost::RequestLimits)
+        .limit_depth(graphql_common::cost::MAX_DEPTH)
+        .limit_complexity(graphql_common::cost::MAX_COMPLEXITY)
+}
+pub(crate) fn get_schema(application: Arc<Application>) -> RootSchema {
+    schema_builder()
+        .extension(loaders::RequestLoaders(application.clone()))
         .data(application)
         .finish()
 }

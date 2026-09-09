@@ -2,12 +2,9 @@ use crate::{
     application::repository::{
         collection::CollectionModel, collection_item::CollectionItemModel, item::ItemModel,
     },
-    application::utils::{find_all_children, find_all_item_by_collection},
     errors::*,
 };
 use diesel::{Connection, PgConnection, RunQueryDsl};
-use service_query::TagFilter;
-use std::collections::HashSet;
 use time::OffsetDateTime;
 #[derive(Clone)]
 pub(crate) struct Item {
@@ -99,15 +96,7 @@ impl Item {
             Ok(ItemModel::update(id, name, content, conn)?.into())
         })
     }
-    pub(super) fn collections(
-        id: i64,
-        conn: &mut PgConnection,
-    ) -> AppResult<Vec<super::collection::Collection>> {
-        Ok(CollectionModel::get_collections_by_item_id(id, conn)?
-            .into_iter()
-            .map(Into::into)
-            .collect())
-    }
+
     pub(super) fn add_collection(
         collection_id: i64,
         item_id: i64,
@@ -161,73 +150,5 @@ impl Item {
         validate_id(collection_id, "collectionId")?;
         validate_id(item_id, "itemId")?;
         CollectionItemModel::delete(collection_id, item_id, conn)
-    }
-    /// 查询
-    pub(super) fn query(
-        collection_match: Option<TagFilter>,
-        conn: &mut PgConnection,
-    ) -> AppResult<Vec<Self>> {
-        if let Some(TagFilter { match_set, .. }) = &collection_match {
-            // collection 不存在
-            CollectionModel::exists_all(match_set, conn)?;
-        }
-        let mut data = ItemModel::all(conn)?
-            .into_iter()
-            .map(Into::into)
-            .collect::<Vec<Self>>();
-        if let Some(TagFilter {
-            match_set,
-            full_match,
-        }) = collection_match
-        {
-            // 构建一个 `id` 到其子节点列表的映射
-            let collection_collection_map = CollectionModel::get_map(conn)?;
-
-            if full_match {
-                let collection_item_map = CollectionItemModel::map_collection_item(conn)?;
-                // 找到所有集合对应的条目，然后取他们的交集
-                let item_ids = match match_set.into_iter().try_fold(
-                    HashSet::new(),
-                    |mut acc, collection_id| -> Option<HashSet<i64>> {
-                        let mut item_ids = HashSet::new();
-                        find_all_item_by_collection(
-                            &mut item_ids,
-                            collection_id,
-                            &collection_collection_map,
-                            &collection_item_map,
-                        );
-                        match (acc.is_empty(), item_ids.is_empty()) {
-                            (_, true) => None,
-                            (true, false) => Some(item_ids),
-                            (false, false) => {
-                                acc.retain(|e| item_ids.contains(e));
-                                Some(acc)
-                            }
-                        }
-                    },
-                ) {
-                    Some(id) => id,
-                    None => return Ok(vec![]),
-                };
-
-                data.retain(|Item { id, .. }| item_ids.contains(id));
-            } else {
-                // 初始化结果列表，并调用递归函数
-                let mut all_set = HashSet::new();
-                for id in &match_set {
-                    all_set.insert(*id);
-                    find_all_children(&mut all_set, *id, &collection_collection_map);
-                }
-                let item_collection_map = CollectionItemModel::map_item_collection(conn)?;
-                data.retain(|Item { id, .. }| {
-                    let item_collection = match item_collection_map.get(id) {
-                        Some(item_collection) => item_collection,
-                        None => return false,
-                    };
-                    !all_set.is_disjoint(item_collection)
-                });
-            }
-        }
-        Ok(data)
     }
 }

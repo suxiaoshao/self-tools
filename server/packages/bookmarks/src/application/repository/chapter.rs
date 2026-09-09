@@ -10,7 +10,8 @@ use diesel::{
 
 use time::OffsetDateTime;
 
-#[derive(Queryable)]
+#[derive(Queryable, QueryableByName)]
+#[diesel(table_name = chapter)]
 pub(in crate::application) struct ChapterModel {
     pub(in crate::application) id: i64,
     pub(in crate::application) title: String,
@@ -24,6 +25,7 @@ pub(in crate::application) struct ChapterModel {
     pub(in crate::application) create_time: OffsetDateTime,
     pub(in crate::application) update_time: OffsetDateTime,
     // 是否已读
+    #[diesel(sql_type = diesel::sql_types::Bool)]
     pub(in crate::application) is_read: bool,
 }
 
@@ -36,7 +38,7 @@ impl ChapterModel {
     ) -> AppResult<Vec<Self>> {
         let chapters = chapter::table
             .filter(chapter::novel_id.eq(novel_id))
-            .order(chapter::time.asc())
+            .order((chapter::time.asc(), chapter::id.asc()))
             .select((
                 chapter::id,
                 chapter::title,
@@ -74,72 +76,6 @@ impl ChapterModel {
         Ok(count)
     }
 
-    /// 获取某个 novel 下的字数
-    pub(in crate::application) fn get_word_count_by_novel_id(
-        novel_id: i64,
-        conn: &mut PgConnection,
-    ) -> AppResult<bigdecimal::BigDecimal> {
-        let word_count = chapter::table
-            .filter(chapter::novel_id.eq(novel_id))
-            .select(diesel::dsl::sum(chapter::word_count))
-            .first::<Option<bigdecimal::BigDecimal>>(conn)?
-            .unwrap_or(bigdecimal::BigDecimal::from(0));
-        Ok(word_count)
-    }
-    /// 获取某个 novel 下的最新章节
-    pub(in crate::application) fn get_last_chapter_by_novel_id(
-        novel_id: i64,
-        conn: &mut PgConnection,
-    ) -> AppResult<Option<Self>> {
-        let chapter = chapter::table
-            .filter(chapter::novel_id.eq(novel_id))
-            .order(chapter::time.desc())
-            .select((
-                chapter::id,
-                chapter::title,
-                chapter::site,
-                chapter::site_id,
-                chapter::content,
-                chapter::time,
-                chapter::word_count,
-                chapter::novel_id,
-                chapter::author_id,
-                chapter::create_time,
-                chapter::update_time,
-                // is_read: true if there's any matching read_record
-                exists(read_record::table.filter(read_record::chapter_id.eq(chapter::id))),
-            ))
-            .first::<Self>(conn)
-            .optional()?;
-        Ok(chapter)
-    }
-    /// 获取某个 novel 下的最早章节
-    pub(in crate::application) fn get_first_chapter_by_novel_id(
-        novel_id: i64,
-        conn: &mut PgConnection,
-    ) -> AppResult<Option<Self>> {
-        let chapter = chapter::table
-            .filter(chapter::novel_id.eq(novel_id))
-            .order(chapter::time.asc())
-            .select((
-                chapter::id,
-                chapter::title,
-                chapter::site,
-                chapter::site_id,
-                chapter::content,
-                chapter::time,
-                chapter::word_count,
-                chapter::novel_id,
-                chapter::author_id,
-                chapter::create_time,
-                chapter::update_time,
-                // is_read: true if there's any matching read_record
-                exists(read_record::table.filter(read_record::chapter_id.eq(chapter::id))),
-            ))
-            .first::<Self>(conn)
-            .optional()?;
-        Ok(chapter)
-    }
     /// 获取某个 novel 下的所有章节 id
     pub(in crate::application) fn get_chapter_ids(
         novel_id: i64,

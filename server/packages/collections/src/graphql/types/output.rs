@@ -1,12 +1,12 @@
+use crate::graphql::loaders;
 use crate::{
     application::{Collection as CollectionData, Item as ItemData},
     errors::Rejection,
-    graphql::error::{application, read_error},
 };
 use async_graphql::{Context, Enum, Object, Result, SimpleObject, Union};
 use graphql_common::{DateTime, ValidationFailure};
 #[derive(Clone)]
-pub(crate) struct Collection(pub CollectionData);
+pub(crate) struct Collection(pub std::sync::Arc<CollectionData>);
 #[Object]
 impl Collection {
     async fn id(&self) -> i64 {
@@ -30,16 +30,19 @@ impl Collection {
     async fn update_time(&self) -> DateTime {
         self.0.update_time.into()
     }
+    #[graphql(complexity = "graphql_common::cost::list_cost(child_complexity)")]
     async fn ancestors(&self, ctx: &Context<'_>) -> Result<Option<Vec<Collection>>> {
-        application(ctx)?
-            .ancestors(self.0.id)
-            .await
-            .map_err(read_error)
-            .map(|v| Some(v.into_iter().map(Collection).collect()))
+        Ok(Some(
+            loaders::ancestors(ctx, self.0.id)
+                .await?
+                .into_iter()
+                .map(Collection)
+                .collect(),
+        ))
     }
 }
 #[derive(Clone)]
-pub(crate) struct Item(pub ItemData);
+pub(crate) struct Item(pub std::sync::Arc<ItemData>);
 #[Object]
 impl Item {
     async fn id(&self) -> i64 {
@@ -57,12 +60,16 @@ impl Item {
     async fn update_time(&self) -> DateTime {
         self.0.update_time.into()
     }
+    #[graphql(complexity = "graphql_common::cost::list_cost(child_complexity)")]
     async fn collections(&self, ctx: &Context<'_>) -> Result<Option<Vec<Collection>>> {
-        application(ctx)?
-            .item_collections(self.0.id)
-            .await
-            .map_err(read_error)
-            .map(|v| Some(v.into_iter().map(Collection).collect()))
+        Ok(Some(
+            loaders::load(ctx, loaders::ItemCollections(self.0.id))
+                .await?
+                .unwrap_or_default()
+                .into_iter()
+                .map(Collection)
+                .collect(),
+        ))
     }
 }
 #[derive(Union)]
@@ -73,9 +80,9 @@ pub(crate) enum ItemAndCollection {
 impl From<crate::application::input::ItemAndCollection> for ItemAndCollection {
     fn from(v: crate::application::input::ItemAndCollection) -> Self {
         match v {
-            crate::application::input::ItemAndCollection::Item(v) => Self::Item(Item(v)),
+            crate::application::input::ItemAndCollection::Item(v) => Self::Item(Item::from(v)),
             crate::application::input::ItemAndCollection::Collection(v) => {
-                Self::Collection(Collection(v))
+                Self::Collection(Collection::from(v))
             }
         }
     }
@@ -238,5 +245,17 @@ impl TryFrom<Rejection> for RemoveMembershipResult {
             Rejection::Validation(v) => Ok(Self::ValidationFailure(v.into())),
             v => Err(v),
         }
+    }
+}
+
+impl From<crate::application::Collection> for Collection {
+    fn from(v: crate::application::Collection) -> Self {
+        Self(std::sync::Arc::new(v))
+    }
+}
+
+impl From<crate::application::Item> for Item {
+    fn from(v: crate::application::Item) -> Self {
+        Self(std::sync::Arc::new(v))
     }
 }

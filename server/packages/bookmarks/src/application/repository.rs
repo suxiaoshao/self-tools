@@ -1,4 +1,5 @@
 use std::env;
+pub(in crate::application) mod query;
 pub(in crate::application) mod schema;
 use diesel::{
     PgConnection,
@@ -31,3 +32,5 @@ pub(in crate::application) fn get_pool() -> AppResult<PgPool> {
         .build(manager)?;
     Ok(pool)
 }
+
+pub(in crate::application) mod read;

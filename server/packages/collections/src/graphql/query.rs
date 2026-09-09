@@ -9,12 +9,15 @@ use service_query::TagFilter;
 pub(crate) struct QueryRoot;
 #[Object]
 impl QueryRoot {
-    #[graphql(guard = "AuthGuard")]
+    #[graphql(
+        guard = "AuthGuard",
+        complexity = "graphql_common::cost::list_cost(child_complexity)"
+    )]
     async fn all_collections(&self, ctx: &Context<'_>) -> Result<Vec<Collection>> {
         application(ctx)?
             .all_collections()
             .await
-            .map(|v| v.into_iter().map(Collection).collect())
+            .map(|v| v.into_iter().map(Collection::from).collect())
             .map_err(read_error)
     }
     #[graphql(guard = "AuthGuard")]
@@ -22,7 +25,7 @@ impl QueryRoot {
         application(ctx)?
             .get_collection(id)
             .await
-            .map(|v| v.map(Collection))
+            .map(|v| v.map(Collection::from))
             .map_err(read_error)
     }
     #[graphql(guard = "AuthGuard")]
@@ -30,10 +33,13 @@ impl QueryRoot {
         application(ctx)?
             .get_item(id)
             .await
-            .map(|v| v.map(Item))
+            .map(|v| v.map(Item::from))
             .map_err(read_error)
     }
-    #[graphql(guard = "AuthGuard")]
+    #[graphql(
+        guard = "AuthGuard",
+        complexity = "graphql_common::cost::page_cost(query.pagination.page_size, child_complexity)"
+    )]
     async fn collection_and_item(
         &self,
         ctx: &Context<'_>,
@@ -49,7 +55,10 @@ impl QueryRoot {
             total,
         ))
     }
-    #[graphql(guard = "AuthGuard")]
+    #[graphql(
+        guard = "AuthGuard",
+        complexity = "graphql_common::cost::page_cost(pagination.page_size, child_complexity)"
+    )]
     async fn query_items(
         &self,
         ctx: &Context<'_>,
@@ -84,6 +93,16 @@ impl QueryRoot {
             .query_items(filter, pagination)
             .await
             .map_err(read_error)?;
-        Ok(ItemList::new(data.into_iter().map(Item).collect(), total))
+        if ctx.look_ahead().field("data").field("collections").exists() {
+            super::loaders::prefetch(
+                ctx,
+                data.iter().map(|v| super::loaders::ItemCollections(v.id)),
+            )
+            .await;
+        }
+        Ok(ItemList::new(
+            data.into_iter().map(Item::from).collect(),
+            total,
+        ))
     }
 }

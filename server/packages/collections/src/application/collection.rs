@@ -89,21 +89,7 @@ impl Collection {
         CollectionModel::delete(id, conn)?;
         Ok(())
     }
-    pub(super) fn get_ancestors(id: i64, conn: &mut PgConnection) -> AppResult<Vec<Self>> {
-        let mut parent = Self::get(id, conn)?.parent_id;
-        let mut result = vec![];
-        let mut seen = std::collections::HashSet::from([id]);
-        while let Some(id) = parent {
-            if !seen.insert(id) {
-                return Err(service_errors::Fault::internal("collection_ancestors").into());
-            }
-            let item = Self::get(id, conn)?;
-            parent = item.parent_id;
-            result.push(item);
-        }
-        result.reverse();
-        Ok(result)
-    }
+
     pub(super) fn update(
         id: i64,
         name: &str,

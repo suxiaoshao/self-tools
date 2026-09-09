@@ -1,13 +1,11 @@
 use super::schema::collection;
-use crate::{
-    application::input::TimeRange, application::repository::schema::collection_item,
-    errors::AppResult,
-};
+use crate::{application::input::TimeRange, errors::AppResult};
 use diesel::prelude::*;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use time::OffsetDateTime;
 
-#[derive(Queryable)]
+#[derive(Queryable, QueryableByName)]
+#[diesel(table_name = collection)]
 #[cfg_attr(test, derive(Debug))]
 pub(in crate::application) struct CollectionModel {
     pub(in crate::application) id: i64,
@@ -99,8 +97,12 @@ impl CollectionModel {
         tag_ids: &HashSet<i64>,
         conn: &mut PgConnection,
     ) -> AppResult<()> {
-        let database_tags = CollectionModel::get_list(conn)?;
-        let database_tags: HashSet<i64> = database_tags.into_iter().map(|tag| tag.id).collect();
+        let database_tags: HashSet<i64> = collection::table
+            .filter(collection::id.eq_any(tag_ids))
+            .select(collection::id)
+            .load::<i64>(conn)?
+            .into_iter()
+            .collect();
         for id in tag_ids {
             if !database_tags.contains(id) {
                 return Err(crate::errors::missing(
@@ -163,6 +165,7 @@ impl CollectionModel {
             (None, None, None) => {
                 let collections = collection::table
                     .filter(collection::parent_id.is_null())
+                    .order(collection::id.asc())
                     .offset(offset)
                     .limit(limit)
                     .load(conn)?;
@@ -172,6 +175,7 @@ impl CollectionModel {
                 let collections = collection::table
                     .filter(collection::parent_id.is_null())
                     .filter(collection::update_time.between(update_time.start(), update_time.end()))
+                    .order(collection::id.asc())
                     .offset(offset)
                     .limit(limit)
                     .load(conn)?;
@@ -181,6 +185,7 @@ impl CollectionModel {
                 let collections = collection::table
                     .filter(collection::parent_id.is_null())
                     .filter(collection::create_time.between(create_time.start(), create_time.end()))
+                    .order(collection::id.asc())
                     .offset(offset)
                     .limit(limit)
                     .load(conn)?;
@@ -191,6 +196,7 @@ impl CollectionModel {
                     .filter(collection::parent_id.is_null())
                     .filter(collection::create_time.between(create_time.start(), create_time.end()))
                     .filter(collection::update_time.between(update_time.start(), update_time.end()))
+                    .order(collection::id.asc())
                     .offset(offset)
                     .limit(limit)
                     .load(conn)?;
@@ -199,6 +205,7 @@ impl CollectionModel {
             (Some(id), None, None) => {
                 let collections = collection::table
                     .filter(collection::parent_id.eq(id))
+                    .order(collection::id.asc())
                     .offset(offset)
                     .limit(limit)
                     .load(conn)?;
@@ -208,6 +215,7 @@ impl CollectionModel {
                 let collections = collection::table
                     .filter(collection::parent_id.eq(id))
                     .filter(collection::update_time.between(update_time.start(), update_time.end()))
+                    .order(collection::id.asc())
                     .offset(offset)
                     .limit(limit)
                     .load(conn)?;
@@ -217,6 +225,7 @@ impl CollectionModel {
                 let collections = collection::table
                     .filter(collection::parent_id.eq(id))
                     .filter(collection::create_time.between(create_time.start(), create_time.end()))
+                    .order(collection::id.asc())
                     .offset(offset)
                     .limit(limit)
                     .load(conn)?;
@@ -227,6 +236,7 @@ impl CollectionModel {
                     .filter(collection::parent_id.eq(id))
                     .filter(collection::create_time.between(create_time.start(), create_time.end()))
                     .filter(collection::update_time.between(update_time.start(), update_time.end()))
+                    .order(collection::id.asc())
                     .offset(offset)
                     .limit(limit)
                     .load(conn)?;
@@ -310,42 +320,11 @@ impl CollectionModel {
     }
 }
 
-/// item id 相关
-impl CollectionModel {
-    pub(in crate::application) fn get_collections_by_item_id(
-        item_id: i64,
-        conn: &mut PgConnection,
-    ) -> AppResult<Vec<CollectionModel>> {
-        let collections = collection::table
-            .inner_join(collection_item::table)
-            .filter(collection_item::item_id.eq(item_id))
-            .load::<(CollectionModel, (i64, i64))>(conn)?;
-        Ok(collections.into_iter().map(|(model, _)| model).collect())
-    }
-}
-
 /// alll
 impl CollectionModel {
     /// 获取所有目录
     pub(in crate::application) fn get_list(conn: &mut PgConnection) -> AppResult<Vec<Self>> {
         let collections = collection::table.load(conn)?;
         Ok(collections)
-    }
-    /// 获取所有目录映射
-    pub(in crate::application) fn get_map(
-        conn: &mut PgConnection,
-    ) -> AppResult<HashMap<i64, Vec<i64>>> {
-        let all_collections = collection::table
-            .select((collection::id, collection::parent_id))
-            .get_results::<(i64, Option<i64>)>(conn)?;
-        // 构建一个 `id` 到其子节点列表的映射
-        let mut lookup: HashMap<i64, Vec<i64>> = HashMap::new();
-        for (id, parent_id) in all_collections {
-            if let Some(parent_id) = parent_id {
-                lookup.entry(parent_id).or_default().push(id);
-            }
-        }
-
-        Ok(lookup)
     }
 }

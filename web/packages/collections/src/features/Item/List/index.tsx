@@ -32,7 +32,6 @@ const GetItems = graphql(`
       data {
         id
         name
-        content
         createTime
         updateTime
       }

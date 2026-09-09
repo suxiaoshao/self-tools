@@ -18,6 +18,7 @@ mod enums;
 mod error;
 mod guard;
 mod input;
+mod loaders;
 pub(crate) mod mutation;
 mod objects;
 mod output;
@@ -25,9 +26,17 @@ pub(crate) mod query;
 mod results;
 pub(crate) type RootSchema = Schema<QueryRoot, MutationRoot, EmptySubscription>;
 
-pub(crate) fn get_schema(application: Arc<Application>) -> RootSchema {
+pub(crate) fn schema_builder()
+-> async_graphql::SchemaBuilder<QueryRoot, MutationRoot, EmptySubscription> {
     Schema::build(QueryRoot, MutationRoot, EmptySubscription)
         .extension(Logger)
+        .extension(graphql_common::cost::RequestLimits)
+        .limit_depth(graphql_common::cost::MAX_DEPTH)
+        .limit_complexity(graphql_common::cost::MAX_COMPLEXITY)
+}
+pub(crate) fn get_schema(application: Arc<Application>) -> RootSchema {
+    schema_builder()
+        .extension(loaders::RequestLoaders(application.clone()))
         .data(application)
         .finish()
 }

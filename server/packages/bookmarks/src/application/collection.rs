@@ -98,21 +98,7 @@ impl Collection {
         CollectionModel::delete_list(&std::collections::HashSet::from([id]), conn)?;
         Ok(())
     }
-    pub(super) fn get_ancestors(id: i64, conn: &mut PgConnection) -> AppResult<Vec<Self>> {
-        let mut parent = Self::get(id, conn)?.parent_id;
-        let mut result = vec![];
-        let mut seen = std::collections::HashSet::from([id]);
-        while let Some(id) = parent {
-            if !seen.insert(id) {
-                return Err(service_errors::Fault::internal("collection_ancestors").into());
-            }
-            let item = Self::get(id, conn)?;
-            parent = item.parent_id;
-            result.push(item);
-        }
-        result.reverse();
-        Ok(result)
-    }
+
     pub(super) fn update(
         id: i64,
         name: &str,
@@ -175,27 +161,5 @@ impl Collection {
             }
             error
         })
-    }
-}
-
-impl Collection {
-    pub(super) fn many_by_novel_id(novel_id: i64, conn: &mut PgConnection) -> AppResult<Vec<Self>> {
-        let ids = CollectionNovelModel::many_by_novel_id(novel_id, conn)?;
-        Ok(CollectionModel::many_by_ids(&ids, conn)?
-            .into_iter()
-            .map(Into::into)
-            .collect())
-    }
-    pub(super) fn get_list_parent_id(
-        parent_id: Option<i64>,
-        conn: &mut PgConnection,
-    ) -> AppResult<Vec<Self>> {
-        if let Some(id) = parent_id {
-            Self::get(id, conn)?;
-        }
-        Ok(CollectionModel::get_list_by_parent(parent_id, conn)?
-            .into_iter()
-            .map(Into::into)
-            .collect())
     }
 }

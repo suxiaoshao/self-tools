@@ -16,7 +16,7 @@ diesel_migrations.workspace = true
 tokio = { workspace = true, features = ["macros", "rt-multi-thread", "net", "time", "sync"] }
 
 # graphql
-async-graphql = { workspace = true, features = ["bigdecimal"] }
+async-graphql = { workspace = true, features = ["bigdecimal", "dataloader"] }
 axum = { workspace = true, features = ["query"] }
 async-graphql-axum.workspace = true
 serde_json.workspace = true

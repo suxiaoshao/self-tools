@@ -189,3 +189,12 @@ async fn bookmarks_transactions_and_typed_results() {
     );
     refresh::run(pool).await;
 }
+
+mod browser_operations {
+    include!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/../../common/graphql-common/test-support/browser_operations.rs"
+    ));
+}
+
+mod query_cost;
