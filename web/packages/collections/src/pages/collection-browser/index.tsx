@@ -78,7 +78,13 @@ export default function Collection() {
       <div className="flex-[0_0_auto] mb-2 flex">
         <CreateCollectionButton parentId={id} refetch={allRefetch} />
         {id && <CreateItemButton className="ml-2" refetch={allRefetch} collectionIds={[id]} />}
-        <Button variant="ghost" className="ml-auto rounded-full" size="icon" onClick={() => refetch()}>
+        <Button
+          variant="ghost"
+          className="ml-auto rounded-full"
+          size="icon"
+          onClick={() => refetch()}
+          aria-label={t('refresh')}
+        >
           <RefreshCcw />
         </Button>
       </div>

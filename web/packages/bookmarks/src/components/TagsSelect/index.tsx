@@ -31,7 +31,7 @@ interface TagsSelectProps extends Omit<ComponentProps<'input'>, 'onChange' | 'va
   value: number[] | null | undefined;
 }
 
-export default function TagsSelect({ value, onChange, className, ...props }: TagsSelectProps) {
+export default function TagsSelect({ value, onChange, className, disabled, ...props }: TagsSelectProps) {
   const { data: { allTags } = {}, loading, error } = useQuery(AllTags);
   const tags = useMemo(() => allTags ?? [], [allTags]);
   const selectedTags = useMemo(() => {
@@ -46,6 +46,7 @@ export default function TagsSelect({ value, onChange, className, ...props }: Tag
       <RequestNotice error={error} />
       <Combobox<(typeof tags)[number], true>
         multiple
+        disabled={disabled || !!error}
         items={tags}
         itemToStringValue={(item) => item.name}
         value={selectedTags}
@@ -60,7 +61,7 @@ export default function TagsSelect({ value, onChange, className, ...props }: Tag
                 {values.map((tag) => (
                   <ComboboxChip key={tag.id}>{tag.name}</ComboboxChip>
                 ))}
-                <ComboboxChipsInput disabled={!!error} placeholder={t('search')} {...props} />
+                <ComboboxChipsInput disabled={disabled || !!error} placeholder={t('search')} {...props} />
               </>
             )}
           </ComboboxValue>

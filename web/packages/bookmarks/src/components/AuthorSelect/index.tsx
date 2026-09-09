@@ -21,7 +21,7 @@ import {
   ComboboxList,
   useComboboxAnchor,
 } from 'ui/components/combobox';
-import { Avatar, AvatarImage } from 'ui/components/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from 'ui/components/avatar';
 
 const SearchAuthor = graphql(`
   query searchAuthor($searchName: String) {
@@ -40,7 +40,7 @@ interface TagsSelectProps extends Omit<ComponentProps<'input'>, 'onChange' | 'va
   value: number | null | undefined;
 }
 
-export default function AuthorSelect({ onChange, className, value, ...props }: TagsSelectProps) {
+export default function AuthorSelect({ onChange, className, value, disabled, ...props }: TagsSelectProps) {
   const { error, loading, data: { allAuthors } = {} } = useQuery(SearchAuthor);
   const authors = allAuthors ?? [];
   const t = useI18n();
@@ -54,6 +54,7 @@ export default function AuthorSelect({ onChange, className, value, ...props }: T
     <>
       <RequestNotice error={error} />
       <Combobox<(typeof authors)[number]>
+        disabled={disabled || !!error}
         items={authors}
         itemToStringLabel={(item) => item.name}
         value={selectedAuthor ?? null}
@@ -63,7 +64,7 @@ export default function AuthorSelect({ onChange, className, value, ...props }: T
           }
         }}
       >
-        <ComboboxInput disabled={!!error} placeholder={t('search')} className={className} {...props} />
+        <ComboboxInput disabled={disabled || !!error} placeholder={t('search')} className={className} {...props} />
         <ComboboxContent anchor={anchor}>
           <ComboboxEmpty>
             {match(loading)
@@ -74,7 +75,8 @@ export default function AuthorSelect({ onChange, className, value, ...props }: T
             {(item) => (
               <ComboboxItem key={item.id} value={item}>
                 <Avatar className="size-5">
-                  <AvatarImage src={getImageUrl(item.avatar)} />
+                  <AvatarImage alt="" src={getImageUrl(item.avatar)} />
+                  <AvatarFallback aria-hidden="true">{item.name[0]}</AvatarFallback>
                 </Avatar>
                 {item.name}
               </ComboboxItem>

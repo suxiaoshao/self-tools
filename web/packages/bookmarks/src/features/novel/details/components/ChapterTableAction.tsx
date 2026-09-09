@@ -1,3 +1,4 @@
+import { useI18n } from 'i18n';
 import useBookmarkWrite from '@bookmarks/useBookmarkWrite';
 import { checkNovelState } from '@bookmarks/features/novel/model/reconcile';
 import { graphql } from '@bookmarks/gql/index';
@@ -61,6 +62,7 @@ interface ChapterTableActionProps {
 }
 
 export default function ChapterTableAction({ isRead, novelId, chapterId, refetch }: ChapterTableActionProps) {
+  const t = useI18n();
   const [addReadRecord] = useMutation(AddReadRecord);
   const [deleteReadRecord] = useMutation(DeleteReadRecord);
   const write = useBookmarkWrite(`/bookmarks/novel/${novelId}`);
@@ -89,7 +91,12 @@ export default function ChapterTableAction({ isRead, novelId, chapterId, refetch
   };
   return (
     <div>
-      <Switch checked={isRead} onCheckedChange={handleToggle} disabled={write.blocked} />
+      <Switch
+        aria-label={t('mark_read', { id: chapterId })}
+        checked={isRead}
+        onCheckedChange={handleToggle}
+        disabled={write.blocked}
+      />
       {write.notice}
     </div>
   );

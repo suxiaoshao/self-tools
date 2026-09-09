@@ -52,26 +52,27 @@ export default function ThemeDrawerItem() {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTrigger render={<SidebarMenuItem />}>
-        <SidebarMenuButton>
+      <SidebarMenuItem>
+        <DialogTrigger render={<SidebarMenuButton />}>
           <Palette />
           <span>{t('theme_setting')}</span>
-        </SidebarMenuButton>
-      </DialogTrigger>
+        </DialogTrigger>
+      </SidebarMenuItem>
 
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t('theme_setting')}</DialogTitle>
         </DialogHeader>
-        <form id="theme-form" onSubmit={handleSubmit(onSubmit)}>
+        <form noValidate id="theme-form" onSubmit={handleSubmit(onSubmit)}>
           <FieldGroup>
             <Controller
               name="colorSetting"
               control={control}
               render={({ field, fieldState }) => (
                 <Field>
-                  <FieldLabel>{t('select_mode')}</FieldLabel>
+                  <FieldLabel id="theme-mode-label">{t('select_mode')}</FieldLabel>
                   <RadioGroup
+                    aria-labelledby="theme-mode-label"
                     {...field}
                     onValueChange={field.onChange}
                     id={field.name}
@@ -101,9 +102,25 @@ export default function ThemeDrawerItem() {
             />
 
             <Field>
-              <FieldLabel>{t('theme_color')}</FieldLabel>
-              <Input type="color" {...register('color')} />
-              {errors.color?.message && <FieldError errors={[errors.color]} />}
+              <FieldLabel htmlFor="theme-color">{t('theme_color')}</FieldLabel>
+              <Input
+                id="theme-color"
+                aria-invalid={!!errors.color}
+                aria-describedby={errors.color ? 'theme-color-error' : undefined}
+                type="color"
+                {...register('color')}
+              />
+              {errors.color?.message && (
+                <FieldError
+                  id="theme-color-error"
+                  errors={[
+                    errors.color && {
+                      ...errors.color,
+                      message: errors.color?.type === 'required' ? t('request_required') : errors.color.message,
+                    },
+                  ]}
+                />
+              )}
             </Field>
           </FieldGroup>
         </form>

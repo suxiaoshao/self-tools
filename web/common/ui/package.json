@@ -12,7 +12,9 @@
     "./lib/utils": "./src/lib/utils.ts",
     "./theme": "./src/theme/index.ts",
     "./components/*": "./src/components/*.tsx",
-    "./fonts.css": "./src/styles/fonts.css"
+    "./fonts.css": "./src/styles/fonts.css",
+    "./confirmation-dialog": "./src/confirmation-dialog.tsx",
+    "./locale": "./src/locale.tsx"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",

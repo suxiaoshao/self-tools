@@ -1,7 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
-import { useI18n } from 'i18n';
+import { useI18n, type I18nKey } from 'i18n';
 import { isUnconfirmed, RequestError, type FieldViolation, type RequestFailure } from 'request-errors';
 import { authenticatedStateVersion, graphQLFailures } from './client';
+
+const resourceLabels: Readonly<Record<string, I18nKey>> = {
+  AUTHOR: 'author',
+  NOVEL: 'novel',
+  COLLECTION: 'collection',
+  ITEM: 'item',
+  TAG: 'tags',
+  CHAPTER: 'chapter',
+  COMMENT: 'comment',
+};
 
 /** UI projections of generated domain results; these are not wire types. */
 export type RejectionNotice =
@@ -162,11 +172,13 @@ export function WriteNotice({
   check,
   pending,
   viewHref,
+  fieldLabels,
 }: {
   outcome?: WriteOutcome;
   check?: () => unknown;
   pending?: boolean;
   viewHref?: string;
+  fieldLabels?: Readonly<Record<string, string>>;
 }) {
   const t = useI18n();
   if (!outcome || outcome.status === 'saved') return null;
@@ -183,7 +195,7 @@ export function WriteNotice({
         <ul>
           {rejection.issues.map((issue, index) => (
             <li key={index}>
-              {issue.path.join('.')}:{' '}
+              {fieldLabels?.[issue.path.join('.')] ?? fieldLabels?.[String(issue.path[0])] ?? t('field_error')}:{' '}
               {
                 {
                   REQUIRED: t('request_required'),
@@ -200,7 +212,8 @@ export function WriteNotice({
       )}
       {rejection?.kind === 'missing' && (
         <p>
-          {t('request_missing')} ({rejection.resources.map((r) => `${r.kind} #${r.id}`).join(', ')})
+          {t('request_missing')} (
+          {rejection.resources.map((r) => `${t(resourceLabels[r.kind] ?? 'resource')} #${r.id}`).join(', ')})
         </p>
       )}
       {rejection?.kind === 'conflict' && (

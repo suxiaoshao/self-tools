@@ -101,11 +101,11 @@ export default function ChapterBatchUpdate({ chapters, novelId, refetch }: Chapt
     >
       {t('is_read')}
       <Tooltip>
-        <DialogTrigger render={<Button size="icon" variant="ghost" />}>
-          <TooltipTrigger render={<span />}>
-            <Edit fontSize="small" />
-          </TooltipTrigger>
-        </DialogTrigger>
+        <TooltipTrigger
+          render={<DialogTrigger render={<Button size="icon" variant="ghost" aria-label={t('batch_update')} />} />}
+        >
+          <Edit />
+        </TooltipTrigger>
         <TooltipContent>{t('batch_update')}</TooltipContent>
       </Tooltip>
       <DialogContent className="px-0 sm:max-w-sm">
@@ -115,6 +115,7 @@ export default function ChapterBatchUpdate({ chapters, novelId, refetch }: Chapt
             <Tooltip>
               <TooltipTrigger render={<span />}>
                 <Checkbox
+                  aria-label={t(checked.length === chapters.length ? 'select_none' : 'select_all')}
                   checked={checked.length === chapters.length}
                   disabled={blocked}
                   onCheckedChange={handleToggleAll}
@@ -129,7 +130,7 @@ export default function ChapterBatchUpdate({ chapters, novelId, refetch }: Chapt
             </Tooltip>
           </DialogTitle>
         </DialogHeader>
-        <li className="max-h-[70vh] overflow-y-auto">
+        <div className="max-h-[50dvh] overflow-y-auto">
           {chapters.map((chapter) => (
             <Label
               key={chapter.url}
@@ -150,7 +151,7 @@ export default function ChapterBatchUpdate({ chapters, novelId, refetch }: Chapt
               </div>
             </Label>
           ))}
-        </li>
+        </div>
         {addWrite.notice}
         {deleteWrite.notice}
         <DialogFooter className="px-6">

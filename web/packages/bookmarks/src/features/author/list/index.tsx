@@ -1,3 +1,5 @@
+import { ConfirmationDialog } from 'ui/confirmation-dialog';
+import { useState } from 'react';
 import { RequestNotice } from 'custom-graphql';
 import { checkDeleted } from '@bookmarks/features/author/model/reconcile';
 import { useApolloClient } from '@apollo/client/react';
@@ -24,8 +26,8 @@ import { useTitle } from 'hooks';
 import { graphql } from '@bookmarks/gql/index';
 import { useMutation, useQuery } from '@apollo/client/react';
 import type { GetAuthorsQuery } from '@bookmarks/gql/graphql';
-import { Button } from 'ui/components/button';
-import { Avatar, AvatarImage } from 'ui/components/avatar';
+import { Button, buttonVariants } from 'ui/components/button';
+import { Avatar, AvatarFallback, AvatarImage } from 'ui/components/avatar';
 
 const GetAuthors = graphql(`
   query getAuthors($pagination: Pagination!) {
@@ -72,6 +74,8 @@ const columnHelper = createCustomColumnHelper<TableItem>();
 export default function AuthorList() {
   const client = useApolloClient();
   const write = useBookmarkWrite('/bookmarks/authors');
+  const [target, setTarget] = useState<{ id: number; name: string }>();
+  const [confirmOpen, setConfirmOpen] = useState(false);
   // fetch
   const pageState = usePage();
   const {
@@ -93,9 +97,12 @@ export default function AuthorList() {
       [
         columnHelper.accessor(
           ({ name, id }) => (
-            <Button variant="link" className="text-foreground w-fit px-0 text-left">
-              <Link to={`/bookmarks/authors/${id}`}>{name}</Link>
-            </Button>
+            <Link
+              to={`/bookmarks/authors/${id}`}
+              className={buttonVariants({ variant: 'link', className: 'text-foreground w-fit px-0 text-left' })}
+            >
+              {name}
+            </Link>
           ),
           {
             header: t('name'),
@@ -104,15 +111,16 @@ export default function AuthorList() {
             meta: {},
           },
         ),
-        columnHelper.accessor(({ site }) => t(getLabelKeyBySite(site)), {
+        columnHelper.accessor('site', {
           header: t('novel_site'),
           id: 'site',
-          cell: (context) => context.getValue(),
+          cell: (context) => t(getLabelKeyBySite(context.getValue())),
         }),
         columnHelper.accessor(
-          ({ avatar }) => (
+          ({ avatar, name }) => (
             <Avatar>
-              <AvatarImage src={getImageUrl(avatar)} />
+              <AvatarImage alt="" src={getImageUrl(avatar)} />
+              <AvatarFallback aria-hidden="true">{name[0]}</AvatarFallback>
             </Avatar>
           ),
           {
@@ -145,36 +153,30 @@ export default function AuthorList() {
           },
           cell: (context) => context.getValue(),
         }),
-        columnHelper.accessor(
-          ({ id }) => (
-            <TableActions>
+        columnHelper.display({
+          header: t('actions'),
+          id: 'action',
+          cell: ({
+            row: {
+              original: { id, name },
+            },
+          }) => (
+            <TableActions triggerId={`author-actions-${id}`}>
               {() => [
                 {
                   text: t('delete'),
-                  onClick: async () => {
-                    if (
-                      !(await write.execute(
-                        async () => (await deleteAuthor({ variables: { id } })).data?.deleteAuthor,
-                        { verify: () => checkDeleted(client, id), confirmed: refetch },
-                      ))
-                    )
-                      return;
-                    void Promise.resolve()
-                      .then(() => refetch())
-                      .catch(() => undefined);
+                  disabled: write.pending || (write.blocked && target?.id !== id),
+                  onClick: () => {
+                    if (!write.blocked) setTarget({ id, name });
+                    setConfirmOpen(true);
                   },
                 },
               ]}
             </TableActions>
           ),
-          {
-            header: t('actions'),
-            id: 'action',
-            cell: (context) => context.getValue(),
-          },
-        ),
+        }),
       ] as CustomColumnDefArray<TableItem>,
-    [deleteAuthor, refetch, t, write, client],
+    [t, write, target],
   );
   const tableOptions = useMemo<CustomTableOptions<TableItem>>(
     () => ({ columns, data: data ?? [], getCoreRowModel: getCoreRowModel() }),
@@ -184,13 +186,42 @@ export default function AuthorList() {
   return (
     <div className="flex flex-col size-full p-4">
       <RequestNotice error={error} />
-      {write.notice}
+      {!confirmOpen && write.notice}
+      <ConfirmationDialog
+        returnFocus={() => document.getElementById(`author-actions-${target?.id}`)}
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title={t('delete_target', { name: target?.name })}
+        description={t('delete_author_impact')}
+        confirmLabel={t('delete')}
+        cancelLabel={t('cancel')}
+        pending={write.pending}
+        confirmDisabled={write.blocked}
+        notice={write.notice}
+        onConfirm={async () => {
+          if (!target) return;
+          const { id } = target;
+          const confirmed = () => {
+            setConfirmOpen(false);
+            void Promise.resolve()
+              .then(() => refetch())
+              .catch(() => undefined);
+          };
+          if (
+            await write.execute(async () => (await deleteAuthor({ variables: { id } })).data?.deleteAuthor, {
+              verify: () => checkDeleted(client, id),
+              confirmed,
+            })
+          )
+            confirmed();
+        }}
+      />
       <div className="flex-[0_0_auto] mb-4 flex">
         <CreateAuthorButton refetch={refetch} />
-        <Button className="ml-2">
-          <Link to="/bookmarks/authors/fetch">{t('crawler')}</Link>
-        </Button>
-        <Button className="ml-auto" variant="ghost" size="icon" onClick={() => refetch()}>
+        <Link to="/bookmarks/authors/fetch" className={buttonVariants({ variant: 'default', className: 'ml-2' })}>
+          {t('crawler')}
+        </Link>
+        <Button className="ml-auto" variant="ghost" size="icon" onClick={() => refetch()} aria-label={t('refresh')}>
           <RefreshCcw />
         </Button>
       </div>

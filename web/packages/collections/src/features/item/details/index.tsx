@@ -1,3 +1,5 @@
+import { ConfirmationDialog } from 'ui/confirmation-dialog';
+import { useState } from 'react';
 import { attemptWrite, useWriteAction, WriteNotice, RequestNotice } from 'custom-graphql';
 import { deleteResult } from '@collections/results';
 import { checkDeleted } from '@collections/features/item/model/reconcile';
@@ -39,6 +41,8 @@ const GetItem = graphql(`
 export default function ItemDetails() {
   const client = useApolloClient();
   const deletion = useWriteAction();
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [target, setTarget] = useState<{ id: number; name: string }>();
   // fetch data
   const { itemId } = useParams();
   const { data, loading, refetch, error } = useQuery(GetItem, { variables: { id: Number(itemId) } });
@@ -54,9 +58,10 @@ export default function ItemDetails() {
   const { open, handleClose, handleOpen, handleOpenChange } = useDialog();
   const [deleteItem] = useMutation(DeleteItem);
   const handleDelete = async () => {
+    if (!target) return;
     const result = await deletion.run(() =>
       attemptWrite(
-        () => deleteItem({ variables: { id: Number(itemId) } }),
+        () => deleteItem({ variables: { id: target.id } }),
         (response) => deleteResult(response.data?.deleteItem),
       ),
     );
@@ -65,21 +70,46 @@ export default function ItemDetails() {
   return (
     <div className="flex flex-col size-full overflow-hidden pb-2">
       <div className="flex w-full pl-2 pr-2">
-        <Button variant="ghost" size="icon-lg" className="rounded-full" onClick={() => navigate(-1)}>
+        <Button
+          variant="ghost"
+          size="icon-lg"
+          className="rounded-full"
+          onClick={() => navigate(-1)}
+          aria-label={t('back')}
+        >
           <ChevronLeft />
         </Button>
         <div className="grow" />
-        <Button variant="ghost" size="icon-lg" className="rounded-full" onClick={handleRefresh}>
+        <Button
+          variant="ghost"
+          size="icon-lg"
+          className="rounded-full"
+          onClick={handleRefresh}
+          aria-label={t('refresh')}
+        >
           <RefreshCcw />
         </Button>
       </div>
       <RequestNotice error={error} retry={refetch} />
-      <WriteNotice
-        outcome={deletion.outcome}
+      <ConfirmationDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title={t('delete_target', { name: target?.name })}
+        description={t('delete_item_impact')}
+        confirmLabel={t('delete')}
+        cancelLabel={t('cancel')}
         pending={deletion.pending}
-        check={async () => {
-          if (await deletion.check(() => checkDeleted(client, Number(itemId)))) navigate(-1);
-        }}
+        confirmDisabled={deletion.blocked}
+        onConfirm={handleDelete}
+        notice={
+          <WriteNotice
+            outcome={deletion.outcome}
+            pending={deletion.pending}
+            check={async () => {
+              if (target && (await deletion.check(() => checkDeleted(client, target.id)))) navigate(-1);
+            }}
+          />
+        }
       />
       {!loading && !error && data?.getItem === null && <p>{t('request_not_found')}</p>}
       <div className="flex-[1_1_0] overflow-y-auto pl-2 pr-2">
@@ -90,7 +120,14 @@ export default function ItemDetails() {
                 <CardTitle>{data.getItem.name}</CardTitle>
                 <CardAction>
                   <Dialog open={open} onOpenChange={handleOpenChange}>
-                    <Button variant="ghost" size="icon-lg" className="rounded-full" onClick={handleOpen}>
+                    <Button
+                      variant="ghost"
+                      size="icon-lg"
+                      className="rounded-full"
+                      disabled={deletion.blocked}
+                      aria-label={t('edit')}
+                      onClick={handleOpen}
+                    >
                       <Edit />
                     </Button>
                     {open && (
@@ -100,8 +137,13 @@ export default function ItemDetails() {
                       variant="ghost"
                       size="icon-lg"
                       className="rounded-full"
-                      disabled={deletion.blocked}
-                      onClick={handleDelete}
+                      disabled={deletion.pending}
+                      aria-label={t('delete_target', { name: data.getItem.name })}
+                      onClick={() => {
+                        if (!deletion.blocked && data.getItem)
+                          setTarget({ id: data.getItem.id, name: data.getItem.name });
+                        setConfirmOpen(true);
+                      }}
                     >
                       <Delete />
                     </Button>

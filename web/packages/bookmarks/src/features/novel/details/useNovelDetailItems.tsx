@@ -13,7 +13,7 @@ import { Link } from 'react-router';
 import { format } from 'time';
 import { match, P } from 'ts-pattern';
 import AddCollection from './components/AddCollection';
-import { Button } from 'ui/components/button';
+import { Button, buttonVariants } from 'ui/components/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from 'ui/components/tooltip';
 import { Badge } from 'ui/components/badge';
 import { X } from 'lucide-react';
@@ -43,7 +43,7 @@ const DeleteCollectionForNovel = graphql(`
 `);
 export default function useNovelDetailItems(data: GetNovelQuery | undefined, refetch: () => void) {
   const client = useApolloClient();
-  const write = useBookmarkWrite('/bookmarks/novel');
+  const write = useBookmarkWrite('/bookmarks');
   const [deleteCollectionForNovel] = useMutation(DeleteCollectionForNovel);
 
   const t = useI18n();
@@ -57,9 +57,12 @@ export default function useNovelDetailItems(data: GetNovelQuery | undefined, ref
               {
                 label: t('author'),
                 value: data.author ? (
-                  <Button variant="link" className="text-foreground w-fit px-0 text-left">
-                    <Link to={`/bookmarks/authors/${data.author.id}`}>{data.author.name}</Link>
-                  </Button>
+                  <Link
+                    to={`/bookmarks/authors/${data.author.id}`}
+                    className={buttonVariants({ variant: 'link', className: 'text-foreground w-fit px-0 text-left' })}
+                  >
+                    {data.author.name}
+                  </Link>
                 ) : (
                   '-'
                 ),
@@ -120,6 +123,8 @@ export default function useNovelDetailItems(data: GetNovelQuery | undefined, ref
                         <TooltipTrigger render={<Badge variant="secondary" />}>
                           <Link to={`/bookmarks/collections?parentId=${id}`}>{name}</Link>
                           <Button
+                            aria-label={t('remove_association', { name })}
+                            disabled={write.blocked}
                             variant="ghost"
                             size="icon-sm"
                             className="data-[state=open]:bg-muted size-6 rounded-full"

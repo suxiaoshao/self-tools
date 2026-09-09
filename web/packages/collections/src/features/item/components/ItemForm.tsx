@@ -1,7 +1,7 @@
 import { useWriteAction, WriteNotice, rejectionFieldErrors, type WriteOutcome } from 'custom-graphql';
 import { Edit as EditIcon, View } from 'lucide-react';
 import { useI18n } from 'i18n';
-import { useRef, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import { Controller, type SubmitHandler, useForm } from 'react-hook-form';
 import { match } from 'ts-pattern';
 import CustomEdit from 'edit/form';
@@ -9,7 +9,7 @@ import Markdown from 'markdown';
 import { CollectionMultiSelect } from '@collections/entities/collection';
 import { DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from 'ui/components/dialog';
 import { Button } from 'ui/components/button';
-import { FieldGroup, FieldLabel, Field } from 'ui/components/field';
+import { FieldError, FieldGroup, FieldLabel, Field } from 'ui/components/field';
 import { Input } from 'ui/components/input';
 import { ToggleGroup, ToggleGroupItem } from 'ui/components/toggle-group';
 
@@ -33,6 +33,7 @@ type ItemFormProps = { handleClose: () => void } & (
 
 /** Mount once per dialog session, after the required content has loaded. */
 export default function ItemForm(props: ItemFormProps) {
+  const formId = useId();
   const { mode, initialValues, handleClose, checkResult } = props;
   const {
     handleSubmit,
@@ -85,10 +86,24 @@ export default function ItemForm(props: ItemFormProps) {
       <div className="min-h-0 overflow-y-auto">
         <fieldset disabled={action.blocked}>
           <FieldGroup className="w-full">
-            <Field>
-              <FieldLabel>{t('item_name')}</FieldLabel>
-              <Input aria-invalid={!!errors.name} required {...register('name', { required: true })} />
-              {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
+            <Field data-invalid={!!errors.name}>
+              <FieldLabel htmlFor={`${formId}-name`}>{t('item_name')}</FieldLabel>
+              <Input
+                id={`${formId}-name`}
+                aria-describedby={errors.name ? `${formId}-name-error` : undefined}
+                aria-invalid={!!errors.name}
+                required
+                {...register('name', { required: t('request_required') })}
+              />
+              <FieldError
+                id={`${formId}-name-error`}
+                errors={[
+                  errors.name && {
+                    ...errors.name,
+                    message: errors.name?.type === 'required' ? t('request_required') : errors.name.message,
+                  },
+                ]}
+              />
             </Field>
             {mode === 'create' && (
               <Field>
@@ -107,27 +122,31 @@ export default function ItemForm(props: ItemFormProps) {
             <Controller
               control={control}
               name="content"
-              rules={{ required: true }}
+              rules={{ required: t('request_required') }}
               render={({ field }) => (
-                <Field>
-                  <FieldLabel className="w-full flex items-center justify-between">
-                    <span>{t('content')}</span>
+                <Field data-invalid={!!errors.content}>
+                  <div className="w-full flex items-center justify-between">
+                    <FieldLabel id={`${formId}-content-label`}>{t('content')}</FieldLabel>
                     <ToggleGroup
                       variant="outline"
                       value={[alignment]}
                       onValueChange={(newAlignment) => handleAlignment(newAlignment[0] ?? 'edit')}
                     >
-                      <ToggleGroupItem value="edit">
+                      <ToggleGroupItem value="edit" aria-label={t('edit')}>
                         <EditIcon />
                       </ToggleGroupItem>
-                      <ToggleGroupItem value="preview">
+                      <ToggleGroupItem value="preview" aria-label={t('preview')}>
                         <View />
                       </ToggleGroupItem>
                     </ToggleGroup>
-                  </FieldLabel>
+                  </div>
                   {match(alignment)
                     .with('edit', () => (
                       <CustomEdit
+                        aria-label={t('content')}
+                        aria-labelledby={`${formId}-content-label`}
+                        aria-invalid={!!errors.content}
+                        aria-describedby={errors.content ? `${formId}-content-error` : undefined}
                         wordWrap="on"
                         className="w-full h-[500px] rounded-lg"
                         language="markdown"
@@ -138,6 +157,15 @@ export default function ItemForm(props: ItemFormProps) {
                     .otherwise(() => (
                       <Markdown className="w-full overflow-y-auto h-[500px]" value={field.value ?? ''} />
                     ))}
+                  <FieldError
+                    id={`${formId}-content-error`}
+                    errors={[
+                      errors.content && {
+                        ...errors.content,
+                        message: errors.content?.type === 'required' ? t('request_required') : errors.content.message,
+                      },
+                    ]}
+                  />
                 </Field>
               )}
             />
@@ -145,6 +173,7 @@ export default function ItemForm(props: ItemFormProps) {
         </fieldset>
       </div>
       <WriteNotice
+        fieldLabels={{ name: t('item_name'), content: t('content'), collectionIds: t('match_collections') }}
         outcome={action.outcome}
         pending={action.pending}
         viewHref="/collections/collections"

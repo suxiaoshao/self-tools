@@ -101,7 +101,7 @@ Item 创建将名称、正文和初始集合关联一次提交；编辑只修改
 ## shadcn/ui 与样式所有权
 
 共享源码与 shadcn 配置位于 `common/ui/`，组件通过 `ui/components/*` 公开，工具通过
-`ui/lib/utils`、主题通过 `ui/theme`、编辑器与 Markdown 共用字体通过 `ui/fonts.css` 公开。组件目录的受限 subpath pattern 供 CLI 定位；不公开
+`ui/lib/utils`、主题通过 `ui/theme`、确认视图通过 `ui/confirmation-dialog`、基础文案通过 `ui/locale`、编辑器与 Markdown 共用字体通过 `ui/fonts.css` 公开。组件目录的受限 subpath pattern 供 CLI 定位；不公开
 `src/*`、私有 hooks 或其他内部目录。UI 包使用 `#components/*`、`#hooks/*`、`#lib/*` 作为内部 CLI alias。
 `packages/portal/components.json` 指向共享 UI，应用全局 CSS 仍为 `packages/portal/src/styles/globals.css`，
 页面尺寸 CSS 归 portal。主题运行时归 ui，菜单表单归 portal；i18n 仅拥有语言运行时与资源。
@@ -109,6 +109,12 @@ Item 创建将名称、正文和初始集合关联一次提交；编辑只修改
 两份 components.json 的 style / iconLibrary / baseColor 保持一致。从 portal 执行
 `pnpm dlx shadcn@latest info --json` 或 `add <component> --dry-run` 检查实际目标路径，再处理需要的源码。
 这些组件是仓库拥有并可定制的源码，不应把 registry 版本视为可以无差别覆盖的副本。
+
+删除确认只负责展示、焦点和关闭约束；各 feature 保有固定目标、写入结果与只读核对。
+确认提交期间不能关闭或重发；未知结果关闭后重新打开仍能核对。操作列若依赖当前状态，
+使用 display cell，避免 TanStack accessor 的值缓存保留旧闭包。删除影响说明按领域级联行为提供。
+UI 不依赖 i18n，portal 用 UiLocaleProvider 注入通用文案；业务字段、确认影响和公共错误仍由各自所有者翻译。
+表单使用已有 RHF / Valibot 规则、本地化 FieldError 与关联标签；受控校验使用 noValidate。
 
 Tailwind 的源码扫描根目录由 `globals.css` 的 `source()` 显式指定为 `web/`，覆盖业务包和共享包；
 不依赖启动命令的工作目录，也不使用 Vite 插件不支持的 `base` 选项。

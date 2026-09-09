@@ -22,7 +22,7 @@ import CollectionActions from './components/CollectionActions';
 import { useTitle } from 'hooks';
 import { graphql } from '@bookmarks/gql/index';
 import { useQuery } from '@apollo/client/react';
-import { Button } from 'ui/components/button';
+import { Button, buttonVariants } from 'ui/components/button';
 
 const GetCollections = graphql(`
   query getCollections($parentId: Int, $pagination: Pagination!) {
@@ -75,9 +75,12 @@ export default function Collections() {
       [
         columnHelper.accessor(
           ({ name, id }) => (
-            <Button variant="link" className="text-foreground w-fit px-0 text-left">
-              <Link to={{ search: createSearchParams({ parentId: id.toString() }).toString() }}>{name}</Link>
-            </Button>
+            <Link
+              to={{ search: createSearchParams({ parentId: id.toString() }).toString() }}
+              className={buttonVariants({ variant: 'link', className: 'text-foreground w-fit px-0 text-left' })}
+            >
+              {name}
+            </Link>
           ),
           {
             header: t('name'),
@@ -123,7 +126,7 @@ export default function Collections() {
       <AncestorsPath />
       <div className="flex flex-[0_0_auto] mb-4">
         <CreateCollectionButton refetch={allRefetch} />
-        <Button variant="ghost" size="icon" className="ml-auto" onClick={() => refetch()}>
+        <Button variant="ghost" size="icon" className="ml-auto" onClick={() => refetch()} aria-label={t('refresh')}>
           <RefreshCcw />
         </Button>
       </div>

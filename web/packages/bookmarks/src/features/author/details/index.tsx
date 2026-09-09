@@ -129,11 +129,11 @@ export default function AuthorDetails() {
       {!loading && data?.getAuthor === null && !hasQueryFailure(error, ['getAuthor']) && <p>{t('request_missing')}</p>}
       {write.notice}
       <div className="flex w-full">
-        <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+        <Button variant="ghost" size="icon" onClick={() => navigate(-1)} aria-label={t('back')}>
           <ChevronLeft />
         </Button>
         <div className="grow" />
-        <Button variant="ghost" size="icon" onClick={handleRefresh}>
+        <Button variant="ghost" size="icon" onClick={handleRefresh} aria-label={t('refresh')}>
           <RefreshCcw />
         </Button>
       </div>
@@ -143,7 +143,7 @@ export default function AuthorDetails() {
             <Item className="pt-0 px-6">
               <ItemMedia>
                 <Avatar className="size-10">
-                  <AvatarImage src={getImageUrl(data.getAuthor.avatar)} />
+                  <AvatarImage alt="" src={getImageUrl(data.getAuthor.avatar)} />
                   <AvatarFallback>{data.getAuthor.name[0]}</AvatarFallback>
                 </Avatar>
               </ItemMedia>
@@ -155,6 +155,7 @@ export default function AuthorDetails() {
                   <TooltipTrigger
                     render={
                       <Button
+                        aria-label={t('update_by_crawler')}
                         variant="ghost"
                         size="icon"
                         disabled={write.blocked || updateLoading}
@@ -167,7 +168,16 @@ export default function AuthorDetails() {
                   <TooltipContent>{t('update_by_crawler')}</TooltipContent>
                 </Tooltip>
                 <Tooltip>
-                  <TooltipTrigger render={<Button variant="ghost" size="icon" onClick={goToSourceSite} />}>
+                  <TooltipTrigger
+                    render={
+                      <Button
+                        aria-label={t('go_to_source_site')}
+                        variant="ghost"
+                        size="icon"
+                        onClick={goToSourceSite}
+                      />
+                    }
+                  >
                     <SquareArrowOutUpRight />
                   </TooltipTrigger>
                   <TooltipContent>{t('go_to_source_site')}</TooltipContent>
@@ -183,7 +193,7 @@ export default function AuthorDetails() {
                   <Item className="pt-0 px-6">
                     <ItemMedia>
                       <Avatar className="size-10">
-                        <AvatarImage src={getImageUrl(avatar)} />
+                        <AvatarImage alt="" src={getImageUrl(avatar)} />
                         <AvatarFallback>{name[0]}</AvatarFallback>
                       </Avatar>
                     </ItemMedia>
@@ -219,7 +229,14 @@ export default function AuthorDetails() {
                     <ItemActions>
                       <Tooltip>
                         <TooltipTrigger
-                          render={<Button variant="ghost" size="icon" onClick={() => window.open(url, '_blank')} />}
+                          render={
+                            <Button
+                              aria-label={t('go_to_source_site')}
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => window.open(url, '_blank')}
+                            />
+                          }
                         >
                           <SquareArrowOutUpRight />
                         </TooltipTrigger>
