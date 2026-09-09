@@ -5,8 +5,6 @@ use super::schema::{
 use crate::errors::AppResult;
 use diesel::prelude::*;
 
-use service_query::TagFilter;
-use std::collections::HashSet;
 use time::OffsetDateTime;
 
 #[derive(Insertable)]
@@ -33,7 +31,8 @@ impl NewNovel<'_> {
     }
 }
 
-#[derive(Queryable)]
+#[derive(Queryable, QueryableByName)]
+#[diesel(table_name = novel)]
 pub(in crate::application) struct NovelModel {
     pub(in crate::application) id: i64,
     pub(in crate::application) name: String,
@@ -43,7 +42,8 @@ pub(in crate::application) struct NovelModel {
     pub(in crate::application) novel_status: NovelStatus,
     pub(in crate::application) site: NovelSite,
     pub(in crate::application) site_id: String,
-    pub(in crate::application) tags: Vec<i64>,
+    #[diesel(column_name = tags)]
+    _tags: Vec<i64>,
     pub(in crate::application) create_time: OffsetDateTime,
     pub(in crate::application) update_time: OffsetDateTime,
 }
@@ -65,49 +65,6 @@ impl NovelModel {
         let exists = diesel::select(diesel::dsl::exists(novel::table.filter(novel::id.eq(id))))
             .get_result(conn)?;
         Ok(exists)
-    }
-}
-
-/// collection_id 相关
-impl NovelModel {
-    /// 查询小说
-    pub(in crate::application) fn query(
-        tag_match: Option<TagFilter>,
-        novel_status: Option<NovelStatus>,
-        conn: &mut PgConnection,
-    ) -> AppResult<Vec<Self>> {
-        // 获取数据
-        let data = match novel_status {
-            Some(novel_status) => novel::table
-                .filter(novel::novel_status.eq(novel_status))
-                .load::<Self>(conn)?,
-            None => novel::table.load(conn)?,
-        };
-        // 若 tag_match 为 None 则直接返回
-        let TagFilter {
-            full_match,
-            match_set,
-        } = match tag_match {
-            Some(value) => value,
-            None => return Ok(data),
-        };
-        // match_set 为空则直接返回
-        if match_set.is_empty() {
-            return Ok(data);
-        }
-        let data = if full_match {
-            data.into_iter()
-                .filter(|NovelModel { tags, .. }| {
-                    let tags = tags.iter().cloned().collect::<HashSet<_>>();
-                    match_set.is_subset(&tags)
-                })
-                .collect()
-        } else {
-            data.into_iter()
-                .filter(|NovelModel { tags, .. }| tags.iter().any(|x| match_set.contains(x)))
-                .collect()
-        };
-        Ok(data)
     }
 }
 

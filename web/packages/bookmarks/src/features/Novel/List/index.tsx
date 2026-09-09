@@ -54,7 +54,6 @@ const GetNovels = graphql(`
         description
         createTime
         updateTime
-        description
         novelStatus
         avatar
         site

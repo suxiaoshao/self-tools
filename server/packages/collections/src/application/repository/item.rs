@@ -7,7 +7,8 @@ use super::schema::item;
 use diesel::prelude::*;
 use time::OffsetDateTime;
 
-#[derive(Queryable)]
+#[derive(Queryable, QueryableByName)]
+#[diesel(table_name = item)]
 #[cfg_attr(test, derive(Debug))]
 pub(in crate::application) struct ItemModel {
     pub(in crate::application) id: i64,
@@ -115,6 +116,7 @@ impl ItemModel {
                 let data = item::table
                     .inner_join(collection_item::table)
                     .filter(collection_item::collection_id.eq(collection_id))
+                    .order(item::id.asc())
                     .offset(offset)
                     .limit(limit)
                     .load::<(ItemModel, (i64, i64))>(conn)?;
@@ -125,6 +127,7 @@ impl ItemModel {
                     .inner_join(collection_item::table)
                     .filter(collection_item::collection_id.eq(collection_id))
                     .filter(item::update_time.between(update_time.start(), update_time.end()))
+                    .order(item::id.asc())
                     .offset(offset)
                     .limit(limit)
                     .load::<(ItemModel, (i64, i64))>(conn)?;
@@ -135,6 +138,7 @@ impl ItemModel {
                     .inner_join(collection_item::table)
                     .filter(collection_item::collection_id.eq(collection_id))
                     .filter(item::create_time.between(create_time.start(), create_time.end()))
+                    .order(item::id.asc())
                     .offset(offset)
                     .limit(limit)
                     .load::<(ItemModel, (i64, i64))>(conn)?;
@@ -146,6 +150,7 @@ impl ItemModel {
                     .filter(collection_item::collection_id.eq(collection_id))
                     .filter(item::create_time.between(create_time.start(), create_time.end()))
                     .filter(item::update_time.between(update_time.start(), update_time.end()))
+                    .order(item::id.asc())
                     .offset(offset)
                     .limit(limit)
                     .load::<(ItemModel, (i64, i64))>(conn)?;
@@ -204,6 +209,7 @@ impl ItemModel {
 /// all
 impl ItemModel {
     /// all
+    #[cfg(test)]
     pub fn all(conn: &mut PgConnection) -> AppResult<Vec<Self>> {
         let items = item::table.load(conn)?;
         Ok(items)

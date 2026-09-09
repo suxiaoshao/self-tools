@@ -4,7 +4,6 @@ mod item;
 mod repository;
 #[cfg(test)]
 mod tests;
-mod utils;
 
 use crate::errors::*;
 pub(crate) use collection::Collection;
@@ -89,18 +88,7 @@ impl Application {
             .run("get_item", move |c| detail(Item::get(id, c)))
             .await
     }
-    pub(crate) async fn ancestors(&self, id: i64) -> AppResult<Vec<Collection>> {
-        self.database
-            .run("collection_ancestors", move |c| {
-                Collection::get_ancestors(id, c)
-            })
-            .await
-    }
-    pub(crate) async fn item_collections(&self, id: i64) -> AppResult<Vec<Collection>> {
-        self.database
-            .run("item_collections", move |c| Item::collections(id, c))
-            .await
-    }
+
     pub(crate) async fn create_collection(
         &self,
         name: String,
@@ -186,15 +174,10 @@ impl Application {
     ) -> AppResult<(Vec<Item>, i64)> {
         self.database
             .run("query_items", move |c| {
-                let data = Item::query(filter, c)?;
-                let total = data.len() as i64;
-                Ok((
-                    data.into_iter()
-                        .skip(page.offset() as usize)
-                        .take(page.limit() as usize)
-                        .collect(),
-                    total,
-                ))
+                c.build_transaction()
+                    .read_only()
+                    .repeatable_read()
+                    .run(|c| repository::query::page(filter, page, c))
             })
             .await
     }
@@ -204,59 +187,64 @@ impl Application {
     ) -> AppResult<(Vec<ItemAndCollection>, i64)> {
         self.database
             .run("collection_and_item", move |c| {
-                let CollectionItemQuery {
-                    id,
-                    create_time,
-                    update_time,
-                    pagination,
-                } = query;
-                if let Some(id) = id {
-                    validate_id(id, "query.id")?;
-                    if !CollectionModel::exists(id, c)? {
-                        return Err(missing(ResourceKind::Collection, id));
-                    }
-                }
-                let collections =
-                    CollectionModel::get_count_by_parent(id, create_time, update_time, c)?;
-                let items = match id {
-                    Some(id) => ItemModel::count(id, create_time, update_time, c)?,
-                    None => 0,
-                };
-                let offset = pagination.offset();
-                let limit = pagination.limit();
-                let mut data = Vec::new();
-                if offset < collections {
-                    data.extend(
-                        CollectionModel::list_parent_with_page(
+                c.build_transaction()
+                    .read_only()
+                    .repeatable_read()
+                    .run(|c| {
+                        let CollectionItemQuery {
                             id,
                             create_time,
                             update_time,
-                            offset,
-                            limit.min(collections - offset),
-                            c,
-                        )?
-                        .into_iter()
-                        .map(|v| ItemAndCollection::Collection(v.into())),
-                    );
-                }
-                let remaining = limit - data.len() as i64;
-                if remaining > 0
-                    && let Some(id) = id
-                {
-                    data.extend(
-                        ItemModel::query(
-                            id,
-                            create_time,
-                            update_time,
-                            (offset - collections).max(0),
-                            remaining,
-                            c,
-                        )?
-                        .into_iter()
-                        .map(|v| ItemAndCollection::Item(v.into())),
-                    );
-                }
-                Ok((data, collections + items))
+                            pagination,
+                        } = query;
+                        if let Some(id) = id {
+                            validate_id(id, "query.id")?;
+                            if !CollectionModel::exists(id, c)? {
+                                return Err(missing(ResourceKind::Collection, id));
+                            }
+                        }
+                        let collections =
+                            CollectionModel::get_count_by_parent(id, create_time, update_time, c)?;
+                        let items = match id {
+                            Some(id) => ItemModel::count(id, create_time, update_time, c)?,
+                            None => 0,
+                        };
+                        let offset = pagination.offset();
+                        let limit = pagination.limit();
+                        let mut data = Vec::new();
+                        if offset < collections {
+                            data.extend(
+                                CollectionModel::list_parent_with_page(
+                                    id,
+                                    create_time,
+                                    update_time,
+                                    offset,
+                                    limit.min(collections - offset),
+                                    c,
+                                )?
+                                .into_iter()
+                                .map(|v| ItemAndCollection::Collection(v.into())),
+                            );
+                        }
+                        let remaining = limit - data.len() as i64;
+                        if remaining > 0
+                            && let Some(id) = id
+                        {
+                            data.extend(
+                                ItemModel::query(
+                                    id,
+                                    create_time,
+                                    update_time,
+                                    (offset - collections).max(0),
+                                    remaining,
+                                    c,
+                                )?
+                                .into_iter()
+                                .map(|v| ItemAndCollection::Item(v.into())),
+                            );
+                        }
+                        Ok((data, collections + items))
+                    })
             })
             .await
     }
@@ -269,3 +257,5 @@ fn detail<T>(result: AppResult<T>) -> AppResult<Option<T>> {
         Err(error) => Err(error),
     }
 }
+
+pub(crate) mod read;

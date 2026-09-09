@@ -20,6 +20,7 @@ impl DraftAuthorInfo {
     async fn image(&self) -> String {
         self.0.image.clone()
     }
+    #[graphql(complexity = "graphql_common::cost::list_cost(child_complexity)")]
     async fn novels(&self, ctx: &Context<'_>) -> Result<Vec<DraftNovelInfo>> {
         application(ctx)?
             .draft_author_novels(&self.0)
@@ -49,6 +50,7 @@ impl DraftNovelInfo {
     async fn image(&self) -> String {
         self.0.image.clone()
     }
+    #[graphql(complexity = "graphql_common::cost::list_cost(child_complexity)")]
     async fn chapters(&self) -> Vec<DraftChapterInfo> {
         self.0
             .chapters
@@ -73,6 +75,7 @@ impl DraftNovelInfo {
     async fn site(&self) -> NovelSite {
         self.0.site.into()
     }
+    #[graphql(complexity = "graphql_common::cost::list_cost(child_complexity)")]
     async fn tags(&self) -> Vec<DraftTagInfo> {
         self.0.tags.iter().cloned().map(DraftTagInfo).collect()
     }

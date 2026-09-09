@@ -6,7 +6,8 @@ use crate::errors::AppResult;
 use diesel::prelude::*;
 use time::OffsetDateTime;
 
-#[derive(Queryable)]
+#[derive(Queryable, QueryableByName)]
+#[diesel(table_name = author)]
 pub(in crate::application) struct AuthorModel {
     pub(in crate::application) id: i64,
     pub(in crate::application) name: String,
@@ -70,7 +71,11 @@ impl AuthorModel {
         limit: i64,
         conn: &mut PgConnection,
     ) -> AppResult<Vec<Self>> {
-        let authors = author::table.offset(offset).limit(limit).load(conn)?;
+        let authors = author::table
+            .order(author::id.asc())
+            .offset(offset)
+            .limit(limit)
+            .load(conn)?;
         Ok(authors)
     }
     /// 获取所有作者
@@ -97,6 +102,7 @@ impl AuthorModel {
     ) -> AppResult<Vec<Self>> {
         let authors = author::table
             .filter(author::name.like(format!("%{search_name}%")))
+            .order(author::id.asc())
             .offset(offset)
             .limit(limit)
             .load(conn)?;

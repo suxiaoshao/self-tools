@@ -38,7 +38,6 @@ const GetAuthors = graphql(`
         updateTime
         avatar
         description
-        url
       }
       total
     }

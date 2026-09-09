@@ -40,10 +40,14 @@ impl NewNovelComment<'_> {
     }
 }
 
-#[derive(Queryable)]
+#[derive(Queryable, QueryableByName)]
+#[diesel(table_name = novel_comment)]
 pub(in crate::application) struct NovelCommentModel {
+    #[diesel(column_name = id)]
     _id: i64,
+    #[diesel(column_name = novel_id)]
     _novel_id: i64,
+    #[diesel(column_name = author_id)]
     _author_id: i64,
     pub(in crate::application) content: String,
     pub(in crate::application) create_time: OffsetDateTime,
@@ -52,20 +56,6 @@ pub(in crate::application) struct NovelCommentModel {
 
 // novel id
 impl NovelCommentModel {
-    pub(in crate::application) fn find_by_novel_id(
-        novel_id: i64,
-        conn: &mut PgConnection,
-    ) -> AppResult<Option<Self>> {
-        use crate::application::repository::schema::novel_comment;
-        let comment = novel_comment::table
-            .filter(novel_comment::novel_id.eq(novel_id))
-            .first(conn);
-        match comment {
-            Ok(id) => Ok(Some(id)),
-            Err(diesel::NotFound) => Ok(None),
-            Err(err) => Err(err.into()),
-        }
-    }
     pub(in crate::application) fn exist_by_novel_id(
         novel_id: i64,
         conn: &mut PgConnection,

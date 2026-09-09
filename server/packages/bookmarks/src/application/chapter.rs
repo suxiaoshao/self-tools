@@ -1,9 +1,5 @@
 use super::NovelSite;
 
-use diesel::PgConnection;
-
-use crate::errors::AppResult;
-
 pub(crate) struct Chapter {
     pub(crate) id: i64,
     pub(crate) title: String,
@@ -40,21 +36,5 @@ impl Chapter {
             site_novel_id,
             is_read: value.is_read,
         }
-    }
-}
-
-/// 小说相关
-impl Chapter {
-    pub(super) fn get_by_novel_id(
-        novel_id: i64,
-        site_novel_id: &str,
-        conn: &mut PgConnection,
-    ) -> AppResult<Vec<Self>> {
-        let chapters =
-            crate::application::repository::chapter::ChapterModel::get_by_novel_id(novel_id, conn)?;
-        Ok(chapters
-            .into_iter()
-            .map(|x| Chapter::from(x, site_novel_id.to_owned()))
-            .collect())
     }
 }

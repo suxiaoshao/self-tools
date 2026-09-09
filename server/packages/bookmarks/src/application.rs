@@ -12,7 +12,6 @@ mod novel;
 mod novel_comment;
 mod save_draft;
 mod tag;
-mod utils;
 
 /// All writes share a short transaction lock because several domain relationships lack FKs.
 /// External fetching happens before this lock. Reads remain concurrent.
@@ -288,109 +287,7 @@ impl Application {
             .run("get_collection", move |c| detail(Collection::get(id, c)))
             .await
     }
-    pub(crate) async fn get_author(&self, id: i64) -> AppResult<Option<Author>> {
-        self.database
-            .run("get_author", move |c| detail(Author::get(id, c)))
-            .await
-    }
-    pub(crate) async fn get_novel(&self, id: i64) -> AppResult<Option<Novel>> {
-        self.database
-            .run("get_novel", move |c| detail(Novel::get(id, c)))
-            .await
-    }
-    pub(crate) async fn author_novels(&self, id: i64) -> AppResult<Vec<Novel>> {
-        self.database
-            .run("author_novels", move |c| {
-                Ok(repository::novel::NovelModel::query_by_author_id(id, c)?
-                    .into_iter()
-                    .map(Into::into)
-                    .collect())
-            })
-            .await
-    }
-    pub(crate) async fn ancestors(&self, id: i64) -> AppResult<Vec<Collection>> {
-        self.database
-            .run("ancestors", move |c| Collection::get_ancestors(id, c))
-            .await
-    }
-    pub(crate) async fn children(&self, id: i64) -> AppResult<Vec<Collection>> {
-        self.database
-            .run("children", move |c| {
-                Collection::get_list_parent_id(Some(id), c)
-            })
-            .await
-    }
-    pub(crate) async fn tags_by_ids(&self, ids: Vec<i64>) -> AppResult<Vec<Tag>> {
-        self.database
-            .run("tags_by_ids", move |c| Tag::get_by_ids(&ids, c))
-            .await
-    }
-    pub(crate) async fn novel_chapters(&self, id: i64, site_id: String) -> AppResult<Vec<Chapter>> {
-        self.database
-            .run("novel_chapters", move |c| {
-                Chapter::get_by_novel_id(id, &site_id, c)
-            })
-            .await
-    }
-    pub(crate) async fn novel_collections(&self, id: i64) -> AppResult<Vec<Collection>> {
-        self.database
-            .run("novel_collections", move |c| {
-                Collection::many_by_novel_id(id, c)
-            })
-            .await
-    }
-    pub(crate) async fn novel_word_count(&self, id: i64) -> AppResult<bigdecimal::BigDecimal> {
-        self.database
-            .run("novel_word_count", move |c| {
-                repository::chapter::ChapterModel::get_word_count_by_novel_id(id, c)
-            })
-            .await
-    }
-    pub(crate) async fn novel_read_percentage(&self, id: i64) -> AppResult<f64> {
-        self.database
-            .run("novel_read_percentage", move |c| {
-                repository::read_record::ReadRecordModel::read_percentage_by_novel_id(id, c)
-            })
-            .await
-    }
-    pub(crate) async fn novel_comments(&self, id: i64) -> AppResult<Option<NovelComment>> {
-        self.database
-            .run("novel_comments", move |c| {
-                Ok(
-                    repository::novel_comment::NovelCommentModel::find_by_novel_id(id, c)?
-                        .map(Into::into),
-                )
-            })
-            .await
-    }
-    pub(crate) async fn first_chapter(
-        &self,
-        id: i64,
-        site_id: String,
-    ) -> AppResult<Option<Chapter>> {
-        self.database
-            .run("first_chapter", move |c| {
-                Ok(
-                    repository::chapter::ChapterModel::get_first_chapter_by_novel_id(id, c)?
-                        .map(|v| Chapter::from(v, site_id)),
-                )
-            })
-            .await
-    }
-    pub(crate) async fn last_chapter(
-        &self,
-        id: i64,
-        site_id: String,
-    ) -> AppResult<Option<Chapter>> {
-        self.database
-            .run("last_chapter", move |c| {
-                Ok(
-                    repository::chapter::ChapterModel::get_last_chapter_by_novel_id(id, c)?
-                        .map(|v| Chapter::from(v, site_id)),
-                )
-            })
-            .await
-    }
+
     pub(crate) async fn query_collections(
         &self,
         parent_id: Option<i64>,
@@ -398,18 +295,25 @@ impl Application {
     ) -> AppResult<(Vec<Collection>, i64)> {
         self.database
             .run("query_collections", move |c| {
-                if let Some(id) = parent_id {
-                    validate_id(id, "parentId")?;
-                    Collection::get(id, c)?;
-                }
-                let total = repository::collection::CollectionModel::get_count(parent_id, c)?;
-                let data = repository::collection::CollectionModel::list_by_parent_with_page(
-                    parent_id,
-                    page.offset(),
-                    page.limit(),
-                    c,
-                )?;
-                Ok((data.into_iter().map(Into::into).collect(), total))
+                c.build_transaction()
+                    .read_only()
+                    .repeatable_read()
+                    .run(|c| {
+                        if let Some(id) = parent_id {
+                            validate_id(id, "parentId")?;
+                            Collection::get(id, c)?;
+                        }
+                        let total =
+                            repository::collection::CollectionModel::get_count(parent_id, c)?;
+                        let data =
+                            repository::collection::CollectionModel::list_by_parent_with_page(
+                                parent_id,
+                                page.offset(),
+                                page.limit(),
+                                c,
+                            )?;
+                        Ok((data.into_iter().map(Into::into).collect(), total))
+                    })
             })
             .await
     }
@@ -420,28 +324,44 @@ impl Application {
     ) -> AppResult<(Vec<Author>, i64)> {
         self.database
             .run("query_authors", move |c| {
-                use repository::author::AuthorModel;
-                let (data, total) = match search_name.filter(|s| !s.is_empty()) {
-                    Some(name) => (
-                        AuthorModel::search_list_with_page(&name, page.offset(), page.limit(), c)?,
-                        AuthorModel::get_search_count(&name, c)?,
-                    ),
-                    None => (
-                        AuthorModel::list_with_page(page.offset(), page.limit(), c)?,
-                        AuthorModel::get_count(c)?,
-                    ),
-                };
-                Ok((data.into_iter().map(Into::into).collect(), total))
+                c.build_transaction()
+                    .read_only()
+                    .repeatable_read()
+                    .run(|c| {
+                        use repository::author::AuthorModel;
+                        let (data, total) = match search_name.filter(|s| !s.is_empty()) {
+                            Some(name) => (
+                                AuthorModel::search_list_with_page(
+                                    &name,
+                                    page.offset(),
+                                    page.limit(),
+                                    c,
+                                )?,
+                                AuthorModel::get_search_count(&name, c)?,
+                            ),
+                            None => (
+                                AuthorModel::list_with_page(page.offset(), page.limit(), c)?,
+                                AuthorModel::get_count(c)?,
+                            ),
+                        };
+                        Ok((data.into_iter().map(Into::into).collect(), total))
+                    })
             })
             .await
     }
     pub(crate) async fn query_tags(&self, page: PageRange) -> AppResult<(Vec<Tag>, i64)> {
         self.database
             .run("query_tags", move |c| {
-                use repository::tag::TagModel;
-                let total = TagModel::count(c)?;
-                let data = TagModel::get_list_by_pagination(page.offset(), page.limit(), c)?;
-                Ok((data.into_iter().map(Into::into).collect(), total))
+                c.build_transaction()
+                    .read_only()
+                    .repeatable_read()
+                    .run(|c| {
+                        use repository::tag::TagModel;
+                        let total = TagModel::count(c)?;
+                        let data =
+                            TagModel::get_list_by_pagination(page.offset(), page.limit(), c)?;
+                        Ok((data.into_iter().map(Into::into).collect(), total))
+                    })
             })
             .await
     }
@@ -454,15 +374,10 @@ impl Application {
     ) -> AppResult<(Vec<Novel>, i64)> {
         self.database
             .run("query_novels", move |c| {
-                let data = Novel::query(collections, tags, status, c)?;
-                let total = data.len() as i64;
-                Ok((
-                    data.into_iter()
-                        .skip(page.offset() as usize)
-                        .take(page.limit() as usize)
-                        .collect(),
-                    total,
-                ))
+                c.build_transaction()
+                    .read_only()
+                    .repeatable_read()
+                    .run(|c| repository::query::page(collections, tags, status, page, c))
             })
             .await
     }
@@ -474,3 +389,5 @@ fn detail<T>(result: AppResult<T>) -> AppResult<Option<T>> {
         Err(error) => Err(error),
     }
 }
+
+pub(crate) mod read;

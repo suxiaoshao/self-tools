@@ -148,9 +148,11 @@ pub(super) async fn run(pool: PgPool) {
     assert!(app.database_ready().await);
     let novel = app.save_draft_novel(input).await.unwrap();
     let original = app
-        .novel_chapters(novel.id, novel.site_id.clone())
+        .batch_chapters(vec![novel.id])
         .await
         .unwrap()
+        .remove(&novel.id)
+        .unwrap_or_default()
         .remove(0);
     app.add_read_records_for_chapter(novel.id, vec![original.id])
         .await
@@ -204,9 +206,11 @@ pub(super) async fn run(pool: PgPool) {
     assert_eq!(refreshed.name, "refreshed");
     assert_eq!(refreshed.novel_status, NovelStatus::Paused);
     let chapters = app
-        .novel_chapters(novel.id, novel.site_id.clone())
+        .batch_chapters(vec![novel.id])
         .await
-        .unwrap();
+        .unwrap()
+        .remove(&novel.id)
+        .unwrap_or_default();
     assert_eq!(chapters.len(), 2);
     assert_eq!(chapters[0].id, original.id);
     assert!(chapters[0].is_read);
@@ -221,13 +225,20 @@ pub(super) async fn run(pool: PgPool) {
     }
     assert!(app.refresh_novel(novel.id).await.is_err());
     assert_eq!(
-        app.get_novel(novel.id).await.unwrap().unwrap().name,
+        app.batch_novels(vec![novel.id])
+            .await
+            .unwrap()
+            .remove(&novel.id)
+            .unwrap()
+            .name,
         "refreshed"
     );
     assert_eq!(
-        app.novel_chapters(novel.id, novel.site_id.clone())
+        app.batch_chapters(vec![novel.id])
             .await
-            .unwrap()[1]
+            .unwrap()
+            .remove(&novel.id)
+            .unwrap_or_default()[1]
             .title,
         "new chapter"
     );
@@ -240,7 +251,12 @@ pub(super) async fn run(pool: PgPool) {
     assert!(app.refresh_novel(novel.id).await.is_err());
     crawler.fail.store(false, Ordering::SeqCst);
     assert_eq!(
-        app.get_novel(novel.id).await.unwrap().unwrap().name,
+        app.batch_novels(vec![novel.id])
+            .await
+            .unwrap()
+            .remove(&novel.id)
+            .unwrap()
+            .name,
         "refreshed"
     );
     crawler
@@ -262,9 +278,11 @@ pub(super) async fn run(pool: PgPool) {
         .clear();
     assert!(app.refresh_novel(novel.id).await.is_err());
     assert_eq!(
-        app.novel_chapters(novel.id, novel.site_id.clone())
+        app.batch_chapters(vec![novel.id])
             .await
             .unwrap()
+            .remove(&novel.id)
+            .unwrap_or_default()
             .len(),
         2
     );
@@ -278,7 +296,12 @@ pub(super) async fn run(pool: PgPool) {
     crawler.author.lock().unwrap().novel_ids.clear();
     assert!(app.refresh_author(novel.author_id).await.is_err());
     assert_eq!(
-        app.get_author(novel.author_id).await.unwrap().unwrap().name,
+        app.batch_authors(vec![novel.author_id])
+            .await
+            .unwrap()
+            .remove(&novel.author_id)
+            .unwrap()
+            .name,
         "author"
     );
     crawler.author.lock().unwrap().novel_ids = vec!["101".into()];
@@ -286,9 +309,11 @@ pub(super) async fn run(pool: PgPool) {
     obsolete.author.id = "201".into();
     let obsolete = app.save_draft_novel(obsolete).await.unwrap();
     let obsolete_chapters = app
-        .novel_chapters(obsolete.id, obsolete.site_id.clone())
+        .batch_chapters(vec![obsolete.id])
         .await
-        .unwrap();
+        .unwrap()
+        .remove(&obsolete.id)
+        .unwrap_or_default();
     app.add_read_records_for_chapter(obsolete.id, vec![obsolete_chapters[0].id])
         .await
         .unwrap();
@@ -303,15 +328,36 @@ pub(super) async fn run(pool: PgPool) {
         .await
         .unwrap();
     app.refresh_author(novel.author_id).await.unwrap();
-    assert!(app.get_novel(obsolete.id).await.unwrap().is_none());
     assert!(
-        app.novel_chapters(obsolete.id, obsolete.site_id)
+        app.batch_novels(vec![obsolete.id])
             .await
             .unwrap()
+            .remove(&obsolete.id)
+            .is_none()
+    );
+    assert!(
+        app.batch_chapters(vec![obsolete.id])
+            .await
+            .unwrap()
+            .remove(&obsolete.id)
+            .unwrap_or_default()
             .is_empty()
     );
-    assert!(app.novel_comments(obsolete.id).await.unwrap().is_none());
-    assert!(app.novel_collections(obsolete.id).await.unwrap().is_empty());
+    assert!(
+        app.batch_novel_comments(vec![obsolete.id])
+            .await
+            .unwrap()
+            .remove(&obsolete.id)
+            .is_none()
+    );
+    assert!(
+        app.batch_novel_collections(vec![obsolete.id])
+            .await
+            .unwrap()
+            .remove(&obsolete.id)
+            .unwrap_or_default()
+            .is_empty()
+    );
     // A valid transport mutation and nested resolvers use the injected application.
     let response=schema.execute(async_graphql::Request::new("mutation{createTag(name:\"甜\",site:JJWXC,siteId:\"test-tag\"){__typename ... on TagSaved{tagId}}}").data(router::Auth)).await;
     assert!(response.errors.is_empty(), "{:?}", response.errors);

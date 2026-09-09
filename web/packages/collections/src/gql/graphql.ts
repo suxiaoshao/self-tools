@@ -235,10 +235,7 @@ export type GetItemsQueryVariables = Exact<{
 }>;
 
 export type GetItemsQuery = {
-  queryItems: {
-    total: number;
-    data: Array<{ id: number; name: string; content: string; createTime: string; updateTime: string }>;
-  };
+  queryItems: { total: number; data: Array<{ id: number; name: string; createTime: string; updateTime: string }> };
 };
 
 export type ReadItemStateQueryVariables = Exact<{
@@ -1438,7 +1435,6 @@ export const GetItemsDocument = {
                     selections: [
                       { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'content' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'createTime' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'updateTime' } },
                     ],

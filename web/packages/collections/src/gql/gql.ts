@@ -27,7 +27,7 @@ type Documents = {
   '\n  mutation addCollectionForItem($itemId: Int!, $collectionId: Int!) {\n    addCollectionForItem(itemId: $itemId, collectionId: $collectionId) {\n      __typename\n      ... on CollectionMembershipChanged {\n        collectionId\n        resource {\n          kind\n          id\n        }\n        present\n      }\n      ... on ValidationFailure {\n        issues {\n          path\n          code\n          min\n          max\n        }\n      }\n      ... on MissingResources {\n        resources {\n          kind\n          id\n        }\n      }\n      ... on Conflict {\n        reason\n        resources {\n          kind\n          id\n        }\n      }\n    }\n  }\n': typeof types.AddCollectionForItemDocument;
   '\n  query getItem($id: Int!) {\n    getItem(id: $id) {\n      id\n      name\n      content\n      createTime\n      updateTime\n      collections {\n        id\n        name\n        path\n        description\n      }\n    }\n  }\n': typeof types.GetItemDocument;
   '\n  mutation deleteCollectionForItem($collectionId: Int!, $itemId: Int!) {\n    deleteCollectionForItem(collectionId: $collectionId, itemId: $itemId) {\n      __typename\n      ... on CollectionMembershipChanged {\n        collectionId\n        resource {\n          kind\n          id\n        }\n        present\n      }\n      ... on ValidationFailure {\n        issues {\n          path\n          code\n          min\n          max\n        }\n      }\n    }\n  }\n': typeof types.DeleteCollectionForItemDocument;
-  '\n  query getItems($collectionMatch: TagMatch, $pagination: Pagination!) {\n    queryItems(collectionMatch: $collectionMatch, pagination: $pagination) {\n      data {\n        id\n        name\n        content\n        createTime\n        updateTime\n      }\n      total\n    }\n  }\n': typeof types.GetItemsDocument;
+  '\n  query getItems($collectionMatch: TagMatch, $pagination: Pagination!) {\n    queryItems(collectionMatch: $collectionMatch, pagination: $pagination) {\n      data {\n        id\n        name\n        createTime\n        updateTime\n      }\n      total\n    }\n  }\n': typeof types.GetItemsDocument;
   '\n  query ReadItemState($id: Int!) {\n    getItem(id: $id) {\n      id\n      name\n      content\n      collections {\n        id\n      }\n    }\n  }\n': typeof types.ReadItemStateDocument;
   '\n  query ReadCollectionState($id: Int!) {\n    getCollection(id: $id) {\n      id\n      name\n      description\n    }\n  }\n': typeof types.ReadCollectionStateDocument;
 };
@@ -58,7 +58,7 @@ const documents: Documents = {
     types.GetItemDocument,
   '\n  mutation deleteCollectionForItem($collectionId: Int!, $itemId: Int!) {\n    deleteCollectionForItem(collectionId: $collectionId, itemId: $itemId) {\n      __typename\n      ... on CollectionMembershipChanged {\n        collectionId\n        resource {\n          kind\n          id\n        }\n        present\n      }\n      ... on ValidationFailure {\n        issues {\n          path\n          code\n          min\n          max\n        }\n      }\n    }\n  }\n':
     types.DeleteCollectionForItemDocument,
-  '\n  query getItems($collectionMatch: TagMatch, $pagination: Pagination!) {\n    queryItems(collectionMatch: $collectionMatch, pagination: $pagination) {\n      data {\n        id\n        name\n        content\n        createTime\n        updateTime\n      }\n      total\n    }\n  }\n':
+  '\n  query getItems($collectionMatch: TagMatch, $pagination: Pagination!) {\n    queryItems(collectionMatch: $collectionMatch, pagination: $pagination) {\n      data {\n        id\n        name\n        createTime\n        updateTime\n      }\n      total\n    }\n  }\n':
     types.GetItemsDocument,
   '\n  query ReadItemState($id: Int!) {\n    getItem(id: $id) {\n      id\n      name\n      content\n      collections {\n        id\n      }\n    }\n  }\n':
     types.ReadItemStateDocument,
@@ -162,8 +162,8 @@ export function graphql(
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(
-  source: '\n  query getItems($collectionMatch: TagMatch, $pagination: Pagination!) {\n    queryItems(collectionMatch: $collectionMatch, pagination: $pagination) {\n      data {\n        id\n        name\n        content\n        createTime\n        updateTime\n      }\n      total\n    }\n  }\n',
-): (typeof documents)['\n  query getItems($collectionMatch: TagMatch, $pagination: Pagination!) {\n    queryItems(collectionMatch: $collectionMatch, pagination: $pagination) {\n      data {\n        id\n        name\n        content\n        createTime\n        updateTime\n      }\n      total\n    }\n  }\n'];
+  source: '\n  query getItems($collectionMatch: TagMatch, $pagination: Pagination!) {\n    queryItems(collectionMatch: $collectionMatch, pagination: $pagination) {\n      data {\n        id\n        name\n        createTime\n        updateTime\n      }\n      total\n    }\n  }\n',
+): (typeof documents)['\n  query getItems($collectionMatch: TagMatch, $pagination: Pagination!) {\n    queryItems(collectionMatch: $collectionMatch, pagination: $pagination) {\n      data {\n        id\n        name\n        createTime\n        updateTime\n      }\n      total\n    }\n  }\n'];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

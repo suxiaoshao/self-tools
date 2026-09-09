@@ -57,11 +57,6 @@ impl Tag {
             Ok(id)
         })
     }
-    /// 获取标签列表
-    pub(super) fn get_by_ids(ids: &[i64], conn: &mut PgConnection) -> AppResult<Vec<Self>> {
-        let tags = TagModel::get_by_ids(ids, conn)?;
-        Ok(tags.into_iter().map(|x| x.into()).collect())
-    }
 }
 
 /// all

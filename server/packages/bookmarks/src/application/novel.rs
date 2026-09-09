@@ -1,4 +1,3 @@
-use super::utils::{find_all_children, find_all_novel_by_collection};
 use super::{NovelSite, NovelStatus};
 use crate::application::repository::author::AuthorModel;
 use crate::application::repository::chapter::ChapterModel;
@@ -11,7 +10,6 @@ use crate::errors::AppResult;
 
 use diesel::PgConnection;
 
-use service_query::TagFilter;
 use std::collections::HashSet;
 use time::OffsetDateTime;
 
@@ -25,7 +23,6 @@ pub(crate) struct Novel {
     pub(crate) novel_status: NovelStatus,
     pub(crate) site: NovelSite,
     pub(crate) site_id: String,
-    pub(crate) tags: Vec<i64>,
     pub(crate) create_time: time::OffsetDateTime,
     pub(crate) update_time: time::OffsetDateTime,
 }
@@ -38,7 +35,6 @@ impl From<NovelModel> for Novel {
             author_id: value.author_id,
             avatar: value.avatar,
             description: value.description,
-            tags: value.tags,
             create_time: value.create_time,
             update_time: value.update_time,
             novel_status: value.novel_status.into(),
@@ -74,81 +70,6 @@ impl Novel {
 
 /// collection_id 相关
 impl Novel {
-    /// 选择小说
-    pub(super) fn query(
-        collection_match: Option<TagFilter>,
-        tag_match: Option<TagFilter>,
-        novel_status: Option<NovelStatus>,
-        conn: &mut PgConnection,
-    ) -> AppResult<Vec<Self>> {
-        if let Some(TagFilter { match_set, .. }) = &collection_match {
-            // collection 不存在
-            CollectionModel::exists_all(match_set, conn)?;
-        }
-        if let Some(TagFilter { match_set, .. }) = &tag_match {
-            // tag 不存在
-            TagModel::exists_all(match_set, conn)?;
-        }
-        let mut data: Vec<Novel> =
-            NovelModel::query(tag_match, novel_status.map(Into::into), conn)?
-                .into_iter()
-                .map(Into::into)
-                .collect();
-        if let Some(TagFilter {
-            match_set,
-            full_match,
-        }) = collection_match
-        {
-            // 构建一个 `id` 到其子节点列表的映射
-            let collection_collection_map = CollectionModel::get_map(conn)?;
-
-            if full_match {
-                let collection_novel_map = CollectionNovelModel::map_collection_novel(conn)?;
-                // 找到所有集合对应的子小说，然后取他们的交集
-                let novel_ids = match match_set.into_iter().try_fold(
-                    HashSet::new(),
-                    |mut acc, collection_id| -> Option<HashSet<i64>> {
-                        let mut novel_ids = HashSet::new();
-                        find_all_novel_by_collection(
-                            &mut novel_ids,
-                            collection_id,
-                            &collection_collection_map,
-                            &collection_novel_map,
-                        );
-                        match (acc.is_empty(), novel_ids.is_empty()) {
-                            (_, true) => None,
-                            (true, false) => Some(novel_ids),
-                            (false, false) => {
-                                acc.retain(|e| novel_ids.contains(e));
-                                Some(acc)
-                            }
-                        }
-                    },
-                ) {
-                    Some(id) => id,
-                    None => return Ok(vec![]),
-                };
-
-                data.retain(|Novel { id, .. }| novel_ids.contains(id));
-            } else {
-                // 初始化结果列表，并调用递归函数
-                let mut all_set = HashSet::new();
-                for id in &match_set {
-                    all_set.insert(*id);
-                    find_all_children(&mut all_set, *id, &collection_collection_map);
-                }
-                let novel_collection_map = CollectionNovelModel::map_novel_collection(conn)?;
-                data.retain(|Novel { id, .. }| {
-                    let novel_collection = match novel_collection_map.get(id) {
-                        Some(novel_collection) => novel_collection,
-                        None => return false,
-                    };
-                    !all_set.is_disjoint(novel_collection)
-                });
-            }
-        }
-        Ok(data)
-    }
     /// 添加集合
     pub(super) fn add_collection(
         collection_id: i64,

@@ -40,7 +40,6 @@ const GetNovel = graphql(`
       description
       createTime
       updateTime
-      description
       novelStatus
       url
       chapters {

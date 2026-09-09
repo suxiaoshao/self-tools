@@ -148,6 +148,30 @@ checkout 和执行整个同步用例。许可数量等于 pool 容量 10，check
 运行期数据库 readiness 使用同一执行器，排队计入 DATABASE 的 5 秒预算，schema 查询保留 2 秒
 statement timeout。`cargo test -p service-db` 覆盖执行隔离、取消、异常和许可归还。
 
+GraphQL 列表保持 page/pageSize 接口，小说、条目、作者、标签、集合按 id 升序在 SQL 中分页；
+混合列表仍集合优先、条目在后。计数与页面读取处于同一只读 REPEATABLE READ 事务，
+一次调用使用同一快照，跨页请求不承诺隔离并发写入。集合筛选用含根及后代的递归 CTE，
+any 为任一子树匹配，all 为每个选中根的子树分别匹配；标签与状态过滤也在 SQL 中完成。
+
+请求级 DataLoader 只持有 application，并通过批量领域读取访问私有 repository；
+单组 SQL 最多绑定 500 个唯一键，超出时在同一 blocking 用例内分块。
+查询请求使用独立 HashMapCache，列表按实际选择预取整页关联键；mutation 禁用缓存，
+不同请求不共享结果。缺失和安全字段错误也在本次查询内缓存，保留 nullable 与部分失败，
+不因预取失败让列表根整体失败或自动重读。章节首末按 time/id 排序，统计在数据库内聚合。
+
+两个 schema 共用 graphql-common 的请求预算：业务子树深度 8，query 根的 `__schema` / `__type`
+子树深度 16；整条请求共享加权复杂度 200,000、展开字段 256、根字段 20。
+深度策略按实际根字段识别，别名、fragment 或 operation 名不能放宽业务限制；框架仍限制全局深度 16。
+分页按 pageSize 计权，无分页列表使用 100 的估算权重，抓取入口附加成本 1,000。
+这些权重限制查询组合，不截断现有全量集合树、选择器、章节或抓取草稿，也不是响应字节硬上限。
+计数先于框架展开/复杂度校验，并保守计算指令与 fragment；超预算在业务 resolver 前返回
+GraphQL INVALID_REQUEST。入口认证仍可已经发生，但业务 SQL、写入及抓取不会执行。
+
+`application::tests::query_cost` 在专用库验证筛选、计数、分页快照、批量 SQL 次数和列表投影。
+两服务的 browser_operations 测试直接读取手写 operation，通过实际 schema/预算验证后停止，
+不调用数据库或爬虫；另直接执行标准 introspection，验证两个生产 schema 能返回文档元数据，
+且混合查询不能豁免业务预算。共享测试支持位于 `common/graphql-common/test-support`。
+
 HTTP 来源配置在组装 router 时读取。application 持有 `thrift::AuthEndpoint`，每次请求在 AUTH_DNS
 预算内异步解析 auth 地址，再调用既有超时、禁止重放的 client；认证和数据库许可彼此独立。
 
