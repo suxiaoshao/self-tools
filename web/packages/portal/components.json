@@ -12,8 +12,8 @@
   },
   "aliases": {
     "components": "@portal/components",
-    "utils": "@portal/lib/utils",
-    "ui": "@portal/components/ui",
+    "utils": "ui/lib/utils",
+    "ui": "ui/components",
     "lib": "@portal/lib",
     "hooks": "@portal/hooks"
   },

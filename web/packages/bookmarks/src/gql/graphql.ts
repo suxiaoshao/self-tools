@@ -99,6 +99,20 @@ export type AllTagsQueryVariables = Exact<{ [key: string]: never }>;
 
 export type AllTagsQuery = { allTags: Array<{ id: number; name: string }> };
 
+export type AllCollectionsQueryVariables = Exact<{ [key: string]: never }>;
+
+export type AllCollectionsQuery = {
+  allCollections: Array<{
+    name: string;
+    id: number;
+    path: string;
+    createTime: string;
+    updateTime: string;
+    description: string | null;
+    parentId: number | null;
+  }>;
+};
+
 export type GetAuthorQueryVariables = Exact<{
   id: number;
 }>;
@@ -246,19 +260,11 @@ export type DeleteAuthorMutation = {
       };
 };
 
-export type AllCollectionsQueryVariables = Exact<{ [key: string]: never }>;
+export type ReadBookmarkAuthorStateQueryVariables = Exact<{
+  id: number;
+}>;
 
-export type AllCollectionsQuery = {
-  allCollections: Array<{
-    name: string;
-    id: number;
-    path: string;
-    createTime: string;
-    updateTime: string;
-    description: string | null;
-    parentId: number | null;
-  }>;
-};
+export type ReadBookmarkAuthorStateQuery = { getAuthor: { id: number } | null };
 
 export type GetCollectionAncestorsQueryVariables = Exact<{
   id: number;
@@ -334,6 +340,14 @@ export type GetCollectionsQuery = {
       description: string | null;
     }>;
   };
+};
+
+export type ReadBookmarkCollectionStateQueryVariables = Exact<{
+  id: number;
+}>;
+
+export type ReadBookmarkCollectionStateQuery = {
+  getCollection: { id: number; name: string; description: string | null; parentId: number | null } | null;
 };
 
 export type AddCollectionForNovelMutationVariables = Exact<{
@@ -586,6 +600,19 @@ export type DeleteNovelMutation = {
       };
 };
 
+export type ReadBookmarkNovelStateQueryVariables = Exact<{
+  id: number;
+}>;
+
+export type ReadBookmarkNovelStateQuery = {
+  getNovel: {
+    id: number;
+    comments: { content: string } | null;
+    collections: Array<{ id: number }> | null;
+    chapters: Array<{ id: number; isRead: boolean }> | null;
+  } | null;
+};
+
 export type CreateTagMutationVariables = Exact<{
   name: string;
   site: NovelSite;
@@ -625,33 +652,6 @@ export type DeleteTagMutation = {
         issues: Array<{ path: Array<string>; code: ValidationCode; min: number | null; max: number | null }>;
       };
 };
-
-export type ReadBookmarkNovelStateQueryVariables = Exact<{
-  id: number;
-}>;
-
-export type ReadBookmarkNovelStateQuery = {
-  getNovel: {
-    id: number;
-    comments: { content: string } | null;
-    collections: Array<{ id: number }> | null;
-    chapters: Array<{ id: number; isRead: boolean }> | null;
-  } | null;
-};
-
-export type ReadBookmarkCollectionStateQueryVariables = Exact<{
-  id: number;
-}>;
-
-export type ReadBookmarkCollectionStateQuery = {
-  getCollection: { id: number; name: string; description: string | null; parentId: number | null } | null;
-};
-
-export type ReadBookmarkAuthorStateQueryVariables = Exact<{
-  id: number;
-}>;
-
-export type ReadBookmarkAuthorStateQuery = { getAuthor: { id: number } | null };
 
 export type ReadBookmarkTagsStateQueryVariables = Exact<{ [key: string]: never }>;
 
@@ -725,6 +725,37 @@ export const AllTagsDocument = {
     },
   ],
 } as unknown as DocumentNode<AllTagsQuery, AllTagsQueryVariables>;
+export const AllCollectionsDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'allCollections' },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'allCollections' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'path' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'createTime' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'updateTime' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'parentId' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<AllCollectionsQuery, AllCollectionsQueryVariables>;
 export const GetAuthorDocument = {
   kind: 'Document',
   definitions: [
@@ -1410,37 +1441,43 @@ export const DeleteAuthorDocument = {
     },
   ],
 } as unknown as DocumentNode<DeleteAuthorMutation, DeleteAuthorMutationVariables>;
-export const AllCollectionsDocument = {
+export const ReadBookmarkAuthorStateDocument = {
   kind: 'Document',
   definitions: [
     {
       kind: 'OperationDefinition',
       operation: 'query',
-      name: { kind: 'Name', value: 'allCollections' },
+      name: { kind: 'Name', value: 'ReadBookmarkAuthorState' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+          type: { kind: 'NonNullType', type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } } },
+        },
+      ],
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'allCollections' },
+            name: { kind: 'Name', value: 'getAuthor' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'id' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+              },
+            ],
             selectionSet: {
               kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'path' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'createTime' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'updateTime' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'description' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'parentId' } },
-              ],
+              selections: [{ kind: 'Field', name: { kind: 'Name', value: 'id' } }],
             },
           },
         ],
       },
     },
   ],
-} as unknown as DocumentNode<AllCollectionsQuery, AllCollectionsQueryVariables>;
+} as unknown as DocumentNode<ReadBookmarkAuthorStateQuery, ReadBookmarkAuthorStateQueryVariables>;
 export const GetCollectionAncestorsDocument = {
   kind: 'Document',
   definitions: [
@@ -1908,6 +1945,48 @@ export const GetCollectionsDocument = {
     },
   ],
 } as unknown as DocumentNode<GetCollectionsQuery, GetCollectionsQueryVariables>;
+export const ReadBookmarkCollectionStateDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'ReadBookmarkCollectionState' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+          type: { kind: 'NonNullType', type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'getCollection' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'id' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'parentId' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ReadBookmarkCollectionStateQuery, ReadBookmarkCollectionStateQueryVariables>;
 export const AddCollectionForNovelDocument = {
   kind: 'Document',
   definitions: [
@@ -3371,6 +3450,72 @@ export const DeleteNovelDocument = {
     },
   ],
 } as unknown as DocumentNode<DeleteNovelMutation, DeleteNovelMutationVariables>;
+export const ReadBookmarkNovelStateDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'ReadBookmarkNovelState' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+          type: { kind: 'NonNullType', type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'getNovel' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'id' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'comments' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [{ kind: 'Field', name: { kind: 'Name', value: 'content' } }],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'collections' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [{ kind: 'Field', name: { kind: 'Name', value: 'id' } }],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'chapters' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'isRead' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ReadBookmarkNovelStateQuery, ReadBookmarkNovelStateQueryVariables>;
 export const CreateTagDocument = {
   kind: 'Document',
   definitions: [
@@ -3616,151 +3761,6 @@ export const DeleteTagDocument = {
     },
   ],
 } as unknown as DocumentNode<DeleteTagMutation, DeleteTagMutationVariables>;
-export const ReadBookmarkNovelStateDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'ReadBookmarkNovelState' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
-          type: { kind: 'NonNullType', type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } } },
-        },
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'getNovel' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'id' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
-              },
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'comments' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [{ kind: 'Field', name: { kind: 'Name', value: 'content' } }],
-                  },
-                },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'collections' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [{ kind: 'Field', name: { kind: 'Name', value: 'id' } }],
-                  },
-                },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'chapters' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'isRead' } },
-                    ],
-                  },
-                },
-              ],
-            },
-          },
-        ],
-      },
-    },
-  ],
-} as unknown as DocumentNode<ReadBookmarkNovelStateQuery, ReadBookmarkNovelStateQueryVariables>;
-export const ReadBookmarkCollectionStateDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'ReadBookmarkCollectionState' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
-          type: { kind: 'NonNullType', type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } } },
-        },
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'getCollection' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'id' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
-              },
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'description' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'parentId' } },
-              ],
-            },
-          },
-        ],
-      },
-    },
-  ],
-} as unknown as DocumentNode<ReadBookmarkCollectionStateQuery, ReadBookmarkCollectionStateQueryVariables>;
-export const ReadBookmarkAuthorStateDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'ReadBookmarkAuthorState' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
-          type: { kind: 'NonNullType', type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } } },
-        },
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'getAuthor' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'id' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
-              },
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [{ kind: 'Field', name: { kind: 'Name', value: 'id' } }],
-            },
-          },
-        ],
-      },
-    },
-  ],
-} as unknown as DocumentNode<ReadBookmarkAuthorStateQuery, ReadBookmarkAuthorStateQueryVariables>;
 export const ReadBookmarkTagsStateDocument = {
   kind: 'Document',
   definitions: [

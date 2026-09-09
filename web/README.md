@@ -4,22 +4,41 @@
 
 ## 包与职责
 
-| 目录                    | 职责                                                                                        |
-| ----------------------- | ------------------------------------------------------------------------------------------- |
-| `packages/portal`       | 唯一的 Vite 应用入口与组合根；负责全局 Provider、顶层路由、登录、主题、导航和共享 UI 源码。 |
-| `packages/bookmarks`    | 书签业务模块；默认导出实现 `MicroConfig` 的 `BookmarkConfig`，由 `portal` 组合。            |
-| `packages/collections`  | 收藏业务模块；默认导出实现 `MicroConfig` 的 `CollectionConfig`，由 `portal` 组合。          |
-| `common/request-errors` | HTTP 公共错误运行时解码、请求失败分类与结果未知判定。                                       |
-| `common/types`          | 跨包类型，以及 `MicroConfig`、菜单和路由接入契约。                                          |
-| `common/custom-graphql` | Apollo Client、同源 Cookie/认证边界、按路径的查询故障与写入反馈。                           |
-| `common/custom-table`   | TanStack Table 的表格、分页和 column helper 封装。                                          |
-| `common/details`        | 详情页展示组件和类型。                                                                      |
-| `common/edit`           | Monaco Editor 封装及其样式入口。                                                            |
-| `common/i18n`           | i18next 初始化、语言状态、翻译资源和公共 hooks。                                            |
-| `common/time`           | Day.js 初始化与时间格式化工具。                                                             |
-| `config/test`           | Vitest 的共享测试环境配置。                                                                 |
+| 目录                     | 职责                                                                                         |
+| ------------------------ | -------------------------------------------------------------------------------------------- |
+| `packages/portal`        | 唯一的 Vite 应用入口与组合根；负责全局 Provider、顶层路由、登录、导航和主题 / 语言设置菜单。 |
+| `packages/bookmarks`     | 书签业务模块；默认导出实现 `MicroConfig` 的 `BookmarkConfig`，由 `portal` 组合。             |
+| `packages/collections`   | 收藏业务模块；默认导出实现 `MicroConfig` 的 `CollectionConfig`，由 `portal` 组合。           |
+| `common/ui`              | 共享 shadcn 组件、`cn`、主题状态与系统主题监听。                                             |
+| `common/hooks`           | `useDialog`、`useTitle` 等无领域语义的 hook。                                                |
+| `common/collection-tree` | 纯集合树投影与受控单选 / 多选视图。                                                          |
+| `common/markdown`        | Markdown 渲染及语法高亮。                                                                    |
+| `common/request-errors`  | HTTP 公共错误运行时解码、请求失败分类与结果未知判定。                                        |
+| `common/types`           | 跨包类型，以及 `MicroConfig`、菜单和路由接入契约。                                           |
+| `common/custom-graphql`  | Apollo Client、同源 Cookie/认证边界、按路径的查询故障与写入反馈。                            |
+| `common/custom-table`    | TanStack Table 的表格、分页和 column helper 封装。                                           |
+| `common/details`         | 详情页展示组件和类型。                                                                       |
+| `common/edit`            | Monaco Editor、表单编辑器及其样式入口。                                                      |
+| `common/i18n`            | i18next 初始化、语言状态、翻译资源和公共 hooks。                                             |
+| `common/time`            | Day.js 初始化与时间格式化工具。                                                              |
+| `config/test`            | Vitest 的共享测试环境配置。                                                                  |
 
-共享包不等于与应用壳完全解耦：当前部分 `common/*` 与功能包会直接引用 `@portal/*` UI、主题或工具。调整包边界时，应以实际依赖方向为准，并同步更新所有消费者与 `tsconfig.json` 路径映射。
+common 只能依赖共享层，不能引用应用。portal 通过 package 入口组合 bookmarks / collections，
+两个业务包互不引用。跨包使用 manifest 声明的 package exports；`@portal/*`、`@bookmarks/*`、
+`@collections/*` 仅供各自包内部使用，跨包相对路径也不可绕过公开入口。
+
+应用内 `pages/` 负责跨领域组合，`features/<domain>/` 拥有领域操作、表单与单领域视图，
+`entities/<domain>/` 拥有供多个 feature 使用的读取与选择适配。跨边界只通过 feature / entity 的
+`index.ts`；peer feature 不互相依赖，entity 不依赖 feature / page。单文件能力不要求增加空目录。
+collections 的混合列表位于 `pages/collection-browser`，通过两个 feature 的公开操作组件分派行行为。
+领域恢复查询和 collections 的领域结果投影位于各 feature 的 `model/`；应用共用的结果判别保留在
+应用 `results.ts`，bookmarks 的统一写入 hook 继续使用同一份 union 投影。
+
+依赖由实际消费者声明：运行依赖在所属包，codegen 与 Vite 工具在各自应用，根包持有共享测试与检查工具。
+Babel 的插件解析目录固定为 portal，使根目录测试入口也能使用 portal 声明的 React Compiler。
+`web/config/workspace-boundaries.mts` 定义 common 层的允许依赖，检查声明、exports、层级和包环；
+`pnpm boundaries` 是独立入口，也已接入 `pnpm lint`。检查包含 type import、re-export、字面量动态
+import 和相对路径；生成物与 UI 的风格忽略不会豁免依赖边界。Oxlint 另检查模块环，Knip 检查依赖与公开面。
 
 ## 运行与组合链路
 
@@ -62,10 +81,14 @@ bookmarks 全部 mutation 使用生成的 union 分支；已知标识的操作�
 
 ## 集合查询与 Item 编辑
 
-两个应用各由一个 `CollectionsProvider` 持有集合树的 Apollo 查询，消费者共享查询状态，
+两个应用各由本应用 `entities/collection` 的 `CollectionsProvider` 持有集合树的 Apollo 查询，消费者共享查询状态，
 Map/树从查询结果派生，不再复制到 Zustand。保持 `no-cache`，刷新通过同一 observable
 重新执行，并禁用请求去重，确保写入后的读取不会复用写入前尚未完成的请求；被替代的读取
 取消订阅，不允许迟到结果覆盖新结果。读取失败由使用该数据的页面或选择器显示并提供重试。
+
+共享 `collection-tree` 只接收本应用的只读集合快照，保留输入兄弟顺序与 path；不拥有 Apollo、
+业务 ID 命名空间或认证状态。实体层 wrapper 保留 RHF 接口与 loading / error / retry，
+两个应用 Provider 始终独立。单选点击选定 ID，多选去重追加与删除；disabled 禁止增删并隐藏弹层。
 
 列表使用服务端稳定页码分页；Item 列表 operation 只读取表格所需字段，正文由详情和
 getEditItem 按需读取。服务端查询预算拒绝沿用 INVALID_REQUEST 的现有展示，不自动重试。
@@ -77,7 +100,15 @@ Item 创建将名称、正文和初始集合关联一次提交；编辑只修改
 
 ## shadcn/ui 与样式所有权
 
-`packages/portal/components.json` 是本仓库 shadcn CLI 配置，组件源码位于 `packages/portal/src/components/ui/`，全局样式入口为 `packages/portal/src/styles/globals.css`。这些组件是仓库拥有并可定制的源码，不应把 registry 版本视为可以无差别覆盖的副本。
+共享源码与 shadcn 配置位于 `common/ui/`，组件通过 `ui/components/*` 公开，工具通过
+`ui/lib/utils`、主题通过 `ui/theme`、编辑器与 Markdown 共用字体通过 `ui/fonts.css` 公开。组件目录的受限 subpath pattern 供 CLI 定位；不公开
+`src/*`、私有 hooks 或其他内部目录。UI 包使用 `#components/*`、`#hooks/*`、`#lib/*` 作为内部 CLI alias。
+`packages/portal/components.json` 指向共享 UI，应用全局 CSS 仍为 `packages/portal/src/styles/globals.css`，
+页面尺寸 CSS 归 portal。主题运行时归 ui，菜单表单归 portal；i18n 仅拥有语言运行时与资源。
+
+两份 components.json 的 style / iconLibrary / baseColor 保持一致。从 portal 执行
+`pnpm dlx shadcn@latest info --json` 或 `add <component> --dry-run` 检查实际目标路径，再处理需要的源码。
+这些组件是仓库拥有并可定制的源码，不应把 registry 版本视为可以无差别覆盖的副本。
 
 Tailwind 的源码扫描根目录由 `globals.css` 的 `source()` 显式指定为 `web/`，覆盖业务包和共享包；
 不依赖启动命令的工作目录，也不使用 Vite 插件不支持的 `base` 选项。

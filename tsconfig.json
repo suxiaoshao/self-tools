@@ -20,7 +20,8 @@
       "@portal/*": ["./web/packages/portal/src/*"],
       "@bookmarks/*": ["./web/packages/bookmarks/src/*"],
       "@collections/*": ["./web/packages/collections/src/*"]
-    }
+    },
+    "allowImportingTsExtensions": true
   },
   "include": [
     "./web/packages/*/src",

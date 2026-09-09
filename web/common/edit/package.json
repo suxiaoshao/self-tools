@@ -9,10 +9,14 @@
   "type": "module",
   "exports": {
     ".": "./src/index.tsx",
-    "./styles.css": "./src/index.css"
+    "./form": "./src/FormEditor.tsx"
   },
   "dependencies": {
     "monaco-editor": "^0.55.1",
-    "monaco-themes": "^0.4.8"
+    "monaco-themes": "^0.4.8",
+    "react": "^19.2.7",
+    "ts-pattern": "^5.9.0",
+    "ui": "workspace:*",
+    "zustand": "5.0.14"
   }
 }

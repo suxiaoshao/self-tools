@@ -15,3 +15,5 @@ ReactDOM.createRoot(document.querySelector('#root') as HTMLElement).render(
     <App />
   </React.StrictMode>,
 );
+
+import './styles/layout.css';

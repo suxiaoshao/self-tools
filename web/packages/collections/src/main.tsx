@@ -6,12 +6,11 @@
  * @FilePath: /self-tools/web/packages/collections/src/main.tsx
  */
 import type { Menu, MicroConfig } from 'types';
-import Collection from './features/Collection';
+import Collection from './pages/collection-browser/index';
 import type { ReactNode } from 'react';
 import App from './App';
 import { Route } from 'react-router';
-import ItemList from './features/Item/List';
-import ItemDetails from './features/Item/Details';
+import { ItemList, ItemDetails } from './features/item';
 
 export default class CollectionConfig implements MicroConfig {
   getName() {

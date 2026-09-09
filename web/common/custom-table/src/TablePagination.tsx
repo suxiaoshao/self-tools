@@ -1,19 +1,12 @@
-import { Button } from '@portal/components/ui/button';
-import { Label } from '@portal/components/ui/label';
+import { Button } from 'ui/components/button';
+import { Label } from 'ui/components/label';
 import { CheckIcon, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import type { PageWithTotal } from './usePage';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@portal/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from 'ui/components/select';
 import { useI18n } from 'i18n';
-import { Popover, PopoverContent, PopoverTrigger } from '@portal/components/ui/popover';
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@portal/components/ui/command';
-import useDialog from '@collections/hooks/useDialog';
+import { Popover, PopoverContent, PopoverTrigger } from 'ui/components/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from 'ui/components/command';
+import { useDialog } from 'hooks';
 import { match } from 'ts-pattern';
 
 export default function TablePagination({

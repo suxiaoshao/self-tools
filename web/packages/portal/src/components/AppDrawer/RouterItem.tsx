@@ -1,6 +1,6 @@
 import type React from 'react';
 import { type To, useLocation, Link } from 'react-router';
-import { SidebarMenuButton, SidebarMenuItem, SidebarMenuSubButton, SidebarMenuSubItem } from '../ui/sidebar';
+import { SidebarMenuButton, SidebarMenuItem, SidebarMenuSubButton, SidebarMenuSubItem } from 'ui/components/sidebar';
 
 interface RouterItem extends React.ComponentProps<'li'> {
   matchPaths: (string | RegExp)[];

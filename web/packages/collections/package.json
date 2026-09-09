@@ -10,19 +10,31 @@
     "generate": "graphql-codegen"
   },
   "dependencies": {
-    "custom-graphql": "workspace:^",
-    "custom-table": "workspace:^",
-    "details": "workspace:^",
-    "edit": "workspace:^",
-    "i18n": "workspace:^",
-    "markdown-to-jsx": "^9.8.2",
-    "prism-themes": "^1.9.0",
-    "prismjs": "^1.30.0",
+    "@apollo/client": "^4.2.6",
+    "@graphql-typed-document-node/core": "^3.2.0",
+    "@hookform/resolvers": "^5.4.0",
+    "collection-tree": "workspace:*",
+    "custom-graphql": "workspace:*",
+    "custom-table": "workspace:*",
+    "details": "workspace:*",
+    "edit": "workspace:*",
+    "graphql": "^16.14.2",
+    "hooks": "workspace:*",
+    "i18n": "workspace:*",
+    "lucide-react": "^1.24.0",
+    "markdown": "workspace:*",
+    "react": "^19.2.7",
+    "react-hook-form": "^7.81.0",
+    "react-router": "^7.18.1",
     "request-errors": "workspace:*",
-    "time": "workspace:^",
-    "types": "workspace:^"
+    "time": "workspace:*",
+    "ts-pattern": "^5.9.0",
+    "types": "workspace:*",
+    "ui": "workspace:*",
+    "valibot": "1.4.2"
   },
   "devDependencies": {
-    "@types/prismjs": "^1.26.6"
+    "@graphql-codegen/cli": "^7.2.0",
+    "@graphql-codegen/client-preset": "6.1.0"
   }
 }

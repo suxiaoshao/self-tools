@@ -2,7 +2,7 @@ import { RequestNotice } from 'custom-graphql';
 import { useI18n } from 'i18n';
 import { type ComponentProps, useMemo } from 'react';
 import { match } from 'ts-pattern';
-import { graphql } from '@bookmarks/gql';
+import { graphql } from '@bookmarks/gql/index';
 import { useQuery } from '@apollo/client/react';
 import {
   Combobox,
@@ -15,7 +15,7 @@ import {
   ComboboxList,
   ComboboxValue,
   useComboboxAnchor,
-} from '@portal/components/ui/combobox';
+} from 'ui/components/combobox';
 
 const AllTags = graphql(`
   query allTags {

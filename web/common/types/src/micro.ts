@@ -9,10 +9,6 @@
 import type { ReactNode } from 'react';
 import type { Enum } from './enum';
 
-export interface MicroState {
-  lang: string;
-}
-
 export interface PathItem {
   path: string;
   element?: ReactNode;

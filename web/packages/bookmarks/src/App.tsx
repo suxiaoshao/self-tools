@@ -5,7 +5,7 @@
  * @LastEditTime: 2025-08-27 20:25:20
  * @FilePath: /self-tools/web/packages/bookmarks/src/App.tsx
  */
-import { CollectionsProvider } from './features/Collections/collectionQuery';
+import { CollectionsProvider } from './entities/collection';
 import { Outlet } from 'react-router';
 import { ApolloProvider } from '@apollo/client/react';
 import { apolloClient } from './utils/apolloClient';

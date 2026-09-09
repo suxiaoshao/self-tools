@@ -1,8 +1,8 @@
 import { BrowserRouter } from 'react-router';
 import AppRouter from './components/AppRouter';
-import { TooltipProvider } from './components/ui/tooltip';
+import { TooltipProvider } from 'ui/components/tooltip';
 import I18next from 'i18n';
-import { CustomTheme } from './features/Theme';
+import { CustomTheme } from 'ui/theme';
 
 function App() {
   return (

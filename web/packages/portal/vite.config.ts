@@ -35,6 +35,8 @@ export default defineConfig(({ command, mode }) => {
   plugins.push(
     react(),
     babel({
+      // The root test runner must resolve compiler plugins from their owning package.
+      cwd: rootDir,
       presets: [reactCompilerPreset()],
     }),
   );

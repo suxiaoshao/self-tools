@@ -1,5 +1,5 @@
 import { FolderCode } from 'lucide-react';
-import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '../ui/empty';
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from 'ui/components/empty';
 
 export default function index() {
   return (

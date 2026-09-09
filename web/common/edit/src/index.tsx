@@ -10,7 +10,7 @@ import {
 import { editor } from 'monaco-editor';
 import './init';
 import { match } from 'ts-pattern';
-import { ColorSetting, selectColorMode, useThemeStore } from '@portal/features/Theme/themeSlice';
+import { ColorSetting, selectColorMode, useThemeStore } from 'ui/theme';
 import { useShallow } from 'zustand/react/shallow';
 
 export type MonacoEditorRef = editor.IStandaloneCodeEditor | undefined;

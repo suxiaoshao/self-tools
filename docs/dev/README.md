@@ -18,6 +18,7 @@
 | [Issue #99：GraphQL 应用边界与同步数据库执行隔离](issue-99/README.md) | bookmarks / collections / service-db           | 收回 transport 的数据库与适配器访问，统一有界 blocking 执行和事务所有权。 |
 | [Issue #100：GraphQL 查询成本与稳定分页](issue-100/README.md)         | bookmarks / collections / graphql-common / web | 统一 SQL 筛选与稳定分页、批量关联读取及请求成本限制。                     |
 | [Issue #101：层级写入与删除一致性](issue-101/README.md)               | bookmarks / collections / database             | 明确父子关系事实源、有限层级遍历、路径更新与删除原子性。                  |
+| [Issue #103：前端包与领域所有权](issue-103/README.md)                 | web workspace / portal / common / lint         | 明确共享能力与领域所有者、公开入口及可执行依赖边界。                      |
 
 ### 已完成或已替代计划
 

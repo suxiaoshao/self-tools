@@ -2,8 +2,8 @@ import { useReactTable, flexRender } from '@tanstack/react-table';
 import type { CustomColumnDef, CustomTableOptions } from './columns';
 import type { PageWithTotal } from './usePage';
 import { match } from 'ts-pattern';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@portal/components/ui/table';
-import { cn } from '@portal/lib/utils';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from 'ui/components/table';
+import { cn } from 'ui/lib/utils';
 import type { ComponentProps } from 'react';
 import TablePagination from './TablePagination';
 

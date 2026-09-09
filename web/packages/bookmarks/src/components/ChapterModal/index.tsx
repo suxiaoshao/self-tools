@@ -9,10 +9,10 @@ import type { FetchAuthorQuery } from '@bookmarks/gql/graphql';
 import { useI18n } from 'i18n';
 import { TableOfContents } from 'lucide-react';
 import { format } from 'time';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@portal/components/ui/dialog';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@portal/components/ui/tooltip';
-import { Button } from '@portal/components/ui/button';
-import { Item, ItemContent, ItemDescription, ItemTitle } from '@portal/components/ui/item';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 'ui/components/dialog';
+import { Tooltip, TooltipContent, TooltipTrigger } from 'ui/components/tooltip';
+import { Button } from 'ui/components/button';
+import { Item, ItemContent, ItemDescription, ItemTitle } from 'ui/components/item';
 
 interface ChapterModalProps {
   chapters: FetchAuthorQuery['fetchAuthor']['novels'][0]['chapters'];
