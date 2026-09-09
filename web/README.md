@@ -35,6 +35,7 @@ collections 的混合列表位于 `pages/collection-browser`，通过两个 feat
 应用 `results.ts`，bookmarks 的统一写入 hook 继续使用同一份 union 投影。
 
 依赖由实际消费者声明：运行依赖在所属包，codegen 与 Vite 工具在各自应用，根包持有共享测试与检查工具。
+Babel 的插件解析目录固定为 portal，使根目录测试入口也能使用 portal 声明的 React Compiler。
 `web/config/workspace-boundaries.mts` 定义 common 层的允许依赖，检查声明、exports、层级和包环；
 `pnpm boundaries` 是独立入口，也已接入 `pnpm lint`。检查包含 type import、re-export、字面量动态
 import 和相对路径；生成物与 UI 的风格忽略不会豁免依赖边界。Oxlint 另检查模块环，Knip 检查依赖与公开面。
