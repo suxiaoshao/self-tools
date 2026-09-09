@@ -1,3 +1,5 @@
+import { useId, useEffect } from 'react';
+import { rejectionFieldErrors } from 'custom-graphql';
 import useBookmarkWrite from '@bookmarks/useBookmarkWrite';
 import { Controller, type SubmitHandler, useForm } from 'react-hook-form';
 import { useI18n } from 'i18n';
@@ -47,10 +49,12 @@ export default function CreateTagButton({ refetch }: CreateTagButtonProps) {
   const write = useBookmarkWrite('/bookmarks/tags');
   const [createTag] = useMutation(CreateTag);
 
+  const formId = useId();
   // 表单控制
   type FormData = Omit<CreateTagMutationVariables, 'collectionId'>;
   const {
     handleSubmit,
+    setError,
     register,
     control,
     formState: { errors },
@@ -63,8 +67,8 @@ export default function CreateTagButton({ refetch }: CreateTagButtonProps) {
           minLength(1, t('request_required')),
           check((name) => Array.from(name).length <= 20, `${t('request_too_long')} (20)`),
         ),
-        site: picklist(['JJWXC', 'QIDIAN']),
-        siteId: string(),
+        site: picklist(['JJWXC', 'QIDIAN'], t('request_required')),
+        siteId: pipe(string(), trim(), minLength(1, t('request_required'))),
       }),
     ),
   });
@@ -79,27 +83,67 @@ export default function CreateTagButton({ refetch }: CreateTagButtonProps) {
 
   // 控制 dialog
   const { open, handleClose, handleOpenChange } = useDialog();
+  useEffect(() => {
+    for (const issue of rejectionFieldErrors(write.outcome)) {
+      const field = issue.path[0] === 'data' ? issue.path[1] : issue.path[0];
+      if (field === 'name' || field === 'site' || field === 'siteId') {
+        setError(field, {
+          type: 'server',
+          message: t(issue.code === 'REQUIRED' ? 'request_required' : 'request_invalid'),
+        });
+      }
+    }
+  }, [write.outcome, setError, t]);
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (!write.pending) handleOpenChange(next);
+      }}
+    >
       <DialogTrigger render={<Button />}>{t('add_tag')}</DialogTrigger>
       <DialogContent>
         <DialogTitle>{t('create_tag')}</DialogTitle>
-        <form className="flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)}>
+        <form noValidate className="flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)}>
           <FieldGroup>
-            <Field>
-              <FieldLabel>{t('tag_name')}</FieldLabel>
-              <Input {...register('name', { required: true })} />
-              <FieldError errors={[errors.name]} />
+            <Field data-invalid={!!errors.name}>
+              <FieldLabel htmlFor={`${formId}-name`}>{t('tag_name')}</FieldLabel>
+              <Input
+                disabled={write.blocked}
+                id={`${formId}-name`}
+                aria-describedby={errors.name ? `${formId}-name-error` : undefined}
+                aria-invalid={!!errors.name}
+                {...register('name', { required: t('request_required') })}
+              />
+
+              <FieldError
+                id={`${formId}-name-error`}
+                errors={[
+                  errors.name && {
+                    ...errors.name,
+                    message:
+                      errors.name?.type === 'required' || errors.name?.type === 'min_length'
+                        ? t('request_required')
+                        : errors.name.message,
+                  },
+                ]}
+              />
             </Field>
             <Controller
               control={control}
               name="site"
-              rules={{ required: true }}
-              render={({ field: { onChange, ...field }, fieldState }) => (
-                <Field className="flex-1">
-                  <FieldLabel>{t('novel_site')}</FieldLabel>
-                  <Select required {...field} onValueChange={onChange}>
-                    <SelectTrigger className="w-full">
+              rules={{ required: t('request_required') }}
+              render={({ field: { onChange, ref, ...field }, fieldState }) => (
+                <Field className="flex-1" data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor={`${formId}-site`}>{t('novel_site')}</FieldLabel>
+                  <Select disabled={write.blocked} required {...field} onValueChange={onChange}>
+                    <SelectTrigger
+                      ref={ref}
+                      id={`${formId}-site`}
+                      aria-invalid={fieldState.invalid}
+                      aria-describedby={fieldState.invalid ? `${formId}-site-error` : undefined}
+                      className="w-full"
+                    >
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -109,20 +153,51 @@ export default function CreateTagButton({ refetch }: CreateTagButtonProps) {
                       </SelectGroup>
                     </SelectContent>
                   </Select>
-                  <FieldError errors={[fieldState.error]} />
+                  <FieldError
+                    id={`${formId}-site-error`}
+                    errors={[
+                      fieldState.error && {
+                        ...fieldState.error,
+                        message:
+                          fieldState.error?.type === 'required' ||
+                          fieldState.error?.type === 'picklist' ||
+                          fieldState.error?.type === 'min_length'
+                            ? t('request_required')
+                            : fieldState.error.message,
+                      },
+                    ]}
+                  />
                 </Field>
               )}
             />
-            <Field>
-              <FieldLabel>{t('tag_site_id')}</FieldLabel>
-              <Input {...register('siteId', { required: true })} />
-              <FieldError errors={[errors.siteId]} />
+            <Field data-invalid={!!errors.siteId}>
+              <FieldLabel htmlFor={`${formId}-siteId`}>{t('tag_site_id')}</FieldLabel>
+              <Input
+                disabled={write.blocked}
+                id={`${formId}-siteId`}
+                aria-describedby={errors.siteId ? `${formId}-siteId-error` : undefined}
+                aria-invalid={!!errors.siteId}
+                {...register('siteId', { required: t('request_required') })}
+              />
+
+              <FieldError
+                id={`${formId}-siteId-error`}
+                errors={[
+                  errors.siteId && {
+                    ...errors.siteId,
+                    message:
+                      errors.siteId?.type === 'required' || errors.siteId?.type === 'min_length'
+                        ? t('request_required')
+                        : errors.siteId.message,
+                  },
+                ]}
+              />
             </Field>
           </FieldGroup>
 
           {write.notice}
           <DialogFooter>
-            <DialogClose render={<Button variant="secondary" />}>{t('cancel')}</DialogClose>
+            <DialogClose render={<Button variant="secondary" disabled={write.pending} />}>{t('cancel')}</DialogClose>
             <Button disabled={write.blocked} type="submit">
               {t('submit')}
             </Button>

@@ -1,3 +1,4 @@
+import { useUiMessages } from '../locale';
 import * as React from 'react';
 import { mergeProps } from '@base-ui/react/merge-props';
 import { useRender } from '@base-ui/react/use-render';
@@ -6,7 +7,8 @@ import { cn } from '../lib/utils';
 import { ChevronRightIcon, MoreHorizontalIcon } from 'lucide-react';
 
 function Breadcrumb({ className, ...props }: React.ComponentProps<'nav'>) {
-  return <nav aria-label="breadcrumb" data-slot="breadcrumb" className={cn(className)} {...props} />;
+  const messages = useUiMessages();
+  return <nav aria-label={messages.breadcrumb} data-slot="breadcrumb" className={cn(className)} {...props} />;
 }
 
 function BreadcrumbList({ className, ...props }: React.ComponentProps<'ol'>) {
@@ -67,6 +69,7 @@ function BreadcrumbSeparator({ children, className, ...props }: React.ComponentP
 }
 
 function BreadcrumbEllipsis({ className, ...props }: React.ComponentProps<'span'>) {
+  const messages = useUiMessages();
   return (
     <span
       data-slot="breadcrumb-ellipsis"
@@ -76,7 +79,7 @@ function BreadcrumbEllipsis({ className, ...props }: React.ComponentProps<'span'
       {...props}
     >
       <MoreHorizontalIcon />
-      <span className="sr-only">More</span>
+      <span className="sr-only">{messages.more}</span>
     </span>
   );
 }

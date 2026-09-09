@@ -1,3 +1,5 @@
+import { ConfirmationDialog } from 'ui/confirmation-dialog';
+import { useState } from 'react';
 import { RequestNotice, hasQueryFailure } from 'custom-graphql';
 import { checkNovelState } from '@bookmarks/features/novel/model/reconcile';
 import { useApolloClient } from '@apollo/client/react';
@@ -133,7 +135,10 @@ const DeleteCommentForNovel = graphql(`
 
 export default function NovelDetails() {
   const client = useApolloClient();
-  const write = useBookmarkWrite('/bookmarks/novel');
+  const write = useBookmarkWrite('/bookmarks');
+  const deletion = useBookmarkWrite('/bookmarks');
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [target, setTarget] = useState<{ id: number; name: string }>();
   // fetch data
   const { novelId } = useParams();
   const { data, loading, refetch, error } = useQuery(GetNovel, { variables: { id: Number(novelId) } });
@@ -168,28 +173,43 @@ export default function NovelDetails() {
   const items = useNovelDetailItems(data, refetch);
   const [deleteComment] = useMutation(DeleteCommentForNovel, { variables: { novelId: data?.getNovel?.id } });
   const handleDeleteComment = async () => {
+    if (!target) return;
+    const { id } = target;
+    const confirmed = () => {
+      setConfirmOpen(false);
+      handleRefresh();
+    };
     if (
-      !(await write.execute(
-        async () => (await deleteComment({ variables: { novelId: data?.getNovel?.id } })).data?.deleteCommentForNovel,
-        { verify: () => checkNovelState(client, Number(novelId), { comment: null }), confirmed: refetch },
-      ))
+      await deletion.execute(
+        async () => (await deleteComment({ variables: { novelId: id } })).data?.deleteCommentForNovel,
+        { verify: () => checkNovelState(client, id, { comment: null }), confirmed },
+      )
     )
-      return;
-    void Promise.resolve()
-      .then(() => refetch())
-      .catch(() => undefined);
+      confirmed();
   };
   return (
     <div className="flex flex-col size-full h-screen">
       <RequestNotice error={error} retry={refetch} />
       {!loading && data?.getNovel === null && !hasQueryFailure(error, ['getNovel']) && <p>{t('request_missing')}</p>}
       {write.notice}
+      <ConfirmationDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title={t('delete_target', { name: `${target?.name ?? ''} · ${t('comment')}` })}
+        description={t('delete_comment_impact')}
+        confirmLabel={t('delete')}
+        cancelLabel={t('cancel')}
+        pending={deletion.pending}
+        confirmDisabled={deletion.blocked}
+        onConfirm={handleDeleteComment}
+        notice={deletion.notice}
+      />
       <div className="flex w-full p-4 pb-0">
-        <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+        <Button variant="ghost" size="icon" onClick={() => navigate(-1)} aria-label={t('back')}>
           <ChevronLeft />
         </Button>
         <div className="grow" />
-        <Button variant="ghost" size="icon" onClick={handleRefresh}>
+        <Button variant="ghost" size="icon" onClick={handleRefresh} aria-label={t('refresh')}>
           <RefreshCcw />
         </Button>
       </div>
@@ -201,7 +221,7 @@ export default function NovelDetails() {
                 <Item className="pt-0 px-6">
                   <ItemMedia>
                     <Avatar className="size-10">
-                      <AvatarImage src={getImageUrl(data.getNovel.avatar)} />
+                      <AvatarImage alt="" src={getImageUrl(data.getNovel.avatar)} />
                       <AvatarFallback>{data.getNovel.name[0]}</AvatarFallback>
                     </Avatar>
                   </ItemMedia>
@@ -214,6 +234,7 @@ export default function NovelDetails() {
                       <TooltipTrigger
                         render={
                           <Button
+                            aria-label={t('update_by_crawler')}
                             variant="ghost"
                             size="icon"
                             disabled={write.blocked || updateLoading}
@@ -226,7 +247,16 @@ export default function NovelDetails() {
                       <TooltipContent>{t('update_by_crawler')}</TooltipContent>
                     </Tooltip>
                     <Tooltip>
-                      <TooltipTrigger render={<Button variant="ghost" size="icon" onClick={goToSourceSite} />}>
+                      <TooltipTrigger
+                        render={
+                          <Button
+                            aria-label={t('go_to_source_site')}
+                            variant="ghost"
+                            size="icon"
+                            onClick={goToSourceSite}
+                          />
+                        }
+                      >
                         <SquareArrowOutUpRight />
                       </TooltipTrigger>
                       <TooltipContent>{t('go_to_source_site')}</TooltipContent>
@@ -243,6 +273,7 @@ export default function NovelDetails() {
                   <CardAction>
                     {!hasQueryFailure(error, ['getNovel', 'comments']) && (
                       <CommentEdit
+                        disabled={deletion.blocked}
                         refetch={refetch}
                         novelId={data.getNovel.id}
                         mode={match(data.getNovel.comments?.content)
@@ -253,7 +284,21 @@ export default function NovelDetails() {
                     )}
                     {data.getNovel.comments?.content && (
                       <Tooltip>
-                        <TooltipTrigger render={<Button variant="ghost" size="icon" onClick={handleDeleteComment} />}>
+                        <TooltipTrigger
+                          render={
+                            <Button
+                              aria-label={t('delete')}
+                              variant="ghost"
+                              size="icon"
+                              disabled={deletion.pending}
+                              onClick={() => {
+                                if (!deletion.blocked && data.getNovel)
+                                  setTarget({ id: data.getNovel.id, name: data.getNovel.name });
+                                setConfirmOpen(true);
+                              }}
+                            />
+                          }
+                        >
                           <Delete />
                         </TooltipTrigger>
                         <TooltipContent>{t('delete')}</TooltipContent>

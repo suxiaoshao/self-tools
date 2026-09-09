@@ -99,12 +99,14 @@ function RemoveCollection({
   itemId: number;
   refetch: () => void;
 }) {
+  const t = useI18n();
   const client = useApolloClient();
   const action = useWriteAction();
   const [remove] = useMutation(DeleteCollectionForItem);
   return (
     <>
       <Button
+        aria-label={t('remove_association', { name: `${t('collection')} #${collectionId}` })}
         variant="ghost"
         size="icon-sm"
         disabled={action.blocked}

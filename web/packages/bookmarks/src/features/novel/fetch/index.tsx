@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import { RequestNotice } from 'custom-graphql';
 import useBookmarkWrite from '@bookmarks/useBookmarkWrite';
 import { useTitle } from 'hooks';
@@ -104,13 +105,19 @@ type ChapterData = FetchNovelQuery['fetchNovel']['chapters'][number];
 const columnHelper = createCustomColumnHelper<ChapterData>();
 
 export default function NovelFetch() {
-  const write = useBookmarkWrite('/bookmarks/novel');
+  const write = useBookmarkWrite('/bookmarks');
   const t = useI18n();
   useTitle(t('novel_crawler'));
+  const formId = useId();
   // fetch
   type FormData = FetchNovelQueryVariables;
   const [fn, { data, loading, error }] = useLazyQuery(FetchNovel);
-  const { handleSubmit, register, control } = useForm<FormData>();
+  const {
+    handleSubmit,
+    register,
+    control,
+    formState: { errors },
+  } = useForm<FormData>();
   const onSubmit = handleSubmit((data) => {
     void fn({ variables: data }).catch(() => undefined);
   });
@@ -204,7 +211,7 @@ export default function NovelFetch() {
     [novel, t],
   );
   return (
-    <form className="flex flex-col size-full p-4 gap-4" onSubmit={onSubmit}>
+    <form noValidate className="flex flex-col size-full p-4 gap-4" onSubmit={onSubmit}>
       <RequestNotice error={error} />
       {write.notice}
       <Card>
@@ -213,7 +220,11 @@ export default function NovelFetch() {
           <CardAction>
             <div className="flex gap-2">
               <Tooltip>
-                <TooltipTrigger render={<Button variant="ghost" size="icon" type="submit" />}>
+                <TooltipTrigger
+                  render={
+                    <Button variant="ghost" size="icon" type="submit" disabled={loading} aria-label={t('fetch')} />
+                  }
+                >
                   <Search />
                 </TooltipTrigger>
                 <TooltipContent>{t('fetch')}</TooltipContent>
@@ -222,6 +233,7 @@ export default function NovelFetch() {
                 <TooltipTrigger
                   render={
                     <Button
+                      aria-label={t('save_draft')}
                       variant="ghost"
                       size="icon"
                       disabled={write.blocked || !novel || saveLoading}
@@ -257,12 +269,18 @@ export default function NovelFetch() {
             <Controller
               control={control}
               name="novelSite"
-              rules={{ required: true }}
-              render={({ field: { onChange, ...field }, fieldState }) => (
-                <Field className="flex-1">
-                  <FieldLabel>{t('novel_site')}</FieldLabel>
+              rules={{ required: t('request_required') }}
+              render={({ field: { onChange, ref, ...field }, fieldState }) => (
+                <Field className="flex-1" data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor={`${formId}-site`}>{t('novel_site')}</FieldLabel>
                   <Select required {...field} onValueChange={onChange}>
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger
+                      ref={ref}
+                      id={`${formId}-site`}
+                      aria-invalid={fieldState.invalid}
+                      aria-describedby={fieldState.invalid ? `${formId}-site-error` : undefined}
+                      className="w-full"
+                    >
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -272,13 +290,40 @@ export default function NovelFetch() {
                       </SelectGroup>
                     </SelectContent>
                   </Select>
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  {fieldState.invalid && (
+                    <FieldError
+                      id={`${formId}-site-error`}
+                      errors={[
+                        fieldState.error && {
+                          ...fieldState.error,
+                          message:
+                            fieldState.error?.type === 'required' ? t('request_required') : fieldState.error.message,
+                        },
+                      ]}
+                    />
+                  )}
                 </Field>
               )}
             />
-            <Field className="flex-1">
-              <FieldLabel>{t('author_id')}</FieldLabel>
-              <Input required {...register('id', { required: true })} />
+            <Field className="flex-1" data-invalid={!!errors.id}>
+              <FieldLabel htmlFor={`${formId}-id`}>{t('novel_id')}</FieldLabel>
+              <Input
+                id={`${formId}-id`}
+                aria-describedby={errors.id ? `${formId}-id-error` : undefined}
+                aria-invalid={!!errors.id}
+                required
+                {...register('id', { required: t('request_required') })}
+              />
+
+              <FieldError
+                id={`${formId}-id-error`}
+                errors={[
+                  errors.id && {
+                    ...errors.id,
+                    message: errors.id?.type === 'required' ? t('request_required') : errors.id.message,
+                  },
+                ]}
+              />
             </Field>
           </FieldGroup>
         </CardContent>
@@ -300,7 +345,7 @@ export default function NovelFetch() {
             <Item className="pt-0 px-6">
               <ItemMedia>
                 <Avatar className="size-10">
-                  <AvatarImage src={getImageUrl(novel.image)} />
+                  <AvatarImage alt="" src={getImageUrl(novel.image)} />
                   <AvatarFallback>{novel.name[0]}</AvatarFallback>
                 </Avatar>
               </ItemMedia>

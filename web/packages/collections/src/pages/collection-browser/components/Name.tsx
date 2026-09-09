@@ -1,18 +1,24 @@
 import type { CollectionAndItem } from '../types';
-import { Button } from 'ui/components/button';
+import { buttonVariants } from 'ui/components/button';
 import { Link, createSearchParams } from 'react-router';
 
 export default function Name({ name, id, __typename }: CollectionAndItem) {
   if (__typename === 'Item') {
     return (
-      <Button variant="link" className="text-foreground w-fit px-0 text-left">
-        <Link to={`/collections/item/${id}`}>{name}</Link>
-      </Button>
+      <Link
+        to={`/collections/item/${id}`}
+        className={buttonVariants({ variant: 'link', className: 'text-foreground w-fit px-0 text-left' })}
+      >
+        {name}
+      </Link>
     );
   }
   return (
-    <Button variant="link" className="text-foreground w-fit px-0 text-left">
-      <Link to={{ search: createSearchParams({ parentId: id.toString() }).toString() }}>{name}</Link>
-    </Button>
+    <Link
+      to={{ search: createSearchParams({ parentId: id.toString() }).toString() }}
+      className={buttonVariants({ variant: 'link', className: 'text-foreground w-fit px-0 text-left' })}
+    >
+      {name}
+    </Link>
   );
 }

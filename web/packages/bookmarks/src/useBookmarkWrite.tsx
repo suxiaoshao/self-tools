@@ -22,6 +22,8 @@ export default function useBookmarkWrite(viewHref: string) {
   };
   return {
     execute,
+    outcome: action.outcome,
+    pending: action.pending,
     blocked: action.blocked,
     notice: (
       <WriteNotice

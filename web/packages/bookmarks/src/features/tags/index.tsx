@@ -1,3 +1,5 @@
+import { ConfirmationDialog } from 'ui/confirmation-dialog';
+import { useState } from 'react';
 import { RequestNotice } from 'custom-graphql';
 import { checkDeleted } from '@bookmarks/features/tags/model/reconcile';
 import { useApolloClient } from '@apollo/client/react';
@@ -22,7 +24,7 @@ import { useTitle } from 'hooks';
 import { graphql } from '@bookmarks/gql/index';
 import { useLazyQuery, useMutation } from '@apollo/client/react';
 import type { GetTagsQuery } from '@bookmarks/gql/graphql';
-import { Button } from 'ui/components/button';
+import { Button, buttonVariants } from 'ui/components/button';
 
 const GetTags = graphql(`
   query getTags($pagination: Pagination!) {
@@ -71,6 +73,8 @@ const columnHelper = createCustomColumnHelper<Data>();
 export default function Tags() {
   const client = useApolloClient();
   const write = useBookmarkWrite('/bookmarks/tags');
+  const [target, setTarget] = useState<{ id: number; name: string }>();
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const pageState = usePage();
   const [getTags, { data: queryData, refetch, error }] = useLazyQuery(GetTags);
   const data = queryData?.queryTags?.data;
@@ -97,15 +101,14 @@ export default function Tags() {
       [
         columnHelper.accessor(
           ({ url, name }) => (
-            <Button
-              variant="link"
-              className="text-foreground w-fit px-0 text-left cursor-pointer"
-              onClick={() => {
-                window.open(url, '_blank');
-              }}
+            <a
+              href={url}
+              target="_blank"
+              rel="noreferrer"
+              className={buttonVariants({ variant: 'link', className: 'w-fit px-0 text-left' })}
             >
               {name}
-            </Button>
+            </a>
           ),
           {
             header: t('name'),
@@ -113,10 +116,10 @@ export default function Tags() {
             cell: (context) => context.getValue(),
           },
         ),
-        columnHelper.accessor(({ site }) => t(getLabelKeyBySite(site)), {
+        columnHelper.accessor('site', {
           header: t('novel_site'),
           id: 'site',
-          cell: (context) => context.getValue(),
+          cell: (context) => t(getLabelKeyBySite(context.getValue())),
         }),
         columnHelper.accessor(({ createTime }) => format(createTime), {
           header: t('create_time'),
@@ -128,36 +131,30 @@ export default function Tags() {
           id: 'updateTime',
           cell: (context) => context.getValue(),
         }),
-        columnHelper.accessor(
-          ({ id }) => (
-            <TableActions>
+        columnHelper.display({
+          header: t('actions'),
+          id: 'action',
+          cell: ({
+            row: {
+              original: { id, name },
+            },
+          }) => (
+            <TableActions triggerId={`tag-actions-${id}`}>
               {() => [
                 {
                   text: t('delete'),
-                  onClick: async () => {
-                    if (
-                      !(await write.execute(async () => (await deleteTag({ variables: { id } })).data?.deleteTag, {
-                        verify: () => checkDeleted(client, id),
-                        confirmed: refetch,
-                      }))
-                    )
-                      return;
-                    void Promise.resolve()
-                      .then(() => refetch())
-                      .catch(() => undefined);
+                  disabled: write.pending || (write.blocked && target?.id !== id),
+                  onClick: () => {
+                    if (!write.blocked) setTarget({ id, name });
+                    setConfirmOpen(true);
                   },
                 },
               ]}
             </TableActions>
           ),
-          {
-            header: t('actions'),
-            id: 'action',
-            cell: (context) => context.getValue(),
-          },
-        ),
+        }),
       ] as CustomColumnDefArray<Data>,
-    [deleteTag, refetch, t, write, client],
+    [t, write, target],
   );
   const tableOptions = useMemo<CustomTableOptions<Data>>(
     () => ({ columns, data: data ?? [], getCoreRowModel: rowModel }),
@@ -168,17 +165,46 @@ export default function Tags() {
     return (
       <div className="flex-0 mt-4 flex">
         <CreateTagButton refetch={refetch} />
-        <Button variant="ghost" size="icon" className="ml-auto" onClick={onSearch}>
+        <Button variant="ghost" size="icon" className="ml-auto" onClick={onSearch} aria-label={t('search')}>
           <Search />
         </Button>
       </div>
     );
-  }, [onSearch, refetch]);
+  }, [onSearch, refetch, t]);
 
   return (
     <div className="flex flex-col size-full p-4">
       <RequestNotice error={error} />
-      {write.notice}
+      {!confirmOpen && write.notice}
+      <ConfirmationDialog
+        returnFocus={() => document.getElementById(`tag-actions-${target?.id}`)}
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title={t('delete_target', { name: target?.name })}
+        description={t('delete_tag_impact')}
+        confirmLabel={t('delete')}
+        cancelLabel={t('cancel')}
+        pending={write.pending}
+        confirmDisabled={write.blocked}
+        notice={write.notice}
+        onConfirm={async () => {
+          if (!target) return;
+          const { id } = target;
+          const confirmed = () => {
+            setConfirmOpen(false);
+            void Promise.resolve()
+              .then(() => refetch())
+              .catch(() => undefined);
+          };
+          if (
+            await write.execute(async () => (await deleteTag({ variables: { id } })).data?.deleteTag, {
+              verify: () => checkDeleted(client, id),
+              confirmed,
+            })
+          )
+            confirmed();
+        }}
+      />
       {input}
       <CustomTable options={tableOptions} page={page} />
     </div>

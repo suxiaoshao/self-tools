@@ -56,17 +56,17 @@ export default function I18nDrawerItem() {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTrigger render={<SidebarMenuItem />}>
-        <SidebarMenuButton>
+      <SidebarMenuItem>
+        <DialogTrigger render={<SidebarMenuButton />}>
           <Languages />
           <span>{t('language_setting')}</span>
-        </SidebarMenuButton>
-      </DialogTrigger>
+        </DialogTrigger>
+      </SidebarMenuItem>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t('language_setting')}</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit(onSubmit)} id="language-form">
+        <form noValidate onSubmit={handleSubmit(onSubmit)} id="language-form">
           <FieldGroup>
             <Controller
               name="langMode"
@@ -74,9 +74,9 @@ export default function I18nDrawerItem() {
               rules={{ required: true }}
               render={({ field, fieldState }) => (
                 <Field>
-                  <FieldLabel>{t('select_mode')}</FieldLabel>
+                  <FieldLabel id="language-mode-label">{t('select_mode')}</FieldLabel>
                   <RadioGroup
-                    aria-labelledby="color-setting"
+                    aria-labelledby="language-mode-label"
                     {...field}
                     onValueChange={field.onChange}
                     id={field.name}
@@ -95,7 +95,17 @@ export default function I18nDrawerItem() {
                       </FieldLabel>
                     </Field>
                   </RadioGroup>
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  {fieldState.invalid && (
+                    <FieldError
+                      errors={[
+                        fieldState.error && {
+                          ...fieldState.error,
+                          message:
+                            fieldState.error?.type === 'required' ? t('request_required') : fieldState.error.message,
+                        },
+                      ]}
+                    />
+                  )}
                 </Field>
               )}
             />
@@ -107,9 +117,9 @@ export default function I18nDrawerItem() {
                 rules={{ required: true }}
                 render={({ field, fieldState }) => (
                   <Field>
-                    <FieldLabel id="color-setting">{t('select_language')}</FieldLabel>
+                    <FieldLabel id="language-choice-label">{t('select_language')}</FieldLabel>
                     <RadioGroup
-                      aria-labelledby="color-setting"
+                      aria-labelledby="language-choice-label"
                       {...field}
                       onValueChange={field.onChange}
                       id={field.name}
@@ -128,7 +138,17 @@ export default function I18nDrawerItem() {
                         </FieldLabel>
                       </Field>
                     </RadioGroup>
-                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                    {fieldState.invalid && (
+                      <FieldError
+                        errors={[
+                          fieldState.error && {
+                            ...fieldState.error,
+                            message:
+                              fieldState.error?.type === 'required' ? t('request_required') : fieldState.error.message,
+                          },
+                        ]}
+                      />
+                    )}
                   </Field>
                 )}
               />

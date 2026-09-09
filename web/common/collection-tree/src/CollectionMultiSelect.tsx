@@ -41,7 +41,7 @@ export function CollectionMultiSelect({
   };
 
   const { reset, control, handleSubmit } = useForm<SelectCollectionType>({
-    resolver: valibotResolver(selectCollectionSchema),
+    resolver: valibotResolver(object({ collectionId: number(t('request_required')) })),
   });
 
   const { open, handleOpenChange, handleClose } = useDialog();
@@ -68,6 +68,7 @@ export function CollectionMultiSelect({
         <Badge key={id} variant="secondary">
           {path}
           <Button
+            aria-label={t('remove_association', { name: path })}
             disabled={disabled}
             variant="ghost"
             size="icon-sm"
@@ -81,7 +82,17 @@ export function CollectionMultiSelect({
         </Badge>
       ))}
       <Popover open={open && !disabled} onOpenChange={handleOpenChange}>
-        <PopoverTrigger render={<Button disabled={disabled} variant="ghost" size="icon-sm" className="rounded-full" />}>
+        <PopoverTrigger
+          render={
+            <Button
+              aria-label={t('add_collection')}
+              disabled={disabled}
+              variant="ghost"
+              size="icon-sm"
+              className="rounded-full"
+            />
+          }
+        >
           <Plus />
         </PopoverTrigger>
         <PopoverContent>

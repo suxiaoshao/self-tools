@@ -6,6 +6,6 @@ export default function Actions(props: CollectionAndItem & { refetch: () => void
   return props.__typename === 'Collection' ? (
     <CollectionActions {...props} />
   ) : (
-    <ItemActions id={props.id} refetch={props.refetch} editable />
+    <ItemActions id={props.id} name={props.name} refetch={props.refetch} editable />
   );
 }

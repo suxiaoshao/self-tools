@@ -1,3 +1,5 @@
+import { ConfirmationDialog } from 'ui/confirmation-dialog';
+import { useState } from 'react';
 import { RequestNotice } from 'custom-graphql';
 import { checkDeleted } from '@bookmarks/features/novel/model/reconcile';
 import { useApolloClient } from '@apollo/client/react';
@@ -16,7 +18,7 @@ import {
 import { useI18n } from 'i18n';
 import { useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Link, useNavigate } from 'react-router';
+import { Link } from 'react-router';
 import { format } from 'time';
 import CreateNovelButton from './components/CreateNovelButton';
 import { convertFormToVariables } from './utils';
@@ -29,11 +31,11 @@ import { useTitle } from 'hooks';
 import { graphql } from '@bookmarks/gql/index';
 import { useMutation, useQuery } from '@apollo/client/react';
 import type { GetNovelsQuery, GetNovelsQueryVariables } from '@bookmarks/gql/graphql';
-import { Button } from 'ui/components/button';
+import { Button, buttonVariants } from 'ui/components/button';
 import { Card, CardContent } from 'ui/components/card';
 import { Switch } from 'ui/components/switch';
 import { FieldLabel, Field } from 'ui/components/field';
-import { Avatar, AvatarImage } from 'ui/components/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from 'ui/components/avatar';
 
 const GetNovels = graphql(`
   query getNovels(
@@ -91,7 +93,9 @@ const columnHelper = createCustomColumnHelper<Data>();
 
 export default function NovelList() {
   const client = useApolloClient();
-  const write = useBookmarkWrite('/bookmarks/novel');
+  const write = useBookmarkWrite('/bookmarks');
+  const [target, setTarget] = useState<{ id: number; name: string }>();
+  const [confirmOpen, setConfirmOpen] = useState(false);
   // i18n
   const t = useI18n();
   // title
@@ -123,9 +127,12 @@ export default function NovelList() {
       [
         columnHelper.accessor(
           ({ id, name }) => (
-            <Button variant="link" className="text-foreground w-fit px-0 text-left">
-              <Link to={`/bookmarks/novel/${id}`}>{name}</Link>
-            </Button>
+            <Link
+              to={`/bookmarks/novel/${id}`}
+              className={buttonVariants({ variant: 'link', className: 'text-foreground w-fit px-0 text-left' })}
+            >
+              {name}
+            </Link>
           ),
           {
             header: t('name'),
@@ -133,15 +140,16 @@ export default function NovelList() {
             cell: (context) => context.getValue(),
           },
         ),
-        columnHelper.accessor(({ site }) => t(getLabelKeyBySite(site)), {
+        columnHelper.accessor('site', {
           header: t('novel_site'),
           id: 'site',
-          cell: (context) => context.getValue(),
+          cell: (context) => t(getLabelKeyBySite(context.getValue())),
         }),
         columnHelper.accessor(
-          ({ avatar }) => (
+          ({ avatar, name }) => (
             <Avatar>
-              <AvatarImage src={getImageUrl(avatar)} />
+              <AvatarImage alt="" src={getImageUrl(avatar)} />
+              <AvatarFallback aria-hidden="true">{name[0]}</AvatarFallback>
             </Avatar>
           ),
           {
@@ -150,10 +158,10 @@ export default function NovelList() {
             cell: (context) => context.getValue(),
           },
         ),
-        columnHelper.accessor(({ novelStatus }) => t(getLabelKeyByNovelStatus(novelStatus)), {
+        columnHelper.accessor('novelStatus', {
           header: t('novel_status'),
           id: 'status',
-          cell: (context) => context.getValue(),
+          cell: (context) => t(getLabelKeyByNovelStatus(context.getValue())),
         }),
         columnHelper.accessor(({ description }) => description ?? '-', {
           header: t('description'),
@@ -174,52 +182,76 @@ export default function NovelList() {
           id: 'updateTime',
           cell: (context) => context.getValue(),
         }),
-        columnHelper.accessor(
-          ({ id }) => (
-            <TableActions>
+        columnHelper.display({
+          header: t('actions'),
+          id: 'action',
+          cell: ({
+            row: {
+              original: { id, name },
+            },
+          }) => (
+            <TableActions triggerId={`novel-actions-${id}`}>
               {() => [
                 {
                   text: t('delete'),
-                  onClick: async () => {
-                    if (
-                      !(await write.execute(async () => (await deleteNovel({ variables: { id } })).data?.deleteNovel, {
-                        verify: () => checkDeleted(client, id),
-                        confirmed: refetch,
-                      }))
-                    )
-                      return;
-                    void Promise.resolve()
-                      .then(() => refetch())
-                      .catch(() => undefined);
+                  disabled: write.pending || (write.blocked && target?.id !== id),
+                  onClick: () => {
+                    if (!write.blocked) setTarget({ id, name });
+                    setConfirmOpen(true);
                   },
                 },
               ]}
             </TableActions>
           ),
-          {
-            header: t('actions'),
-            id: 'action',
-            cell: (context) => context.getValue(),
-          },
-        ),
+        }),
       ] as CustomColumnDefArray<Data>,
-    [deleteNovel, refetch, t, write, client],
+    [t, write, target],
   );
   const tableOptions = useMemo<CustomTableOptions<Data>>(
     () => ({ columns, data: data ?? [], getCoreRowModel: getCoreRowModel() }),
     [columns, data],
   );
 
-  const navigate = useNavigate();
   return (
     <div className="flex flex-col size-full">
       <RequestNotice error={error} />
-      {write.notice}
+      {!confirmOpen && write.notice}
+      <ConfirmationDialog
+        returnFocus={() => document.getElementById(`novel-actions-${target?.id}`)}
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title={t('delete_target', { name: target?.name })}
+        description={t('delete_novel_impact')}
+        confirmLabel={t('delete')}
+        cancelLabel={t('cancel')}
+        pending={write.pending}
+        confirmDisabled={write.blocked}
+        notice={write.notice}
+        onConfirm={async () => {
+          if (!target) return;
+          const { id } = target;
+          const confirmed = () => {
+            setConfirmOpen(false);
+            void Promise.resolve()
+              .then(() => refetch())
+              .catch(() => undefined);
+          };
+          if (
+            await write.execute(async () => (await deleteNovel({ variables: { id } })).data?.deleteNovel, {
+              verify: () => checkDeleted(client, id),
+              confirmed,
+            })
+          )
+            confirmed();
+        }}
+      />
       <div className="basis-auto flex p-4 pb-0 gap-4">
         <CreateNovelButton refetch={refetch} />
-        <Button onClick={() => navigate('/bookmarks/novel/fetch')}>{t('crawler')}</Button>
+        <Link to="/bookmarks/novel/fetch" className={buttonVariants()}>
+          {t('crawler')}
+        </Link>
         <div className="grow" />
-        <Button variant="ghost" size="icon" onClick={() => refetch()}>
+        <Button variant="ghost" size="icon" onClick={() => refetch()} aria-label={t('refresh')}>
           <RefreshCcw />
         </Button>
       </div>
@@ -232,7 +264,12 @@ export default function NovelList() {
                 control={control}
                 name="collectionMatch.fullMatch"
                 render={({ field: { value, onChange, ...field } }) => (
-                  <Switch checked={value} onCheckedChange={onChange} {...field} />
+                  <Switch
+                    aria-label={t('collection_whether_full_match')}
+                    checked={value}
+                    onCheckedChange={onChange}
+                    {...field}
+                  />
                 )}
               />
             </Field>
@@ -252,7 +289,12 @@ export default function NovelList() {
                 control={control}
                 name="tagMatch.fullMatch"
                 render={({ field: { value, onChange, ...field } }) => (
-                  <Switch checked={value} onCheckedChange={onChange} {...field} />
+                  <Switch
+                    aria-label={t('tag_whether_full_match')}
+                    checked={value}
+                    onCheckedChange={onChange}
+                    {...field}
+                  />
                 )}
               />
             </Field>
@@ -262,7 +304,7 @@ export default function NovelList() {
               <Controller
                 control={control}
                 name="tagMatch.matchSet"
-                render={({ field }) => <TagsSelect className="w-[400px]" {...field} />}
+                render={({ field }) => <TagsSelect aria-label={t('match_tags')} className="w-[400px]" {...field} />}
               />
             </Field>
           </CardContent>

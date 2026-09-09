@@ -43,7 +43,16 @@ export interface EditProps extends Omit<ComponentProps<'div'>, 'onChange' | 'cod
  * @since 0.2.2
  * @description 编辑器组件
  * */
-export default function Edit({ onChangeCode, code, language, wordWrap, readOnly = false, ref, ...props }: EditProps) {
+export default function Edit({
+  onChangeCode,
+  code,
+  language,
+  wordWrap,
+  readOnly = false,
+  ref,
+  'aria-label': ariaLabel,
+  ...props
+}: EditProps) {
   /**
    * 编辑器绑定的 dom 的引用
    * */
@@ -74,6 +83,7 @@ export default function Edit({ onChangeCode, code, language, wordWrap, readOnly 
         theme: editTheme,
         automaticLayout: true,
         fontSize: 16,
+        ariaLabel,
         minimap: {
           enabled: true,
         },
@@ -98,8 +108,8 @@ export default function Edit({ onChangeCode, code, language, wordWrap, readOnly 
     }
   }, [editRef, language]);
   useEffect(() => {
-    edit?.updateOptions({ readOnly });
-  }, [edit, readOnly]);
+    edit?.updateOptions({ readOnly, ariaLabel });
+  }, [edit, readOnly, ariaLabel]);
   /**
    * props.readonly 改变时修改编辑器的只读属性
    * */

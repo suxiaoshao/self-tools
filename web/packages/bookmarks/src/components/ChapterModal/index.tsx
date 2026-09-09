@@ -23,18 +23,22 @@ export default function ChapterModal({ chapters }: ChapterModalProps) {
   return (
     <Dialog>
       <Tooltip>
-        <DialogTrigger render={<Button type="button" variant="ghost" size="icon" />}>
-          <TooltipTrigger render={<span />}>
-            <TableOfContents />
-          </TooltipTrigger>
-        </DialogTrigger>
+        <TooltipTrigger
+          render={
+            <DialogTrigger
+              render={<Button type="button" variant="ghost" size="icon" aria-label={t('view_novel_chapters')} />}
+            />
+          }
+        >
+          <TableOfContents />
+        </TooltipTrigger>
         <TooltipContent>{t('view_novel_chapters')}</TooltipContent>
       </Tooltip>
       <DialogContent className="px-0 pb-0 sm:max-w-sm">
         <DialogHeader className="px-6">
           <DialogTitle>{t('novel_chapters')}</DialogTitle>
         </DialogHeader>
-        <li className="max-h-[70vh] overflow-y-auto">
+        <div className="max-h-[70vh] overflow-y-auto">
           {chapters.map((chapter) => (
             <Item size="sm" key={chapter.url}>
               <ItemContent>
@@ -46,7 +50,7 @@ export default function ChapterModal({ chapters }: ChapterModalProps) {
               </ItemContent>
             </Item>
           ))}
-        </li>
+        </div>
       </DialogContent>
     </Dialog>
   );

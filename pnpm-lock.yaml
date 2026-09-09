@@ -200,6 +200,9 @@ importers:
 
   web/common/markdown:
     dependencies:
+      i18n:
+        specifier: workspace:*
+        version: link:../i18n
       markdown-to-jsx:
         specifier: ^9.8.2
         version: 9.8.2(react@19.2.7)

@@ -10,15 +10,16 @@
 
 ### 当前计划
 
-| 计划                                                                  | 规范所有者                                     | 目的                                                                      |
-| --------------------------------------------------------------------- | ---------------------------------------------- | ------------------------------------------------------------------------- |
-| [Issue #96：统一登录、Session 与通行密钥管理](issue-96/README.md)     | auth / login / portal                          | 明确认证持久化、同源 Cookie 与两种登录流程。                              |
-| [Issue #97：两站图片代理与 CORS 来源边界](issue-97/README.md)         | bookmarks / middleware                         | 明确图片目标限制、资源预算和可信 Origin 合同。                            |
-| [Issue #98：端到端错误、日志与链路追踪](issue-98/README.md)           | server / web / gateway                         | 明确业务结果、错误恢复、协议转换和跨服务诊断合同。                        |
-| [Issue #99：GraphQL 应用边界与同步数据库执行隔离](issue-99/README.md) | bookmarks / collections / service-db           | 收回 transport 的数据库与适配器访问，统一有界 blocking 执行和事务所有权。 |
-| [Issue #100：GraphQL 查询成本与稳定分页](issue-100/README.md)         | bookmarks / collections / graphql-common / web | 统一 SQL 筛选与稳定分页、批量关联读取及请求成本限制。                     |
-| [Issue #101：层级写入与删除一致性](issue-101/README.md)               | bookmarks / collections / database             | 明确父子关系事实源、有限层级遍历、路径更新与删除原子性。                  |
-| [Issue #103：前端包与领域所有权](issue-103/README.md)                 | web workspace / portal / common / lint         | 明确共享能力与领域所有者、公开入口及可执行依赖边界。                      |
+| 计划                                                                               | 规范所有者                                      | 目的                                                                      |
+| ---------------------------------------------------------------------------------- | ----------------------------------------------- | ------------------------------------------------------------------------- |
+| [Issue #96：统一登录、Session 与通行密钥管理](issue-96/README.md)                  | auth / login / portal                           | 明确认证持久化、同源 Cookie 与两种登录流程。                              |
+| [Issue #97：两站图片代理与 CORS 来源边界](issue-97/README.md)                      | bookmarks / middleware                          | 明确图片目标限制、资源预算和可信 Origin 合同。                            |
+| [Issue #98：端到端错误、日志与链路追踪](issue-98/README.md)                        | server / web / gateway                          | 明确业务结果、错误恢复、协议转换和跨服务诊断合同。                        |
+| [Issue #99：GraphQL 应用边界与同步数据库执行隔离](issue-99/README.md)              | bookmarks / collections / service-db            | 收回 transport 的数据库与适配器访问，统一有界 blocking 执行和事务所有权。 |
+| [Issue #100：GraphQL 查询成本与稳定分页](issue-100/README.md)                      | bookmarks / collections / graphql-common / web  | 统一 SQL 筛选与稳定分页、批量关联读取及请求成本限制。                     |
+| [Issue #101：层级写入与删除一致性](issue-101/README.md)                            | bookmarks / collections / database              | 明确父子关系事实源、有限层级遍历、路径更新与删除原子性。                  |
+| [Issue #103：前端包与领域所有权](issue-103/README.md)                              | web workspace / portal / common / lint          | 明确共享能力与领域所有者、公开入口及可执行依赖边界。                      |
+| [Issue #104：操作安全、可访问性与表单反馈](../../web/docs/dev/issue-104/README.md) | web / portal / bookmarks / collections / common | 统一删除确认、交互语义、翻译与字段反馈。                                  |
 
 ### 已完成或已替代计划
 

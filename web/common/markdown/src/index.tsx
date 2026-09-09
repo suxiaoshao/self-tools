@@ -1,3 +1,4 @@
+import { useI18n } from 'i18n';
 import React, { type ComponentProps, type JSX, useEffect } from 'react';
 import MarkdownSource, { type MarkdownToJSX } from 'markdown-to-jsx';
 import Prism from 'prismjs';
@@ -100,11 +101,18 @@ const option: MarkdownToJSX.Options = {
   },
 };
 export default function CustomMarkdown({ value, ...props }: MarkdownProps) {
+  const t = useI18n();
   useEffect(() => {
     Prism.highlightAll();
-  }, [value]);
+  }, [value, t]);
   return (
-    <div {...props}>
+    <div
+      key={t('copy')}
+      data-prismjs-copy={t('copy')}
+      data-prismjs-copy-success={t('copied')}
+      data-prismjs-copy-error={t('copy_failed')}
+      {...props}
+    >
       <MarkdownSource className="size-full" options={option}>
         {value}
       </MarkdownSource>

@@ -1,3 +1,5 @@
+import { ConfirmationDialog } from 'ui/confirmation-dialog';
+import { useState } from 'react';
 import { attemptWrite, useWriteAction, WriteNotice } from 'custom-graphql';
 import { collectionResult } from '@collections/features/collection/model/results';
 import { deleteResult } from '@collections/results';
@@ -74,6 +76,8 @@ interface CollectionActionsProps {
 
 export default function CollectionActions({ id, refetch, ...data }: CollectionActionsProps) {
   const client = useApolloClient();
+  const [deleteTarget, setDeleteTarget] = useState<{ id: number; name: string }>();
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const deletion = useWriteAction();
   const [deleteCollection] = useMutation(DeleteCollection);
   const [updateCollection] = useMutation(UpdateCollection);
@@ -93,26 +97,20 @@ export default function CollectionActions({ id, refetch, ...data }: CollectionAc
 
   return (
     <>
-      <TableActions>
+      <TableActions triggerId={`collection-actions-${id}`}>
         {() => [
           {
             text: t('delete'),
-            onClick: async () => {
-              const result = await deletion.run(() =>
-                attemptWrite(
-                  () => deleteCollection({ variables: { id } }),
-                  (response) => deleteResult(response.data?.deleteCollection),
-                ),
-              );
-              if (result?.status === 'saved')
-                void Promise.resolve()
-                  .then(refetch)
-                  .catch(() => undefined);
+            disabled: deletion.pending,
+            onClick: () => {
+              if (!deletion.blocked) setDeleteTarget({ id, name: data.name });
+              setConfirmOpen(true);
             },
           },
 
           <DropdownMenuItem
             key="edit"
+            disabled={deletion.blocked}
             onClick={() => {
               handleOpen();
             }}
@@ -121,15 +119,46 @@ export default function CollectionActions({ id, refetch, ...data }: CollectionAc
           </DropdownMenuItem>,
         ]}
       </TableActions>
-      <WriteNotice
-        outcome={deletion.outcome}
+      <ConfirmationDialog
+        returnFocus={() => document.getElementById(`collection-actions-${deleteTarget?.id}`)}
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title={t('delete_target', { name: deleteTarget?.name })}
+        description={t('delete_collection_impact')}
+        confirmLabel={t('delete')}
+        cancelLabel={t('cancel')}
         pending={deletion.pending}
-        check={async () => {
-          if (await deletion.check(() => checkDeleted(client, id)))
+        confirmDisabled={deletion.blocked}
+        onConfirm={async () => {
+          if (!deleteTarget) return;
+          const { id } = deleteTarget;
+          const result = await deletion.run(() =>
+            attemptWrite(
+              () => deleteCollection({ variables: { id } }),
+              (response) => deleteResult(response.data?.deleteCollection),
+            ),
+          );
+          if (result?.status === 'saved') {
+            setConfirmOpen(false);
             void Promise.resolve()
               .then(refetch)
               .catch(() => undefined);
+          }
         }}
+        notice={
+          <WriteNotice
+            outcome={deletion.outcome}
+            pending={deletion.pending}
+            check={async () => {
+              if (deleteTarget && (await deletion.check(() => checkDeleted(client, deleteTarget.id)))) {
+                setConfirmOpen(false);
+                void Promise.resolve()
+                  .then(refetch)
+                  .catch(() => undefined);
+              }
+            }}
+          />
+        }
       />
       <Dialog open={open} onOpenChange={handleOpenChange}>
         <CollectionForm

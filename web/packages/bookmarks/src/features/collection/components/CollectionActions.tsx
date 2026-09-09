@@ -1,3 +1,5 @@
+import { ConfirmationDialog } from 'ui/confirmation-dialog';
+import { useState } from 'react';
 import { checkCollection } from '@bookmarks/features/collection/model/reconcile';
 import { checkDeleted } from '@bookmarks/features/collection/model/reconcile';
 import { useApolloClient } from '@apollo/client/react';
@@ -72,6 +74,9 @@ type CollectionActionsProps = CollectionTableData & {
 export default function CollectionActions({ id, refetch, ...data }: CollectionActionsProps) {
   const client = useApolloClient();
   const write = useBookmarkWrite('/bookmarks/collections');
+  const deletion = useBookmarkWrite('/bookmarks/collections');
+  const [deleteTarget, setDeleteTarget] = useState<{ id: number; name: string }>();
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleteCollection] = useMutation(DeleteCollection);
   const [editCollection] = useMutation(UpdateCollection);
   const { open, handleClose, handleOpen, handleOpenChange } = useDialog();
@@ -99,26 +104,48 @@ export default function CollectionActions({ id, refetch, ...data }: CollectionAc
   };
   return (
     <>
-      {write.notice}
-      <TableActions>
+      <ConfirmationDialog
+        returnFocus={() => document.getElementById(`bookmark-collection-actions-${deleteTarget?.id}`)}
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title={t('delete_target', { name: deleteTarget?.name })}
+        description={t('delete_collection_impact')}
+        confirmLabel={t('delete')}
+        cancelLabel={t('cancel')}
+        pending={deletion.pending}
+        confirmDisabled={deletion.blocked}
+        notice={deletion.notice}
+        onConfirm={async () => {
+          if (!deleteTarget) return;
+          const { id } = deleteTarget;
+          const confirmed = () => {
+            setConfirmOpen(false);
+            void Promise.resolve()
+              .then(refetch)
+              .catch(() => undefined);
+          };
+          if (
+            await deletion.execute(async () => (await deleteCollection({ variables: { id } })).data?.deleteCollection, {
+              verify: () => checkDeleted(client, id),
+              confirmed,
+            })
+          )
+            confirmed();
+        }}
+      />
+      <TableActions triggerId={`bookmark-collection-actions-${id}`}>
         {() => [
           {
             text: t('delete'),
-            onClick: async () => {
-              if (
-                !(await write.execute(
-                  async () => (await deleteCollection({ variables: { id } })).data?.deleteCollection,
-                  { verify: () => checkDeleted(client, id), confirmed: refetch },
-                ))
-              )
-                return;
-              void Promise.resolve()
-                .then(() => refetch())
-                .catch(() => undefined);
+            disabled: deletion.pending || write.blocked,
+            onClick: () => {
+              if (!deletion.blocked) setDeleteTarget({ id, name: data.name });
+              setConfirmOpen(true);
             },
           },
           <DropdownMenuItem
             key="edit"
+            disabled={deletion.blocked}
             onClick={() => {
               handleOpen();
             }}

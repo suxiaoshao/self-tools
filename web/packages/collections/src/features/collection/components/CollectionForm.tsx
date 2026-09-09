@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import { useWriteAction, WriteNotice, rejectionFieldErrors, type WriteOutcome } from 'custom-graphql';
 import { useI18n } from 'i18n';
 import { useForm, type SubmitHandler } from 'react-hook-form';
@@ -5,7 +6,7 @@ import type { CreateCollectionMutationVariables } from '../../../gql/graphql';
 import { match } from 'ts-pattern';
 import { DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from 'ui/components/dialog';
 import { Button } from 'ui/components/button';
-import { FieldGroup, FieldLabel, Field } from 'ui/components/field';
+import { FieldError, FieldGroup, FieldLabel, Field } from 'ui/components/field';
 import { Input } from 'ui/components/input';
 export type CollectionFormData = Omit<CreateCollectionMutationVariables, 'parentId'>;
 interface CollectFormProps {
@@ -23,6 +24,7 @@ export default function CollectionForm({
   initialValues,
   checkResult,
 }: CollectFormProps) {
+  const formId = useId();
   // 表单控制
   const {
     handleSubmit,
@@ -57,21 +59,54 @@ export default function CollectionForm({
             .exhaustive()}
         </DialogTitle>
       </DialogHeader>
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <form noValidate id={formId} onSubmit={handleSubmit(onSubmit)}>
         <FieldGroup>
-          <Field>
-            <FieldLabel>{t('collection_name')}</FieldLabel>
-            <Input aria-invalid={!!errors.name} required {...register('name', { required: true })} />
-            {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
+          <Field data-invalid={!!errors.name}>
+            <FieldLabel htmlFor={`${formId}-name`}>{t('collection_name')}</FieldLabel>
+            <Input
+              disabled={action.blocked}
+              id={`${formId}-name`}
+              aria-describedby={errors.name ? `${formId}-name-error` : undefined}
+              aria-invalid={!!errors.name}
+              required
+              {...register('name', { required: t('request_required') })}
+            />
+
+            <FieldError
+              id={`${formId}-name-error`}
+              errors={[
+                errors.name && {
+                  ...errors.name,
+                  message: errors.name?.type === 'required' ? t('request_required') : errors.name.message,
+                },
+              ]}
+            />
           </Field>
-          <Field>
-            <FieldLabel>{t('description')}</FieldLabel>
-            <Input {...register('description', { setValueAs: (value) => value || null })} />
+          <Field data-invalid={!!errors.description}>
+            <FieldLabel htmlFor={`${formId}-description`}>{t('description')}</FieldLabel>
+            <Input
+              disabled={action.blocked}
+              id={`${formId}-description`}
+              aria-describedby={errors.description ? `${formId}-description-error` : undefined}
+              aria-invalid={!!errors.description}
+              {...register('description', { setValueAs: (value) => value || null })}
+            />
+
+            <FieldError
+              id={`${formId}-description-error`}
+              errors={[
+                errors.description && {
+                  ...errors.description,
+                  message: errors.description?.type === 'required' ? t('request_required') : errors.description.message,
+                },
+              ]}
+            />
           </Field>
         </FieldGroup>
       </form>
 
       <WriteNotice
+        fieldLabels={{ name: t('collection_name'), description: t('description') }}
         outcome={action.outcome}
         pending={action.pending}
         viewHref="/collections/collections"
@@ -85,12 +120,7 @@ export default function CollectionForm({
       />
       <DialogFooter>
         <DialogClose render={<Button />}>{t('cancel')}</DialogClose>
-        <Button
-          disabled={action.blocked}
-          onClick={() => {
-            handleSubmit(onSubmit)();
-          }}
-        >
+        <Button disabled={action.blocked} type="submit" form={formId}>
           {t('submit')}
         </Button>
       </DialogFooter>

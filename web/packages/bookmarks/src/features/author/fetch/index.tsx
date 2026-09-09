@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import { RequestNotice } from 'custom-graphql';
 import useBookmarkWrite from '@bookmarks/useBookmarkWrite';
 import type { FetchAuthorQueryVariables } from '@bookmarks/gql/graphql';
@@ -94,6 +95,7 @@ const SaveDraftAuthor = graphql(`
 
 export default function AuthorFetch() {
   const write = useBookmarkWrite('/bookmarks/authors');
+  const formId = useId();
   // title
   const t = useI18n();
   useTitle(t('author_crawler'));
@@ -101,7 +103,12 @@ export default function AuthorFetch() {
   // fetch
   type FormData = FetchAuthorQueryVariables;
   const [fn, { data, loading, error }] = useLazyQuery(FetchAuthor);
-  const { handleSubmit, register, control } = useForm<FormData>();
+  const {
+    handleSubmit,
+    register,
+    control,
+    formState: { errors },
+  } = useForm<FormData>();
   const onSubmit = handleSubmit((data) => {
     void fn({ variables: data }).catch(() => undefined);
   });
@@ -110,7 +117,7 @@ export default function AuthorFetch() {
   // save
   const [saveDraftAuthor, { loading: saveLoading }] = useMutation(SaveDraftAuthor);
   return (
-    <form className="flex flex-col size-full p-4 gap-4" onSubmit={onSubmit}>
+    <form noValidate className="flex flex-col size-full p-4 gap-4" onSubmit={onSubmit}>
       <RequestNotice error={error} />
       {write.notice}
       <Card className="gap-0">
@@ -118,7 +125,9 @@ export default function AuthorFetch() {
           <CardTitle>{t('filter')}</CardTitle>
           <CardAction>
             <Tooltip>
-              <TooltipTrigger render={<Button variant="ghost" size="icon" type="submit" />}>
+              <TooltipTrigger
+                render={<Button variant="ghost" size="icon" type="submit" disabled={loading} aria-label={t('fetch')} />}
+              >
                 <Search />
               </TooltipTrigger>
               <TooltipContent>{t('fetch')}</TooltipContent>
@@ -127,6 +136,7 @@ export default function AuthorFetch() {
               <TooltipTrigger
                 render={
                   <Button
+                    aria-label={t('save_draft')}
                     variant="ghost"
                     size="icon"
                     disabled={write.blocked || !author || saveLoading}
@@ -161,12 +171,18 @@ export default function AuthorFetch() {
             <Controller
               control={control}
               name="novelSite"
-              rules={{ required: true }}
-              render={({ field: { onChange, ...field }, fieldState }) => (
-                <Field className="flex-1">
-                  <FieldLabel>{t('novel_site')}</FieldLabel>
+              rules={{ required: t('request_required') }}
+              render={({ field: { onChange, ref, ...field }, fieldState }) => (
+                <Field className="flex-1" data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor={`${formId}-site`}>{t('novel_site')}</FieldLabel>
                   <Select required {...field} onValueChange={onChange}>
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger
+                      ref={ref}
+                      id={`${formId}-site`}
+                      aria-invalid={fieldState.invalid}
+                      aria-describedby={fieldState.invalid ? `${formId}-site-error` : undefined}
+                      className="w-full"
+                    >
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -176,13 +192,40 @@ export default function AuthorFetch() {
                       </SelectGroup>
                     </SelectContent>
                   </Select>
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  {fieldState.invalid && (
+                    <FieldError
+                      id={`${formId}-site-error`}
+                      errors={[
+                        fieldState.error && {
+                          ...fieldState.error,
+                          message:
+                            fieldState.error?.type === 'required' ? t('request_required') : fieldState.error.message,
+                        },
+                      ]}
+                    />
+                  )}
                 </Field>
               )}
             />
-            <Field className="flex-1">
-              <FieldLabel>{t('author_id')}</FieldLabel>
-              <Input required {...register('id', { required: true })} />
+            <Field className="flex-1" data-invalid={!!errors.id}>
+              <FieldLabel htmlFor={`${formId}-id`}>{t('author_id')}</FieldLabel>
+              <Input
+                id={`${formId}-id`}
+                aria-describedby={errors.id ? `${formId}-id-error` : undefined}
+                aria-invalid={!!errors.id}
+                required
+                {...register('id', { required: t('request_required') })}
+              />
+
+              <FieldError
+                id={`${formId}-id-error`}
+                errors={[
+                  errors.id && {
+                    ...errors.id,
+                    message: errors.id?.type === 'required' ? t('request_required') : errors.id.message,
+                  },
+                ]}
+              />
             </Field>
           </FieldGroup>
         </CardContent>
@@ -203,7 +246,7 @@ export default function AuthorFetch() {
           <Item className="pt-0 px-6">
             <ItemMedia>
               <Avatar className="size-10">
-                <AvatarImage src={getImageUrl(author.image)} />
+                <AvatarImage alt="" src={getImageUrl(author.image)} />
                 <AvatarFallback>{author.name[0]}</AvatarFallback>
               </Avatar>
             </ItemMedia>

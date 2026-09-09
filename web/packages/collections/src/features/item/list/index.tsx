@@ -20,7 +20,7 @@ import { convertFormToVariables } from './utils';
 import { CollectionMultiSelect } from '@collections/entities/collection';
 import { format } from 'time';
 import CreateItemButton from '@collections/features/item/components/CreateItemButton';
-import { Button } from 'ui/components/button';
+import { Button, buttonVariants } from 'ui/components/button';
 import { RefreshCcw } from 'lucide-react';
 import { Card, CardContent } from 'ui/components/card';
 import { FieldLabel, Field } from 'ui/components/field';
@@ -71,9 +71,12 @@ export default function ItemList() {
       [
         columnHelper.accessor(
           ({ id, name }) => (
-            <Button variant="link" className="text-foreground w-fit px-0 text-left">
-              <Link to={`/collections/item/${id}`}>{name}</Link>
-            </Button>
+            <Link
+              to={`/collections/item/${id}`}
+              className={buttonVariants({ variant: 'link', className: 'text-foreground w-fit px-0 text-left' })}
+            >
+              {name}
+            </Link>
           ),
           {
             header: t('name'),
@@ -91,7 +94,7 @@ export default function ItemList() {
           id: 'updateTime',
           cell: (context) => context.getValue(),
         }),
-        columnHelper.accessor(({ id }) => <ItemActions id={id} refetch={refetch} />, {
+        columnHelper.accessor(({ id, name }) => <ItemActions id={id} name={name} refetch={refetch} />, {
           header: t('actions'),
           id: 'action',
           cell: (context) => context.getValue(),
@@ -107,7 +110,13 @@ export default function ItemList() {
     <div className="flex flex-col size-full">
       <div className="flex-[0_0_auto] flex p-4 pb-0">
         <CreateItemButton variant="default" refetch={refetch} collectionIds={[]} />
-        <Button variant="ghost" size="icon-lg" className="rounded-full ml-auto" onClick={() => refetch()}>
+        <Button
+          variant="ghost"
+          size="icon-lg"
+          className="rounded-full ml-auto"
+          onClick={() => refetch()}
+          aria-label={t('refresh')}
+        >
           <RefreshCcw />
         </Button>
       </div>

@@ -75,7 +75,7 @@ type SelectCollectionType = InferInput<typeof selectCollectionSchema>;
 
 export default function AddCollection({ novelId, refetch }: AddCollectionProps) {
   const client = useApolloClient();
-  const write = useBookmarkWrite('/bookmarks/novel');
+  const write = useBookmarkWrite('/bookmarks');
   const { open, handleClose, handleOpenChange } = useDialog();
   const { value: allCollection, fetchData } = useAllCollection();
 
@@ -83,7 +83,7 @@ export default function AddCollection({ novelId, refetch }: AddCollectionProps) 
   const [fn] = useMutation(AddCollectionForNovel);
 
   const { control, handleSubmit } = useForm<SelectCollectionType>({
-    resolver: valibotResolver(selectCollectionSchema),
+    resolver: valibotResolver(object({ collectionId: number(t('request_required')) })),
   });
   const onSubmit = handleSubmit(async ({ collectionId }) => {
     if (
@@ -106,11 +106,11 @@ export default function AddCollection({ novelId, refetch }: AddCollectionProps) 
   });
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger render={<Button variant="ghost" size="icon" />}>
+      <DialogTrigger render={<Button variant="ghost" size="icon" aria-label={t('add_collection')} />}>
         <Plus />
       </DialogTrigger>
       <DialogContent>
-        <form onSubmit={onSubmit}>
+        <form noValidate onSubmit={onSubmit}>
           <DialogHeader>
             <DialogTitle>{t('select_collection')}</DialogTitle>
           </DialogHeader>
@@ -126,6 +126,7 @@ export default function AddCollection({ novelId, refetch }: AddCollectionProps) 
                 name="collectionId"
                 render={({ field, fieldState }) => (
                   <CollectionSelect
+                    disabled={write.blocked}
                     {...field}
                     allCollections={allCollections}
                     errorMessage={fieldState.error?.message}

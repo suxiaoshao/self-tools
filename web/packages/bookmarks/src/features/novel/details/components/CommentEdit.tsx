@@ -1,3 +1,5 @@
+import { useId, useEffect } from 'react';
+import { rejectionFieldErrors } from 'custom-graphql';
 import { checkNovelState } from '@bookmarks/features/novel/model/reconcile';
 import { useApolloClient } from '@apollo/client/react';
 import useBookmarkWrite from '@bookmarks/useBookmarkWrite';
@@ -25,10 +27,6 @@ import { Button } from 'ui/components/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from 'ui/components/tooltip';
 import { FieldError, FieldGroup, FieldLabel, Field } from 'ui/components/field';
 import { Spinner } from 'ui/components/spinner';
-
-const CreateCommentSchema = object({
-  content: pipe(string(), minLength(1)),
-});
 
 const CreateComment = graphql(`
   mutation CreateComment($novelId: Int!, $content: String!) {
@@ -95,20 +93,23 @@ const UpdateComment = graphql(`
 `);
 
 interface CommentEditProps {
+  disabled?: boolean;
   novelId: number;
   refetch: () => void;
   mode: 'create' | 'update';
   initContent?: string;
 }
 
-export default function CommentEdit({ novelId, refetch, mode, initContent }: CommentEditProps) {
+export default function CommentEdit({ novelId, refetch, mode, initContent, disabled }: CommentEditProps) {
   const client = useApolloClient();
-  const write = useBookmarkWrite('/bookmarks/novel');
+  const write = useBookmarkWrite('/bookmarks');
   const t = useI18n();
+  const formId = useId();
+  const CreateCommentSchema = object({ content: pipe(string(), minLength(1, t('request_required'))) });
   const { open, handleClose, handleOpenChange } = useDialog();
   const [createComment, { loading }] = useMutation(CreateComment);
   const [updateComment, { loading: updateLoading }] = useMutation(UpdateComment);
-  const { handleSubmit, control } = useForm<Omit<CreateCommentMutationVariables, 'novelId'>>({
+  const { handleSubmit, control, setError } = useForm<Omit<CreateCommentMutationVariables, 'novelId'>>({
     resolver: valibotResolver(CreateCommentSchema),
     defaultValues: {
       content: initContent,
@@ -150,14 +151,26 @@ export default function CommentEdit({ novelId, refetch, mode, initContent }: Com
       .catch(() => undefined);
   };
 
+  useEffect(() => {
+    for (const issue of rejectionFieldErrors(write.outcome)) {
+      if (issue.path[0] === 'content') setError('content', { type: 'server', message: t('request_invalid') });
+    }
+  }, [write.outcome, setError, t]);
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (!write.pending) handleOpenChange(next);
+      }}
+    >
       <Tooltip>
-        <DialogTrigger render={<Button variant="ghost" size="icon" />}>
-          <TooltipTrigger render={<span />}>
-            <Edit />
-          </TooltipTrigger>
-        </DialogTrigger>
+        <TooltipTrigger
+          render={
+            <DialogTrigger render={<Button disabled={disabled} variant="ghost" size="icon" aria-label={t('edit')} />} />
+          }
+        >
+          <Edit />
+        </TooltipTrigger>
         <TooltipContent>{t('edit')}</TooltipContent>
       </Tooltip>
 
@@ -170,23 +183,48 @@ export default function CommentEdit({ novelId, refetch, mode, initContent }: Com
               .exhaustive()}
           </DialogTitle>
         </DialogHeader>
-        <form className="w-full flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)}>
+        <form noValidate className="w-full flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)}>
           <FieldGroup className="w-full">
             <Controller
               name="content"
               control={control}
               render={({ field, fieldState }) => (
-                <Field>
-                  <FieldLabel>{t('content')}</FieldLabel>
-                  <CustomEdit wordWrap="on" className="h-[500px] rounded-lg" language="markdown" {...field} />
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel id={`${formId}-content-label`}>{t('content')}</FieldLabel>
+                  <CustomEdit
+                    aria-label={t('content')}
+                    readOnly={write.blocked}
+                    aria-labelledby={`${formId}-content-label`}
+                    aria-invalid={fieldState.invalid}
+                    aria-describedby={fieldState.invalid ? `${formId}-content-error` : undefined}
+                    wordWrap="on"
+                    className="h-[min(500px,50dvh)] rounded-lg"
+                    language="markdown"
+                    {...field}
+                  />
+                  {fieldState.invalid && (
+                    <FieldError
+                      id={`${formId}-content-error`}
+                      errors={[
+                        fieldState.error && {
+                          ...fieldState.error,
+                          message:
+                            fieldState.error?.type === 'required' || fieldState.error?.type === 'min_length'
+                              ? t('request_required')
+                              : fieldState.error.message,
+                        },
+                      ]}
+                    />
+                  )}
                 </Field>
               )}
             />
           </FieldGroup>
           {write.notice}
           <DialogFooter>
-            <DialogClose render={<Button variant="secondary" />}>{t('cancel')}</DialogClose>
+            <DialogClose render={<Button disabled={write.pending} type="button" variant="secondary" />}>
+              {t('cancel')}
+            </DialogClose>
             <Button type="submit" disabled={write.blocked || loading || updateLoading}>
               {(loading || updateLoading) && <Spinner />}
               {t('submit')}
