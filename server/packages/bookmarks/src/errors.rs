@@ -78,19 +78,7 @@ pub(crate) fn source_conflict(error: AppError) -> AppError {
     }
     error
 }
-pub(crate) fn crawler_error(error: novel_crawler::NovelError) -> AppError {
-    use service_errors::{Fault, FaultKind};
-    let kind = match &error {
-        novel_crawler::NovelError::NetworkError(source) if source.is_timeout() => {
-            FaultKind::Timeout
-        }
-        novel_crawler::NovelError::NetworkError(source) if source.is_connect() => {
-            FaultKind::Network
-        }
-        _ => FaultKind::Protocol,
-    };
-    Fault::new(kind, "novel_crawler", error).into()
-}
+
 pub(crate) fn invalid(path: &str, code: service_errors::ValidationCode) -> AppError {
     UseCaseError::Rejected(Rejection::Validation(vec![FieldViolation {
         path: path.split('.').map(str::to_owned).collect(),

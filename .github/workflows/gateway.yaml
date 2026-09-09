@@ -42,4 +42,4 @@ jobs:
           targets: gateway
           push: true
           set: |
-            gateway.tags=suxiaoshao/gateway:latest,suxiaoshao/gateway:${{ github.sha }}
+            gateway.tags+=suxiaoshao/gateway:latest

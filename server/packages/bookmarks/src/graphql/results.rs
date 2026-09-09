@@ -104,8 +104,8 @@ impl From<crate::errors::ResourceRef> for ResourceRef {
         }
     }
 }
-impl From<crate::service::novel::ReadRecordsUpdated> for ReadRecordsUpdated {
-    fn from(v: crate::service::novel::ReadRecordsUpdated) -> Self {
+impl From<crate::application::ReadRecordsUpdated> for ReadRecordsUpdated {
+    fn from(v: crate::application::ReadRecordsUpdated) -> Self {
         Self {
             chapter_ids: v.chapter_ids,
             changed_count: v.changed_count,

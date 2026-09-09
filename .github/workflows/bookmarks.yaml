@@ -8,6 +8,9 @@ on:
       - docker/docker-bake.hcl
       - docker/server/rust/**
       - server/common/service-health/**
+      - server/common/service-db/**
+      - server/common/service-query/**
+      - server/common/graphql-common/**
       - docker/server/bookmarks.Dockerfile
       - server/packages/bookmarks/**
       - server/common/middleware/**
@@ -44,4 +47,4 @@ jobs:
           targets: bookmarks
           push: true
           set: |
-            bookmarks.tags=suxiaoshao/bookmarks:latest,suxiaoshao/bookmarks:${{ github.sha }}
+            bookmarks.tags+=suxiaoshao/bookmarks:latest

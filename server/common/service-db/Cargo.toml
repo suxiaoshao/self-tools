@@ -1,0 +1,13 @@
+[package]
+name = "service-db"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+diesel = { workspace = true, features = ["postgres", "r2d2"] }
+tokio = { workspace = true, features = ["rt", "sync"] }
+tracing.workspace = true
+service-errors.workspace = true
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt", "time"] }

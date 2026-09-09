@@ -1,30 +1,37 @@
 use super::{
-    error::{detail, pool, read_error, with_conn},
+    error::{application, read_error},
     guard::AuthGuard,
     types::*,
 };
-use crate::service::{
-    collection::{Collection as CollectionService, CollectionQueryRunner},
-    item::{Item as ItemService, ItemQueryRunner, ItemRunner},
-};
 use async_graphql::{Context, Object, Result};
 use graphql_common::{Pagination, TagMatch};
-use service_query::{QueryStack, Queryable, TagFilter};
+use service_query::TagFilter;
 pub(crate) struct QueryRoot;
 #[Object]
 impl QueryRoot {
     #[graphql(guard = "AuthGuard")]
     async fn all_collections(&self, ctx: &Context<'_>) -> Result<Vec<Collection>> {
-        with_conn(ctx, CollectionService::all_collections)
+        application(ctx)?
+            .all_collections()
+            .await
             .map(|v| v.into_iter().map(Collection).collect())
+            .map_err(read_error)
     }
     #[graphql(guard = "AuthGuard")]
     async fn get_collection(&self, ctx: &Context<'_>, id: i64) -> Result<Option<Collection>> {
-        with_conn(ctx, |conn| detail(CollectionService::get(id, conn))).map(|v| v.map(Collection))
+        application(ctx)?
+            .get_collection(id)
+            .await
+            .map(|v| v.map(Collection))
+            .map_err(read_error)
     }
     #[graphql(guard = "AuthGuard")]
     async fn get_item(&self, ctx: &Context<'_>, id: i64) -> Result<Option<Item>> {
-        with_conn(ctx, |conn| detail(ItemService::get(id, conn))).map(|v| v.map(Item))
+        application(ctx)?
+            .get_item(id)
+            .await
+            .map(|v| v.map(Item))
+            .map_err(read_error)
     }
     #[graphql(guard = "AuthGuard")]
     async fn collection_and_item(
@@ -33,18 +40,10 @@ impl QueryRoot {
         query: CollectionItemQuery,
     ) -> Result<ItemAndCollectionList> {
         let query = query.checked()?;
-        if let Some(id) = query.id {
-            crate::errors::validate_id(id, "query.id").map_err(read_error)?;
-        }
-        let conn = pool(ctx)?;
-        let (collections, items) = tokio::try_join!(
-            CollectionQueryRunner::new(query, conn.clone()),
-            ItemQueryRunner::new(query, conn.clone())
-        )
-        .map_err(read_error)?;
-        let runner = QueryStack::new(collections).add_query(items);
-        let (data, total) =
-            tokio::try_join!(runner.query(query.pagination), runner.len()).map_err(read_error)?;
+        let (data, total) = application(ctx)?
+            .collection_and_item(query)
+            .await
+            .map_err(read_error)?;
         Ok(ItemAndCollectionList::new(
             data.into_iter().map(Into::into).collect(),
             total,
@@ -76,16 +75,15 @@ impl QueryRoot {
                 crate::errors::validate_id(*id, "collectionMatch.matchSet").map_err(read_error)?;
             }
         }
-        let runner = ItemRunner::new(
-            collection_match.map(|v| TagFilter {
-                match_set: v.match_set,
-                full_match: v.full_match,
-            }),
-            pool(ctx)?.clone(),
-        )
-        .map_err(read_error)?;
-        let (data, total) =
-            tokio::try_join!(runner.query(pagination), runner.len()).map_err(read_error)?;
+
+        let filter = collection_match.map(|v| TagFilter {
+            match_set: v.match_set,
+            full_match: v.full_match,
+        });
+        let (data, total) = application(ctx)?
+            .query_items(filter, pagination)
+            .await
+            .map_err(read_error)?;
         Ok(ItemList::new(data.into_iter().map(Item).collect(), total))
     }
 }

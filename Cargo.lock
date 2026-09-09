@@ -698,6 +698,7 @@ dependencies = [
  "diesel",
  "diesel_migrations",
  "dotenv",
+ "futures",
  "graphql-common",
  "middleware",
  "novel_crawler",
@@ -705,6 +706,7 @@ dependencies = [
  "reqwest",
  "serde",
  "serde_json",
+ "service-db",
  "service-errors",
  "service-health",
  "service-query",
@@ -932,6 +934,7 @@ dependencies = [
  "graphql-common",
  "middleware",
  "serde_json",
+ "service-db",
  "service-errors",
  "service-health",
  "service-query",
@@ -5022,6 +5025,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "service-db"
+version = "0.1.0"
+dependencies = [
+ "diesel",
+ "service-errors",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
 name = "service-errors"
 version = "0.1.0"
 dependencies = [
@@ -5048,7 +5061,6 @@ name = "service-query"
 version = "0.1.0"
 dependencies = [
  "service-errors",
- "tokio",
 ]
 
 [[package]]

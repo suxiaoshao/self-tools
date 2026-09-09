@@ -9,7 +9,7 @@ edition.workspace = true
 telemetry.workspace = true
 service-errors.workspace = true
 tracing.workspace = true
-tokio = { workspace = true, features = ["time"] }
+tokio = { workspace = true, features = ["time", "net"] }
 uuid = "1.23.4"
 # volo
 volo.workspace = true

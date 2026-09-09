@@ -1,9 +1,6 @@
-use crate::{
-    errors::{AppError, AppResult, Rejection},
-    model::PgPool,
-};
+use crate::errors::{AppError, AppResult, Rejection};
 use async_graphql::{Context, Result};
-use service_errors::{Fault, FaultKind, PublicCode, PublicError, PublicResource, UseCaseError};
+use service_errors::{Fault, PublicCode, PublicError, PublicResource, UseCaseError};
 pub fn read_error(error: AppError) -> async_graphql::Error {
     match error {
         UseCaseError::Fault(fault) => graphql_common::fault_error(fault),
@@ -40,38 +37,11 @@ pub fn read_error(error: AppError) -> async_graphql::Error {
         }
     }
 }
-pub fn pool<'a>(ctx: &'a Context<'_>) -> Result<&'a PgPool> {
+pub fn application<'a>(
+    ctx: &'a Context<'_>,
+) -> Result<&'a std::sync::Arc<crate::application::Application>> {
     ctx.data_opt()
-        .ok_or_else(|| graphql_common::fault_error(Fault::internal("graphql_pool")))
-}
-pub fn with_conn<T>(
-    ctx: &Context<'_>,
-    f: impl FnOnce(&mut diesel::PgConnection) -> AppResult<T>,
-) -> Result<T> {
-    let mut conn = pool(ctx)?.get().map_err(|e| {
-        graphql_common::fault_error(Fault::new(FaultKind::Pool, "database_pool", e))
-    })?;
-    f(&mut conn).map_err(read_error)
-}
-pub fn detail<T>(result: AppResult<T>) -> AppResult<Option<T>> {
-    match result {
-        Ok(v) => Ok(Some(v)),
-        Err(UseCaseError::Rejected(Rejection::Missing(_))) => Ok(None),
-        Err(e) => Err(e),
-    }
-}
-pub fn write<T, R>(
-    ctx: &Context<'_>,
-    f: impl FnOnce(&mut diesel::PgConnection) -> AppResult<T>,
-    success: impl FnOnce(T) -> R,
-) -> Result<R>
-where
-    R: TryFrom<Rejection, Error = Rejection>,
-{
-    let mut conn = pool(ctx)?.get().map_err(|e| {
-        graphql_common::fault_error(Fault::new(FaultKind::Pool, "database_pool", e))
-    })?;
-    project(ctx, f(&mut conn), success)
+        .ok_or_else(|| graphql_common::fault_error(Fault::internal("graphql_application")))
 }
 pub fn project<T, R>(
     ctx: &Context<'_>,

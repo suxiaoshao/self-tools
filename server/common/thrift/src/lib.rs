@@ -15,7 +15,9 @@ use dns_lookup::lookup_host;
 pub use gen_thrift::volo_gen::*;
 
 mod client;
+mod endpoint;
 pub use client::{AuthClient, RpcError, context};
+pub use endpoint::AuthEndpoint;
 
 pub fn get_client() -> Result<AuthClient, service_errors::Fault> {
     Ok(client_at(get_ip()?))

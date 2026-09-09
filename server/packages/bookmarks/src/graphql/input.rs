@@ -13,7 +13,7 @@ pub(crate) struct CreateNovelInput {
     pub(crate) site_id: String,
     pub(crate) tags: HashSet<i64>,
 }
-impl From<CreateNovelInput> for crate::service::novel::CreateNovelInput {
+impl From<CreateNovelInput> for crate::application::CreateNovelInput {
     fn from(v: CreateNovelInput) -> Self {
         Self {
             name: v.name,
@@ -36,7 +36,7 @@ pub(crate) struct SaveDraftAuthor {
     pub(crate) image: String,
     pub(crate) novels: Vec<SaveNovelInfo>,
 }
-impl From<SaveDraftAuthor> for crate::service::save_draft::SaveDraftAuthor {
+impl From<SaveDraftAuthor> for crate::application::SaveDraftAuthor {
     fn from(v: SaveDraftAuthor) -> Self {
         Self {
             id: v.id,
@@ -59,7 +59,7 @@ pub(crate) struct SaveNovelInfo {
     pub(crate) tags: Vec<SaveTagInfo>,
     pub(crate) novel_status: NovelStatus,
 }
-impl From<SaveNovelInfo> for crate::service::save_draft::SaveNovelInfo {
+impl From<SaveNovelInfo> for crate::application::SaveNovelInfo {
     fn from(v: SaveNovelInfo) -> Self {
         Self {
             id: v.id,
@@ -80,7 +80,7 @@ pub(crate) struct SaveChapterInfo {
     pub(crate) time: DateTime,
     pub(crate) word_count: u32,
 }
-impl From<SaveChapterInfo> for crate::service::save_draft::SaveChapterInfo {
+impl From<SaveChapterInfo> for crate::application::SaveChapterInfo {
     fn from(v: SaveChapterInfo) -> Self {
         Self {
             id: v.id,
@@ -95,7 +95,7 @@ pub(crate) struct SaveTagInfo {
     pub(crate) id: String,
     pub(crate) name: String,
 }
-impl From<SaveTagInfo> for crate::service::save_draft::SaveTagInfo {
+impl From<SaveTagInfo> for crate::application::SaveTagInfo {
     fn from(v: SaveTagInfo) -> Self {
         Self {
             id: v.id,
@@ -115,7 +115,7 @@ pub(crate) struct SaveDraftNovel {
     pub(crate) novel_status: NovelStatus,
     pub(crate) author: SaveAuthorInfo,
 }
-impl From<SaveDraftNovel> for crate::service::save_draft::SaveDraftNovel {
+impl From<SaveDraftNovel> for crate::application::SaveDraftNovel {
     fn from(v: SaveDraftNovel) -> Self {
         Self {
             id: v.id,
@@ -138,7 +138,7 @@ pub(crate) struct SaveAuthorInfo {
     pub(crate) description: String,
     pub(crate) image: String,
 }
-impl From<SaveAuthorInfo> for crate::service::save_draft::SaveAuthorInfo {
+impl From<SaveAuthorInfo> for crate::application::SaveAuthorInfo {
     fn from(v: SaveAuthorInfo) -> Self {
         Self {
             id: v.id,

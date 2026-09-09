@@ -1,291 +1,117 @@
-/*
- * @Author: suxiaoshao suxiaoshao@gmail.com
- * @Date: 2024-02-02 20:43:34
- * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-05-29 14:44:34
- * @FilePath: /self-tools/server/packages/bookmarks/src/graphql/output/mod.rs
- */
-use async_graphql::Object;
-use graphql_common::DateTime;
-use novel_crawler::{
-    AuthorFn, ChapterFn, JJAuthor, JJChapter, JJNovel, JJTag, NovelFn, QDAuthor, QDChapter,
-    QDNovel, QDTag, TagFn,
+use super::{
+    enums::{NovelSite, NovelStatus},
+    error::{application, read_error},
 };
-
-use crate::graphql::enums::{NovelSite, NovelStatus};
-
-#[derive(Clone, Eq, PartialEq, Debug)]
-pub(crate) enum DraftAuthorInfo {
-    Qidian(QDAuthor),
-    Jjwxc(JJAuthor),
-}
-
+use crate::application;
+use async_graphql::{Context, Object, Result};
+use graphql_common::DateTime;
+pub(crate) struct DraftAuthorInfo(pub application::DraftAuthor);
 #[Object]
 impl DraftAuthorInfo {
     async fn url(&self) -> String {
-        match self {
-            DraftAuthorInfo::Qidian(inner) => inner.url(),
-            DraftAuthorInfo::Jjwxc(inner) => inner.url(),
-        }
+        self.0.url.clone()
     }
     async fn name(&self) -> String {
-        match self {
-            DraftAuthorInfo::Qidian(inner) => inner.name().to_owned(),
-            DraftAuthorInfo::Jjwxc(inner) => inner.name().to_owned(),
-        }
+        self.0.name.clone()
     }
     async fn description(&self) -> String {
-        match self {
-            DraftAuthorInfo::Qidian(inner) => inner.description().to_owned(),
-            DraftAuthorInfo::Jjwxc(inner) => inner.description().to_owned(),
-        }
+        self.0.description.clone()
     }
     async fn image(&self) -> String {
-        match self {
-            DraftAuthorInfo::Qidian(inner) => inner.image().to_owned(),
-            DraftAuthorInfo::Jjwxc(inner) => inner.image().to_owned(),
-        }
+        self.0.image.clone()
     }
-    async fn novels(&self) -> async_graphql::Result<Vec<DraftNovelInfo>> {
-        match self {
-            DraftAuthorInfo::Qidian(inner) => {
-                let data = inner.novels().await.map_err(|error| {
-                    super::error::read_error(crate::errors::crawler_error(error))
-                })?;
-                Ok(data.into_iter().map(DraftNovelInfo::Qidian).collect())
-            }
-            DraftAuthorInfo::Jjwxc(inner) => {
-                let data = inner.novels().await.map_err(|error| {
-                    super::error::read_error(crate::errors::crawler_error(error))
-                })?;
-                Ok(data.into_iter().map(DraftNovelInfo::Jjwxc).collect())
-            }
-        }
+    async fn novels(&self, ctx: &Context<'_>) -> Result<Vec<DraftNovelInfo>> {
+        application(ctx)?
+            .draft_author_novels(&self.0)
+            .await
+            .map(|v| v.into_iter().map(DraftNovelInfo).collect())
+            .map_err(read_error)
     }
     async fn id(&self) -> String {
-        match self {
-            DraftAuthorInfo::Qidian(inner) => inner.id().to_owned(),
-            DraftAuthorInfo::Jjwxc(inner) => inner.id().to_owned(),
-        }
+        self.0.id.clone()
     }
     async fn site(&self) -> NovelSite {
-        match self {
-            DraftAuthorInfo::Qidian(_) => NovelSite::Qidian,
-            DraftAuthorInfo::Jjwxc(_) => NovelSite::Jjwxc,
-        }
+        self.0.site.into()
     }
 }
-
-impl DraftAuthorInfo {
-    pub(crate) async fn new(id: String, novel_site: NovelSite) -> async_graphql::Result<Self> {
-        match novel_site {
-            NovelSite::Qidian => Ok(DraftAuthorInfo::Qidian(
-                novel_crawler::QDAuthor::get_author_data(&id)
-                    .await
-                    .map_err(|error| {
-                        super::error::read_error(crate::errors::crawler_error(error))
-                    })?,
-            )),
-            NovelSite::Jjwxc => Ok(DraftAuthorInfo::Jjwxc(
-                novel_crawler::JJAuthor::get_author_data(&id)
-                    .await
-                    .map_err(|error| {
-                        super::error::read_error(crate::errors::crawler_error(error))
-                    })?,
-            )),
-        }
-    }
-}
-
-#[derive(Clone, Eq, PartialEq, Debug)]
-pub(crate) enum DraftNovelInfo {
-    Qidian(QDNovel),
-    Jjwxc(JJNovel),
-}
-
+pub(crate) struct DraftNovelInfo(pub application::DraftNovel);
 #[Object]
 impl DraftNovelInfo {
     async fn url(&self) -> String {
-        match self {
-            DraftNovelInfo::Qidian(inner) => inner.url(),
-            DraftNovelInfo::Jjwxc(inner) => inner.url(),
-        }
+        self.0.url.clone()
     }
     async fn name(&self) -> String {
-        match self {
-            DraftNovelInfo::Qidian(inner) => inner.name().to_owned(),
-            DraftNovelInfo::Jjwxc(inner) => inner.name().to_owned(),
-        }
+        self.0.name.clone()
     }
     async fn description(&self) -> String {
-        match self {
-            DraftNovelInfo::Qidian(inner) => inner.description().to_owned(),
-            DraftNovelInfo::Jjwxc(inner) => inner.description().to_owned(),
-        }
+        self.0.description.clone()
     }
     async fn image(&self) -> String {
-        match self {
-            DraftNovelInfo::Qidian(inner) => inner.image().to_owned(),
-            DraftNovelInfo::Jjwxc(inner) => inner.image().to_owned(),
-        }
+        self.0.image.clone()
     }
-    async fn chapters(&self) -> async_graphql::Result<Vec<DraftChapterInfo>> {
-        match self {
-            DraftNovelInfo::Qidian(inner) => {
-                let data = inner.chapters().await.map_err(|error| {
-                    super::error::read_error(crate::errors::crawler_error(error))
-                })?;
-                Ok(data.into_iter().map(DraftChapterInfo::Qidian).collect())
-            }
-            DraftNovelInfo::Jjwxc(inner) => {
-                let data = inner.chapters().await.map_err(|error| {
-                    super::error::read_error(crate::errors::crawler_error(error))
-                })?;
-                Ok(data.into_iter().map(DraftChapterInfo::Jjwxc).collect())
-            }
-        }
+    async fn chapters(&self) -> Vec<DraftChapterInfo> {
+        self.0
+            .chapters
+            .iter()
+            .cloned()
+            .map(DraftChapterInfo)
+            .collect()
     }
-    async fn author(&self) -> async_graphql::Result<DraftAuthorInfo> {
-        match self {
-            DraftNovelInfo::Qidian(inner) => {
-                let data = inner.author().await.map_err(|error| {
-                    super::error::read_error(crate::errors::crawler_error(error))
-                })?;
-                Ok(DraftAuthorInfo::Qidian(data))
-            }
-            DraftNovelInfo::Jjwxc(inner) => {
-                let data = inner.author().await.map_err(|error| {
-                    super::error::read_error(crate::errors::crawler_error(error))
-                })?;
-                Ok(DraftAuthorInfo::Jjwxc(data))
-            }
-        }
+    async fn author(&self, ctx: &Context<'_>) -> Result<DraftAuthorInfo> {
+        application(ctx)?
+            .draft_novel_author(&self.0)
+            .await
+            .map(DraftAuthorInfo)
+            .map_err(read_error)
     }
     async fn status(&self) -> NovelStatus {
-        match self {
-            DraftNovelInfo::Qidian(inner) => inner.status().into(),
-            DraftNovelInfo::Jjwxc(inner) => inner.status().into(),
-        }
+        self.0.status.into()
     }
     async fn id(&self) -> String {
-        match self {
-            DraftNovelInfo::Qidian(inner) => inner.id().to_owned(),
-            DraftNovelInfo::Jjwxc(inner) => inner.id().to_owned(),
-        }
+        self.0.id.clone()
     }
     async fn site(&self) -> NovelSite {
-        match self {
-            DraftNovelInfo::Qidian(_) => NovelSite::Qidian,
-            DraftNovelInfo::Jjwxc(_) => NovelSite::Jjwxc,
-        }
+        self.0.site.into()
     }
-    async fn tags(&'_ self) -> Vec<DraftTagInfo<'_>> {
-        match self {
-            DraftNovelInfo::Qidian(inner) => {
-                inner.tags().iter().map(DraftTagInfo::Qidian).collect()
-            }
-            DraftNovelInfo::Jjwxc(inner) => inner.tags().iter().map(DraftTagInfo::Jjwxc).collect(),
-        }
+    async fn tags(&self) -> Vec<DraftTagInfo> {
+        self.0.tags.iter().cloned().map(DraftTagInfo).collect()
     }
 }
-
-impl DraftNovelInfo {
-    pub(crate) async fn new(id: String, novel_site: NovelSite) -> async_graphql::Result<Self> {
-        match novel_site {
-            NovelSite::Qidian => Ok(DraftNovelInfo::Qidian(
-                novel_crawler::QDNovel::get_novel_data(&id)
-                    .await
-                    .map_err(|error| {
-                        super::error::read_error(crate::errors::crawler_error(error))
-                    })?,
-            )),
-            NovelSite::Jjwxc => Ok(DraftNovelInfo::Jjwxc(
-                novel_crawler::JJNovel::get_novel_data(&id)
-                    .await
-                    .map_err(|error| {
-                        super::error::read_error(crate::errors::crawler_error(error))
-                    })?,
-            )),
-        }
-    }
-}
-
-#[derive(Clone, Eq, PartialEq, Debug)]
-pub(crate) enum DraftChapterInfo {
-    Qidian(QDChapter),
-    Jjwxc(JJChapter),
-}
-
+pub(crate) struct DraftChapterInfo(pub application::DraftChapter);
 #[Object]
 impl DraftChapterInfo {
     async fn url(&self) -> String {
-        match self {
-            DraftChapterInfo::Qidian(inner) => inner.url(),
-            DraftChapterInfo::Jjwxc(inner) => inner.url(),
-        }
+        self.0.url.clone()
     }
     async fn title(&self) -> String {
-        match self {
-            DraftChapterInfo::Qidian(inner) => inner.title().to_owned(),
-            DraftChapterInfo::Jjwxc(inner) => inner.title().to_owned(),
-        }
+        self.0.title.clone()
     }
     async fn time(&self) -> DateTime {
-        match self {
-            DraftChapterInfo::Qidian(inner) => inner.time().into(),
-            DraftChapterInfo::Jjwxc(inner) => inner.time().into(),
-        }
+        self.0.time.into()
     }
     async fn word_count(&self) -> u32 {
-        match self {
-            DraftChapterInfo::Qidian(inner) => inner.word_count(),
-            DraftChapterInfo::Jjwxc(inner) => inner.word_count(),
-        }
+        self.0.word_count
     }
     async fn novel_id(&self) -> String {
-        match self {
-            DraftChapterInfo::Qidian(inner) => inner.novel_id().to_owned(),
-            DraftChapterInfo::Jjwxc(inner) => inner.novel_id().to_owned(),
-        }
+        self.0.novel_id.clone()
     }
     async fn id(&self) -> String {
-        match self {
-            DraftChapterInfo::Qidian(inner) => inner.chapter_id().to_owned(),
-            DraftChapterInfo::Jjwxc(inner) => inner.chapter_id().to_owned(),
-        }
+        self.0.id.clone()
     }
     async fn site(&self) -> NovelSite {
-        match self {
-            DraftChapterInfo::Qidian(_) => NovelSite::Qidian,
-            DraftChapterInfo::Jjwxc(_) => NovelSite::Jjwxc,
-        }
+        self.0.site.into()
     }
 }
-
-#[derive(Clone, Eq, PartialEq, Debug)]
-pub(crate) enum DraftTagInfo<'a> {
-    Qidian(&'a QDTag),
-    Jjwxc(&'a JJTag),
-}
-
+pub(crate) struct DraftTagInfo(pub application::DraftTag);
 #[Object]
-impl DraftTagInfo<'_> {
+impl DraftTagInfo {
     async fn url(&self) -> String {
-        match self {
-            DraftTagInfo::Qidian(inner) => inner.url(),
-            DraftTagInfo::Jjwxc(inner) => inner.url(),
-        }
+        self.0.url.clone()
     }
     async fn id(&self) -> String {
-        match self {
-            DraftTagInfo::Qidian(inner) => inner.id().to_owned(),
-            DraftTagInfo::Jjwxc(inner) => inner.id().to_owned(),
-        }
+        self.0.id.clone()
     }
     async fn name(&self) -> String {
-        match self {
-            DraftTagInfo::Qidian(inner) => inner.name().to_owned(),
-            DraftTagInfo::Jjwxc(inner) => inner.name().to_owned(),
-        }
+        self.0.name.clone()
     }
 }

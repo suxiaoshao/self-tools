@@ -1,12 +1,12 @@
 use crate::{
+    application::{Collection as CollectionData, Item as ItemData},
     errors::Rejection,
-    graphql::error::with_conn,
-    service::{collection, item},
+    graphql::error::{application, read_error},
 };
 use async_graphql::{Context, Enum, Object, Result, SimpleObject, Union};
 use graphql_common::{DateTime, ValidationFailure};
 #[derive(Clone)]
-pub(crate) struct Collection(pub collection::Collection);
+pub(crate) struct Collection(pub CollectionData);
 #[Object]
 impl Collection {
     async fn id(&self) -> i64 {
@@ -31,14 +31,15 @@ impl Collection {
         self.0.update_time.into()
     }
     async fn ancestors(&self, ctx: &Context<'_>) -> Result<Option<Vec<Collection>>> {
-        with_conn(ctx, |conn| {
-            collection::Collection::get_ancestors(self.0.id, conn)
-        })
-        .map(|v| Some(v.into_iter().map(Collection).collect()))
+        application(ctx)?
+            .ancestors(self.0.id)
+            .await
+            .map_err(read_error)
+            .map(|v| Some(v.into_iter().map(Collection).collect()))
     }
 }
 #[derive(Clone)]
-pub(crate) struct Item(pub item::Item);
+pub(crate) struct Item(pub ItemData);
 #[Object]
 impl Item {
     async fn id(&self) -> i64 {
@@ -57,7 +58,10 @@ impl Item {
         self.0.update_time.into()
     }
     async fn collections(&self, ctx: &Context<'_>) -> Result<Option<Vec<Collection>>> {
-        with_conn(ctx, |conn| item::Item::collections(self.0.id, conn))
+        application(ctx)?
+            .item_collections(self.0.id)
+            .await
+            .map_err(read_error)
             .map(|v| Some(v.into_iter().map(Collection).collect()))
     }
 }
@@ -66,11 +70,11 @@ pub(crate) enum ItemAndCollection {
     Item(Item),
     Collection(Collection),
 }
-impl From<crate::service::input::ItemAndCollection> for ItemAndCollection {
-    fn from(v: crate::service::input::ItemAndCollection) -> Self {
+impl From<crate::application::input::ItemAndCollection> for ItemAndCollection {
+    fn from(v: crate::application::input::ItemAndCollection) -> Self {
         match v {
-            crate::service::input::ItemAndCollection::Item(v) => Self::Item(Item(v)),
-            crate::service::input::ItemAndCollection::Collection(v) => {
+            crate::application::input::ItemAndCollection::Item(v) => Self::Item(Item(v)),
+            crate::application::input::ItemAndCollection::Collection(v) => {
                 Self::Collection(Collection(v))
             }
         }

@@ -19,5 +19,7 @@ pub trait AuthorFn: Sized + Send + Sync + Sized {
     fn image(&self) -> &str;
     fn novels(&self) -> impl std::future::Future<Output = NovelResult<Vec<Self::Novel>>> + Send;
     fn get_url_from_id(id: &str) -> String;
+    /// Source identifiers already parsed from the author page; does not fetch novels.
+    fn novel_ids(&self) -> &std::collections::HashSet<String>;
     fn id(&self) -> &str;
 }

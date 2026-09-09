@@ -43,4 +43,4 @@ jobs:
           targets: auth
           push: true
           set: |
-            auth.tags=suxiaoshao/auth:latest,suxiaoshao/auth:${{ github.sha }}
+            auth.tags+=suxiaoshao/auth:latest

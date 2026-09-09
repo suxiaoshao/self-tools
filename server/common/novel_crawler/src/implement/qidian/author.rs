@@ -79,6 +79,9 @@ impl AuthorFn for QDAuthor {
     fn get_url_from_id(id: &str) -> String {
         format!("https://m.qidian.com/author/{id}/")
     }
+    fn novel_ids(&self) -> &HashSet<String> {
+        &self.novel_ids
+    }
     fn id(&self) -> &str {
         self.id.as_str()
     }

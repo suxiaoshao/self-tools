@@ -8,6 +8,7 @@ edition.workspace = true
 [dependencies]
 service-errors = { workspace = true, features = ["database"] }
 service-query.workspace = true
+service-db.workspace = true
 telemetry.workspace = true
 service-health = { workspace = true, features = ["database", "auth"] }
 diesel_migrations.workspace = true

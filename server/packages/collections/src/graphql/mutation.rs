@@ -1,5 +1,8 @@
-use super::{error::write, guard::AuthGuard, types::*};
-use crate::service::{collection::Collection, item::Item};
+use super::{
+    error::{application, project},
+    guard::AuthGuard,
+    types::*,
+};
 use async_graphql::{Context, Object, Result};
 pub(crate) struct MutationRoot;
 #[Object]
@@ -12,9 +15,11 @@ impl MutationRoot {
         parent_id: Option<i64>,
         description: Option<String>,
     ) -> Result<CollectionWriteResult> {
-        write(
+        project(
             ctx,
-            |conn| Collection::create(&name, parent_id, description, conn),
+            application(ctx)?
+                .create_collection(name, parent_id, description)
+                .await,
             |v| {
                 CollectionWriteResult::CollectionSaved(CollectionSaved {
                     collection_id: v.id,
@@ -30,9 +35,11 @@ impl MutationRoot {
         name: String,
         description: Option<String>,
     ) -> Result<CollectionWriteResult> {
-        write(
+        project(
             ctx,
-            |conn| Collection::update(id, &name, description.as_deref(), conn),
+            application(ctx)?
+                .update_collection(id, name, description)
+                .await,
             |v| {
                 CollectionWriteResult::CollectionSaved(CollectionSaved {
                     collection_id: v.id,
@@ -48,9 +55,11 @@ impl MutationRoot {
         content: String,
         collection_ids: Vec<i64>,
     ) -> Result<ItemWriteResult> {
-        write(
+        project(
             ctx,
-            |conn| Item::create(name, content, collection_ids, conn),
+            application(ctx)?
+                .create_item(name, content, collection_ids)
+                .await,
             |v| ItemWriteResult::ItemSaved(ItemSaved { item_id: v.id }),
         )
     }
@@ -62,41 +71,33 @@ impl MutationRoot {
         name: String,
         content: String,
     ) -> Result<ItemWriteResult> {
-        write(
+        project(
             ctx,
-            |conn| Item::update(id, &name, &content, conn),
+            application(ctx)?.update_item(id, name, content).await,
             |v| ItemWriteResult::ItemSaved(ItemSaved { item_id: v.id }),
         )
     }
     #[graphql(guard = "AuthGuard")]
     async fn delete_collection(&self, ctx: &Context<'_>, id: i64) -> Result<DeleteResult> {
-        write(
-            ctx,
-            |conn| Collection::delete(id, conn),
-            |v| {
-                DeleteResult::ResourceDeleted(ResourceDeleted {
-                    resource: ResourceRef {
-                        kind: ResourceKind::Collection,
-                        id: v,
-                    },
-                })
-            },
-        )
+        project(ctx, application(ctx)?.delete_collection(id).await, |v| {
+            DeleteResult::ResourceDeleted(ResourceDeleted {
+                resource: ResourceRef {
+                    kind: ResourceKind::Collection,
+                    id: v,
+                },
+            })
+        })
     }
     #[graphql(guard = "AuthGuard")]
     async fn delete_item(&self, ctx: &Context<'_>, id: i64) -> Result<DeleteResult> {
-        write(
-            ctx,
-            |conn| Item::delete(id, conn),
-            |v| {
-                DeleteResult::ResourceDeleted(ResourceDeleted {
-                    resource: ResourceRef {
-                        kind: ResourceKind::Item,
-                        id: v,
-                    },
-                })
-            },
-        )
+        project(ctx, application(ctx)?.delete_item(id).await, |v| {
+            DeleteResult::ResourceDeleted(ResourceDeleted {
+                resource: ResourceRef {
+                    kind: ResourceKind::Item,
+                    id: v,
+                },
+            })
+        })
     }
     #[graphql(guard = "AuthGuard")]
     async fn add_collection_for_item(
@@ -105,9 +106,11 @@ impl MutationRoot {
         collection_id: i64,
         item_id: i64,
     ) -> Result<AddMembershipResult> {
-        write(
+        project(
             ctx,
-            |conn| Item::add_collection(collection_id, item_id, conn),
+            application(ctx)?
+                .add_collection_for_item(collection_id, item_id)
+                .await,
             |_| {
                 AddMembershipResult::CollectionMembershipChanged(CollectionMembershipChanged {
                     collection_id,
@@ -127,9 +130,11 @@ impl MutationRoot {
         collection_id: i64,
         item_id: i64,
     ) -> Result<RemoveMembershipResult> {
-        write(
+        project(
             ctx,
-            |conn| Item::delete_collection(collection_id, item_id, conn),
+            application(ctx)?
+                .delete_collection_for_item(collection_id, item_id)
+                .await,
             |_| {
                 RemoveMembershipResult::CollectionMembershipChanged(CollectionMembershipChanged {
                     collection_id,

@@ -40,7 +40,8 @@
 | crate            | 职责                                                           |
 | ---------------- | -------------------------------------------------------------- |
 | `service-errors` | 与协议无关的业务拒绝/故障、输入问题与公开错误代码              |
-| `service-query`  | 校验后的分页范围、查询组合与纯查询条件                         |
+| `service-query`  | 校验后的分页范围与纯查询条件                                   |
+| `service-db`     | 有界 blocking 数据库执行、连接 checkout 与许可生命周期         |
 | `telemetry`      | OpenTelemetry SDK 生命周期、可信传播与白名单 JSON 日志         |
 | `graphql-common` | GraphQL 标量、输入 adapter、公开错误和校验结果投影             |
 | `middleware`     | 按 Cargo feature 组合 CORS、HTTP trace 与 GraphQL trace        |
@@ -134,17 +135,39 @@ schema.graphql 后运行 `pnpm --filter <collections|bookmarks> generate`。
 快照回归断言与 Rust schema 一致。
 不要手改 `src/gql/` 生成文件。
 
-collections 的 model/service 仅使用应用类型；GraphQL adapter 投影写入标识和业务拒绝。
+两个服务由启动入口调用 `Application::connect` 完成 pool 和 migration 版本检查，再组装 router。
+GraphQL context 的共享业务依赖只有 `Arc<Application>`；请求级 Auth、correlation 和 OperationState
+继续独立传递。`application.rs` 与 `application/` 拥有用例、普通 Rust 输入/DTO，Diesel record、SQL
+和 schema 收在私有 `application/repository`。GraphQL 只做输入转换和结果投影，不持有池、连接或
+具体爬虫/RPC client。领域 enum 与 PostgreSQL enum 的转换归 repository。
+
+两个 application 使用 `service-db::Database`：先异步等待许可，再提交 `spawn_blocking`，在闭包内
+checkout 和执行整个同步用例。许可数量等于 pool 容量 10，checkout 超时 5 秒；Clone 共享同一执行器。
+事务由写入用例负责，列表 count/page 在同一次执行中完成。当前 tracing span 和许可随闭包保留到
+任务实际结束；取消请求不会停止已提交的数据库工作，不代表回滚，也不会触发 mutation 重试。
+运行期数据库 readiness 使用同一执行器，排队计入 DATABASE 的 5 秒预算，schema 查询保留 2 秒
+statement timeout。`cargo test -p service-db` 覆盖执行隔离、取消、异常和许可归还。
+
+HTTP 来源配置在组装 router 时读取。application 持有 `thrift::AuthEndpoint`，每次请求在 AUTH_DNS
+预算内异步解析 auth 地址，再调用既有超时、禁止重放的 client；认证和数据库许可彼此独立。
+
+collections 的 GraphQL adapter 投影写入标识和业务拒绝。
 目录层级变更、条目和关联写入在事务内按固定表顺序取得写锁，避免缺少父目录外键时出现
 悬空目录，以及 exists 检查后的并发删除造成错误分类。事务拒绝保持 Err；正常超末页为空列表。
 专用数据库回归：先以 `COLLECTIONS_PG` 执行 `--migrate`，再以相同 URL 设置
 `COLLECTIONS_TEST_PG`，运行 `cargo test -p collections collections_transactions_and_typed_results -- --ignored`。
 此测试清空专用库中的 collections 表，不得指定个人业务库。
 
-bookmarks 的 model/service 只使用应用类型。草稿、多表删除、目录操作和批量阅读记录在事务中
-提交，业务拒绝保持 Err 并回滚。先用 BOOKMARKS_PG 执行 --migrate，再以相同 URL 设置
+bookmarks 的私有 crawler adapter 把站点数据转换为拥有所有权的应用快照。作者快照保留已解析的
+小说 ID，只有请求 novels 字段时才抓取小说；小说的章节与标签已随站点元数据取得，author 字段
+才另取作者。`novel_crawler::AuthorFn::novel_ids` 仅暴露已解析的 ID，不发起网络请求。
+刷新依次执行 blocking 读取来源、释放连接后抓取/校验、blocking 事务内重读并写入。抓取等待
+不占数据库许可；身份校验、空列表保护、章节与阅读记录同步继续生效。草稿、多表删除、目录
+操作和批量阅读记录在事务中提交，业务拒绝保持 Err 并回滚。
+先用 BOOKMARKS_PG 执行 --migrate，再以相同 URL 设置
 BOOKMARKS_TEST_PG，运行 `cargo test -p bookmarks bookmarks_transactions_and_typed_results -- --ignored`。
-该测试清空专用库的 bookmarks 表，不能使用个人业务库。
+该测试清空专用库的 bookmarks 表，不能使用个人业务库。固定 crawler 回归在容量为 1 的池上
+验证网络暂停时仍可查询、按需抓取、失败回滚、阅读记录保留以及 GraphQL mutation/嵌套字段。
 
 ## 安全错误与 tracing
 
@@ -171,18 +194,18 @@ HTTP 服务处理 SIGINT/SIGTERM 后排空请求并执行有界 SDK shutdown；a
 - 数据库结构演进的事实源位于各服务的 `migrations/`；每个 migration 都应提供可审阅
   的 `up.sql` 与 `down.sql`，并明确已有数据与回滚影响。
 - `bookmarks` 从 `BOOKMARKS_PG` 建立连接池，`collections` 从
-  `COLLECTIONS_PG` 建立连接池。两者在构建 GraphQL schema 时创建连接池。
+  `COLLECTIONS_PG` 建立连接池。两者在启动监听前创建连接池，导出 GraphQL schema 不创建池。
 - `collections/diesel.toml` 直接把 Diesel schema 输出到
-  `src/model/schema.rs`。
-- `bookmarks/diesel.toml` 把原始输出写到 `src/model/schema/pre_schema.rs`；运行时使用
-  的 `src/model/schema.rs` 还集成了 `custom_type.rs` 中的 PostgreSQL enum 映射和
+  `src/application/repository/schema.rs`。
+- `bookmarks/diesel.toml` 把原始输出写到 `src/application/repository/schema/pre_schema.rs`；运行时使用
+  的 `src/application/repository/schema.rs` 还集成了 `custom_type.rs` 中的 PostgreSQL enum 映射和
   项目级调整。生成后必须有意识地核对并合并差异，不能用 `pre_schema.rs` 直接覆盖
   运行时 schema。
 - 当前服务启动路径不自动执行 migration。应用 migration 与刷新 Diesel schema 是
   显式开发/部署步骤，执行前应确认 Diesel CLI、目标数据库 URL 和当前工作目录对应
   正确服务。
 
-修改数据库结构时，应按 `migration -> 目标数据库 -> Diesel schema -> model/service ->
+修改数据库结构时，应按 `migration -> 目标数据库 -> Diesel schema -> repository/application ->
 GraphQL contract -> 前端 schema/codegen` 的依赖方向检查所有消费者。
 
 ## 图片代理与跨域来源
@@ -216,7 +239,7 @@ cargo test -p bookmarks live_image_sources -- --ignored --nocapture
   schema 或 operation。
 - 跨服务重构应一次性更新公开接口和全部调用方，不保留两套事实源或没有退出计划的
   临时兼容层。
-- 追踪跨层问题时，从服务入口沿 router、GraphQL/RPC handler、service、model、
+- 追踪跨层问题时，从服务入口沿 router、GraphQL/RPC handler、application、repository、
   数据库与容器依赖完整核对。
 
 ## 命令与验证

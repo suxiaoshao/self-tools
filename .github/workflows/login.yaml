@@ -43,4 +43,4 @@ jobs:
           targets: login
           push: true
           set: |
-            login.tags=suxiaoshao/login:latest,suxiaoshao/login:${{ github.sha }}
+            login.tags+=suxiaoshao/login:latest
