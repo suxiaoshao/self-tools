@@ -31,6 +31,7 @@ export interface EditProps extends Omit<ComponentProps<'div'>, 'onChange' | 'cod
    * 当编辑器代码改变时触发的方法
    * */
   onChangeCode?: (newCode: string) => void;
+  readOnly?: boolean;
   language?: string;
   wordWrap?: 'off' | 'on' | 'wordWrapColumn' | 'bounded';
   ref?: Ref<editor.IStandaloneCodeEditor | undefined>;
@@ -42,7 +43,7 @@ export interface EditProps extends Omit<ComponentProps<'div'>, 'onChange' | 'cod
  * @since 0.2.2
  * @description 编辑器组件
  * */
-export default function Edit({ onChangeCode, code, language, wordWrap, ref, ...props }: EditProps) {
+export default function Edit({ onChangeCode, code, language, wordWrap, readOnly = false, ref, ...props }: EditProps) {
   /**
    * 编辑器绑定的 dom 的引用
    * */
@@ -77,6 +78,7 @@ export default function Edit({ onChangeCode, code, language, wordWrap, ref, ...p
           enabled: true,
         },
         language,
+        readOnly,
         value: code,
         fontLigatures: true,
         wordWrap,
@@ -95,6 +97,9 @@ export default function Edit({ onChangeCode, code, language, wordWrap, ref, ...p
       setEdit(newEdit);
     }
   }, [editRef, language]);
+  useEffect(() => {
+    edit?.updateOptions({ readOnly });
+  }, [edit, readOnly]);
   /**
    * props.readonly 改变时修改编辑器的只读属性
    * */

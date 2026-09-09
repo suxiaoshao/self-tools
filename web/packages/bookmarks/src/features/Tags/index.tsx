@@ -11,7 +11,6 @@ import {
   type CustomTableOptions,
   getCoreRowModel,
   TableActions,
-  useCustomTable,
   usePage,
   usePageWithTotal,
 } from 'custom-table';
@@ -164,7 +163,6 @@ export default function Tags() {
     () => ({ columns, data: data ?? [], getCoreRowModel: rowModel }),
     [columns, data],
   );
-  const tableInstance = useCustomTable(tableOptions);
 
   const input = useMemo(() => {
     return (
@@ -182,7 +180,7 @@ export default function Tags() {
       <RequestNotice error={error} />
       {write.notice}
       {input}
-      <CustomTable tableInstance={tableInstance} page={page} />
+      <CustomTable options={tableOptions} page={page} />
     </div>
   );
 }

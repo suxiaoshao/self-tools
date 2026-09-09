@@ -2,7 +2,7 @@ import { attemptWrite, useWriteAction, WriteNotice, RequestNotice } from 'custom
 import { membershipResult } from '@collections/results';
 import { checkMembership } from '@collections/reconcile';
 import CollectionSelect from '@collections/components/CollectionSelect';
-import { CollectionLoadingState, useAllCollection } from '@collections/features/Collection/collectionSlice';
+import { CollectionLoadingState, useAllCollection } from '@collections/features/Collection/collectionQuery';
 import useDialog from '@collections/hooks/useDialog';
 import { Plus } from 'lucide-react';
 import { Controller, useForm } from 'react-hook-form';

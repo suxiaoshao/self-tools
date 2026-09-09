@@ -57,9 +57,27 @@ bookmarks 全部 mutation 使用生成的 union 分支；已知标识的操作�
 主字段/关联的 null 与 error 分开处理，部分失败保留其他内容；表单内和页面分别显示安全提示，
 不使用全局错误 toast。
 
+共享 `CustomTable` 接收包含当前数据的不可变 `options`，在组件内部持有 TanStack 可变实例。
+该组件显式退出 React Compiler 自动记忆化，避免稳定实例引用使刷新后的单元格停留在旧值。
+
+## 集合查询与 Item 编辑
+
+两个应用各由一个 `CollectionsProvider` 持有集合树的 Apollo 查询，消费者共享查询状态，
+Map/树从查询结果派生，不再复制到 Zustand。保持 `no-cache`，刷新通过同一 observable
+重新执行，并禁用请求去重，确保写入后的读取不会复用写入前尚未完成的请求；被替代的读取
+取消订阅，不允许迟到结果覆盖新结果。读取失败由使用该数据的页面或选择器显示并提供重试。
+
+Item 创建将名称、正文和初始集合关联一次提交；编辑只修改名称与正文，关联由详情页的增删
+操作独立维护。列表和详情共用编辑入口，每次打开只读取必要内容，读取成功后初始化一次草稿；
+后台刷新不回填草稿，关闭或切换 Item 后重新开始。提交中的表单及结果未知的表单只读，
+结果核对绑定实际提交快照；旧编辑会话完成不能关闭后来打开的会话。
+
 ## shadcn/ui 与样式所有权
 
 `packages/portal/components.json` 是本仓库 shadcn CLI 配置，组件源码位于 `packages/portal/src/components/ui/`，全局样式入口为 `packages/portal/src/styles/globals.css`。这些组件是仓库拥有并可定制的源码，不应把 registry 版本视为可以无差别覆盖的副本。
+
+Tailwind 的源码扫描根目录由 `globals.css` 的 `source()` 显式指定为 `web/`，覆盖业务包和共享包；
+不依赖启动命令的工作目录，也不使用 Vite 插件不支持的 `base` 选项。
 
 处理组件选型、API、迁移、CLI 或 registry 时，先从 [shadcn/ui llms.txt](https://ui.shadcn.com/llms.txt) 定位当前官方文档，并结合仓库的 `.agents/skills/shadcn/`。更新组件前先判断本地差异是有意定制还是过期实现，并保留仍有价值的本地行为。
 
@@ -81,7 +99,7 @@ Base64URL 转换集中在 Auth service，不把原始 Credential 对象直接 JS
 未支持、取消、无 Passkey 时可使用密码，不自动反复唤起认证。
 
 共享 custom-graphql 只对通过契约校验的 UNAUTHENTICATED 通知 portal，通过请求代次避免旧请求清除新登录。
-登录/退出/重新初始化时中止旧业务请求、清 Apollo cache，并清两个集合树的内存投影；
+登录/退出/重新初始化时中止旧业务请求并清 Apollo cache；两个集合树随认证代次卸载，
 受保护路由随代次卸载。403、503、业务错误和密码错误不触发全局退出。
 安全操作只允许一个 pending 流程，卸载/取消中止等待；已到达服务器的变更仍需刷新状态确认。
 

@@ -18,9 +18,7 @@ export default defineConfig(({ command, mode }) => {
   }
 
   const plugins = [
-    tailwindcss({
-      base: resolve(rootDir, '../../..'),
-    }),
+    tailwindcss(),
     analyzer({
       enabled: isAnalyze,
       analyzerMode: 'static',

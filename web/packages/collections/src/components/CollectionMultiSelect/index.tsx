@@ -10,7 +10,7 @@ import {
   type AllCollectionItem,
   CollectionLoadingState,
   useAllCollection,
-} from '@collections/features/Collection/collectionSlice';
+} from '@collections/features/Collection/collectionQuery';
 import { useI18n } from 'i18n';
 import React, {
   type ComponentProps,
@@ -39,13 +39,21 @@ const selectCollectionSchema = object({
 type SelectCollectionType = InferInput<typeof selectCollectionSchema>;
 
 interface CollectionMultiSelectProps extends Omit<ComponentProps<'div'>, 'name' | 'onChange' | 'onBlur' | 'value'> {
+  disabled?: boolean;
   onChange: (newValue: number[] | null | undefined) => void;
   onBlur: FocusEventHandler<HTMLInputElement> | undefined;
   value: number[] | null | undefined;
   ref: ForwardedRef<HTMLDivElement | null>;
 }
 
-function CollectionMultiSelect({ onChange, value, className, ref, ...props }: CollectionMultiSelectProps) {
+function CollectionMultiSelect({
+  onChange,
+  value,
+  className,
+  ref,
+  disabled = false,
+  ...props
+}: CollectionMultiSelectProps) {
   const { value: allCollection, fetchData } = useAllCollection();
   const content = useMemo(
     () =>
@@ -58,10 +66,15 @@ function CollectionMultiSelect({ onChange, value, className, ref, ...props }: Co
         ))
         .with({ tag: CollectionLoadingState.loading }, () => <Spinner />)
         .with({ tag: CollectionLoadingState.state }, ({ value: allCollections }) => (
-          <InnerCollectionSelect onChange={onChange} value={value} allCollections={allCollections} />
+          <InnerCollectionSelect
+            disabled={disabled}
+            onChange={onChange}
+            value={value}
+            allCollections={allCollections}
+          />
         ))
         .otherwise(() => null),
-    [allCollection, value, fetchData, onChange],
+    [allCollection, value, fetchData, onChange, disabled],
   );
   const [sourceRef, setSourceRef] = React.useState<HTMLDivElement | null>(null);
   useImperativeHandle<HTMLDivElement | null, HTMLDivElement | null>(ref, () => sourceRef, [sourceRef]);
@@ -76,11 +89,12 @@ export default CollectionMultiSelect;
 
 interface InnerCollectionSelectProps {
   allCollections: Map<number, AllCollectionItem>;
+  disabled?: boolean;
   onChange: (newValue: number[] | null | undefined) => void;
   value: number[] | null | undefined;
 }
 
-function InnerCollectionSelect({ allCollections, onChange, value }: InnerCollectionSelectProps) {
+function InnerCollectionSelect({ allCollections, onChange, value, disabled = false }: InnerCollectionSelectProps) {
   const selectList = useMemo(
     () => value?.map((id) => allCollections.get(id)).filter((item) => item !== undefined) ?? [],
     [allCollections, value],
@@ -122,6 +136,7 @@ function InnerCollectionSelect({ allCollections, onChange, value }: InnerCollect
         <Badge key={id} variant="secondary">
           {path}
           <Button
+            disabled={disabled}
             variant="ghost"
             size="icon-sm"
             className="data-[state=open]:bg-muted size-6 rounded-full"
@@ -133,8 +148,8 @@ function InnerCollectionSelect({ allCollections, onChange, value }: InnerCollect
           </Button>
         </Badge>
       ))}
-      <Popover open={open} onOpenChange={handleOpenChange}>
-        <PopoverTrigger render={<Button variant="ghost" size="icon-sm" className="rounded-full" />}>
+      <Popover open={open && !disabled} onOpenChange={handleOpenChange}>
+        <PopoverTrigger render={<Button disabled={disabled} variant="ghost" size="icon-sm" className="rounded-full" />}>
           <Plus />
         </PopoverTrigger>
         <PopoverContent>

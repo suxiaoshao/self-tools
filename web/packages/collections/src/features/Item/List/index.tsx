@@ -8,7 +8,6 @@ import {
   type CustomColumnDefArray,
   CustomTable,
   getCoreRowModel,
-  useCustomTable,
   usePage,
   usePageWithTotal,
 } from 'custom-table';
@@ -101,8 +100,9 @@ export default function ItemList() {
       ] as CustomColumnDefArray<Data>,
     [refetch, t],
   );
-  const tableInstance = useCustomTable(
-    useMemo(() => ({ columns, data: data ?? [], getCoreRowModel: getCoreRowModel() }), [columns, data]),
+  const tableOptions = useMemo(
+    () => ({ columns, data: data ?? [], getCoreRowModel: getCoreRowModel() }),
+    [columns, data],
   );
   return (
     <div className="flex flex-col size-full">
@@ -137,7 +137,7 @@ export default function ItemList() {
           </CardContent>
         </Card>
         <RequestNotice error={error} retry={refetch} />
-        <CustomTable className="overflow-hidden flex-none max-h-none" tableInstance={tableInstance} page={page} />
+        <CustomTable className="overflow-hidden flex-none max-h-none" options={tableOptions} page={page} />
       </div>
     </div>
   );

@@ -1,6 +1,5 @@
 import useBookmarkWrite from '@bookmarks/useBookmarkWrite';
 import { useI18n } from 'i18n';
-import { useAllCollection } from '../collectionSlice';
 import useParentId from './useParentId';
 import CollectionForm, { type CollectionFormData } from './CollectionForm';
 import { graphql } from '@bookmarks/gql';
@@ -48,7 +47,6 @@ interface CreateCollectButtonProps {
 export default function CreateCollectionButton({ refetch }: CreateCollectButtonProps) {
   const write = useBookmarkWrite('/bookmarks/collections');
   const parentId = useParentId();
-  const { fetchData } = useAllCollection();
 
   const [createCollection] = useMutation(CreateCollection);
 
@@ -63,7 +61,6 @@ export default function CreateCollectionButton({ refetch }: CreateCollectButtonP
       .then(() => refetch())
       .catch(() => undefined);
     handleClose();
-    void fetchData();
   };
   // 控制 dialog
   const { open, handleClose, handleOpen, handleOpenChange } = useDialog();

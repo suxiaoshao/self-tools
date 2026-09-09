@@ -4,7 +4,7 @@ import { useApolloClient } from '@apollo/client/react';
 import useBookmarkWrite from '@bookmarks/useBookmarkWrite';
 import { useMutation } from '@apollo/client/react';
 import CollectionSelect from '@bookmarks/components/CollectionSelect';
-import { CollectionLoadingState, useAllCollection } from '@bookmarks/features/Collections/collectionSlice';
+import { CollectionLoadingState, useAllCollection } from '@bookmarks/features/Collections/collectionQuery';
 import { graphql } from '@bookmarks/gql';
 import useDialog from '@collections/hooks/useDialog';
 import { valibotResolver } from '@hookform/resolvers/valibot';

@@ -10,7 +10,6 @@ import {
   type CustomTableOptions,
   getCoreRowModel,
   TableActions,
-  useCustomTable,
   usePage,
   usePageWithTotal,
 } from 'custom-table';
@@ -211,7 +210,7 @@ export default function NovelList() {
     () => ({ columns, data: data ?? [], getCoreRowModel: getCoreRowModel() }),
     [columns, data],
   );
-  const tableInstance = useCustomTable(tableOptions);
+
   const navigate = useNavigate();
   return (
     <div className="flex flex-col size-full">
@@ -269,7 +268,7 @@ export default function NovelList() {
             </Field>
           </CardContent>
         </Card>
-        <CustomTable className="w-full" tableInstance={tableInstance} page={page} />
+        <CustomTable className="w-full" options={tableOptions} page={page} />
       </div>
     </div>
   );

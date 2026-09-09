@@ -10,7 +10,6 @@ import {
   type CustomTableOptions,
   getCoreRowModel,
   TableActions,
-  useCustomTable,
   usePage,
   usePageWithTotal,
 } from 'custom-table';
@@ -182,7 +181,6 @@ export default function AuthorList() {
     () => ({ columns, data: data ?? [], getCoreRowModel: getCoreRowModel() }),
     [columns, data],
   );
-  const tableInstance = useCustomTable(tableOptions);
 
   return (
     <div className="flex flex-col size-full p-4">
@@ -197,7 +195,7 @@ export default function AuthorList() {
           <RefreshCcw />
         </Button>
       </div>
-      <CustomTable tableInstance={tableInstance} page={page} />
+      <CustomTable options={tableOptions} page={page} />
     </div>
   );
 }

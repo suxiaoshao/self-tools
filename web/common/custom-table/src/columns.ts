@@ -8,9 +8,7 @@ import {
   type GroupColumnDef,
   type IdentifiedColumnDef,
   type RowData,
-  type Table,
   type TableOptions,
-  useReactTable,
 } from '@tanstack/react-table';
 import type { ComponentProps } from 'react';
 
@@ -25,10 +23,6 @@ export type CustomColumnDefArray<T extends RowData> = CustomColumnDef<T>[];
 export type CustomTableOptions<T extends RowData> = Omit<TableOptions<T>, 'columns'> & {
   columns: CustomColumnDefArray<T>;
 };
-
-export function useCustomTable<D extends RowData>(options: CustomTableOptions<D>): Table<D> {
-  return useReactTable(options);
-}
 
 export function createCustomColumnHelper<TData extends RowData>(): CustomColumnHelper<TData> {
   return createColumnHelper<TData>();

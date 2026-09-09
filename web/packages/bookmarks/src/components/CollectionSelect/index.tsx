@@ -6,7 +6,7 @@
  * @FilePath: /self-tools/web/packages/bookmarks/src/components/CollectionSelect/index.tsx
  */
 import { useMemo } from 'react';
-import type { AllCollectionItem, CollectionTreeItem } from '@bookmarks/features/Collections/collectionSlice';
+import type { AllCollectionItem, CollectionTreeItem } from '@bookmarks/features/Collections/collectionQuery';
 import { getCollectionTreeFromCollectionList } from '@bookmarks/features/Collections/utils';
 import { ChevronRight } from 'lucide-react';
 import {

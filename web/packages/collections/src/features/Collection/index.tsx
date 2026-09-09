@@ -6,7 +6,7 @@ import { RequestNotice } from 'custom-graphql';
  * @LastEditTime: 2024-01-26 13:27:19
  * @FilePath: /self-tools/web/packages/collections/src/features/Collection/index.tsx
  */
-import { CustomTable, getCoreRowModel, useCustomTable, usePage, usePageWithTotal } from 'custom-table';
+import { CustomTable, getCoreRowModel, usePage, usePageWithTotal } from 'custom-table';
 import { RefreshCcw } from 'lucide-react';
 import CreateCollectionButton from './components/CreateCollectionButton';
 import AncestorsPath from './components/AncestorsPath';
@@ -18,7 +18,7 @@ import { useI18n } from 'i18n';
 import useTitle from '@bookmarks/hooks/useTitle';
 import { graphql } from '@collections/gql';
 import { useQuery } from '@apollo/client/react';
-import { useAllCollection } from './collectionSlice';
+import { useAllCollection } from './collectionQuery';
 import { Button } from '@portal/components/ui/button';
 
 const CollectionAndItems = graphql(`
@@ -70,15 +70,13 @@ export default function Collection() {
   const { data, total } = sourceData?.collectionAndItem ?? {};
   const page = usePageWithTotal(pageState, total);
   const columns = useTableColumns(allRefetch);
-  const tableInstance = useCustomTable(
-    useMemo(
-      () => ({
-        columns,
-        data: data ?? [],
-        getCoreRowModel: getCoreRowModel(),
-      }),
-      [columns, data],
-    ),
+  const tableOptions = useMemo(
+    () => ({
+      columns,
+      data: data ?? [],
+      getCoreRowModel: getCoreRowModel(),
+    }),
+    [columns, data],
   );
 
   return (
@@ -92,7 +90,7 @@ export default function Collection() {
         </Button>
       </div>
       <RequestNotice error={error} retry={allRefetch} />
-      <CustomTable tableInstance={tableInstance} page={page} />
+      <CustomTable options={tableOptions} page={page} />
     </div>
   );
 }

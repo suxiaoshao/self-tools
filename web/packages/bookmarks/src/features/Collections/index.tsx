@@ -6,12 +6,11 @@ import {
   CustomTable,
   type CustomTableOptions,
   getCoreRowModel,
-  useCustomTable,
   usePage,
   usePageWithTotal,
 } from 'custom-table';
 import { useCallback, useEffect, useEffectEvent, useMemo } from 'react';
-import { useAllCollection } from './collectionSlice';
+import { useAllCollection } from './collectionQuery';
 import AncestorsPath from './components/AncestorsPath';
 import CreateCollectionButton from './components/CreateCollectionButton';
 import useParentId from './components/useParentId';
@@ -117,19 +116,18 @@ export default function Collections() {
     () => ({ columns, data: data ?? [], getCoreRowModel: getCoreRowModel() }),
     [columns, data],
   );
-  const tableInstance = useCustomTable(tableOptions);
 
   return (
     <div className="size-full p-4 flex flex-col">
       <RequestNotice error={error} />
       <AncestorsPath />
       <div className="flex flex-[0_0_auto] mb-4">
-        <CreateCollectionButton refetch={refetch} />
+        <CreateCollectionButton refetch={allRefetch} />
         <Button variant="ghost" size="icon" className="ml-auto" onClick={() => refetch()}>
           <RefreshCcw />
         </Button>
       </div>
-      <CustomTable tableInstance={tableInstance} page={page} />
+      <CustomTable options={tableOptions} page={page} />
     </div>
   );
 }

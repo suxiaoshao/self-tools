@@ -20,7 +20,6 @@ import {
   CustomTable,
   type CustomTableOptions,
   getCoreRowModel,
-  useCustomTable,
 } from 'custom-table';
 import { useMemo } from 'react';
 import { Details, type DetailsItem } from 'details';
@@ -152,7 +151,7 @@ export default function NovelFetch() {
     () => ({ columns, data: novel?.chapters ?? [], getCoreRowModel: getCoreRowModel() }),
     [columns, novel?.chapters],
   );
-  const tableInstance = useCustomTable(tableOptions);
+
   // details
   const items = useMemo<DetailsItem[]>(
     () =>
@@ -328,7 +327,7 @@ export default function NovelFetch() {
               <Details items={items} />
             </CardContent>
           </Card>
-          <CustomTable tableInstance={tableInstance} />
+          <CustomTable options={tableOptions} />
         </>
       )}
     </form>

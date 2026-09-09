@@ -1,4 +1,4 @@
-import type { AllCollectionItem, CollectionTreeItem } from './collectionSlice';
+import type { AllCollectionItem, CollectionTreeItem } from './collectionQuery';
 
 export function getCollectionTreeFromCollectionList(data: Iterable<AllCollectionItem>): CollectionTreeItem[] {
   const list = [...data];
