@@ -30,6 +30,45 @@ struct NewCollection<'a> {
 
 /// id 相关
 impl CollectionModel {
+    pub(in crate::application) fn hierarchy(
+        conn: &mut PgConnection,
+    ) -> AppResult<super::super::hierarchy::Hierarchy> {
+        use super::super::hierarchy::{Hierarchy, Node};
+        let rows = collection::table
+            .select((
+                collection::id,
+                collection::name,
+                collection::path,
+                collection::parent_id,
+            ))
+            .order(collection::id.asc())
+            .load::<(i64, String, String, Option<i64>)>(conn)?;
+        Ok(Hierarchy::new(
+            rows.into_iter()
+                .map(|(id, name, path, parent_id)| Node {
+                    id,
+                    name,
+                    path,
+                    parent_id,
+                })
+                .collect(),
+        ))
+    }
+
+    pub(in crate::application) fn set_path(
+        id: i64,
+        path: &str,
+        conn: &mut PgConnection,
+    ) -> AppResult<()> {
+        diesel::update(collection::table.find(id))
+            .set((
+                collection::path.eq(path),
+                collection::update_time.eq(OffsetDateTime::now_utc()),
+            ))
+            .execute(conn)?;
+        Ok(())
+    }
+
     /// 创建目录
     pub(in crate::application) fn create(
         name: &str,
@@ -137,26 +176,6 @@ impl CollectionModel {
 
 /// parent_id 相关
 impl CollectionModel {
-    /// 获取父目录下的所有目录
-    pub(in crate::application) fn get_list_by_parent(
-        parent_id: Option<i64>,
-        conn: &mut PgConnection,
-    ) -> AppResult<Vec<Self>> {
-        match parent_id {
-            Some(parent_id) => {
-                let collections = collection::table
-                    .filter(collection::parent_id.eq(parent_id))
-                    .load(conn)?;
-                Ok(collections)
-            }
-            None => {
-                let collections = collection::table
-                    .filter(collection::parent_id.is_null())
-                    .load(conn)?;
-                Ok(collections)
-            }
-        }
-    }
     /// 获取父目录下的所有目录数量
     pub(in crate::application) fn get_count(
         parent_id: Option<i64>,

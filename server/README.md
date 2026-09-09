@@ -193,6 +193,37 @@ BOOKMARKS_TEST_PG，运行 `cargo test -p bookmarks bookmarks_transactions_and_t
 该测试清空专用库的 bookmarks 表，不能使用个人业务库。固定 crawler 回归在容量为 1 的池上
 验证网络暂停时仍可查询、按需抓取、失败回滚、阅读记录保留以及 GraphQL mutation/嵌套字段。
 
+## 集合层级与删除一致性
+
+bookmarks / collections 的 `collection.parent_id` 是父子关系事实源，`path` 是由祖先名称链
+派生的持久化值，保留 `/{name}/` 格式和唯一约束。私有 application 层级模块在取得现有写锁后
+读取节点快照；创建、bookmarks 移动及两服务重命名均按真实关系计算路径，同一父节点下的同名
+冲突也按 parent_id / name 判断。collections 不提供移动入口。
+
+祖先检查、子树路径规划和删除遍历使用显式栈及 visited，不依赖递归调用栈或旧路径前缀。
+重命名 / 移动只重算实际子树；旧路径漂移不能绕过防环，也不能使前缀相似的无关节点被更新。
+先检查全部最终路径，再在同一事务内以未占用临时值腾出受影响的旧路径，最后写入最终路径及
+目标元数据，支持有效路径交换；临时值不对其他事务可见。
+
+自身 / 后代移动返回 parentId 的 ValidationFailure，明确指定的缺失资源返回 MissingResources；
+受影响的已存储环或缺失祖先返回安全 INTERNAL 和 requestId，任何故障或冲突整笔回滚。
+删除缺失目标仍幂等成功。没有新增 schema、级联规则、历史数据清理或全库自动修复；
+应用入口和事务锁维护写入不变量，不承诺数据库拒绝任意直接 SQL 造成的异常。
+
+删除所有权及顺序：
+
+- Novel：阅读记录、评论、集合关联、章节先于小说；共享 Author、Tag、Collection 保留。
+- Author：完成其全部小说清理后删除作者；刷新移除小说复用同一清理逻辑。
+- Collection：先验证完整真实子树，再按子节点到父节点删除成员关系和集合；保留 Novel / Item。
+- Item：先删除成员关系，再删除条目；保留 Collection。
+
+专用库迁移前提同上。分别设置 `BOOKMARKS_TEST_PG` / `COLLECTIONS_TEST_PG`，运行
+`cargo test -p <bookmarks|collections> application::tests -- --ignored --test-threads=1`；
+这些用例清空测试表，新增层级及独立小说删除用例只接受 `self_tools_<service>_test` 库名。
+层级回归覆盖旧路径漂移、深树、故障回滚与受控双连接竞争；常规单元测试以 30,000 个节点
+验证有限遍历，SDL 快照测试保持公开契约一致。实现与验证说明见
+[层级写入与删除计划](../docs/dev/issue-101/README.md)。
+
 ## 安全错误与 tracing
 
 service-errors 拥有 UseCaseError、保留 source 的 Fault 和公开故障分类；领域拥有业务拒绝。

@@ -128,6 +128,7 @@ export default function CollectionActions({ id, refetch, ...data }: CollectionAc
         ]}
       </TableActions>
       <CollectionForm
+        mode="edit"
         notice={write.notice}
         disabled={write.blocked}
         afterSubmit={onSubmit}

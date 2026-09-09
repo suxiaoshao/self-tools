@@ -1,4 +1,5 @@
 mod collection;
+mod hierarchy;
 pub(crate) mod input;
 mod item;
 mod repository;

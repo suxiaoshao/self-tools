@@ -74,77 +74,76 @@ export default function ItemForm(props: ItemFormProps) {
   };
   const t = useI18n();
   return (
-    <DialogContent className="sm:max-w-5xl">
-      <DialogHeader>
+    <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col sm:max-w-5xl">
+      <DialogHeader className="shrink-0">
         <DialogTitle>
           {match(mode)
             .with('create', () => t('create_item'))
             .otherwise(() => t('modify_item'))}
         </DialogTitle>
       </DialogHeader>
-      <fieldset disabled={action.blocked}>
-        <FieldGroup className="w-full">
-          <Field>
-            <FieldLabel>{t('item_name')}</FieldLabel>
-            <Input aria-invalid={!!errors.name} required {...register('name', { required: true })} />
-            {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
-          </Field>
-          {mode === 'create' && (
+      <div className="min-h-0 overflow-y-auto">
+        <fieldset disabled={action.blocked}>
+          <FieldGroup className="w-full">
             <Field>
-              <FieldLabel>{t('match_collections')}</FieldLabel>
-              <CollectionMultiSelect
-                disabled={action.blocked}
-                value={collectionIds}
-                onChange={(ids) => setCollectionIds(ids ?? [])}
-                onBlur={undefined}
-                ref={null}
-              />
-              {collectionError && <p className="text-sm text-destructive">{collectionError}</p>}
+              <FieldLabel>{t('item_name')}</FieldLabel>
+              <Input aria-invalid={!!errors.name} required {...register('name', { required: true })} />
+              {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
             </Field>
-          )}
-
-          <Controller
-            control={control}
-            name="content"
-            rules={{ required: true }}
-            render={({ field }) => (
+            {mode === 'create' && (
               <Field>
-                <FieldLabel className="w-full flex items-center justify-between">
-                  <span>{t('content')}</span>
-                  <ToggleGroup
-                    variant="outline"
-                    value={[alignment]}
-                    onValueChange={(newAlignment) => handleAlignment(newAlignment[0] ?? 'edit')}
-                  >
-                    <ToggleGroupItem value="edit">
-                      <EditIcon />
-                    </ToggleGroupItem>
-                    <ToggleGroupItem value="preview">
-                      <View />
-                    </ToggleGroupItem>
-                  </ToggleGroup>
-                </FieldLabel>
-                {match(alignment)
-                  .with('edit', () => (
-                    <CustomEdit
-                      wordWrap="on"
-                      className="w-full h-[500px] rounded-lg"
-                      language="markdown"
-                      readOnly={action.blocked}
-                      {...field}
-                    />
-                  ))
-                  .otherwise(() => (
-                    <Markdown
-                      className="w-[calc(var(--container-5xl)-(--spacing(12)))] overflow-y-auto h-[500px]"
-                      value={field.value ?? ''}
-                    />
-                  ))}
+                <FieldLabel>{t('match_collections')}</FieldLabel>
+                <CollectionMultiSelect
+                  disabled={action.blocked}
+                  value={collectionIds}
+                  onChange={(ids) => setCollectionIds(ids ?? [])}
+                  onBlur={undefined}
+                  ref={null}
+                />
+                {collectionError && <p className="text-sm text-destructive">{collectionError}</p>}
               </Field>
             )}
-          />
-        </FieldGroup>
-      </fieldset>
+
+            <Controller
+              control={control}
+              name="content"
+              rules={{ required: true }}
+              render={({ field }) => (
+                <Field>
+                  <FieldLabel className="w-full flex items-center justify-between">
+                    <span>{t('content')}</span>
+                    <ToggleGroup
+                      variant="outline"
+                      value={[alignment]}
+                      onValueChange={(newAlignment) => handleAlignment(newAlignment[0] ?? 'edit')}
+                    >
+                      <ToggleGroupItem value="edit">
+                        <EditIcon />
+                      </ToggleGroupItem>
+                      <ToggleGroupItem value="preview">
+                        <View />
+                      </ToggleGroupItem>
+                    </ToggleGroup>
+                  </FieldLabel>
+                  {match(alignment)
+                    .with('edit', () => (
+                      <CustomEdit
+                        wordWrap="on"
+                        className="w-full h-[500px] rounded-lg"
+                        language="markdown"
+                        readOnly={action.blocked}
+                        {...field}
+                      />
+                    ))
+                    .otherwise(() => (
+                      <Markdown className="w-full overflow-y-auto h-[500px]" value={field.value ?? ''} />
+                    ))}
+                </Field>
+              )}
+            />
+          </FieldGroup>
+        </fieldset>
+      </div>
       <WriteNotice
         outcome={action.outcome}
         pending={action.pending}
@@ -158,7 +157,7 @@ export default function ItemForm(props: ItemFormProps) {
             : undefined
         }
       />
-      <DialogFooter>
+      <DialogFooter className="shrink-0">
         <DialogClose render={<Button variant="secondary" />}>{t('cancel')}</DialogClose>
         <Button
           disabled={action.blocked}

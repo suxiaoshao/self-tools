@@ -8,6 +8,7 @@
 mod author;
 mod chapter;
 mod collection;
+mod hierarchy;
 mod novel;
 mod novel_comment;
 mod save_draft;
