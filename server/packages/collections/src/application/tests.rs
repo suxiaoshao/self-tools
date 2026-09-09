@@ -1,3 +1,4 @@
+mod hierarchy;
 use super::repository as model;
 use super::*;
 use super::{collection::Collection, item::Item};

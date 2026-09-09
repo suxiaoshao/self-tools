@@ -46,10 +46,9 @@ impl Collection {
         }
         conn.transaction(|conn| {
             lock_tree(conn)?;
-            let path = match parent_id {
-                None => format!("/{name}/"),
-                Some(id) => format!("{}{name}/", Self::get(id, conn)?.path),
-            };
+            let hierarchy = CollectionModel::hierarchy(conn)?;
+            let path = hierarchy.child_path(parent_id, name)?;
+            hierarchy.check_name(parent_id, name, None)?;
             if CollectionModel::exists_by_path(&path, conn)? {
                 return Err(conflict(ConflictReason::CollectionPathExists, vec![]));
             }
@@ -74,22 +73,14 @@ impl Collection {
         validate_id(id, "id")?;
         conn.transaction(|conn| {
             lock_tree(conn)?;
-            Self::delete_inner(id, conn)?;
+            let ids = CollectionModel::hierarchy(conn)?.subtree(id)?;
+            for id in ids.into_iter().rev() {
+                CollectionItemModel::delete_by_collection_id(id, conn)?;
+                CollectionModel::delete(id, conn)?;
+            }
             Ok(id)
         })
     }
-    fn delete_inner(id: i64, conn: &mut PgConnection) -> AppResult<()> {
-        if !CollectionModel::exists(id, conn)? {
-            return Ok(());
-        }
-        for child in CollectionModel::list_parent(Some(id), conn)? {
-            Self::delete_inner(child.id, conn)?;
-        }
-        CollectionItemModel::delete_by_collection_id(id, conn)?;
-        CollectionModel::delete(id, conn)?;
-        Ok(())
-    }
-
     pub(super) fn update(
         id: i64,
         name: &str,
@@ -100,32 +91,19 @@ impl Collection {
         validate_name(name)?;
         conn.transaction(|conn| {
             lock_tree(conn)?;
-            let old = Self::get(id, conn)?;
-            let path = match old.parent_id {
-                None => format!("/{name}/"),
-                Some(parent) => format!("{}{name}/", Self::get(parent, conn)?.path),
-            };
-            if path != old.path && CollectionModel::exists_by_path(&path, conn)? {
-                return Err(conflict(ConflictReason::CollectionPathExists, vec![]));
+            let hierarchy = CollectionModel::hierarchy(conn)?;
+            let old = hierarchy.get(id)?;
+            let ids = hierarchy.subtree(old.id)?;
+            let parent_id = old.parent_id;
+            let changes = hierarchy.paths(&ids, name, parent_id)?;
+            let path = hierarchy.child_path(parent_id, name)?;
+            for change in &changes {
+                CollectionModel::set_path(change.id, &change.temporary, conn)?;
             }
-            let updated = CollectionModel::update(id, name, description, &path, conn)?;
-            if old.path != path {
-                // Compare literal prefixes in Rust; user '%' and '_' must not become SQL wildcards.
-                for child in CollectionModel::get_list(conn)? {
-                    if child.id != id
-                        && let Some(suffix) = child.path.strip_prefix(&old.path)
-                    {
-                        CollectionModel::update(
-                            child.id,
-                            &child.name,
-                            child.description.as_deref(),
-                            &format!("{path}{suffix}"),
-                            conn,
-                        )?;
-                    }
-                }
+            for change in &changes {
+                CollectionModel::set_path(change.id, &change.path, conn)?;
             }
-            Ok(updated.into())
+            Ok(CollectionModel::update(id, name, description, &path, conn)?.into())
         })
         .map_err(path_conflict)
     }

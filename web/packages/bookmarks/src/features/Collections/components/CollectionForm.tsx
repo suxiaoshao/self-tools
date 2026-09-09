@@ -17,11 +17,6 @@ import { Input } from '@portal/components/ui/input';
 import { valibotResolver } from '@hookform/resolvers/valibot';
 import { nullish, object, string } from 'valibot';
 
-enum CollectionFormType {
-  create = 'create',
-  edit = 'edit',
-}
-
 export type CollectionFormData = Omit<CreateCollectionMutationVariables, 'parentId'>;
 
 interface CollectionFormProps {
@@ -30,7 +25,7 @@ interface CollectionFormProps {
   disabled?: boolean;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  mode?: CollectionFormType;
+  mode?: 'create' | 'edit';
   initialValues?: CollectionFormData;
 }
 
@@ -41,7 +36,7 @@ export default function CollectionForm({
   onOpenChange,
   afterSubmit,
   initialValues,
-  mode = CollectionFormType.create,
+  mode = 'create',
 }: CollectionFormProps) {
   // 表单控制
   const {
@@ -63,8 +58,8 @@ export default function CollectionForm({
           <DialogHeader>
             <DialogTitle>
               {match(mode)
-                .with(CollectionFormType.create, () => t('create_collection'))
-                .with(CollectionFormType.edit, () => t('modify_collection'))
+                .with('create', () => t('create_collection'))
+                .with('edit', () => t('modify_collection'))
                 .exhaustive()}
             </DialogTitle>
           </DialogHeader>
