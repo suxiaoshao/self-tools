@@ -31,7 +31,7 @@ pub(crate) fn schema_builder()
     Schema::build(QueryRoot, MutationRoot, EmptySubscription)
         .extension(Logger)
         .extension(graphql_common::cost::RequestLimits)
-        .limit_depth(graphql_common::cost::MAX_DEPTH)
+        .limit_depth(graphql_common::cost::MAX_INTROSPECTION_DEPTH)
         .limit_complexity(graphql_common::cost::MAX_COMPLEXITY)
 }
 pub(crate) fn get_schema(application: Arc<Application>) -> RootSchema {

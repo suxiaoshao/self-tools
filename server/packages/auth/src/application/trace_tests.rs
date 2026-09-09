@@ -147,7 +147,7 @@ async fn gateway_http_graphql_and_real_auth_rpc_share_trace() {
     )
     .extension(middleware::Logger)
     .extension(graphql_common::cost::RequestLimits)
-    .limit_depth(graphql_common::cost::MAX_DEPTH)
+    .limit_depth(graphql_common::cost::MAX_INTROSPECTION_DEPTH)
     .limit_complexity(graphql_common::cost::MAX_COMPLEXITY)
     .finish();
     let mut ids = Vec::new();

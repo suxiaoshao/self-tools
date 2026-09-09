@@ -80,16 +80,18 @@ DataLoader 的 `max_batch_size` 是触发调度的阈值，不能当作 SQL 键�
 
 两个服务使用同一组显式常量，放入 graphql-common；业务字段权重仍由对应 GraphQL 所有者定义。初始设计值为：
 
-| 预算               | 目标值与计算方式                                                                                                               |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
-| 字段深度           | 8；采用 async-graphql limit_depth，fragment 不人为增加字段深度。                                                               |
-| 加权复杂度         | 200,000；标量为 1，普通对象为 `1 + child_complexity`；分页 root 为 `1 + pageSize * child_complexity`，其 data 包装不再重复乘。 |
-| 现有无分页列表     | `1 + 100 * child_complexity`；100 是组合成本权重，不是返回条数上限。抓取入口额外加 1,000，防止大量低选择成本的公网请求组合。   |
-| 展开后的字段出现数 | 256；根字段最多 20。alias、重复 fragment 引用按出现次数计数，使用饱和计算及提前拒绝，不能先构造指数大小的展开结果。            |
+| 预算               | 目标值与计算方式                                                                                                                                                                        |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 字段深度           | 业务根字段子树为 8；query 根的 `__schema` / `__type` 子树为 16，以容纳标准 introspection 的 `ofType` 链。请求扩展逐子树检查，框架 limit_depth 保留 16 的全局上限；fragment 不增加深度。 |
+| 加权复杂度         | 200,000；标量为 1，普通对象为 `1 + child_complexity`；分页 root 为 `1 + pageSize * child_complexity`，其 data 包装不再重复乘。                                                          |
+| 现有无分页列表     | `1 + 100 * child_complexity`；100 是组合成本权重，不是返回条数上限。抓取入口额外加 1,000，防止大量低选择成本的公网请求组合。                                                            |
+| 展开后的字段出现数 | 256；根字段最多 20。alias、重复 fragment 引用按出现次数计数，使用饱和计算及提前拒绝，不能先构造指数大小的展开结果。                                                                     |
 
 非分页 list 的权重也应用于草稿 novels/chapters/tags，防止将抓取字段绕过组合预算。分页参数非法时成本计算使用安全取值，不允许负数转换为 usize 或乘法溢出；正式参数错误仍走既有 INVALID_REQUEST。mutation 输入数组是写入合同，保持已有验证，不把读取优化扩大为新的批量写入限制。
 
 字段出现数/root 数限制作为 graphql-common 的独立 request extension，接入两服务实际 schema。复用解析后的文档、选定 operation、fragment 和变量；对 skip/include 采取保守计数，不允许用指令构造检查与执行不一致的绕过。解析后先进行有 visited-path 和提前退出的保守计数，再进入框架语义/复杂度校验，防止框架展开重复 fragment 前已经消耗过多资源；引用环或未知 operation 统一安全拒绝。使用 Request 的 parsed document 缓存，不为一次请求重复解析文本。schema 导出入口不连接数据库，也不因运行期策略改变 SDL。
+
+Introspection 只依据实际 query 根字段名识别，不依据 operation 名、别名或 fragment 名；业务与 introspection 混合时各自执行深度策略，仍共享字段数、根字段数和复杂度预算，不存在整条操作免检。两个生产 schema 必须能实际返回标准 introspection 结果，并覆盖更名、别名/fragment 及混合查询不能放宽业务限制的回归。
 
 执行顺序仍是 HTTP 来源/Cookie 校验 -> 一次 auth.Check -> GraphQL 验证 -> resolver。超预算时 auth.Check 可以已经发生，业务 SQL、mutation 和 crawler 调用数必须为 0。返回 HTTP 200 的 GraphQL `errors`，`data: null`，安全 `message/code = INVALID_REQUEST` 与 requestId；不伪装成 429、INTERNAL 或自动重试。custom-graphql 已有的错误展示与输入保留继续生效，不新增 i18n key 或前端错误码。
 
@@ -145,7 +147,7 @@ query getItems($collectionMatch: TagMatch, $pagination: Pagination!) {
 ## 实现与验证记录
 
 - W1/W2 已接入两服务：SQL 筛选/分页、只读快照、批量领域读取及请求级 DataLoader；已删除退出的内存分页、全表关系映射和单键关联入口。
-- W3 已接入生产 schema：预算限制、字段权重、保守的 fragment 展开保护与安全错误。现有 52 个手写 operation 通过实际 schema 验证，SDL 快照保持一致。
+- W3 已接入生产 schema：预算限制、字段权重、保守的 fragment 展开保护与安全错误。现有 52 个手写 operation 通过实际 schema 验证，SDL 快照保持一致。标准 introspection 已在两个生产 schema 实际执行通过，operation 更名、根字段别名及 fragment 包装保持兼容；混合查询、超限 introspection 和字段预算共享的回归通过，业务深度仍为 8。
 - W4 已精简 Item 列表正文、重复 description 和未消费的 author URL，并通过两个现有 generate 入口更新生成物；未升级依赖版本，Cargo.lock 仅增加 DataLoader feature 所需的既有依赖边。
 - 两服务专用库回归通过：any/all、重叠子树、空交集、稳定页序、超末页、脏环终止、500 键分块与批量空值；并发写入在 count/page 之间提交时，当前调用仍读到同一快照。已有事务、固定 crawler 与 readiness 回归也通过。
 - 无筛选列表为 2 次业务 SQL；页面关联作者或集合后为 3 次，覆盖 5/20/100 条页面。20 条各含 64 KiB 正文的 Item 列表响应小于 16 KiB，独立正文读取保持完整。

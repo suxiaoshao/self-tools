@@ -110,6 +110,86 @@ async fn handwritten_browser_operations_fit_production_schema_and_limits() {
     }
 }
 #[tokio::test]
+async fn standard_introspection_loads_production_schema() {
+    let schema = crate::graphql::schema_builder().finish();
+    let query = include_str!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/../../common/graphql-common/test-support/introspection.graphql"
+    ));
+    // Execute real introspection resolvers, not the validation-only test extension.
+    // Renaming the operation, aliasing the root and wrapping it in a fragment
+    // must not change its policy.
+    for (query, name, root) in [
+        (query.to_owned(), "IntrospectionQuery", "__schema"),
+        (
+            query
+                .replace(
+                    "query IntrospectionQuery {",
+                    "query SchemaDocs { ...SchemaRoot } fragment SchemaRoot on QueryRoot {",
+                )
+                .replace("__schema {", "metadata: __schema {"),
+            "SchemaDocs",
+            "metadata",
+        ),
+    ] {
+        let response = schema
+            .execute(Request::new(query).operation_name(name))
+            .await;
+        assert!(response.errors.is_empty(), "{name}: {:?}", response.errors);
+        let data = response.data.into_json().unwrap();
+        assert_eq!(data[root]["queryType"]["name"], "QueryRoot");
+        assert!(data[root]["types"].as_array().unwrap().len() > 10);
+    }
+}
+#[tokio::test]
+async fn introspection_does_not_exempt_mixed_operations() {
+    let schema = crate::graphql::schema_builder()
+        .extension(ValidateOnly)
+        .finish();
+    let query = include_str!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/../../common/graphql-common/test-support/introspection.graphql"
+    ));
+    let mixed = query
+        .replace(
+            "query IntrospectionQuery {",
+            "query Mixed { allCollections { id }",
+        )
+        .replace("__schema {", "metadata: __schema {");
+    let response = schema.execute(&mixed).await;
+    assert!(response.errors.is_empty(), "{:?}", response.errors);
+    assert_eq!(response.data, value!({"validated":true}));
+    let deep_business = mixed.replace(
+        "allCollections { id }",
+        "allCollections { ancestors { ancestors { id } } }",
+    );
+    // Name/alias spoofing must still hit the business complexity budget,
+    // even though the query also contains valid schema introspection.
+    let spoofed = deep_business
+        .replace("query Mixed", "query IntrospectionQuery")
+        .replace("allCollections {", "__schema: allCollections {");
+    let wide = format!(
+        "query SchemaDocs {{ {} }}",
+        (0..21)
+            .map(|i| format!("a{i}:__type(name:\"QueryRoot\"){{name}}"))
+            .collect::<String>()
+    );
+    let deep_introspection = format!(
+        "{{ __type(name:\"QueryRoot\") {{ {} name {} }} }}",
+        "ofType {".repeat(15),
+        "}".repeat(15)
+    );
+    for query in [deep_business, spoofed, wide, deep_introspection] {
+        let response = schema.execute(&query).await;
+        assert_eq!(response.data, Value::Null, "{query}");
+        assert!(!response.errors.is_empty(), "{query}");
+        for error in response.errors {
+            assert_eq!(error.message, "INVALID_REQUEST");
+            assert!(error.extensions.unwrap().get("requestId").is_some());
+        }
+    }
+}
+#[tokio::test]
 async fn oversized_operations_stop_before_execution_with_safe_errors() {
     let schema = crate::graphql::schema_builder()
         .extension(ValidateOnly)
