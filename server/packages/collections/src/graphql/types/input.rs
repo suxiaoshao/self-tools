@@ -23,12 +23,12 @@ pub(crate) struct CollectionItemQuery {
 }
 
 impl CollectionItemQuery {
-    pub fn checked(self) -> async_graphql::Result<crate::service::input::CollectionItemQuery> {
+    pub fn checked(self) -> async_graphql::Result<crate::application::input::CollectionItemQuery> {
         let pagination = self.pagination.checked().map_err(|mut v| {
             v.path.splice(0..0, ["query".into(), "pagination".into()]);
             graphql_common::invalid_fields(vec![v])
         })?;
-        Ok(crate::service::input::CollectionItemQuery {
+        Ok(crate::application::input::CollectionItemQuery {
             id: self.id,
             create_time: self.create_time.map(Into::into),
             update_time: self.update_time.map(Into::into),
@@ -36,7 +36,7 @@ impl CollectionItemQuery {
         })
     }
 }
-impl From<TimeRange> for crate::service::input::TimeRange {
+impl From<TimeRange> for crate::application::input::TimeRange {
     fn from(v: TimeRange) -> Self {
         Self {
             start: v.start.into(),

@@ -110,7 +110,34 @@ async fn gateway_http_graphql_and_real_auth_rpc_share_trace() {
             .await
             .unwrap();
     });
-    let client = Arc::new(thrift::client_at(addr));
+    let client = Arc::new(thrift::AuthEndpoint::new(
+        addr.to_string(),
+        service_health::budget::AUTH_DNS,
+        service_health::budget::AUTH_RPC,
+    ));
+    assert!(client.ready().await);
+    assert_eq!(
+        client
+            .authenticate("invalid-session".into())
+            .await
+            .unwrap_err()
+            .code,
+        service_errors::PublicCode::Unauthenticated
+    );
+    let unavailable = thrift::AuthEndpoint::new(
+        "invalid address".into(),
+        service_health::budget::AUTH_DNS,
+        service_health::budget::AUTH_RPC,
+    );
+    assert!(!unavailable.ready().await);
+    assert_eq!(
+        unavailable
+            .authenticate("private-token".into())
+            .await
+            .unwrap_err()
+            .code,
+        service_errors::PublicCode::Unavailable
+    );
     let schema = async_graphql::Schema::build(
         Query,
         async_graphql::EmptyMutation,
@@ -142,10 +169,10 @@ async fn gateway_http_graphql_and_real_auth_rpc_share_trace() {
             let token = token.clone();
             let schema = schema.clone();
             async move {
-                let response = match client.check(thrift::context(Some(token))).await {
+                let response = match client.authenticate(token).await {
                     Ok(_) => axum::Json(schema.execute("query getNovel { value broken }").await)
                         .into_response(),
-                    Err(error) => middleware::HttpError(error.public_error()).into_response(),
+                    Err(error) => middleware::HttpError(error).into_response(),
                 };
                 Ok::<Response<Body>, std::convert::Infallible>(response)
             }

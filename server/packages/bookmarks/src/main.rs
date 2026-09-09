@@ -8,10 +8,9 @@
 mod errors;
 const MIGRATIONS: diesel_migrations::EmbeddedMigrations =
     diesel_migrations::embed_migrations!("migrations");
+mod application;
 mod graphql;
-mod model;
 mod router;
-mod service;
 
 use std::net::SocketAddr;
 
@@ -44,7 +43,9 @@ async fn main() -> anyhow::Result<()> {
     let result: anyhow::Result<()> = async {
         // 设置跨域
         let cors = get_cors()?;
-        let app = get_router()?.layer(cors).layer(middleware::trace_layer());
+        let app = get_router(application::Application::connect()?)?
+            .layer(cors)
+            .layer(middleware::trace_layer());
 
         let addr = "0.0.0.0:8080";
         tracing::info!(target: "telemetry", event = "service.started");
@@ -63,6 +64,3 @@ async fn main() -> anyhow::Result<()> {
     }
     result
 }
-
-#[cfg(test)]
-mod tests;

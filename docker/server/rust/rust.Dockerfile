@@ -1,8 +1,5 @@
 FROM rust
-RUN apt update \
-    && apt install clang cmake pkg-config -y
-COPY ./docker/server/rust/sources.list /etc/apt/sources.list
-COPY ./docker/server/rust/preferences /etc/apt/preferences
-RUN apt update \
-    && apt install mold -y
+RUN apt-get update \
+    && apt-get install --no-install-recommends -y clang cmake pkg-config mold \
+    && rm -rf /var/lib/apt/lists/*
 RUN rustup component add rustfmt

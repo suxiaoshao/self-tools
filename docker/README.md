@@ -55,6 +55,8 @@ xtask 按现有 null 环境键规则读取，无值时不注入。不增加容�
 
 五个服务共享的 Cargo registry 和 target 缓存使用 `sharing=locked`，避免 Buildx 并行构建时同时解包依赖或写入编译产物。
 
+CI 通过 `TAG=github.sha` 生成提交标签，再用 Bake 的 `tags+=` 追加 `latest`；标签不能用逗号拼成单个字符串。Rust builder 使用官方 `rust` 镜像自带的 Debian 软件源安装 clang、cmake、pkg-config 和 mold，不混入其他发行版的软件源。
+
 部署前准备专用数据库/角色及连接配置。三个服务镜像都支持显式迁移，以下命令需要正确镜像、数据库容器和 Compose 网络已存在：
 
 ```bash

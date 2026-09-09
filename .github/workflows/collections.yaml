@@ -8,6 +8,9 @@ on:
       - docker/docker-bake.hcl
       - docker/server/rust/**
       - server/common/service-health/**
+      - server/common/service-db/**
+      - server/common/service-query/**
+      - server/common/graphql-common/**
       - docker/server/collections.Dockerfile
       - server/packages/collections/**
       - server/common/middleware/**
@@ -43,4 +46,4 @@ jobs:
           targets: collections
           push: true
           set: |
-            collections.tags=suxiaoshao/collections:latest,suxiaoshao/collections:${{ github.sha }}
+            collections.tags+=suxiaoshao/collections:latest

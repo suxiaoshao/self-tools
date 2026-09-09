@@ -1,21 +1,11 @@
 use super::{
     enums::{NovelSite, NovelStatus},
-    error::{detail, with_conn},
+    error::{application, read_error},
 };
-use crate::{
-    model::{
-        chapter::ChapterModel, novel::NovelModel, novel_comment::NovelCommentModel,
-        read_record::ReadRecordModel,
-    },
-    service,
-};
+use crate::application;
 use async_graphql::{Context, Object, Result, SimpleObject};
 use graphql_common::DateTime;
-use novel_crawler::{
-    AuthorFn, ChapterFn, JJAuthor, JJChapter, JJNovel, JJTag, NovelFn, QDAuthor, QDChapter,
-    QDNovel, QDTag, TagFn,
-};
-pub(crate) struct Author(pub service::author::Author);
+pub(crate) struct Author(pub application::Author);
 #[Object]
 impl Author {
     async fn id(&self) -> i64 {
@@ -43,27 +33,18 @@ impl Author {
         self.0.update_time.into()
     }
     async fn novels(&self, ctx: &Context<'_>) -> Result<Option<Vec<Novel>>> {
-        with_conn(ctx, |c| {
-            Ok(NovelModel::query_by_author_id(self.0.id, c)?
-                .into_iter()
-                .map(|v| Novel(v.into()))
-                .collect())
-        })
-        .map(Some)
+        application(ctx)?
+            .author_novels(self.0.id)
+            .await
+            .map(|v| Some(v.into_iter().map(Novel).collect()))
+            .map_err(read_error)
     }
     async fn url(&self) -> String {
-        match self.0.site {
-            crate::model::schema::custom_type::NovelSite::Qidian => {
-                QDAuthor::get_url_from_id(&self.0.site_id)
-            }
-            crate::model::schema::custom_type::NovelSite::Jjwxc => {
-                JJAuthor::get_url_from_id(&self.0.site_id)
-            }
-        }
+        self.0.url()
     }
 }
 graphql_common::list!(Author);
-pub(crate) struct Tag(pub service::tag::Tag);
+pub(crate) struct Tag(pub application::Tag);
 #[Object]
 impl Tag {
     async fn id(&self) -> i64 {
@@ -85,18 +66,11 @@ impl Tag {
         self.0.update_time.into()
     }
     async fn url(&self) -> String {
-        match self.0.site {
-            crate::model::schema::custom_type::NovelSite::Qidian => {
-                QDTag::get_url_from_id(&self.0.site_id)
-            }
-            crate::model::schema::custom_type::NovelSite::Jjwxc => {
-                JJTag::get_url_from_id(&self.0.site_id)
-            }
-        }
+        self.0.url()
     }
 }
 graphql_common::list!(Tag);
-pub(crate) struct Collection(pub service::collection::Collection);
+pub(crate) struct Collection(pub application::Collection);
 #[Object]
 impl Collection {
     async fn id(&self) -> i64 {
@@ -121,20 +95,22 @@ impl Collection {
         self.0.update_time.into()
     }
     async fn ancestors(&self, ctx: &Context<'_>) -> Result<Option<Vec<Collection>>> {
-        with_conn(ctx, |c| {
-            service::collection::Collection::get_ancestors(self.0.id, c)
-        })
-        .map(|v| Some(v.into_iter().map(Collection).collect()))
+        application(ctx)?
+            .ancestors(self.0.id)
+            .await
+            .map(|v| Some(v.into_iter().map(Collection).collect()))
+            .map_err(read_error)
     }
     async fn children(&self, ctx: &Context<'_>) -> Result<Option<Vec<Collection>>> {
-        with_conn(ctx, |c| {
-            service::collection::Collection::get_list_parent_id(Some(self.0.id), c)
-        })
-        .map(|v| Some(v.into_iter().map(Collection).collect()))
+        application(ctx)?
+            .children(self.0.id)
+            .await
+            .map(|v| Some(v.into_iter().map(Collection).collect()))
+            .map_err(read_error)
     }
 }
 graphql_common::list!(Collection);
-pub(crate) struct Chapter(pub service::chapter::Chapter);
+pub(crate) struct Chapter(pub application::Chapter);
 #[Object]
 impl Chapter {
     async fn id(&self) -> i64 {
@@ -174,29 +150,24 @@ impl Chapter {
         self.0.is_read
     }
     async fn novel(&self, ctx: &Context<'_>) -> Result<Option<Novel>> {
-        with_conn(ctx, |c| {
-            detail(service::novel::Novel::get(self.0.novel_id, c))
-        })
-        .map(|v| v.map(Novel))
+        application(ctx)?
+            .get_novel(self.0.novel_id)
+            .await
+            .map(|v| v.map(Novel))
+            .map_err(read_error)
     }
     async fn author(&self, ctx: &Context<'_>) -> Result<Option<Author>> {
-        with_conn(ctx, |c| {
-            detail(service::author::Author::get(self.0.author_id, c))
-        })
-        .map(|v| v.map(Author))
+        application(ctx)?
+            .get_author(self.0.author_id)
+            .await
+            .map(|v| v.map(Author))
+            .map_err(read_error)
     }
     async fn url(&self) -> String {
-        match self.0.site {
-            crate::model::schema::custom_type::NovelSite::Qidian => {
-                QDChapter::get_url_from_id(&self.0.site_id, &self.0.site_novel_id)
-            }
-            crate::model::schema::custom_type::NovelSite::Jjwxc => {
-                JJChapter::get_url_from_id(&self.0.site_id, &self.0.site_novel_id)
-            }
-        }
+        self.0.url()
     }
 }
-pub(crate) struct Novel(pub service::novel::Novel);
+pub(crate) struct Novel(pub application::Novel);
 #[Object]
 impl Novel {
     async fn id(&self) -> i64 {
@@ -227,68 +198,74 @@ impl Novel {
         self.0.update_time.into()
     }
     async fn author(&self, ctx: &Context<'_>) -> Result<Option<Author>> {
-        with_conn(ctx, |c| {
-            detail(service::author::Author::get(self.0.author_id, c))
-        })
-        .map(|v| v.map(Author))
+        application(ctx)?
+            .get_author(self.0.author_id)
+            .await
+            .map(|v| v.map(Author))
+            .map_err(read_error)
     }
     async fn tags(&self, ctx: &Context<'_>) -> Result<Option<Vec<Tag>>> {
-        with_conn(ctx, |c| service::tag::Tag::get_by_ids(&self.0.tags, c))
+        application(ctx)?
+            .tags_by_ids(self.0.tags.clone())
+            .await
             .map(|v| Some(v.into_iter().map(Tag).collect()))
+            .map_err(read_error)
     }
     async fn chapters(&self, ctx: &Context<'_>) -> Result<Option<Vec<Chapter>>> {
-        with_conn(ctx, |c| {
-            service::chapter::Chapter::get_by_novel_id(self.0.id, &self.0.site_id, c)
-        })
-        .map(|v| Some(v.into_iter().map(Chapter).collect()))
+        application(ctx)?
+            .novel_chapters(self.0.id, self.0.site_id.clone())
+            .await
+            .map(|v| Some(v.into_iter().map(Chapter).collect()))
+            .map_err(read_error)
     }
     async fn collections(&self, ctx: &Context<'_>) -> Result<Option<Vec<Collection>>> {
-        with_conn(ctx, |c| {
-            service::collection::Collection::many_by_novel_id(self.0.id, c)
-        })
-        .map(|v| Some(v.into_iter().map(Collection).collect()))
+        application(ctx)?
+            .novel_collections(self.0.id)
+            .await
+            .map(|v| Some(v.into_iter().map(Collection).collect()))
+            .map_err(read_error)
     }
     async fn word_count(&self, ctx: &Context<'_>) -> Result<Option<bigdecimal::BigDecimal>> {
-        with_conn(ctx, |c| {
-            ChapterModel::get_word_count_by_novel_id(self.0.id, c)
-        })
-        .map(Some)
+        application(ctx)?
+            .novel_word_count(self.0.id)
+            .await
+            .map(Some)
+            .map_err(read_error)
     }
     async fn read_percentage(&self, ctx: &Context<'_>) -> Result<Option<f64>> {
-        with_conn(ctx, |c| {
-            ReadRecordModel::read_percentage_by_novel_id(self.0.id, c)
-        })
-        .map(Some)
+        application(ctx)?
+            .novel_read_percentage(self.0.id)
+            .await
+            .map(Some)
+            .map_err(read_error)
     }
     async fn last_chapter(&self, ctx: &Context<'_>) -> Result<Option<Chapter>> {
-        with_conn(ctx, |c| {
-            ChapterModel::get_last_chapter_by_novel_id(self.0.id, c)
-        })
-        .map(|v| v.map(|v| Chapter(service::chapter::Chapter::from(v, self.0.site_id.clone()))))
+        application(ctx)?
+            .last_chapter(self.0.id, self.0.site_id.clone())
+            .await
+            .map(|v| v.map(Chapter))
+            .map_err(read_error)
     }
     async fn first_chapter(&self, ctx: &Context<'_>) -> Result<Option<Chapter>> {
-        with_conn(ctx, |c| {
-            ChapterModel::get_first_chapter_by_novel_id(self.0.id, c)
-        })
-        .map(|v| v.map(|v| Chapter(service::chapter::Chapter::from(v, self.0.site_id.clone()))))
+        application(ctx)?
+            .first_chapter(self.0.id, self.0.site_id.clone())
+            .await
+            .map(|v| v.map(Chapter))
+            .map_err(read_error)
     }
     async fn comments(&self, ctx: &Context<'_>) -> Result<Option<NovelComment>> {
-        with_conn(ctx, |c| NovelCommentModel::find_by_novel_id(self.0.id, c))
-            .map(|v| v.map(|v| NovelComment(v.into())))
+        application(ctx)?
+            .novel_comments(self.0.id)
+            .await
+            .map(|v| v.map(NovelComment))
+            .map_err(read_error)
     }
     async fn url(&self) -> String {
-        match self.0.site {
-            crate::model::schema::custom_type::NovelSite::Qidian => {
-                QDNovel::get_url_from_id(&self.0.site_id)
-            }
-            crate::model::schema::custom_type::NovelSite::Jjwxc => {
-                JJNovel::get_url_from_id(&self.0.site_id)
-            }
-        }
+        self.0.url()
     }
 }
 graphql_common::list!(Novel);
-pub(crate) struct NovelComment(pub service::novel_comment::NovelComment);
+pub(crate) struct NovelComment(pub application::NovelComment);
 #[Object]
 impl NovelComment {
     async fn content(&self) -> &str {

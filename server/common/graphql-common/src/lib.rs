@@ -7,7 +7,7 @@ mod paginate;
 mod tag_match;
 
 pub use date_time::DateTime;
-pub use paginate::{Paginate, Pagination, QueryStack, Queryable};
+pub use paginate::Pagination;
 pub use paste::paste;
 pub use tag_match::{TagMatch, TagMatchValidator};
 

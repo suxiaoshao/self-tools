@@ -1,10 +1,3 @@
-/*
- * @Author: suxiaoshao suxiaoshao@gmail.com
- * @Date: 2024-01-23 03:28:35
- * @LastEditors: suxiaoshao suxiaoshao@gmail.com
- * @LastEditTime: 2024-03-23 21:11:30
- * @FilePath: /self-tools/server/packages/bookmarks/src/router/mod.rs
- */
 mod fetch_content;
 mod graphql;
 use self::graphql::{graphql_handler, graphql_playground};
@@ -14,30 +7,21 @@ use axum::{
     routing::{get, post},
 };
 
-pub(crate) fn get_router() -> anyhow::Result<Router> {
-    let pool =
-        crate::model::get_pool().map_err(|_| anyhow::anyhow!("bookmarks database unavailable"))?;
-    service_health::database::check(
-        &mut *pool
-            .get()
-            .map_err(|_| anyhow::anyhow!("database unavailable"))?,
-        crate::MIGRATIONS,
-    )?;
-    let schema = get_schema(pool.clone());
+pub(crate) fn get_router(
+    application: std::sync::Arc<crate::application::Application>,
+) -> anyhow::Result<Router> {
+    let schema = get_schema(application.clone());
+    let origin = middleware::auth_http::configured_origin()
+        .map_err(|_| anyhow::anyhow!("invalid AUTH_ORIGIN"))?;
     let images =
         fetch_content::image_router(std::sync::Arc::new(fetch_content::ImageProxyState::new()?));
-
     let router = Router::new()
         .route(
             "/health/ready",
             get(move || {
-                let pool = pool.clone();
+                let application = application.clone();
                 async move {
-                    let (database, auth) = tokio::join!(
-                        service_health::database::ready(pool, crate::MIGRATIONS),
-                        service_health::auth_ready()
-                    );
-                    if database && auth {
+                    if application.ready().await {
                         axum::http::StatusCode::NO_CONTENT
                     } else {
                         axum::http::StatusCode::SERVICE_UNAVAILABLE
@@ -50,6 +34,7 @@ pub(crate) fn get_router() -> anyhow::Result<Router> {
             post(graphql_handler).get(graphql_playground),
         )
         .with_state(schema)
+        .layer(axum::Extension(origin))
         .merge(images);
     Ok(router)
 }

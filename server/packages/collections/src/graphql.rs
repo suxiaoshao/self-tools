@@ -9,7 +9,8 @@
 use ::middleware::Logger;
 use async_graphql::{EmptySubscription, Schema};
 
-use crate::model::PgPool;
+use crate::application::Application;
+use std::sync::Arc;
 
 use self::{mutation::MutationRoot, query::QueryRoot};
 
@@ -20,10 +21,10 @@ pub(crate) mod types;
 pub(crate) type RootSchema = Schema<QueryRoot, MutationRoot, EmptySubscription>;
 mod guard;
 
-pub(crate) fn get_schema(pool: PgPool) -> RootSchema {
+pub(crate) fn get_schema(application: Arc<Application>) -> RootSchema {
     Schema::build(QueryRoot, MutationRoot, EmptySubscription)
         .extension(Logger)
-        .data(pool)
+        .data(application)
         .finish()
 }
 

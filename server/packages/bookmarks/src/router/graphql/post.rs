@@ -12,20 +12,21 @@ pub(crate) struct Auth;
 pub(crate) async fn graphql_handler(
     State(schema): State<RootSchema>,
     headers: HeaderMap,
+    Extension(origin): Extension<String>,
     correlation: Option<Extension<RequestCorrelation>>,
     req: GraphQLRequest<HttpError>,
 ) -> Result<Response, HttpError> {
-    let origin = auth_http::configured_origin().map_err(|_| Fault::internal("auth_origin"))?;
     auth_http::validate_request(&headers, &Method::POST, &origin)
         .map_err(|_| HttpError::new(PublicCode::RequestRejected))?;
     let token = auth_http::session_cookie(&headers)
         .map_err(|_| HttpError::new(PublicCode::RequestRejected))?
         .ok_or_else(|| HttpError::new(PublicCode::Unauthenticated))?;
-    let client = thrift::get_client()?;
-    client
-        .check(thrift::context(Some(token)))
+    schema
+        .data::<std::sync::Arc<crate::application::Application>>()
+        .ok_or_else(|| Fault::internal("graphql_application"))?
+        .authenticate(token)
         .await
-        .map_err(|error| HttpError(error.public_error()))?;
+        .map_err(HttpError)?;
     let correlation = correlation
         .map(|extension| extension.0)
         .ok_or_else(|| Fault::internal("request_correlation"))?;

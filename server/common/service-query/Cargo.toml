@@ -3,5 +3,4 @@ name = "service-query"
 version.workspace = true
 edition.workspace = true
 [dependencies]
-tokio = { workspace = true, features = ["macros"] }
 service-errors.workspace = true
