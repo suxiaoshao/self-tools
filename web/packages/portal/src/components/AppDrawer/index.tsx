@@ -25,7 +25,7 @@ import {
   SidebarProvider,
   useSidebar,
 } from 'ui/components/sidebar';
-import { Toaster } from 'ui/components/sonner';
+import { Toaster } from 'ui/components/toast';
 
 function CloseSidebarOnNavigation() {
   const { key } = useLocation();

@@ -3,36 +3,11 @@ import { itemResult } from '@collections/features/item/model/results';
 import ItemForm, { type ItemCreateData } from './ItemForm';
 import { useDialog } from 'hooks';
 import { useI18n } from 'i18n';
-import { graphql } from '@collections/gql/index';
+import { CreateItemDocument as CreateItem } from '@collections/gql/graphql';
 import { useMutation } from '@apollo/client/react';
 import { Dialog } from 'ui/components/dialog';
 import { Button } from 'ui/components/button';
 import type { ComponentProps } from 'react';
-
-const CreateItem = graphql(`
-  mutation createItem($collectionIds: [Int!]!, $name: String!, $content: String!) {
-    createItem(collectionIds: $collectionIds, name: $name, content: $content) {
-      __typename
-      ... on ItemSaved {
-        itemId
-      }
-      ... on ValidationFailure {
-        issues {
-          path
-          code
-          min
-          max
-        }
-      }
-      ... on MissingResources {
-        resources {
-          kind
-          id
-        }
-      }
-    }
-  }
-`);
 
 interface CreateItemButtonProps extends ComponentProps<typeof Button> {
   /** 表格重新刷新 */

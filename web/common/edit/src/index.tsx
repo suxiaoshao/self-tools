@@ -1,5 +1,6 @@
 import { lazy, useCallback, useImperativeHandle, useRef, type Ref } from 'react';
 import { AsyncBoundary } from 'ui/async-boundary';
+import { Textarea } from 'ui/components/textarea';
 import type { EditProps, MonacoEditorRef } from './types';
 export type { EditProps, MonacoEditorRef } from './types';
 
@@ -37,9 +38,9 @@ export default function Edit({ ref, focusRef, ...props }: EditProps & { focusRef
   const { code, onChangeCode, readOnly, language: _language, wordWrap: _wordWrap, ...containerProps } = props;
   const fallback = (
     <div {...containerProps}>
-      <textarea
+      <Textarea
         ref={textarea}
-        className="size-full min-h-40 resize-none border rounded p-2 font-mono"
+        className="size-full min-h-40 resize-none font-mono"
         aria-label={props['aria-label']}
         aria-describedby={props['aria-describedby']}
         aria-invalid={props['aria-invalid']}

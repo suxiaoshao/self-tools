@@ -1,17 +1,6 @@
 import type { ApolloClient } from '@apollo/client';
-import { graphql } from '@collections/gql/index';
-const ReadItemState = graphql(`
-  query ReadItemState($id: Int!) {
-    getItem(id: $id) {
-      id
-      name
-      content
-      collections {
-        id
-      }
-    }
-  }
-`);
+import { ReadItemStateDocument as ReadItemState } from '@collections/gql/graphql';
+
 export async function checkDeleted(client: ApolloClient, id: number) {
   const response = await client.query({ query: ReadItemState, variables: { id } });
   return !response.error && response.data?.getItem === null;

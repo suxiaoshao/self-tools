@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { useI18n, type I18nKey } from 'i18n';
 import { isUnconfirmed, RequestError, type FieldViolation, type RequestFailure } from 'request-errors';
 import { authenticatedStateVersion, graphQLFailures } from './client';
+import { Alert, AlertDescription } from 'ui/components/alert';
+import { Button } from 'ui/components/button';
 
 const resourceLabels: Readonly<Record<string, I18nKey>> = {
   AUTHOR: 'author',
@@ -106,26 +108,29 @@ export function RequestNotice({ error, retry }: { error: unknown; retry?: () => 
   const failures = graphQLFailures(error);
   if (!failures.length) return null;
   return (
-    <div role="alert" className="text-sm text-destructive py-2">
-      {failures.map(({ failure }, index) => (
-        <div key={index}>
-          <FailureText failure={failure} />
-        </div>
-      ))}
-      {retry && (
-        <button
-          type="button"
-          className="underline ml-2"
-          onClick={() => {
-            void Promise.resolve()
-              .then(retry)
-              .catch(() => undefined);
-          }}
-        >
-          {t('refresh')}
-        </button>
-      )}
-    </div>
+    <Alert variant="destructive">
+      <AlertDescription>
+        {failures.map(({ failure }, index) => (
+          <div key={index}>
+            <FailureText failure={failure} />
+          </div>
+        ))}
+        {retry && (
+          <Button
+            type="button"
+            variant="link"
+            className="h-auto p-0 text-current"
+            onClick={() => {
+              void Promise.resolve()
+                .then(retry)
+                .catch(() => undefined);
+            }}
+          >
+            {t('refresh')}
+          </Button>
+        )}
+      </AlertDescription>
+    </Alert>
   );
 }
 function FailureText({ failure }: { failure: RequestFailure }) {
@@ -184,79 +189,82 @@ export function WriteNotice({
   if (!outcome || outcome.status === 'saved') return null;
   const rejection = outcome.status === 'rejected' ? outcome.rejection : undefined;
   return (
-    <div role="alert" className="text-sm text-destructive py-2">
-      {outcome.status === 'failed' && (
-        <>
-          {outcome.unconfirmed && <p>{t('request_write_unknown')}</p>}
-          <FailureText failure={outcome.failure} />
-        </>
-      )}
-      {rejection?.kind === 'validation' && (
-        <ul>
-          {rejection.issues.map((issue, index) => (
-            <li key={index}>
-              {fieldLabels?.[issue.path.join('.')] ?? fieldLabels?.[String(issue.path[0])] ?? t('field_error')}:{' '}
-              {
+    <Alert variant="destructive">
+      <AlertDescription>
+        {outcome.status === 'failed' && (
+          <>
+            {outcome.unconfirmed && <p>{t('request_write_unknown')}</p>}
+            <FailureText failure={outcome.failure} />
+          </>
+        )}
+        {rejection?.kind === 'validation' && (
+          <ul>
+            {rejection.issues.map((issue, index) => (
+              <li key={index}>
+                {fieldLabels?.[issue.path.join('.')] ?? fieldLabels?.[String(issue.path[0])] ?? t('field_error')}:{' '}
                 {
-                  REQUIRED: t('request_required'),
-                  INVALID_FORMAT: t('request_invalid'),
-                  TOO_LONG: t('request_too_long'),
-                  OUT_OF_RANGE: t('request_out_of_range'),
-                }[issue.code]
-              }
-              {issue.min !== undefined && ` ≥ ${issue.min}`}
-              {issue.max !== undefined && ` ≤ ${issue.max}`}
-            </li>
-          ))}
-        </ul>
-      )}
-      {rejection?.kind === 'missing' && (
-        <p>
-          {t('request_missing')} (
-          {rejection.resources.map((r) => `${t(resourceLabels[r.kind] ?? 'resource')} #${r.id}`).join(', ')})
-        </p>
-      )}
-      {rejection?.kind === 'conflict' && (
-        <p>
-          {
+                  {
+                    REQUIRED: t('request_required'),
+                    INVALID_FORMAT: t('request_invalid'),
+                    TOO_LONG: t('request_too_long'),
+                    OUT_OF_RANGE: t('request_out_of_range'),
+                  }[issue.code]
+                }
+                {issue.min !== undefined && ` ≥ ${issue.min}`}
+                {issue.max !== undefined && ` ≤ ${issue.max}`}
+              </li>
+            ))}
+          </ul>
+        )}
+        {rejection?.kind === 'missing' && (
+          <p>
+            {t('request_missing')} (
+            {rejection.resources.map((r) => `${t(resourceLabels[r.kind] ?? 'resource')} #${r.id}`).join(', ')})
+          </p>
+        )}
+        {rejection?.kind === 'conflict' && (
+          <p>
             {
-              COLLECTION_PATH_EXISTS: t('request_path_exists'),
-              MEMBERSHIP_EXISTS: t('request_membership_exists'),
-              SOURCE_ID_EXISTS: t('request_source_exists'),
-              COMMENT_EXISTS: t('request_comment_exists'),
-            }[rejection.reason]
-          }
-        </p>
-      )}
-      {rejection?.kind === 'alreadyRead' && (
-        <p>
-          {t('request_already_read')} ({rejection.chapterIds.join(', ')})
-        </p>
-      )}
-      {outcome.status === 'failed' && outcome.unconfirmed && (
-        <div className="flex gap-3 mt-2">
-          {check && (
-            <button
-              type="button"
-              disabled={pending}
-              className="underline"
-              onClick={() => {
-                void Promise.resolve()
-                  .then(check)
-                  .catch(() => undefined);
-              }}
-            >
-              {t('request_check_result')}
-            </button>
-          )}
-          {viewHref && (
-            <a className="underline" href={viewHref} target="_blank" rel="noreferrer">
-              {t('request_view_list')}
-            </a>
-          )}
-        </div>
-      )}
-    </div>
+              {
+                COLLECTION_PATH_EXISTS: t('request_path_exists'),
+                MEMBERSHIP_EXISTS: t('request_membership_exists'),
+                SOURCE_ID_EXISTS: t('request_source_exists'),
+                COMMENT_EXISTS: t('request_comment_exists'),
+              }[rejection.reason]
+            }
+          </p>
+        )}
+        {rejection?.kind === 'alreadyRead' && (
+          <p>
+            {t('request_already_read')} ({rejection.chapterIds.join(', ')})
+          </p>
+        )}
+        {outcome.status === 'failed' && outcome.unconfirmed && (
+          <div className="flex gap-3 mt-2">
+            {check && (
+              <Button
+                type="button"
+                disabled={pending}
+                variant="link"
+                className="h-auto p-0 text-current"
+                onClick={() => {
+                  void Promise.resolve()
+                    .then(check)
+                    .catch(() => undefined);
+                }}
+              >
+                {t('request_check_result')}
+              </Button>
+            )}
+            {viewHref && (
+              <a className="underline" href={viewHref} target="_blank" rel="noreferrer">
+                {t('request_view_list')}
+              </a>
+            )}
+          </div>
+        )}
+      </AlertDescription>
+    </Alert>
   );
 }
 /** Errors on the root or this association are relevant; sibling failures retain the useful fields. */

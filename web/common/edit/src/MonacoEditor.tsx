@@ -1,7 +1,7 @@
 import { useEffect, useEffectEvent, useImperativeHandle, useRef, useState } from 'react';
 import { editor } from 'monaco-editor';
 import './init';
-import { selectColorMode, useThemeStore } from 'ui/theme';
+import { useTheme } from 'ui/theme';
 import type { EditProps } from './types';
 
 export default function MonacoEditor({
@@ -16,7 +16,7 @@ export default function MonacoEditor({
 }: EditProps) {
   const container = useRef<HTMLDivElement>(null);
   const [instance, setInstance] = useState<editor.IStandaloneCodeEditor>();
-  const theme = useThemeStore(selectColorMode);
+  const { resolvedTheme: theme } = useTheme();
   const onChange = useEffectEvent((value: string) => onChangeCode?.(value));
   const initialOptions = useEffectEvent(() => ({ value: code, language, readOnly, wordWrap, ariaLabel }));
   useImperativeHandle(ref, () => instance, [instance]);

@@ -1,0 +1,20 @@
+query getNovels($collectionMatch: TagMatch, $novelStatus: NovelStatus, $tagMatch: TagMatch, $pagination: Pagination!) {
+  queryNovels(
+    collectionMatch: $collectionMatch
+    novelStatus: $novelStatus
+    tagMatch: $tagMatch
+    pagination: $pagination
+  ) {
+    data {
+      id
+      name
+      description
+      createTime
+      updateTime
+      novelStatus
+      avatar
+      site
+    }
+    total
+  }
+}

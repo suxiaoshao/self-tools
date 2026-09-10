@@ -11,14 +11,13 @@ import {
   type CustomColumnDefArray,
   CustomTable,
   type CustomTableOptions,
-  getCoreRowModel,
   TableActions,
   usePage,
   usePageWithTotal,
 } from 'custom-table';
 import { useI18n } from 'i18n';
 import { useMemo } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import { Link } from 'react-router';
 import { format } from 'time';
 import CreateNovelButton from './components/CreateNovelButton';
@@ -28,8 +27,7 @@ import { getLabelKeyBySite } from '@bookmarks/utils/novelSite';
 import { CollectionMultiSelect } from '@bookmarks/entities/collection';
 import TagsSelect from '@bookmarks/components/TagsSelect/index';
 import { getLabelKeyByNovelStatus } from '@bookmarks/utils/novelStatus';
-import { useTitle } from 'hooks';
-import { graphql } from '@bookmarks/gql/index';
+import { GetNovelsDocument as GetNovels, DeleteNovelDocument as DeleteNovel } from '@bookmarks/gql/graphql';
 import { useMutation, useQuery } from '@apollo/client/react';
 import type { GetNovelsQuery, GetNovelsQueryVariables } from '@bookmarks/gql/graphql';
 import { Button, buttonVariants } from 'ui/components/button';
@@ -37,56 +35,6 @@ import { Card, CardContent } from 'ui/components/card';
 import { Switch } from 'ui/components/switch';
 import { FieldLabel, Field } from 'ui/components/field';
 import { Avatar, AvatarFallback, AvatarImage } from 'ui/components/avatar';
-
-const GetNovels = graphql(`
-  query getNovels(
-    $collectionMatch: TagMatch
-    $novelStatus: NovelStatus
-    $tagMatch: TagMatch
-    $pagination: Pagination!
-  ) {
-    queryNovels(
-      collectionMatch: $collectionMatch
-      novelStatus: $novelStatus
-      tagMatch: $tagMatch
-      pagination: $pagination
-    ) {
-      data {
-        id
-        name
-        description
-        createTime
-        updateTime
-        novelStatus
-        avatar
-        site
-      }
-      total
-    }
-  }
-`);
-
-const DeleteNovel = graphql(`
-  mutation deleteNovel($id: Int!) {
-    deleteNovel(id: $id) {
-      __typename
-      ... on ResourceDeleted {
-        resource {
-          kind
-          id
-        }
-      }
-      ... on ValidationFailure {
-        issues {
-          path
-          code
-          min
-          max
-        }
-      }
-    }
-  }
-`);
 
 type Data = GetNovelsQuery['queryNovels']['data'][0];
 
@@ -100,17 +48,17 @@ export default function NovelList() {
   // i18n
   const t = useI18n();
   // title
-  useTitle(t('novel_manage'));
+
   // form & table
   type FormData = Omit<GetNovelsQueryVariables, 'pagination'>;
   const pageState = usePage();
-  const { control, watch } = useForm<FormData>({
+  const { control } = useForm<FormData>({
     defaultValues: {
       tagMatch: { matchSet: [], fullMatch: false },
       collectionMatch: { matchSet: [], fullMatch: false },
     },
   });
-  const form = watch();
+  const form = useWatch({ control, compute: (values) => values });
   const {
     data: queryData,
     refetch,
@@ -125,7 +73,7 @@ export default function NovelList() {
   const [deleteNovel] = useMutation(DeleteNovel);
   const columns = useMemo<CustomColumnDefArray<Data>>(
     () =>
-      [
+      columnHelper.columns([
         columnHelper.accessor(
           ({ id, name }) => (
             <Link
@@ -167,9 +115,11 @@ export default function NovelList() {
         columnHelper.accessor(({ description }) => description ?? '-', {
           header: t('description'),
           id: 'description',
-          cellProps: {
-            align: 'center',
-            className: 'max-w-[200px] truncate',
+          meta: {
+            cellProps: {
+              align: 'center',
+              className: 'max-w-[200px] truncate',
+            },
           },
           cell: (context) => context.getValue(),
         }),
@@ -205,16 +155,14 @@ export default function NovelList() {
             </TableActions>
           ),
         }),
-      ] as CustomColumnDefArray<Data>,
+      ]),
     [t, write, target],
   );
-  const tableOptions = useMemo<CustomTableOptions<Data>>(
-    () => ({ columns, data: data ?? [], getCoreRowModel: getCoreRowModel() }),
-    [columns, data],
-  );
+  const tableOptions = useMemo<CustomTableOptions<Data>>(() => ({ columns, data: data ?? [] }), [columns, data]);
 
   return (
     <div className="flex min-h-0 size-full flex-col">
+      <title>{t('novel_manage')}</title>
       <PageToolbar>
         <CreateNovelButton refetch={refetch} />
         <Link to="/bookmarks/novel/fetch" className={buttonVariants()}>

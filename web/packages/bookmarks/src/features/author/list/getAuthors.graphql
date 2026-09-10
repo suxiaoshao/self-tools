@@ -1,0 +1,14 @@
+query getAuthors($pagination: Pagination!) {
+  queryAuthors(pagination: $pagination) {
+    data {
+      id
+      site
+      name
+      createTime
+      updateTime
+      avatar
+      description
+    }
+    total
+  }
+}

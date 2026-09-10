@@ -1,0 +1,29 @@
+mutation updateAuthorByCrawler($authorId: Int!) {
+  updateAuthorByCrawler(authorId: $authorId) {
+    __typename
+    ... on AuthorSaved {
+      authorId
+    }
+    ... on ValidationFailure {
+      issues {
+        path
+        code
+        min
+        max
+      }
+    }
+    ... on MissingResources {
+      resources {
+        kind
+        id
+      }
+    }
+    ... on Conflict {
+      reason
+      resources {
+        kind
+        id
+      }
+    }
+  }
+}

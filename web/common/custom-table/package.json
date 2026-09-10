@@ -11,11 +11,10 @@
     ".": "./src/index.tsx"
   },
   "dependencies": {
-    "@tanstack/react-table": "^8.21.3",
-    "hooks": "workspace:*",
+    "@tanstack/react-table": "^9.2.4",
     "i18n": "workspace:*",
-    "lucide-react": "^1.24.0",
-    "react": "^19.2.7",
+    "lucide-react": "^1.43.0",
+    "react": "^19.2.8",
     "ts-pattern": "^5.9.0",
     "ui": "workspace:*"
   }

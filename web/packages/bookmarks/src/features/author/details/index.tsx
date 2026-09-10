@@ -2,8 +2,7 @@ import { PageToolbar } from 'ui/page-toolbar';
 import { RequestNotice, hasQueryFailure } from 'custom-graphql';
 import useBookmarkWrite from '@bookmarks/useBookmarkWrite';
 import { useMutation, useQuery } from '@apollo/client/react';
-import { graphql } from '@bookmarks/gql/index';
-import { useTitle } from 'hooks';
+import { GetAuthorDocument as GetAuthor, UpdateAuthorByCrawlerDocument as UpdateAuthor } from '@bookmarks/gql/graphql';
 import { getImageUrl } from '@bookmarks/utils/image';
 import { getLabelKeyByNovelStatus } from '@bookmarks/utils/novelStatus';
 import { Avatar, AvatarFallback, AvatarImage } from 'ui/components/avatar';
@@ -26,91 +25,27 @@ import {
 } from 'lucide-react';
 import { useCallback } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
-import { toast } from 'sonner';
+import { toast } from 'ui/components/toast';
 import { format } from 'time';
 import { P, match } from 'ts-pattern';
-
-const GetAuthor = graphql(`
-  query getAuthor($id: Int!) {
-    getAuthor(id: $id) {
-      novels {
-        id
-        name
-        avatar
-        createTime
-        updateTime
-        description
-        novelStatus
-        url
-        lastChapter {
-          time
-        }
-        firstChapter {
-          time
-        }
-        wordCount
-      }
-      id
-      site
-      name
-      createTime
-      updateTime
-      avatar
-      description
-      url
-    }
-  }
-`);
-
-const UpdateAuthor = graphql(`
-  mutation updateAuthorByCrawler($authorId: Int!) {
-    updateAuthorByCrawler(authorId: $authorId) {
-      __typename
-      ... on AuthorSaved {
-        authorId
-      }
-      ... on ValidationFailure {
-        issues {
-          path
-          code
-          min
-          max
-        }
-      }
-      ... on MissingResources {
-        resources {
-          kind
-          id
-        }
-      }
-      ... on Conflict {
-        reason
-        resources {
-          kind
-          id
-        }
-      }
-    }
-  }
-`);
 
 export default function AuthorDetails() {
   const write = useBookmarkWrite('/bookmarks/authors');
   const t = useI18n();
   const { authorId } = useParams();
   const { data, loading, refetch, error } = useQuery(GetAuthor, { variables: { id: Number(authorId) } });
-  useTitle(t('author_detail', { authorName: data?.getAuthor?.name }));
+
   const navigate = useNavigate();
   const handleRefresh = useCallback(() => {
     void Promise.resolve()
       .then(() => refetch())
       .catch(() => undefined);
   }, [refetch]);
-  const goToSourceSite = useCallback(() => {
+  const goToSourceSite = () => {
     if (data?.getAuthor?.url) {
       window.open(data.getAuthor.url, '_blank');
     }
-  }, [data?.getAuthor?.url]);
+  };
   const [updateAuthor, { loading: updateLoading }] = useMutation(UpdateAuthor);
   const handleUpdateAuthor = useCallback(async () => {
     if (
@@ -119,13 +54,14 @@ export default function AuthorDetails() {
       ))
     )
       return;
-    toast.success(t('update_by_crawler_success'));
+    toast.add({ title: t('update_by_crawler_success'), type: 'success' });
     void Promise.resolve()
       .then(() => refetch())
       .catch(() => undefined);
   }, [authorId, refetch, updateAuthor, t, write]);
   return (
     <div className="flex min-h-0 size-full flex-col">
+      <title>{t('author_detail', { authorName: data?.getAuthor?.name })}</title>
       <PageToolbar>
         <Button variant="ghost" size="icon" onClick={() => navigate(-1)} aria-label={t('back')}>
           <ChevronLeft />

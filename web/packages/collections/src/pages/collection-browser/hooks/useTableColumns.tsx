@@ -34,7 +34,7 @@ export default function useTableColumns(refetch: () => void) {
   const t = useI18n();
   const columns = useMemo<CustomColumnDefArray<CollectionAndItemsQuery['collectionAndItem']['data'][0]>>(
     () =>
-      [
+      columnHelper.columns([
         columnHelper.accessor(({ __typename }) => <Typename __typename={__typename} />, {
           header: t('type'),
           id: '__typename',
@@ -65,8 +65,10 @@ export default function useTableColumns(refetch: () => void) {
           {
             header: t('description'),
             id: 'description',
-            cellProps: {
-              align: 'center',
+            meta: {
+              cellProps: {
+                align: 'center',
+              },
             },
             cell: (context) => context.getValue(),
           },
@@ -81,13 +83,13 @@ export default function useTableColumns(refetch: () => void) {
           id: 'updateTime',
           cell: (context) => context.getValue(),
         }),
-        columnHelper.accessor((item) => <Actions {...item} refetch={refetch} />, {
+        columnHelper.display({
           header: t('actions'),
           id: 'action',
-          cellProps: { className: 'p-0' },
-          cell: (context) => context.getValue(),
+          meta: { cellProps: { className: 'p-0' } },
+          cell: ({ row }) => <Actions {...row.original} refetch={refetch} />,
         }),
-      ] as CustomColumnDefArray<CollectionAndItemsQuery['collectionAndItem']['data'][0]>,
+      ]),
     [refetch, t],
   );
   return columns;

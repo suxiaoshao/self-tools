@@ -1,0 +1,19 @@
+mutation deleteCollection($id: Int!) {
+  deleteCollection(id: $id) {
+    __typename
+    ... on ResourceDeleted {
+      resource {
+        kind
+        id
+      }
+    }
+    ... on ValidationFailure {
+      issues {
+        path
+        code
+        min
+        max
+      }
+    }
+  }
+}

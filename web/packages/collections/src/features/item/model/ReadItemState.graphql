@@ -1,0 +1,10 @@
+query ReadItemState($id: Int!) {
+  getItem(id: $id) {
+    id
+    name
+    content
+    collections {
+      id
+    }
+  }
+}

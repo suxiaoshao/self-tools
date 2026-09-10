@@ -1,6 +1,6 @@
 use crate::application::{Error, Rejection, Result};
 use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
-use hmac::{Hmac, Mac};
+use hmac::{Hmac, KeyInit, Mac};
 use sha2::{Digest, Sha256};
 pub const IDLE: i64 = 30 * 86400;
 pub const ABSOLUTE: i64 = 90 * 86400;
@@ -54,5 +54,24 @@ mod tests {
         assert!(verify(b"secret", &expected, "ab", "c"));
         assert!(!verify(b"secret", &expected, "a", "bc"));
         assert!(!verify(b"changed", &expected, "ab", "c"));
+    }
+
+    #[test]
+    fn dependency_updates_preserve_existing_token_hashes_and_configuration_fingerprints() {
+        // Fixed SHA-256/HMAC-SHA256 vectors, independently computed from the wire format.
+        assert_eq!(
+            hash(&"A".repeat(43)).unwrap(),
+            [
+                15, 0, 115, 133, 182, 249, 212, 183, 238, 178, 116, 134, 5, 175, 225, 169, 132,
+                160, 163, 191, 163, 240, 20, 208, 158, 42, 120, 76, 233, 229, 205, 26
+            ]
+        );
+        let expected = [
+            85, 87, 107, 100, 193, 134, 137, 133, 146, 189, 72, 150, 4, 29, 255, 167, 233, 213,
+            157, 167, 174, 108, 186, 77, 120, 99, 96, 162, 228, 12, 126, 173,
+        ];
+        assert_eq!(fingerprint(b"secret", "ab", "c"), expected);
+        assert!(verify(b"secret", &expected, "ab", "c"));
+        assert!(!verify(b"secret", &expected[..31], "ab", "c"));
     }
 }

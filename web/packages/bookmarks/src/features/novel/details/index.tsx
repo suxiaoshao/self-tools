@@ -6,8 +6,11 @@ import { checkNovelState } from '@bookmarks/features/novel/model/reconcile';
 import { useApolloClient } from '@apollo/client/react';
 import useBookmarkWrite from '@bookmarks/useBookmarkWrite';
 import { useMutation, useQuery } from '@apollo/client/react';
-import { graphql } from '@bookmarks/gql/index';
-import { useTitle } from 'hooks';
+import {
+  GetNovelDocument as GetNovel,
+  UpdateNovelByCrawlerDocument as UpdateNovelByCrawler,
+  DeleteCommentForNovelDocument as DeleteCommentForNovel,
+} from '@bookmarks/gql/graphql';
 import { getImageUrl } from '@bookmarks/utils/image';
 import CustomMarkdown from 'markdown';
 import { Delete, RefreshCcw, Download, SquareArrowOutUpRight, ChevronLeft } from 'lucide-react';
@@ -19,120 +22,13 @@ import { P, match } from 'ts-pattern';
 import Chapters from './components/Chapters';
 import CommentEdit from './components/CommentEdit';
 import useNovelDetailItems from './useNovelDetailItems';
-import { toast } from 'sonner';
+import { toast } from 'ui/components/toast';
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from 'ui/components/card';
 import { Skeleton } from 'ui/components/skeleton';
 import { Button } from 'ui/components/button';
 import { Item, ItemActions, ItemContent, ItemDescription, ItemMedia, ItemTitle } from 'ui/components/item';
 import { Avatar, AvatarFallback, AvatarImage } from 'ui/components/avatar';
 import { Tooltip, TooltipContent, TooltipTrigger } from 'ui/components/tooltip';
-
-const GetNovel = graphql(`
-  query getNovel($id: Int!) {
-    getNovel(id: $id) {
-      id
-      name
-      avatar
-      description
-      createTime
-      updateTime
-      novelStatus
-      url
-      chapters {
-        id
-        title
-        createTime
-        updateTime
-        url
-        wordCount
-        time
-        isRead
-      }
-      author {
-        avatar
-        description
-        id
-        name
-        site
-      }
-      lastChapter {
-        time
-      }
-      firstChapter {
-        time
-      }
-      wordCount
-      tags {
-        url
-        name
-        id
-      }
-      site
-      collections {
-        name
-        id
-        description
-        path
-      }
-      comments {
-        content
-      }
-    }
-  }
-`);
-
-const UpdateNovelByCrawler = graphql(`
-  mutation updateNovelByCrawler($novelId: Int!) {
-    updateNovelByCrawler(novelId: $novelId) {
-      __typename
-      ... on NovelSaved {
-        novelId
-      }
-      ... on ValidationFailure {
-        issues {
-          path
-          code
-          min
-          max
-        }
-      }
-      ... on MissingResources {
-        resources {
-          kind
-          id
-        }
-      }
-      ... on Conflict {
-        reason
-        resources {
-          kind
-          id
-        }
-      }
-    }
-  }
-`);
-const DeleteCommentForNovel = graphql(`
-  mutation deleteCommentForNovel($novelId: Int!) {
-    deleteCommentForNovel(novelId: $novelId) {
-      __typename
-      ... on ResourceDeleted {
-        resource {
-          kind
-          id
-        }
-      }
-      ... on ValidationFailure {
-        issues {
-          path
-          code
-          min
-          max
-        }
-      }
-    }
-  }
-`);
 
 export default function NovelDetails() {
   const client = useApolloClient();
@@ -146,18 +42,18 @@ export default function NovelDetails() {
 
   // title
   const t = useI18n();
-  useTitle(t('novel_detail', { novelName: data?.getNovel?.name }));
+
   const navigate = useNavigate();
   const handleRefresh = useCallback(() => {
     void Promise.resolve()
       .then(() => refetch())
       .catch(() => undefined);
   }, [refetch]);
-  const goToSourceSite = useCallback(() => {
+  const goToSourceSite = () => {
     if (data?.getNovel?.url) {
       window.open(data.getNovel.url, '_blank');
     }
-  }, [data?.getNovel?.url]);
+  };
   const [updateNovel, { loading: updateLoading }] = useMutation(UpdateNovelByCrawler);
   const handleUpdateNovel = useCallback(async () => {
     if (
@@ -166,7 +62,7 @@ export default function NovelDetails() {
       ))
     )
       return;
-    toast.success(t('update_by_crawler_success'));
+    toast.add({ title: t('update_by_crawler_success'), type: 'success' });
     void Promise.resolve()
       .then(() => refetch())
       .catch(() => undefined);
@@ -190,6 +86,7 @@ export default function NovelDetails() {
   };
   return (
     <div className="flex min-h-0 size-full flex-col">
+      <title>{t('novel_detail', { novelName: data?.getNovel?.name })}</title>
       <PageToolbar>
         <Button variant="ghost" size="icon" onClick={() => navigate(-1)} aria-label={t('back')}>
           <ChevronLeft />

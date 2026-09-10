@@ -4,8 +4,8 @@ version.workspace = true
 edition.workspace = true
 
 [dependencies]
-clap = { version = "4.6.1", features = ["derive"] }
-bollard = { version = "0.21.0", features = ["chrono"] }
+clap = { version = "4.6.6", features = ["derive"] }
+bollard = { version = "0.21.1", features = ["chrono"] }
 serde.workspace = true
 serde_json.workspace = true
 rand.workspace = true
@@ -14,6 +14,6 @@ thiserror.workspace = true
 tokio = { workspace = true, features = ["rt", "time"] }
 tracing.workspace = true
 tracing-subscriber.workspace = true
-rcgen = "0.14.8"
+rcgen = "0.14.10"
 url.workspace = true
 nom.workspace = true

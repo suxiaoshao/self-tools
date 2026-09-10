@@ -8,6 +8,7 @@ export default function NotFound() {
   const t = useI18n();
   return (
     <Empty>
+      <title>{t('not_found_title')}</title>
       <EmptyHeader>
         <EmptyMedia variant="icon">
           <FolderCode />

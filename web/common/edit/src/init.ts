@@ -8,8 +8,9 @@
 import { editor } from 'monaco-editor';
 import 'ui/fonts.css';
 import monankai from '../node_modules/monaco-themes/themes/Dracula.json';
+// Vite's ?worker transform supplies the constructor default export.
 // oxlint-disable-next-line import/default
-import EditorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
+import EditorWorker from 'monaco-editor/editor/editor.worker?worker';
 
 editor.defineTheme('monankai', monankai as editor.IStandaloneThemeData);
 

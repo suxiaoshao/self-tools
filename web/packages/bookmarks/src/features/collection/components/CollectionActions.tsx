@@ -9,63 +9,12 @@ import { TableActions } from 'custom-table';
 import { useI18n } from 'i18n';
 import CollectionForm, { type CollectionFormData } from './CollectionForm';
 import type { CollectionTableData } from '../types';
-import { graphql } from '@bookmarks/gql/index';
+import {
+  DeleteCollectionDocument as DeleteCollection,
+  UpdateCollectionDocument as UpdateCollection,
+} from '@bookmarks/gql/graphql';
 import { useMutation } from '@apollo/client/react';
 import { DropdownMenuItem } from 'ui/components/dropdown-menu';
-
-const DeleteCollection = graphql(`
-  mutation deleteCollection($id: Int!) {
-    deleteCollection(id: $id) {
-      __typename
-      ... on ResourceDeleted {
-        resource {
-          kind
-          id
-        }
-      }
-      ... on ValidationFailure {
-        issues {
-          path
-          code
-          min
-          max
-        }
-      }
-    }
-  }
-`);
-
-const UpdateCollection = graphql(`
-  mutation updateCollection($id: Int!, $name: String!, $parentId: Int, $description: String) {
-    updateCollection(id: $id, name: $name, parentId: $parentId, description: $description) {
-      __typename
-      ... on CollectionSaved {
-        collectionId
-      }
-      ... on ValidationFailure {
-        issues {
-          path
-          code
-          min
-          max
-        }
-      }
-      ... on MissingResources {
-        resources {
-          kind
-          id
-        }
-      }
-      ... on Conflict {
-        reason
-        resources {
-          kind
-          id
-        }
-      }
-    }
-  }
-`);
 
 type CollectionActionsProps = CollectionTableData & {
   refetch: () => Promise<void>;

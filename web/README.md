@@ -9,9 +9,9 @@
 | `packages/portal`        | 唯一的 Vite 应用入口与组合根；负责全局 Provider、顶层路由、登录、导航和主题 / 语言设置菜单。 |
 | `packages/bookmarks`     | 书签业务模块；默认导出实现 `MicroConfig` 的 `BookmarkConfig`，由 `portal` 组合。             |
 | `packages/collections`   | 收藏业务模块；默认导出实现 `MicroConfig` 的 `CollectionConfig`，由 `portal` 组合。           |
-| `common/ui`              | 共享 shadcn 组件、`cn`、主题状态与系统主题监听。                                             |
-| `common/hooks`           | `useDialog`、`useTitle` 等无领域语义的 hook。                                                |
-| `common/collection-tree` | 纯集合树投影与受控单选 / 多选视图。                                                          |
+| `common/ui`              | 共享 shadcn 组件、`cn`、next-themes 与自定义颜色。                                           |
+| `common/hooks`           | 无领域语义的 `useDialog`。                                                                   |
+| `common/collection-tree` | 基于只读集合快照的分栏浏览与受控单选 / 多选。                                                |
 | `common/markdown`        | Markdown 渲染及语法高亮。                                                                    |
 | `common/request-errors`  | HTTP 公共错误运行时解码、请求失败分类与结果未知判定。                                        |
 | `common/runtime-config`  | 无框架依赖的同源认证、GraphQL 与图片路径。                                                   |
@@ -36,7 +36,10 @@ collections 的混合列表位于 `pages/collection-browser`，通过两个 feat
 应用 `results.ts`，bookmarks 的统一写入 hook 继续使用同一份 union 投影。
 
 依赖由实际消费者声明：运行依赖在所属包，codegen 与 Vite 工具在各自应用，根包持有共享测试与检查工具。
-Babel 的插件解析目录固定为 portal，使根目录测试入口也能使用 portal 声明的 React Compiler。
+portal 的 Vite React 插件使用 Oxc 原生 React Compiler，共享包和根目录测试沿用同一配置。
+Table V9 参与编译；编译器暂不支持的 `try/finally` 清理路径保留正常运行语义，由编译器跳过优化。
+主题模式与系统监听由 next-themes 单独拥有，沿用 `colorSetting` 存储键；自定义 `color` 与 theme-color 独立保留。
+页面使用 React 19 `<title>`，加载／失败回退自行提供标题；组合根不再同时输出另一份标题。
 `web/config/workspace-boundaries.mts` 定义 common 层的允许依赖，检查声明、exports、层级和包环；
 `pnpm boundaries` 是独立入口，也已接入 `pnpm lint`。检查包含 type import、re-export、字面量动态
 import 和相对路径；生成物与 UI 的风格忽略不会豁免依赖边界。Oxlint 另检查模块环，Knip 检查依赖与公开面。
@@ -69,9 +72,9 @@ portal 监听路由 location key，在导航完成后关闭移动端抽屉，包
 `bookmarks` 和 `collections` 分别维护自己的 GraphQL 客户端输入与生成物：
 
 - `schema.graphql`：客户端 codegen 使用的 schema 输入；运行时 API 的最终契约仍由对应后端 schema 决定。
-- `src/**/*.ts`、`src/**/*.tsx` 中的 GraphQL operation：业务查询和 mutation 的手写事实源。
+- 调用点旁的 `src/**/*.graphql`：业务查询和 mutation 的手写事实源。
 - `codegen.ts`：输入范围、scalar 映射和输出位置配置。
-- `src/gql/`：生成物，只能通过目标包现有的 `generate` script 刷新，不应手工修改。
+- `src/gql/graphql.ts`：直接插件生成的类型与具名 TypedDocumentNode，消费者按需导入；只能通过目标包现有的 `generate` script 刷新。
 
 `generate` 统一执行 codegen 和 oxfmt，先在临时目录完成输出再同步受管目录（包含移除过时文件）。
 `pnpm graphql:check` 用同一 codegen 配置在临时目录生成与格式化，比较完整文件集合与内容，不改写工作区；
@@ -89,8 +92,8 @@ bookmarks 全部 mutation 使用生成的 union 分支；已知标识的操作�
 主字段/关联的 null 与 error 分开处理，部分失败保留其他内容；表单内和页面分别显示安全提示，
 不使用全局错误 toast。
 
-共享 `CustomTable` 接收包含当前数据的不可变 `options`，在组件内部持有 TanStack 可变实例。
-该组件显式退出 React Compiler 自动记忆化，避免稳定实例引用使刷新后的单元格停留在旧值。
+共享 `CustomTable` 使用 TanStack Table V9 的 `useTable` 与 Store 订阅，参与 React Compiler。
+列通过原生 column helper 定义，展示属性归 `columnMeta`；服务端分页保持现有一基页码契约。
 
 ## 集合查询与 Item 编辑
 
@@ -101,7 +104,9 @@ Map/树从查询结果派生，不再复制到 Zustand。保持 `no-cache`，刷
 
 共享 `collection-tree` 只接收本应用的只读集合快照，保留输入兄弟顺序与 path；不拥有 Apollo、
 业务 ID 命名空间或认证状态。实体层 wrapper 保留 RHF 接口与 loading / error / retry，
-两个应用 Provider 始终独立。单选点击选定 ID，多选去重追加与删除；disabled 禁止增删并隐藏弹层。
+两个应用 Provider 始终独立。单选／多选共用 Dialog 分栏选择器：桌面显示最近三层，手机显示当前层，
+Breadcrumb 与返回按钮支持任意深度。浏览与勾选独立，名称／完整路径搜索保留跨层草稿；确认后提交 ID，
+取消丢弃临时修改。多选按 ID 去重，已选区显示完整路径；disabled 禁止增删、确认并关闭弹层。
 
 列表使用服务端稳定页码分页；Item 列表 operation 只读取表格所需字段，正文由详情和
 getEditItem 按需读取。服务端查询预算拒绝沿用 INVALID_REQUEST 的现有展示，不自动重试。
@@ -118,6 +123,8 @@ Item 创建将名称、正文和初始集合关联一次提交；编辑只修改
 `src/*`、私有 hooks 或其他内部目录。UI 包使用 `#components/*`、`#hooks/*`、`#lib/*` 作为内部 CLI alias。
 `packages/portal/components.json` 指向共享 UI，应用全局 CSS 仍为 `packages/portal/src/styles/globals.css`，
 页面尺寸 CSS 归 portal。主题运行时归 ui，菜单表单归 portal；i18n 仅拥有语言运行时与资源。
+成功通知使用 Base UI Toast 的 `toast.add`，由 AppDrawer 挂载 Toaster；请求故障和未知写入继续使用局部 Alert。
+共享类名工具直接导出 `cn`，portal 将 CVA 的 `clsx` 导入映射到同一实现。分页跳转使用 Combobox。
 
 两份 components.json 的 style / iconLibrary / baseColor 保持一致。从 portal 执行
 `pnpm dlx shadcn@latest info --json` 或 `add <component> --dry-run` 检查实际目标路径，再处理需要的源码。
@@ -155,10 +162,13 @@ portal 在现有菜单路由内容上放置 `ui/async-boundary`，页面切换�
 
 `edit` 仅在挂载时加载 Monaco。加载中或失败时使用受控文本框，保留 RHF 草稿、只读状态和 focus 请求；
 成功加载后才创建 editor，卸载清理 listener、editor 和 model。公开 Monaco ref 保持原语义，表单 focus 通过独立适配器保持可用。
+Monaco worker 使用 0.56 的公开子路径；`monaco-themes 0.4.8` 未导出主题 JSON，Dracula 暂保留已有物理路径导入。
 
 Markdown 先渲染正文与复制操作，有代码块时才加载 Prism。`markdown/vite` 从锁定版本的本地包提供语言及依赖资源，
 语言清单归 markdown，别名和依赖关系使用 Prism metadata/autoloader。无 CDN；高亮只处理当前容器，过时异步完成不改写旧 DOM。
 不支持的语言或资源加载失败保留纯文本和复制操作。
+正文排版归 markdown 包内的 `typeset.css`，标题／段落／列表使用 renderer 原生元素；代码复制工具栏通过
+`not-typeset` 退出排版。保留原生 Clipboard API 的点击触发和失败反馈。
 
 `pnpm build:check` 执行生产 build，读取本次 `.vite/manifest.json` 与模块归属报告，遍历入口静态 imports，按产物去重、
 逐文件 gzip 计量。入口 JS 上限 450 KiB、CSS 上限 60 KiB，并禁止业务页面、Monaco、Prism grammar 和 worker 出现在初始静态闭包。
@@ -174,14 +184,18 @@ anonymous、authenticated 和 unavailable。登录页以 Passkey 为主，密码
 服务端退出成功后才更新页面状态；请求未确认时保留错误和重试入口。
 
 所有请求携带 `X-Self-Tools-Request: 1`，修改请求用 JSON；同源 Origin 与 Cookie 规则由
-[后端](../server/README.md#管理员会话与通行密钥) 拥有。WebAuthn options 和 response 的
-Base64URL 转换集中在 Auth service，不把原始 Credential 对象直接 JSON.stringify。
+[后端](../server/README.md#管理员会话与通行密钥) 拥有。WebAuthn options 优先使用浏览器
+`parseRequestOptionsFromJSON`／`parseCreationOptionsFromJSON`，响应优先使用 `credential.toJSON()`；
+缺少对应 API 时沿用局部 Base64URL 转换，兼容路径仍集中在 Auth service。
 未支持、取消、无 Passkey 时可使用密码，不自动反复唤起认证。
 
 共享 custom-graphql 只对通过契约校验的 UNAUTHENTICATED 通知 portal，通过请求代次避免旧请求清除新登录。
 登录/退出/重新初始化时中止旧业务请求并清 Apollo cache；两个集合树随认证代次卸载，
 受保护路由随代次卸载。403、503、业务错误和密码错误不触发全局退出。
 安全操作只允许一个 pending 流程，卸载/取消中止等待；已到达服务器的变更仍需刷新状态确认。
+
+现有运行时依赖 AbortSignal.any／timeout，需要 Chrome／Edge 124、Firefox 124、Safari 17.4 或更新版本。
+Vite 默认语法目标更低，不代表会补齐这些 Web API。WebAuthn JSON API 单独检测，不随此次迁移提高浏览器下限。
 
 ## 图片来源兼容
 

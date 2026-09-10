@@ -78,16 +78,11 @@ fn operations(dir: &Path, out: &mut Vec<String>) {
     for entry in std::fs::read_dir(dir).unwrap() {
         let path = entry.unwrap().path();
         if path.is_dir() {
-            if path.file_name().unwrap() != "gql" {
+            if !matches!(path.file_name().unwrap().to_str(), Some("gql" | "fixtures")) {
                 operations(&path, out);
             }
-        } else if path.extension().is_some_and(|e| e == "ts" || e == "tsx")
-            && !path.to_string_lossy().contains(".test.")
-        {
-            let source = std::fs::read_to_string(path).unwrap();
-            for segment in source.split("graphql(`").skip(1) {
-                out.push(segment.split("`)").next().unwrap().into());
-            }
+        } else if path.extension().is_some_and(|e| e == "graphql") {
+            out.push(std::fs::read_to_string(path).unwrap());
         }
     }
 }

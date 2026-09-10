@@ -2,7 +2,7 @@ import { RequestNotice } from 'custom-graphql';
 import { useI18n } from 'i18n';
 import { type ComponentProps, useMemo } from 'react';
 import { match } from 'ts-pattern';
-import { graphql } from '@bookmarks/gql/index';
+import { AllTagsDocument as AllTags } from '@bookmarks/gql/graphql';
 import { useQuery } from '@apollo/client/react';
 import {
   Combobox,
@@ -16,15 +16,6 @@ import {
   ComboboxValue,
   useComboboxAnchor,
 } from 'ui/components/combobox';
-
-const AllTags = graphql(`
-  query allTags {
-    allTags {
-      id
-      name
-    }
-  }
-`);
 
 interface TagsSelectProps extends Omit<ComponentProps<'input'>, 'onChange' | 'value'> {
   onChange: (event: number[]) => void;

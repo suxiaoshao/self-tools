@@ -53,8 +53,8 @@ novel_crawler.workspace = true
 futures.workspace = true
 
 [dev-dependencies]
-rcgen = "0.14.8"
-tokio-rustls = "0.26.4"
+rcgen = "0.14.10"
+tokio-rustls = "0.26.5"
 tower = { version = "0.5.3", features = ["util"] }
 tokio = { workspace = true, features = ["io-util"] }
 # env

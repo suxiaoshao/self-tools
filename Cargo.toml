@@ -7,30 +7,30 @@ version = "0.1.0"
 edition = "2024"
 
 [workspace.dependencies]
-anyhow = "1.0.103"
+anyhow = "1.0.104"
 async-graphql = "7.2.1"
 async-graphql-axum = "7.2.1"
 axum = "0.8.9"
-base64 = "0.22.1"
-diesel = "2.3.11"
+base64 = "0.23.1"
+diesel = "2.3.13"
 diesel_migrations = { version = "2.3.2", features = ["postgres"] }
 dotenv = "0.15.0"
-futures = "0.3.32"
-futures-util = "0.3.32"
-http = "1.4.2"
+futures = "0.3.34"
+futures-util = "0.3.34"
+http = "1.5.0"
 nom = "8.0.0"
 rand = "0.10.2"
-reqwest = { version = "0.13.4", default-features = false }
-serde = { version = "1.0.228", features = ["derive"] }
-serde_json = "1.0.150"
-thiserror = "2.0.18"
-time = "=0.3.47"
-tokio = { version = "1.52.3", default-features = false }
+reqwest = { version = "0.13.5", default-features = false }
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.151"
+thiserror = "2.0.20"
+time = "0.3.55"
+tokio = { version = "1.53.1", default-features = false }
 tracing = "0.1.44"
 tracing-subscriber = "0.3.23"
 url = "2.5.8"
-volo = "0.12.3"
-volo-thrift = "0.12.4"
+volo = "0.12.4"
+volo-thrift = "0.12.6"
 
 service-health = { path = "server/common/service-health" }
 graphql-common = { path = "server/common/graphql-common" }

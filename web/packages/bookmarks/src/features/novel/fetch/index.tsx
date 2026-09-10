@@ -2,7 +2,6 @@ import { PageToolbar } from 'ui/page-toolbar';
 import { useId } from 'react';
 import { RequestNotice } from 'custom-graphql';
 import useBookmarkWrite from '@bookmarks/useBookmarkWrite';
-import { useTitle } from 'hooks';
 import { getImageUrl } from '@bookmarks/utils/image';
 import { Search, Save } from 'lucide-react';
 import { useI18n } from 'i18n';
@@ -14,17 +13,16 @@ import {
   type CustomColumnDefArray,
   CustomTable,
   type CustomTableOptions,
-  getCoreRowModel,
 } from 'custom-table';
 import { useMemo } from 'react';
 import { Details, type DetailsItem } from 'details';
 import { match, P } from 'ts-pattern';
 import { getLabelKeyByNovelStatus } from '@bookmarks/utils/novelStatus';
 import { getLabelKeyBySite } from '@bookmarks/utils/novelSite';
-import { graphql } from '@bookmarks/gql/index';
+import { FetchNovelDocument as FetchNovel, SaveDraftNovelDocument as SaveDraftNovel } from '@bookmarks/gql/graphql';
 import { useLazyQuery, useMutation } from '@apollo/client/react';
 import type { FetchNovelQuery, FetchNovelQueryVariables } from '@bookmarks/gql/graphql';
-import { toast } from 'sonner';
+import { toast } from 'ui/components/toast';
 import { Button } from 'ui/components/button';
 import { Card, CardContent, CardHeader, CardTitle } from 'ui/components/card';
 import { Skeleton } from 'ui/components/skeleton';
@@ -37,71 +35,6 @@ import { Avatar, AvatarFallback, AvatarImage } from 'ui/components/avatar';
 import { Badge } from 'ui/components/badge';
 import { Spinner } from 'ui/components/spinner';
 
-const FetchNovel = graphql(`
-  query fetchNovel($id: String!, $novelSite: NovelSite!) {
-    fetchNovel(id: $id, novelSite: $novelSite) {
-      author {
-        description
-        image
-        name
-        url
-        id
-      }
-      chapters {
-        title
-        url
-        site
-        time
-        wordCount
-        id
-      }
-      tags {
-        id
-        name
-        url
-      }
-      description
-      image
-      name
-      url
-      site
-      status
-      id
-    }
-  }
-`);
-const SaveDraftNovel = graphql(`
-  mutation saveDraftNovel($novel: SaveDraftNovel!) {
-    saveDraftNovel(novel: $novel) {
-      __typename
-      ... on NovelSaved {
-        novelId
-      }
-      ... on ValidationFailure {
-        issues {
-          path
-          code
-          min
-          max
-        }
-      }
-      ... on MissingResources {
-        resources {
-          kind
-          id
-        }
-      }
-      ... on Conflict {
-        reason
-        resources {
-          kind
-          id
-        }
-      }
-    }
-  }
-`);
-
 type ChapterData = FetchNovelQuery['fetchNovel']['chapters'][number];
 const columnHelper = createCustomColumnHelper<ChapterData>();
 
@@ -109,7 +42,7 @@ export default function NovelFetch() {
   const write = useBookmarkWrite('/bookmarks');
   const t = useI18n();
   const sites = { JJWXC: t('jjwxc'), QIDIAN: t('qidian') };
-  useTitle(t('novel_crawler'));
+
   const formId = useId();
   // fetch
   type FormData = FetchNovelQueryVariables;
@@ -127,7 +60,7 @@ export default function NovelFetch() {
   const [saveDraftNovel, { loading: saveLoading }] = useMutation(SaveDraftNovel);
   const columns = useMemo<CustomColumnDefArray<ChapterData>>(
     () =>
-      [
+      columnHelper.columns([
         columnHelper.accessor('title', { header: t('title'), id: 'title', cell: (context) => context.getValue() }),
         columnHelper.accessor('wordCount', {
           header: t('word_count'),
@@ -139,11 +72,11 @@ export default function NovelFetch() {
           id: 'time',
           cell: (context) => context.getValue(),
         }),
-      ] as CustomColumnDefArray<ChapterData>,
+      ]),
     [t],
   );
   const tableOptions = useMemo<CustomTableOptions<ChapterData>>(
-    () => ({ columns, data: novel?.chapters ?? [], getCoreRowModel: getCoreRowModel() }),
+    () => ({ columns, data: novel?.chapters ?? [] }),
     [columns, novel?.chapters],
   );
 
@@ -214,6 +147,7 @@ export default function NovelFetch() {
   );
   return (
     <form noValidate className="flex min-h-0 size-full flex-col" onSubmit={onSubmit}>
+      <title>{t('novel_crawler')}</title>
       <PageToolbar>
         <Tooltip>
           <TooltipTrigger
@@ -242,7 +176,7 @@ export default function NovelFetch() {
                       ))
                     )
                       return;
-                    toast.success(t('save_draft_success'));
+                    toast.add({ title: t('save_draft_success'), type: 'success' });
                   }
                 }}
               />

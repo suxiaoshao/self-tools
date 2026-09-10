@@ -9,17 +9,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: git clone
-        uses: actions/checkout@v4
-      - name: Install Node.js
-        uses: actions/setup-node@v4
+        uses: actions/checkout@v7
+      - name: Install Node.js, pnpm and dependencies
+        uses: pnpm/setup@v2
         with:
-          node-version: lts/*
-      - uses: pnpm/action-setup@v4
-        name: Install pnpm
-        id: pnpm-install
-        with:
-          run_install: |
-            - recursive: true
+          runtime: node@lts
+          cache: true
+          require-lockfile: true
       - name: Lint
         run: pnpm lint
       - name: Test
@@ -32,10 +28,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: git clone
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
-      - name: protoc
+      - name: Install native build tools
         run: sudo apt update && sudo apt install mold clang -y
       - name: server Lint
         run: cargo clippy --all

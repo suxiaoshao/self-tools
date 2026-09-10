@@ -1,0 +1,15 @@
+query ReadBookmarkNovelState($id: Int!) {
+  getNovel(id: $id) {
+    id
+    comments {
+      content
+    }
+    collections {
+      id
+    }
+    chapters {
+      id
+      isRead
+    }
+  }
+}

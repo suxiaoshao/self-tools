@@ -1,13 +1,7 @@
 import type { GetNovelQuery } from '@bookmarks/gql/graphql';
 import { useMemo } from 'react';
 import { useI18n } from 'i18n';
-import {
-  type CustomColumnDefArray,
-  CustomTable,
-  type CustomTableProps,
-  createCustomColumnHelper,
-  getCoreRowModel,
-} from 'custom-table';
+import { type CustomColumnDefArray, CustomTable, type CustomTableProps, createCustomColumnHelper } from 'custom-table';
 import { format } from 'time';
 import ChapterTableAction from './ChapterTableAction';
 import ChapterBatchUpdate from './ChapterBatchUpdate';
@@ -26,7 +20,7 @@ export default function Chapters({ chapters, refetch, novelId, ...props }: Chapt
   const t = useI18n();
   const columns = useMemo<CustomColumnDefArray<Data>>(
     () =>
-      [
+      columnHelper.columns([
         columnHelper.accessor('title', { header: t('title'), id: 'title', cell: (context) => context.getValue() }),
         columnHelper.accessor('wordCount', {
           header: t('word_count'),
@@ -57,12 +51,9 @@ export default function Chapters({ chapters, refetch, novelId, ...props }: Chapt
             cell: (context) => context.getValue(),
           },
         ),
-      ] as CustomColumnDefArray<Data>,
+      ]),
     [t, refetch, chapters, novelId],
   );
-  const tableOptions = useMemo(
-    () => ({ columns, data: chapters, getCoreRowModel: getCoreRowModel() }),
-    [columns, chapters],
-  );
+  const tableOptions = useMemo(() => ({ columns, data: chapters }), [columns, chapters]);
   return <CustomTable className="h-[600px] flex-none overscroll-none" options={tableOptions} {...props} />;
 }

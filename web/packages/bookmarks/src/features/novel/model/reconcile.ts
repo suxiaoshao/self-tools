@@ -1,22 +1,6 @@
 import type { ApolloClient } from '@apollo/client';
-import { graphql } from '@bookmarks/gql/index';
-const ReadNovelState = graphql(`
-  query ReadBookmarkNovelState($id: Int!) {
-    getNovel(id: $id) {
-      id
-      comments {
-        content
-      }
-      collections {
-        id
-      }
-      chapters {
-        id
-        isRead
-      }
-    }
-  }
-`);
+import { ReadBookmarkNovelStateDocument as ReadNovelState } from '@bookmarks/gql/graphql';
+
 export async function checkDeleted(client: ApolloClient, id: number) {
   const response = await client.query({ query: ReadNovelState, variables: { id }, fetchPolicy: 'network-only' });
   return !response.error && response.data?.getNovel === null;

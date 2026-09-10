@@ -1,23 +1,3 @@
-import { graphql } from '@collections/gql';
+import { DeleteItemDocument as DeleteItem } from '@collections/gql/graphql';
 
-export const DeleteItem = graphql(`
-  mutation deleteItem($id: Int!) {
-    deleteItem(id: $id) {
-      __typename
-      ... on ResourceDeleted {
-        resource {
-          kind
-          id
-        }
-      }
-      ... on ValidationFailure {
-        issues {
-          path
-          code
-          min
-          max
-        }
-      }
-    }
-  }
-`);
+export { DeleteItem };

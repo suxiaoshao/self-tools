@@ -1,10 +1,9 @@
 import { Palette } from 'lucide-react';
 import { Controller, type SubmitHandler, useForm } from 'react-hook-form';
-import { ColorSetting, useThemeStore } from 'ui/theme';
+import { ColorSetting, useColorStore, useTheme } from 'ui/theme';
 import { string, object, type InferInput, pipe, regex, enum_ } from 'valibot';
 import { valibotResolver } from '@hookform/resolvers/valibot';
 import { useI18n } from 'i18n';
-import { useShallow } from 'zustand/react/shallow';
 import { SidebarMenuButton, SidebarMenuItem } from 'ui/components/sidebar';
 import {
   Dialog,
@@ -23,7 +22,12 @@ import { useDialog } from 'hooks';
 
 export default function ThemeDrawerItem() {
   const { open, handleClose, handleOpenChange } = useDialog();
-  const { updateColor, ...theme } = useThemeStore(useShallow((state) => state));
+  const { color, updateColor } = useColorStore();
+  const { theme: mode, setTheme } = useTheme();
+  const theme = {
+    color,
+    colorSetting: mode === 'dark' ? ColorSetting.dark : mode === 'light' ? ColorSetting.light : ColorSetting.system,
+  };
   const t = useI18n();
   const createColorSchema = object({
     color: pipe(string(), regex(/^#[0-9a-fA-F]{6}$/, t('color_format_error'))),
@@ -41,9 +45,9 @@ export default function ThemeDrawerItem() {
     resolver: valibotResolver(createColorSchema),
   });
   const onSubmit: SubmitHandler<FormData> = ({ color, colorSetting }) => {
-    updateColor(color, colorSetting);
+    updateColor(color);
+    setTheme(colorSetting);
     handleClose();
-    reset(theme);
   };
   const onOpenChange = (open: boolean) => {
     handleOpenChange(open);

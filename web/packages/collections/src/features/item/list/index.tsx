@@ -1,18 +1,16 @@
 import { PageToolbar } from 'ui/page-toolbar';
 import { RequestNotice } from 'custom-graphql';
-import { useTitle } from 'hooks';
-import { graphql } from '@collections/gql/index';
+import { GetItemsDocument as GetItems } from '@collections/gql/graphql';
 import type { GetItemsQuery, GetItemsQueryVariables } from '@collections/gql/graphql';
 import { useI18n } from 'i18n';
 import {
   createCustomColumnHelper,
   type CustomColumnDefArray,
   CustomTable,
-  getCoreRowModel,
   usePage,
   usePageWithTotal,
 } from 'custom-table';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import { useQuery } from '@apollo/client/react';
 import { Link } from 'react-router';
 import { useMemo } from 'react';
@@ -27,20 +25,6 @@ import { Card, CardContent } from 'ui/components/card';
 import { FieldLabel, Field } from 'ui/components/field';
 import { Switch } from 'ui/components/switch';
 
-const GetItems = graphql(`
-  query getItems($collectionMatch: TagMatch, $pagination: Pagination!) {
-    queryItems(collectionMatch: $collectionMatch, pagination: $pagination) {
-      data {
-        id
-        name
-        createTime
-        updateTime
-      }
-      total
-    }
-  }
-`);
-
 type Data = GetItemsQuery['queryItems']['data'][0];
 
 const columnHelper = createCustomColumnHelper<Data>();
@@ -49,16 +33,16 @@ export default function ItemList() {
   // i18n
   const t = useI18n();
   // title
-  useTitle(t('item_manage'));
+
   // form & table
   type FormData = Omit<GetItemsQueryVariables, 'pagination'>;
   const pageState = usePage();
-  const { control, watch } = useForm<FormData>({
+  const { control } = useForm<FormData>({
     defaultValues: {
       collectionMatch: { matchSet: [], fullMatch: false },
     },
   });
-  const form = watch();
+  const form = useWatch({ control, compute: (values) => values });
   const {
     data: { queryItems: { data, total } = {} } = {},
     refetch,
@@ -69,7 +53,7 @@ export default function ItemList() {
   const page = usePageWithTotal(pageState, total);
   const columns = useMemo<CustomColumnDefArray<Data>>(
     () =>
-      [
+      columnHelper.columns([
         columnHelper.accessor(
           ({ id, name }) => (
             <Link
@@ -95,20 +79,18 @@ export default function ItemList() {
           id: 'updateTime',
           cell: (context) => context.getValue(),
         }),
-        columnHelper.accessor(({ id, name }) => <ItemActions id={id} name={name} refetch={refetch} />, {
+        columnHelper.display({
           header: t('actions'),
           id: 'action',
-          cell: (context) => context.getValue(),
+          cell: ({ row }) => <ItemActions id={row.original.id} name={row.original.name} refetch={refetch} />,
         }),
-      ] as CustomColumnDefArray<Data>,
+      ]),
     [refetch, t],
   );
-  const tableOptions = useMemo(
-    () => ({ columns, data: data ?? [], getCoreRowModel: getCoreRowModel() }),
-    [columns, data],
-  );
+  const tableOptions = useMemo(() => ({ columns, data: data ?? [] }), [columns, data]);
   return (
     <div className="flex min-h-0 size-full flex-col">
+      <title>{t('item_manage')}</title>
       <PageToolbar>
         <CreateItemButton variant="default" refetch={refetch} collectionIds={[]} />
         <Button

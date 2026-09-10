@@ -1,7 +1,7 @@
 import { RequestNotice } from 'custom-graphql';
 import { createSearchParams, Link } from 'react-router';
 import useParentId from './useParentId';
-import { graphql } from '@bookmarks/gql/index';
+import { GetCollectionAncestorsDocument as GetCollectionAncestors } from '@bookmarks/gql/graphql';
 import { useQuery } from '@apollo/client/react';
 import {
   Breadcrumb,
@@ -14,19 +14,6 @@ import {
 import { useI18n } from 'i18n';
 import { Fragment } from 'react/jsx-runtime';
 import { Spinner } from 'ui/components/spinner';
-
-const GetCollectionAncestors = graphql(`
-  query getCollectionAncestors($id: Int!) {
-    getCollection(id: $id) {
-      ancestors {
-        id
-        name
-      }
-      id
-      name
-    }
-  }
-`);
 
 export default function AncestorsPath() {
   const parentId = useParentId();

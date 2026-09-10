@@ -1,3 +1,4 @@
+import { NativeSelect, NativeSelectOption } from 'ui/components/native-select';
 import { useId, useEffect } from 'react';
 import { rejectionFieldErrors } from 'custom-graphql';
 import useBookmarkWrite from '@bookmarks/useBookmarkWrite';
@@ -5,7 +6,7 @@ import { useI18n } from 'i18n';
 import { useForm, type SubmitHandler, Controller } from 'react-hook-form';
 import AuthorSelect from '../../../../components/AuthorSelect/index';
 import TagsSelect from '../../../../components/TagsSelect/index';
-import { graphql } from '@bookmarks/gql/index';
+import { CreateNovelDocument as CreateNovel } from '@bookmarks/gql/graphql';
 import { useMutation } from '@apollo/client/react';
 import type { CreateNovelMutationVariables } from '@bookmarks/gql/graphql';
 import {
@@ -21,38 +22,6 @@ import { useDialog } from 'hooks';
 import { Button } from 'ui/components/button';
 import { FieldError, FieldGroup, FieldLabel, Field } from 'ui/components/field';
 import { Input } from 'ui/components/input';
-
-const CreateNovel = graphql(`
-  mutation createNovel($data: CreateNovelInput!) {
-    createNovel(data: $data) {
-      __typename
-      ... on NovelSaved {
-        novelId
-      }
-      ... on ValidationFailure {
-        issues {
-          path
-          code
-          min
-          max
-        }
-      }
-      ... on MissingResources {
-        resources {
-          kind
-          id
-        }
-      }
-      ... on Conflict {
-        reason
-        resources {
-          kind
-          id
-        }
-      }
-    }
-  }
-`);
 
 interface CreateNovelButtonProps {
   /** 表格重新刷新 */
@@ -125,17 +94,18 @@ export default function CreateNovelButton({ refetch }: CreateNovelButtonProps) {
           <FieldGroup>
             <Field data-invalid={!!errors.novelStatus}>
               <FieldLabel htmlFor={`${formId}-novelStatus`}>{t('novel_status')}</FieldLabel>
-              <select
+              <NativeSelect
+                className="w-full"
                 disabled={write.blocked}
                 id={`${formId}-novelStatus`}
                 aria-describedby={errors.novelStatus ? `${formId}-novelStatus-error` : undefined}
                 aria-invalid={!!errors.novelStatus}
                 {...register('novelStatus', { required: t('request_required') })}
               >
-                <option value="ONGOING">{t('ongoing')}</option>
-                <option value="COMPLETED">{t('completed')}</option>
-                <option value="PAUSED">{t('paused')}</option>
-              </select>
+                <NativeSelectOption value="ONGOING">{t('ongoing')}</NativeSelectOption>
+                <NativeSelectOption value="COMPLETED">{t('completed')}</NativeSelectOption>
+                <NativeSelectOption value="PAUSED">{t('paused')}</NativeSelectOption>
+              </NativeSelect>
 
               <FieldError
                 id={`${formId}-novelStatus-error`}
@@ -213,16 +183,17 @@ export default function CreateNovelButton({ refetch }: CreateNovelButtonProps) {
             </Field>
             <Field data-invalid={!!errors.site}>
               <FieldLabel htmlFor={`${formId}-site`}>{t('novel_site')}</FieldLabel>
-              <select
+              <NativeSelect
+                className="w-full"
                 disabled={write.blocked}
                 id={`${formId}-site`}
                 aria-describedby={errors.site ? `${formId}-site-error` : undefined}
                 aria-invalid={!!errors.site}
                 {...register('site', { required: t('request_required') })}
               >
-                <option value="JJWXC">{t('jjwxc')}</option>
-                <option value="QIDIAN">{t('qidian')}</option>
-              </select>
+                <NativeSelectOption value="JJWXC">{t('jjwxc')}</NativeSelectOption>
+                <NativeSelectOption value="QIDIAN">{t('qidian')}</NativeSelectOption>
+              </NativeSelect>
 
               <FieldError
                 id={`${formId}-site-error`}

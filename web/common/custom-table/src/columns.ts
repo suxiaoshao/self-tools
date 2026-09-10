@@ -1,48 +1,26 @@
 import {
-  type AccessorFn,
   type ColumnDef,
+  type ColumnHelper,
   createColumnHelper,
-  type DeepKeys,
-  type DeepValue,
-  type DisplayColumnDef,
-  type GroupColumnDef,
-  type IdentifiedColumnDef,
+  metaHelper,
   type RowData,
+  tableFeatures,
   type TableOptions,
 } from '@tanstack/react-table';
 import type { ComponentProps } from 'react';
 
-export interface CustomExtendsType {
+interface CellPresentation {
   cellProps?: ComponentProps<'td'>;
   headerCellProps?: ComponentProps<'th'>;
 }
-export type CustomColumnDef<T extends RowData, TValue = unknown> = ColumnDef<T, TValue> & CustomExtendsType;
 
-export type CustomColumnDefArray<T extends RowData> = CustomColumnDef<T>[];
+export const features = tableFeatures({ columnMeta: metaHelper<CellPresentation>() });
+type Features = typeof features;
 
-export type CustomTableOptions<T extends RowData> = Omit<TableOptions<T>, 'columns'> & {
-  columns: CustomColumnDefArray<T>;
-};
+export type CustomColumnDef<T extends RowData, TValue = unknown> = ColumnDef<Features, T, TValue>;
+export type CustomColumnDefArray<T extends RowData> = ReturnType<ColumnHelper<Features, T>['columns']>;
+export type CustomTableOptions<T extends RowData> = Omit<TableOptions<Features, T>, 'features'>;
 
-export function createCustomColumnHelper<TData extends RowData>(): CustomColumnHelper<TData> {
-  return createColumnHelper<TData>();
-}
-
-export interface CustomColumnHelper<TData extends RowData> {
-  accessor: <
-    TAccessor extends AccessorFn<TData> | DeepKeys<TData>,
-    TValue extends TAccessor extends AccessorFn<TData, infer TReturn>
-      ? TReturn
-      : TAccessor extends DeepKeys<TData>
-        ? DeepValue<TData, TAccessor>
-        : never,
-  >(
-    accessor: TAccessor,
-    column: (TAccessor extends AccessorFn<TData>
-      ? DisplayColumnDef<TData, TValue>
-      : IdentifiedColumnDef<TData, TValue>) &
-      CustomExtendsType,
-  ) => CustomColumnDef<TData, TValue>;
-  display: (column: DisplayColumnDef<TData>) => CustomColumnDef<TData, unknown> & CustomExtendsType;
-  group: (column: GroupColumnDef<TData>) => CustomColumnDef<TData, unknown> & CustomExtendsType;
+export function createCustomColumnHelper<T extends RowData>() {
+  return createColumnHelper<Features, T>();
 }

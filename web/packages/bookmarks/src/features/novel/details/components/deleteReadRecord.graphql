@@ -1,0 +1,17 @@
+mutation deleteReadRecord($chapterIds: [Int!]!) {
+  deleteReadRecordsForChapter(chapterIds: $chapterIds) {
+    __typename
+    ... on ReadRecordsUpdated {
+      chapterIds
+      changedCount
+    }
+    ... on ValidationFailure {
+      issues {
+        path
+        code
+        min
+        max
+      }
+    }
+  }
+}

@@ -1,0 +1,19 @@
+mutation deleteCommentForNovel($novelId: Int!) {
+  deleteCommentForNovel(novelId: $novelId) {
+    __typename
+    ... on ResourceDeleted {
+      resource {
+        kind
+        id
+      }
+    }
+    ... on ValidationFailure {
+      issues {
+        path
+        code
+        min
+        max
+      }
+    }
+  }
+}

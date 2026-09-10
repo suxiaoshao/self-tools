@@ -1,0 +1,34 @@
+mutation addCollectionForItem($itemId: Int!, $collectionId: Int!) {
+  addCollectionForItem(itemId: $itemId, collectionId: $collectionId) {
+    __typename
+    ... on CollectionMembershipChanged {
+      collectionId
+      resource {
+        kind
+        id
+      }
+      present
+    }
+    ... on ValidationFailure {
+      issues {
+        path
+        code
+        min
+        max
+      }
+    }
+    ... on MissingResources {
+      resources {
+        kind
+        id
+      }
+    }
+    ... on Conflict {
+      reason
+      resources {
+        kind
+        id
+      }
+    }
+  }
+}

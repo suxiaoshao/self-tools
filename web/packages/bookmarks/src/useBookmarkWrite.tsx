@@ -1,19 +1,16 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { useWriteAction, WriteNotice } from 'custom-graphql';
 import { writeResult } from './results';
 
 export default function useBookmarkWrite(viewHref: string) {
   const action = useWriteAction();
   const executing = useRef(false);
-  const recovery = useRef<{ verify: () => Promise<boolean>; confirmed?: () => unknown } | undefined>(undefined);
-  const execute = async (
-    request: () => Promise<Parameters<typeof writeResult>[0]>,
-    recover?: typeof recovery.current,
-  ) => {
+  const [recovery, setRecovery] = useState<{ verify: () => Promise<boolean>; confirmed?: () => unknown }>();
+  const execute = async (request: () => Promise<Parameters<typeof writeResult>[0]>, recover?: typeof recovery) => {
     if (action.blocked || executing.current) return false;
     executing.current = true;
     try {
-      recovery.current = recover;
+      setRecovery(recover);
       const outcome = await action.run(async () => writeResult(await request()));
       return outcome?.status === 'saved';
     } finally {
@@ -31,10 +28,9 @@ export default function useBookmarkWrite(viewHref: string) {
         pending={action.pending}
         viewHref={viewHref}
         check={
-          recovery.current
+          recovery
             ? async () => {
-                const current = recovery.current;
-                if (current && (await action.check(current.verify))) await current.confirmed?.();
+                if (await action.check(recovery.verify)) await recovery.confirmed?.();
               }
             : undefined
         }

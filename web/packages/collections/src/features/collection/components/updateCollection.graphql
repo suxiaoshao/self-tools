@@ -1,0 +1,29 @@
+mutation updateCollection($id: Int!, $name: String!, $description: String) {
+  updateCollection(id: $id, name: $name, description: $description) {
+    __typename
+    ... on CollectionSaved {
+      collectionId
+    }
+    ... on ValidationFailure {
+      issues {
+        path
+        code
+        min
+        max
+      }
+    }
+    ... on MissingResources {
+      resources {
+        kind
+        id
+      }
+    }
+    ... on Conflict {
+      reason
+      resources {
+        kind
+        id
+      }
+    }
+  }
+}

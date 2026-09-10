@@ -8,7 +8,7 @@ import { Plus } from 'lucide-react';
 import { Controller, useForm } from 'react-hook-form';
 import { match } from 'ts-pattern';
 import { useI18n } from 'i18n';
-import { graphql } from '@collections/gql/index';
+import { AddCollectionForItemDocument as AddCollectionForItem } from '@collections/gql/graphql';
 import { type InferInput, number, object } from 'valibot';
 import { useApolloClient, useMutation } from '@apollo/client/react';
 import { valibotResolver } from '@hookform/resolvers/valibot';
@@ -23,43 +23,6 @@ import {
   DialogTrigger,
 } from 'ui/components/dialog';
 import { Spinner } from 'ui/components/spinner';
-
-const AddCollectionForItem = graphql(`
-  mutation addCollectionForItem($itemId: Int!, $collectionId: Int!) {
-    addCollectionForItem(itemId: $itemId, collectionId: $collectionId) {
-      __typename
-      ... on CollectionMembershipChanged {
-        collectionId
-        resource {
-          kind
-          id
-        }
-        present
-      }
-      ... on ValidationFailure {
-        issues {
-          path
-          code
-          min
-          max
-        }
-      }
-      ... on MissingResources {
-        resources {
-          kind
-          id
-        }
-      }
-      ... on Conflict {
-        reason
-        resources {
-          kind
-          id
-        }
-      }
-    }
-  }
-`);
 
 interface AddCollectionProps {
   itemId: number;
@@ -122,6 +85,7 @@ export default function AddCollection({ itemId, refetch }: AddCollectionProps) {
                 render={({ field, fieldState }) => (
                   <CollectionSelect
                     {...field}
+                    disabled={action.blocked}
                     allCollections={allCollections}
                     errorMessage={fieldState.error?.message}
                   />

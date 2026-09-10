@@ -3,7 +3,7 @@ import { rejectionFieldErrors } from 'custom-graphql';
 import useBookmarkWrite from '@bookmarks/useBookmarkWrite';
 import { Controller, type SubmitHandler, useForm } from 'react-hook-form';
 import { useI18n } from 'i18n';
-import { graphql } from '@bookmarks/gql/index';
+import { CreateTagDocument as CreateTag } from '@bookmarks/gql/graphql';
 import { useMutation } from '@apollo/client/react';
 import type { CreateTagMutationVariables } from '@bookmarks/gql/graphql';
 import { Dialog, DialogClose, DialogContent, DialogFooter, DialogTitle, DialogTrigger } from 'ui/components/dialog';
@@ -15,31 +15,6 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectVa
 import { valibotResolver } from '@hookform/resolvers/valibot';
 import { check, minLength, object, picklist, pipe, string, trim } from 'valibot';
 
-const CreateTag = graphql(`
-  mutation createTag($name: String!, $site: NovelSite!, $siteId: String!) {
-    createTag(name: $name, site: $site, siteId: $siteId) {
-      __typename
-      ... on TagSaved {
-        tagId
-      }
-      ... on ValidationFailure {
-        issues {
-          path
-          code
-          min
-          max
-        }
-      }
-      ... on Conflict {
-        reason
-        resources {
-          kind
-          id
-        }
-      }
-    }
-  }
-`);
 interface CreateTagButtonProps {
   refetch: () => void;
 }

@@ -1,5 +1,5 @@
 import { Languages } from 'lucide-react';
-import { Controller, type SubmitHandler, useForm } from 'react-hook-form';
+import { Controller, type SubmitHandler, useForm, useWatch } from 'react-hook-form';
 import { useI18nStore, LangMode, CustomLang } from 'i18n';
 import { object, enum_, type InferInput } from 'valibot';
 import { valibotResolver } from '@hookform/resolvers/valibot';
@@ -37,7 +37,7 @@ export default function I18nDrawerItem() {
       setLangSetting: state.setLangSetting,
     })),
   );
-  const { handleSubmit, control, watch, reset } = useForm<FormData>({
+  const { handleSubmit, control, reset } = useForm<FormData>({
     defaultValues: {
       langMode: i18n.langMode,
       customLang: i18n.customLang,
@@ -48,7 +48,7 @@ export default function I18nDrawerItem() {
     setLangSetting(data);
     handleClose();
   };
-  const watchTag = watch('langMode');
+  const watchTag = useWatch({ control, name: 'langMode' });
   const onOpenChange = (open: boolean) => {
     handleOpenChange(open);
     reset(i18n);
