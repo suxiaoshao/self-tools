@@ -2,13 +2,12 @@
 
 ## 1. 状态、目标与检查重点
 
-- 状态：`In progress`（实施、受控测试、真实网络与桌面浏览器验收、本地部署已完成；CA/i0 补修 PR #112 等待合并）。
+- 状态：`Done`（实施、受控测试、真实网络与桌面浏览器验收、本地部署已完成）。
 - Issue：[#97](https://github.com/suxiaoshao/self-tools/issues/97)，对应 RF-003、RF-007。
-- 分支：初始实施 `codex/issue-97-http-trust-boundaries`（基线 `0b71c48`）；当前补修 `codex/issue-97-runtime-ca-certificates`（基线 `3043185`）。
 - 证据日期：2026-09-07。
-- 规范计划：`docs/dev/issue-97/README.md`；由[根索引](../README.md)发现，由 [#94](../issue-94/README.md)跟踪。
+- 规范计划：`docs/dev/issue-97/README.md`；由[根索引](../README.md)发现，历史问题归属见 [#94](../issue-94/README.md)。
 - 所有者：bookmarks HTTP 图片代理、middleware CORS；消费者为 login、bookmarks、collections 及现有前端图片标签。
-- 实施提交：初始实施已通过 [PR #111](https://github.com/suxiaoshao/self-tools/pull/111) 合并（`3043185`）；CA/i0 补修 `15c90b7` 已提交推送至 [PR #112](https://github.com/suxiaoshao/self-tools/pull/112)。两阶段变更均已在本地 OrbStack 部署；本记录不代表远端生产部署。
+- 部署边界：初始实施与 CA/i0 补修均已在本地 OrbStack 部署；本记录不代表远端生产部署。Issue、PR 与合并记录由 GitHub 管理。
 
 目标是保留起点和晋江的小说封面、作者头像显示，让 `/fetch-content` 无法请求任意网站、内网或非图片资源，同时消除 CORS 将相似域名误判为可信来源的问题。
 
@@ -292,7 +291,7 @@ PR #111 配置补修（已实现）：login 在 Compose 中以 `environment: { C
 
 ## 6. 工作包
 
-用户已要求按计划实施。WP-01/02/03 代码已完成；WP-04 运行说明已更新，真实网络与视觉验收保留为未完成边界。
+WP-01/02/03 代码与 WP-04 运行说明、真实网络和桌面浏览器验收均已完成；实际结果和部署边界见第 7、8 节。
 
 ### WP-01：定义图片目标与 HTTP 边界
 
@@ -345,21 +344,21 @@ PR #111 配置补修（已实现）：login 在 Compose 中以 `environment: { C
 | T-08 | 受影响包编译、单元/受控测试、严格 Clippy                                                                      | 通过，命令如下                                                    |
 | T-09 | 修改文档格式、相对链接、Rust 格式与差异检查                                                                   | 通过：范围内格式、相对链接、Rust 格式和差异检查                   |
 
-| 实际命令                                                                                                   | 结果与边界                                                                                  |
-| ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| `cargo metadata --no-deps --format-version 1 --offline`                                                    | 通过；后续 Cargo test/clippy 也验证最终 manifest/lockfile                                   |
-| `cargo check -p bookmarks -p login -p collections -p gateway --offline`                                    | 通过，覆盖生产消费者                                                                        |
-| `cargo test -p bookmarks -p middleware -p gateway --all-features --offline`                                | 初始受控测试通过；bookmarks 增补 TLS/分块场景后单独重跑                                     |
-| `cargo test -p bookmarks --offline`                                                                        | 最终 12 通过、1 个 live smoke 默认忽略；middleware 2 通过、gateway 4 通过的结果仍有效       |
-| `cargo clippy -p bookmarks -p middleware -p gateway --all-features --all-targets --offline -- -D warnings` | 通过；bookmarks 后续新增测试后用下一条重跑                                                  |
-| `cargo clippy -p bookmarks --all-targets --offline -- -D warnings`                                         | 最终通过                                                                                    |
-| `cargo test -p bookmarks --offline live_image_sources -- --ignored --nocapture`                            | 已执行，6 个来源均失败于目标连接前后的受控拒绝；下述 DNS 核对确认无法在本机完成正常公网验收 |
+| 实际命令                                                                                                   | 结果与边界                                                                            |
+| ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `cargo metadata --no-deps --format-version 1 --offline`                                                    | 通过；后续 Cargo test/clippy 也验证最终 manifest/lockfile                             |
+| `cargo check -p bookmarks -p login -p collections -p gateway --offline`                                    | 通过，覆盖生产消费者                                                                  |
+| `cargo test -p bookmarks -p middleware -p gateway --all-features --offline`                                | 初始受控测试通过；bookmarks 增补 TLS/分块场景后单独重跑                               |
+| `cargo test -p bookmarks --offline`                                                                        | 最终 12 通过、1 个 live smoke 默认忽略；middleware 2 通过、gateway 4 通过的结果仍有效 |
+| `cargo clippy -p bookmarks -p middleware -p gateway --all-features --all-targets --offline -- -D warnings` | 通过；bookmarks 后续新增测试后用下一条重跑                                            |
+| `cargo clippy -p bookmarks --all-targets --offline -- -D warnings`                                         | 最终通过                                                                              |
+| `cargo test -p bookmarks --offline live_image_sources -- --ignored --nocapture`                            | 首次执行受 Fake-IP 阻塞；后续 DNS 配置修正后八个样本通过，见第 9 节最终复测           |
 
 沙箱首次禁止本地 listener（Operation not permitted），因此受控网络测试在宿主环境执行。真实来源测试后只读核对六个域名，均返回 `198.18.0.47` 至 `198.18.0.52` 以及 `fdfe:dcba:9876::2e` 至 `::33`。它们属于明确拒绝的 benchmarking/ULA 地址；没有修改生产策略或本机代理设置来绕过。
 
 实际 HTTPS handler 测试使用 rcgen 内存证书、tokio-rustls 本地 listener、仅该测试 client 信任的证书与专用 resolver；验证不向上游转发 Authorization/Cookie、JPEG header 配 PNG 字节会以 PNG 返回、上游 Set-Cookie 不透传。测试使用有限伪图片字节，不保存原站资产。
 
-本轮按实际影响验证，不运行无前端代码变更的 pnpm lint/test，不提前重复全量 CI。若后续提交 PR，现有 CI/hooks 仍须完成且不绕过。
+初始实施按实际影响运行受控验证；后续完整提交 hooks 及本地部署验收结果见第 9 节。
 
 ## 8. 已完成验收与交付边界
 
@@ -369,21 +368,20 @@ PR #111 配置补修（已实现）：login 在 Compose 中以 `environment: { C
 2. 小说列表和作者详情的真实图片已在内建浏览器验证，分别为 10/10、18/18 加载成功；晋江抓取预览已返回小说信息与章节列表。
 3. 本地部署后三个服务的合法来源/相似恶意来源 CORS 预检已通过；自定义来源三态由前次 Compose 配置检查覆盖，未在本轮修改环境文件或轮换运行配置。
 
-剩余交付为 PR #112 合并；GitHub #97 保持开放。远端 CI 状态以 PR 检查为准，此处不将本地 hooks 通过等同于远端 CI 或生产部署完成。
+必要实现与本地验收已完成；远端 CI 以 GitHub 检查为准，远端生产部署未在本记录中验证。
 
 ## 9. 完成记录
 
-| 内容               | 当前结果                                                                                                      |
-| ------------------ | ------------------------------------------------------------------------------------------------------------- |
-| 代码               | WP-01/02/03 已实施；WP-04 文档已更新                                                                          |
-| 实际变更           | F-01 至 F-21 中标注文件已新增或修改；新增 4 个图片模块文件，无数据库/GraphQL 生成物变更                       |
-| 依赖               | 声明显式 URL/TLS/Tokio 能力及受控测试依赖；移除 middleware nom；无版本升级                                    |
-| 兼容               | 现有前端 API 形状不变；来源白名单与 CORS 收紧按计划生效                                                       |
-| 诊断调整           | 失败不收集额外共享字节计数；gateway 图片路径 query 与原始错误脱敏，其他路径保留现状                           |
-| 测试               | 原受控测试及提交 hooks 通过；补修 13 个测试、Clippy、八个 live 图片样本及桌面浏览器验收通过                   |
-| 提交/PR/部署       | PR #111 已合并并在本地部署；CA/i0 补修 `15c90b7` 已推送至 PR #112 并在本地部署，等待合并；GitHub #97 保持开放 |
-| 文档与当前稳定说明 | 根索引、#94 进度、server/web/gateway README 已同步                                                            |
-| 工作区其他修改     | 保留原有 package.json pnpm 版本修改，不纳入本 Issue                                                           |
+| 内容               | 当前结果                                                                                    |
+| ------------------ | ------------------------------------------------------------------------------------------- |
+| 代码与交付         | WP-01/02/03 已实施；WP-04 文档、真实来源抽样与桌面浏览器验收已完成                          |
+| 实际变更           | F-01 至 F-21 中标注文件已新增或修改；新增 4 个图片模块文件，无数据库/GraphQL 生成物变更     |
+| 依赖               | 声明显式 URL/TLS/Tokio 能力及受控测试依赖；移除 middleware nom；无版本升级                  |
+| 兼容               | 现有前端 API 形状不变；来源白名单与 CORS 收紧按计划生效                                     |
+| 诊断调整           | 失败不收集额外共享字节计数；gateway 图片路径 query 与原始错误脱敏，其他路径保留现状         |
+| 测试               | 原受控测试及提交 hooks 通过；补修 13 个测试、Clippy、八个 live 图片样本及桌面浏览器验收通过 |
+| 部署               | 初始实施与 CA/i0 补修均已在本地 OrbStack 部署；未验证远端生产部署                           |
+| 文档与当前稳定说明 | 根索引、历史问题归属、server/web/gateway README 已同步                                      |
 
 ### PR 提交阶段补充
 
@@ -408,7 +406,7 @@ PR #111 配置补修（已实现）：login 在 Compose 中以 `environment: { C
 - 六种已支持来源通过实际 `/fetch-content` 抽样均返回空 502；容器解析六个域名仍为 `198.18.0.47` 至 `.52`，符合 Fake-IP 被拒绝的现有策略。内网目标 `http://127.0.0.1/` 返回空 403。没有放宽 IP/TLS 校验。
 - 现有作者数据包含 `i0-static.jjwxc.net` 的 `/tmp/backend/authorspace/...` 和 `/authorimagespace.php?...` 图片，实际返回 403。当前白名单不含该主机；扩展前需要官方来源证据与单独的策略/回归覆盖，不能把这类失败归因于 DNS。
 - 浏览器另观察到现有窄窗口侧栏无展开入口，以及 Theme/I18n DialogTrigger 的 Base UI nativeButton 错误；未纳入这次 Dockerfile 修复。
-- 本轮未修改前端或 Rust 源码，未重复 workspace 单元测试；验证以实际镜像构建、容器启动、HTTP 与浏览器为主。修改文档格式检查和 `git diff --check` 通过。整体 T-07 仍未通过，计划不标记 Done。
+- 该阶段未修改前端或 Rust 源码，未重复 workspace 单元测试；验证以实际镜像构建、容器启动、HTTP 与浏览器为主。修改文档格式检查和 `git diff --check` 通过。当时 T-07 受 Fake-IP/i0 阻塞，后续复测已解除。
 
 ### i0 来源与本机 DNS 补充（已实现并验证）
 
@@ -426,4 +424,4 @@ PR #111 配置补修（已实现）：login 在 Compose 中以 `environment: { C
 - `cargo clippy -p bookmarks --all-targets --offline -- -D warnings` 通过。base64 使用本机 0.22.1 源码验证的标准解码器：要求规范 padding，拒绝非法尾位；Cargo.lock 仅新增 bookmarks 对既有 base64 的依赖引用。
 - bookmarks 新镜像构建并启动通过；实际 HTTPS `/fetch-content` 八个样本全部 200，大小和 JPEG/PNG 签名符合预期。
 - 内建浏览器桌面 1280×900：作者详情 18/18 图片加载成功且请求均 200，小说列表 10/10 图片加载成功；晋江小说 3854336 的抓取预览返回小说信息和章节列表，未点击保存、未写入业务数据。
-- 上述结果取代前次 Fake-IP/i0 的阻塞结论；移动端导航、Base UI 警告仍为已记录的其他前端问题。代码补修已提交推送至 PR #112，等待合并；未关闭 #97。
+- 上述结果取代前次 Fake-IP/i0 的阻塞结论；当时观察到的移动端导航、Base UI 警告属于其他前端范围，不影响本计划的完成结论。
