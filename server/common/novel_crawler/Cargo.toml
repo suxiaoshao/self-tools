@@ -16,7 +16,6 @@ serde.workspace = true
 serde_json.workspace = true
 # async trait support
 tokio = { workspace = true, features = ["macros"] }
-futures.workspace = true
 # 错误处理
 thiserror.workspace = true
 # 时间
@@ -24,3 +23,4 @@ time = { workspace = true, features = ["parsing", "macros"] }
 
 [dev-dependencies]
 anyhow.workspace = true
+tokio = { workspace = true, features = ["rt", "net", "io-util", "time"] }

@@ -1,6 +1,5 @@
 use std::{collections::HashSet, sync::LazyLock};
 
-use futures::future::try_join_all;
 use nom::{
     IResult, Parser,
     bytes::complete::{tag, take_while},
@@ -12,11 +11,11 @@ use scraper::{ElementRef, Html, Selector};
 use crate::{
     author::AuthorFn,
     errors::{NovelError, NovelResult},
-    implement::{parse_image_src, parse_inner_html, parse_text, text_from_url},
-    novel::NovelFn,
+    implement::{
+        http::{UserAgent, text_from_url},
+        parse_image_src, parse_inner_html, parse_text,
+    },
 };
-
-use super::novel::JJNovel;
 
 static SELECTOR_AUTHOR_NAME: LazyLock<Selector> =
     LazyLock::new(|| Selector::parse("[itemprop=name]").unwrap());
@@ -37,29 +36,11 @@ pub struct JJAuthor {
 }
 
 impl AuthorFn for JJAuthor {
-    type Novel = JJNovel;
     const SITE: crate::NovelSite = crate::NovelSite::Jjwxc;
     async fn get_author_data(author_id: &str) -> NovelResult<Self> {
         let url = format!("https://www.jjwxc.net/oneauthor.php?authorid={author_id}");
-        let image_doc = text_from_url(&url, "gb18030").await?;
-        let image_doc = Html::parse_document(&image_doc);
-
-        // 图片
-        let image = parse_image_src(&image_doc, &SELECTOR_AUTHOR_IMAGE)?;
-        // 其他
-        let name = parse_inner_html(&image_doc, &SELECTOR_AUTHOR_NAME)?;
-        let description = parse_text(&image_doc, &SELECTOR_AUTHOR_DESCRIPTION)?;
-        let urls = image_doc
-            .select(&SELECTOR_NOVEL_URLS)
-            .map(map_url)
-            .collect::<NovelResult<HashSet<_>>>()?;
-        Ok(Self {
-            id: author_id.to_string(),
-            name,
-            description,
-            image,
-            novel_ids: urls,
-        })
+        let page = text_from_url(&url, "gb18030", UserAgent::Mobile).await?;
+        Self::parse(author_id, &page)
     }
 
     fn url(&self) -> String {
@@ -74,10 +55,6 @@ impl AuthorFn for JJAuthor {
     fn image(&self) -> &str {
         self.image.as_str()
     }
-    async fn novels(&self) -> NovelResult<Vec<Self::Novel>> {
-        let data = try_join_all(self.novel_ids.iter().map(|x| JJNovel::get_novel_data(x))).await?;
-        Ok(data)
-    }
     fn get_url_from_id(id: &str) -> String {
         format!("https://www.jjwxc.net/oneauthor.php?authorid={id}")
     }
@@ -86,6 +63,22 @@ impl AuthorFn for JJAuthor {
     }
     fn id(&self) -> &str {
         self.id.as_str()
+    }
+}
+
+impl JJAuthor {
+    fn parse(author_id: &str, page: &str) -> NovelResult<Self> {
+        let html = Html::parse_document(page);
+        Ok(Self {
+            id: author_id.to_string(),
+            image: parse_image_src(&html, &SELECTOR_AUTHOR_IMAGE)?,
+            name: parse_inner_html(&html, &SELECTOR_AUTHOR_NAME)?,
+            description: parse_text(&html, &SELECTOR_AUTHOR_DESCRIPTION)?,
+            novel_ids: html
+                .select(&SELECTOR_NOVEL_URLS)
+                .map(map_url)
+                .collect::<NovelResult<_>>()?,
+        })
     }
 }
 
@@ -119,12 +112,34 @@ mod test {
         Ok(())
     }
 
-    #[tokio::test]
-    async fn jj_author_test() -> anyhow::Result<()> {
-        let author = JJAuthor::get_author_data("1000001").await?;
-        println!("{author:#?}");
-        let author = JJAuthor::get_author_data("809836").await?;
-        println!("{author:#?}");
-        Ok(())
+    const PAGE: &str = include_str!("../../../tests/fixtures/jjwxc-author.html");
+
+    #[test]
+    fn parses_author_and_filters_duplicate_and_tooltip_links() {
+        let author = JJAuthor::parse("601", PAGE).unwrap();
+        assert_eq!(author.id(), "601");
+        assert_eq!(author.name(), "晋江样本作者");
+        assert_eq!(author.description(), "合成作者简介");
+        assert_eq!(author.image(), "https://example.invalid/jjwxc-author.jpg");
+        assert_eq!(
+            author.novel_ids(),
+            &HashSet::from(["701".into(), "702".into()])
+        );
+    }
+
+    #[test]
+    fn distinguishes_no_works_from_missing_author_metadata() {
+        let no_works = PAGE.replace("onebook.php?novelid=", "other.php?novelid=");
+        assert!(
+            JJAuthor::parse("601", &no_works)
+                .unwrap()
+                .novel_ids()
+                .is_empty()
+        );
+        let missing_name = PAGE.replace("itemprop=\"name\"", "itemprop=\"other\"");
+        assert!(matches!(
+            JJAuthor::parse("601", &missing_name),
+            Err(NovelError::ParseError)
+        ));
     }
 }

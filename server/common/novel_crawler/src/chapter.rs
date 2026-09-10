@@ -6,8 +6,6 @@
  * @FilePath: /self-tools/server/common/novel_crawler/src/chapter.rs
  */
 pub trait ChapterFn: Sized + Send {
-    type Author: crate::AuthorFn;
-    type Novel: crate::NovelFn;
     fn url(&self) -> String;
     fn title(&self) -> &str;
     fn chapter_id(&self) -> &str;
@@ -15,8 +13,4 @@ pub trait ChapterFn: Sized + Send {
     fn word_count(&self) -> u32;
     fn time(&self) -> time::OffsetDateTime;
     fn get_url_from_id(chapter_id: &str, novel_id: &str) -> String;
-}
-
-pub trait ChapterDetail: ChapterFn {
-    fn content(&self) -> &str;
 }

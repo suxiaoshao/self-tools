@@ -1,4 +1,4 @@
-use crate::{JJAuthor, JJChapter, JJNovel, TagFn};
+use crate::TagFn;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct JJTag {
@@ -7,12 +7,6 @@ pub struct JJTag {
 }
 
 impl TagFn for JJTag {
-    type Author = JJAuthor;
-
-    type Novel = JJNovel;
-
-    type Chapter = JJChapter;
-
     fn name(&self) -> &str {
         &self.name
     }

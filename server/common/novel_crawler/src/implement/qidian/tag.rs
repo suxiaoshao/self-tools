@@ -1,4 +1,4 @@
-use crate::{QDAuthor, QDChapter, QDNovel, TagFn};
+use crate::TagFn;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct QDTag {
@@ -6,12 +6,6 @@ pub struct QDTag {
 }
 
 impl TagFn for QDTag {
-    type Author = QDAuthor;
-
-    type Novel = QDNovel;
-
-    type Chapter = QDChapter;
-
     fn name(&self) -> &str {
         self.name.as_str()
     }

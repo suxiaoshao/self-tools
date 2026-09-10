@@ -5,10 +5,10 @@
  * @LastEditTime: 2024-02-03 17:04:59
  * @FilePath: /self-tools/server/common/novel_crawler/src/implement/jjwxc/mod.rs
  */
-pub mod author;
-pub mod chapter;
-pub mod novel;
-pub mod tag;
+mod author;
+mod chapter;
+mod novel;
+mod tag;
 
 pub use author::JJAuthor;
 pub use chapter::JJChapter;

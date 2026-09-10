@@ -1,7 +1,10 @@
 use crate::{
-    NovelError, QDAuthor,
+    NovelError,
     errors::NovelResult,
-    implement::{parse_attr, text_from_url},
+    implement::{
+        http::{UserAgent, text_from_url},
+        parse_attr,
+    },
     novel::{NovelFn, NovelStatus},
 };
 use nom::{
@@ -48,33 +51,16 @@ pub struct QDNovel {
 
 impl NovelFn for QDNovel {
     type Chapter = QDChapter;
-    type Author = QDAuthor;
     type Tag = QDTag;
+    const SITE: crate::NovelSite = crate::NovelSite::Qidian;
     async fn get_novel_data(novel_id: &str) -> NovelResult<Self> {
-        let (html, chapter_html) = Self::get_doc(novel_id).await?;
-        let html = Html::parse_document(&html);
-        let name = parse_attr(&html, &SELECTOR_NOVEL_NAME, "content")?;
-        let description = parse_attr(&html, &SELECTOR_NOVEL_DESCRIPTION, "content")?;
-        let image = parse_attr(&html, &SELECTOR_NOVEL_IMAGE, "content")?;
-        let image = format!("https:{image}");
-        let chapters: Vec<QDChapter> = parse_chapters(&chapter_html, novel_id)?;
-        let status = parse_status(&html)?;
-        let author_id = html
-            .select(&SELECTOR_AUTHOR)
-            .next()
-            .ok_or(NovelError::ParseError)
-            .and_then(parse_author)?;
-        let tags = parse_tags(&html)?;
-        Ok(Self {
-            id: novel_id.to_string(),
-            name,
-            description,
-            image,
-            chapters,
-            author_id,
-            status,
-            tags,
-        })
+        let url = Self::get_url_from_id(novel_id);
+        let chapter_url = format!("https://m.qidian.com/book/{novel_id}/catalog/");
+        let (page, catalogue) = tokio::try_join!(
+            text_from_url(&url, "utf-8", UserAgent::Mobile),
+            text_from_url(&chapter_url, "utf-8", UserAgent::Mobile)
+        )?;
+        Self::parse(novel_id, &page, &catalogue)
     }
 
     fn url(&self) -> String {
@@ -96,8 +82,8 @@ impl NovelFn for QDNovel {
         self.author_id.as_str()
     }
 
-    async fn chapters(&self) -> NovelResult<Vec<Self::Chapter>> {
-        Ok(self.chapters.clone())
+    fn chapters(&self) -> &[Self::Chapter] {
+        &self.chapters
     }
     fn get_url_from_id(id: &str) -> String {
         format!("https://m.qidian.com/book/{id}.html")
@@ -115,14 +101,30 @@ impl NovelFn for QDNovel {
 }
 
 impl QDNovel {
-    pub(crate) async fn get_doc(id: &str) -> NovelResult<(String, String)> {
-        let url = format!("https://m.qidian.com/book/{id}.html");
-        let chapter_url = format!("https://m.qidian.com/book/{id}/catalog/");
-        let data = tokio::try_join!(
-            text_from_url(&url, "utf-8"),
-            text_from_url(&chapter_url, "utf-8")
-        )?;
-        Ok(data)
+    fn parse(novel_id: &str, page: &str, catalogue: &str) -> NovelResult<Self> {
+        let html = Html::parse_document(page);
+        let name = parse_attr(&html, &SELECTOR_NOVEL_NAME, "content")?;
+        let description = parse_attr(&html, &SELECTOR_NOVEL_DESCRIPTION, "content")?;
+        let image = parse_attr(&html, &SELECTOR_NOVEL_IMAGE, "content")?;
+        let image = format!("https:{image}");
+        let chapters = parse_chapters(catalogue, novel_id)?;
+        let status = parse_status(&html)?;
+        let author_id = html
+            .select(&SELECTOR_AUTHOR)
+            .next()
+            .ok_or(NovelError::ParseError)
+            .and_then(parse_author)?;
+        let tags = parse_tags(&html);
+        Ok(Self {
+            id: novel_id.to_string(),
+            name,
+            description,
+            image,
+            chapters,
+            author_id,
+            status,
+            tags,
+        })
     }
 }
 
@@ -134,7 +136,7 @@ fn parse_chapters(html: &str, novel_id: &str) -> NovelResult<Vec<QDChapter>> {
         .ok_or(NovelError::ParseError)?
         .inner_html();
     #[derive(Serialize, Deserialize)]
-    pub struct Data {
+    struct Data {
         #[serde(rename = "pageContext")]
         page_context: PageContext,
     }
@@ -158,13 +160,13 @@ fn parse_chapters(html: &str, novel_id: &str) -> NovelResult<Vec<QDChapter>> {
     }
 
     #[derive(Serialize, Deserialize)]
-    pub struct V {
+    struct V {
         #[serde(rename = "cs")]
         cs: Vec<Chapter>,
     }
 
     #[derive(Serialize, Deserialize)]
-    pub struct Chapter {
+    struct Chapter {
         #[serde(rename = "cN")]
         name: String,
         #[serde(rename = "id")]
@@ -241,25 +243,104 @@ fn parse_status(html: &Html) -> NovelResult<NovelStatus> {
         _ => Err(NovelError::ParseError),
     }
 }
-fn parse_tags(html: &Html) -> NovelResult<Vec<QDTag>> {
-    html.select(&SELECTOR_TAGS).map(map_tag).collect()
+fn parse_tags(html: &Html) -> Vec<QDTag> {
+    html.select(&SELECTOR_TAGS).filter_map(map_tag).collect()
 }
 
-fn map_tag(element_ref: ElementRef) -> NovelResult<QDTag> {
-    let name = element_ref.inner_html();
-    Ok(QDTag { name })
+fn map_tag(element_ref: ElementRef) -> Option<QDTag> {
+    let text = element_ref.text().collect::<String>();
+    match text.trim() {
+        "" | "相似标签小说" => None,
+        name => Some(QDTag {
+            name: name.to_owned(),
+        }),
+    }
 }
 
 #[cfg(test)]
 mod test {
-    use crate::novel::NovelFn;
+    use super::*;
+    use crate::{ChapterFn, TagFn};
+    use time::macros::datetime;
 
-    #[tokio::test]
-    async fn qd_novel_test() -> anyhow::Result<()> {
-        let novel_id = "1040796068";
-        let novel = super::QDNovel::get_novel_data(novel_id).await?;
-        println!("{novel:#?}");
-        Ok(())
+    const PAGE: &str = include_str!("../../../tests/fixtures/qidian-novel.html");
+    const CATALOGUE: &str = include_str!("../../../tests/fixtures/qidian-catalogue.html");
+
+    #[test]
+    fn parses_metadata_and_borrows_catalogue_in_volume_order() {
+        let novel = QDNovel::parse("901", PAGE, CATALOGUE).unwrap();
+        assert_eq!(QDNovel::SITE, crate::NovelSite::Qidian);
+        assert_eq!((novel.id(), novel.author_id()), ("901", "801"));
+        assert_eq!(novel.name(), "起点样本小说");
+        assert_eq!(novel.description(), "合成小说简介");
+        assert_eq!(novel.image(), "https://example.invalid/qidian-novel.jpg");
+        assert_eq!(novel.status(), NovelStatus::Ongoing);
+        assert_eq!(
+            novel
+                .tags()
+                .iter()
+                .map(|tag| (tag.id(), tag.name()))
+                .collect::<Vec<_>>(),
+            [("奇幻", "奇幻"), ("冒险", "冒险")]
+        );
+        let chapters = novel.chapters();
+        assert_eq!(
+            chapters
+                .iter()
+                .map(|chapter| (chapter.chapter_id(), chapter.title(), chapter.word_count()))
+                .collect::<Vec<_>>(),
+            [
+                ("903", "序章", 1200),
+                ("901", "第一章", 2300),
+                ("902", "第二章", 3400)
+            ]
+        );
+        assert!(chapters.iter().all(|chapter| chapter.novel_id() == "901"));
+        assert_eq!(chapters[0].time(), datetime!(2026-09-10 10:20:30 +8));
+        assert_eq!(chapters[1].time(), datetime!(2026-09-10 11:21:00 +8));
+        assert!(std::ptr::eq(chapters, novel.chapters.as_slice()));
+        assert!(std::ptr::eq(chapters, novel.chapters()));
+        for (text, status) in [
+            ("完本", NovelStatus::Completed),
+            ("暂停", NovelStatus::Paused),
+        ] {
+            assert_eq!(
+                QDNovel::parse("901", &PAGE.replace("连载", text), CATALOGUE)
+                    .unwrap()
+                    .status(),
+                status
+            );
+        }
+    }
+
+    #[test]
+    fn distinguishes_empty_catalogue_from_invalid_documents() {
+        let empty = r#"<script id="vite-plugin-ssr_pageContext">{"pageContext":{"pageProps":{"pageData":{"vs":[]}}}}</script>"#;
+        assert!(
+            QDNovel::parse("901", PAGE, empty)
+                .unwrap()
+                .chapters()
+                .is_empty()
+        );
+        assert!(matches!(
+            QDNovel::parse("901", PAGE, "<html></html>"),
+            Err(NovelError::ParseError)
+        ));
+        let malformed = r#"<script id="vite-plugin-ssr_pageContext">{</script>"#;
+        assert!(matches!(
+            QDNovel::parse("901", PAGE, malformed),
+            Err(NovelError::Json(_))
+        ));
+        let missing_name = PAGE.replace("og:novel:book_name", "other");
+        assert!(matches!(
+            QDNovel::parse("901", &missing_name, CATALOGUE),
+            Err(NovelError::ParseError)
+        ));
+        let bad_time = CATALOGUE.replace("2026-09-10 10:20:30", "invalid-time");
+        assert!(matches!(
+            QDNovel::parse("901", PAGE, &bad_time),
+            Err(NovelError::TimeParseError(_))
+        ));
     }
 
     #[test]

@@ -98,6 +98,7 @@ export default function AuthorFetch() {
   const formId = useId();
   // title
   const t = useI18n();
+  const sites = { JJWXC: t('jjwxc'), QIDIAN: t('qidian') };
   useTitle(t('author_crawler'));
 
   // fetch
@@ -175,7 +176,7 @@ export default function AuthorFetch() {
               render={({ field: { onChange, ref, ...field }, fieldState }) => (
                 <Field className="flex-1" data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor={`${formId}-site`}>{t('novel_site')}</FieldLabel>
-                  <Select required {...field} onValueChange={onChange}>
+                  <Select required {...field} value={field.value ?? null} items={sites} onValueChange={onChange}>
                     <SelectTrigger
                       ref={ref}
                       id={`${formId}-site`}
@@ -187,8 +188,11 @@ export default function AuthorFetch() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
-                        <SelectItem value="JJWXC">{t('jjwxc')}</SelectItem>
-                        <SelectItem value="QIDIAN">{t('qidian')}</SelectItem>
+                        {Object.entries(sites).map(([value, label]) => (
+                          <SelectItem key={value} value={value}>
+                            {label}
+                          </SelectItem>
+                        ))}
                       </SelectGroup>
                     </SelectContent>
                   </Select>

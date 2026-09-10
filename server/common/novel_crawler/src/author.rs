@@ -5,10 +5,9 @@
  * @LastEditTime: 2024-03-21 20:38:32
  * @FilePath: /self-tools/server/common/novel_crawler/src/author.rs
  */
-use crate::{errors::NovelResult, novel::NovelFn};
+use crate::errors::NovelResult;
 
-pub trait AuthorFn: Sized + Send + Sync + Sized {
-    type Novel: NovelFn;
+pub trait AuthorFn: Sized + Send + Sync {
     const SITE: crate::NovelSite;
     fn get_author_data(
         author_id: &str,
@@ -17,7 +16,6 @@ pub trait AuthorFn: Sized + Send + Sync + Sized {
     fn name(&self) -> &str;
     fn description(&self) -> &str;
     fn image(&self) -> &str;
-    fn novels(&self) -> impl std::future::Future<Output = NovelResult<Vec<Self::Novel>>> + Send;
     fn get_url_from_id(id: &str) -> String;
     /// Source identifiers already parsed from the author page; does not fetch novels.
     fn novel_ids(&self) -> &std::collections::HashSet<String>;
