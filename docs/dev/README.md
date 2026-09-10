@@ -20,3 +20,4 @@
 | [Issue #104：操作安全、可访问性与表单反馈](../../web/docs/dev/issue-104/README.md)  | web / portal / bookmarks / collections / common | 统一删除确认、交互语义、翻译与字段反馈。                                  |
 | [Issue #105：前端配置、加载边界与构建检查](issue-105/README.md)                     | web / gateway / CI                              | 集中同源路径、按需加载与生产产物和生成漂移检查。                          |
 | [Issue #107：crawler 所有权与确定性测试](../../server/docs/dev/issue-107/README.md) | novel_crawler / bookmarks                       | 使用同步借用读取已抓取章节，收敛公开接口并隔离公网测试。                  |
+| [Issue #125：导航入口与页面操作栏统一](../../web/docs/dev/issue-125/README.md)      | web / portal / bookmarks / collections / ui     | 合并导航入口和页面操作，统一高度、表单及回退组合约定。                    |

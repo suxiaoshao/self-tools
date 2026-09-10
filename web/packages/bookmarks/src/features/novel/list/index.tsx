@@ -1,3 +1,4 @@
+import { PageToolbar } from 'ui/page-toolbar';
 import { ConfirmationDialog } from 'ui/confirmation-dialog';
 import { useState } from 'react';
 import { RequestNotice } from 'custom-graphql';
@@ -213,39 +214,8 @@ export default function NovelList() {
   );
 
   return (
-    <div className="flex flex-col size-full">
-      <RequestNotice error={error} />
-      {!confirmOpen && write.notice}
-      <ConfirmationDialog
-        returnFocus={() => document.getElementById(`novel-actions-${target?.id}`)}
-        open={confirmOpen}
-        onOpenChange={setConfirmOpen}
-        title={t('delete_target', { name: target?.name })}
-        description={t('delete_novel_impact')}
-        confirmLabel={t('delete')}
-        cancelLabel={t('cancel')}
-        pending={write.pending}
-        confirmDisabled={write.blocked}
-        notice={write.notice}
-        onConfirm={async () => {
-          if (!target) return;
-          const { id } = target;
-          const confirmed = () => {
-            setConfirmOpen(false);
-            void Promise.resolve()
-              .then(() => refetch())
-              .catch(() => undefined);
-          };
-          if (
-            await write.execute(async () => (await deleteNovel({ variables: { id } })).data?.deleteNovel, {
-              verify: () => checkDeleted(client, id),
-              confirmed,
-            })
-          )
-            confirmed();
-        }}
-      />
-      <div className="basis-auto flex p-4 pb-0 gap-4">
+    <div className="flex min-h-0 size-full flex-col">
+      <PageToolbar>
         <CreateNovelButton refetch={refetch} />
         <Link to="/bookmarks/novel/fetch" className={buttonVariants()}>
           {t('crawler')}
@@ -254,62 +224,96 @@ export default function NovelList() {
         <Button variant="ghost" size="icon" onClick={() => refetch()} aria-label={t('refresh')}>
           <RefreshCcw />
         </Button>
-      </div>
-      <div className="flex-[1_1_0] overflow-y-auto p-4 pr-1 w-full">
-        <Card className="mb-4 gap-0">
-          <CardContent className="grid grid-cols-[auto_1fr] gap-y-2 gap-x-4">
-            <Field>
-              <FieldLabel>{t('collection_whether_full_match')}</FieldLabel>
-              <Controller
-                control={control}
-                name="collectionMatch.fullMatch"
-                render={({ field: { value, onChange, ...field } }) => (
-                  <Switch
-                    aria-label={t('collection_whether_full_match')}
-                    checked={value}
-                    onCheckedChange={onChange}
-                    {...field}
-                  />
-                )}
-              />
-            </Field>
+      </PageToolbar>
+      <div className="flex min-h-0 flex-1 flex-col">
+        <RequestNotice error={error} />
+        {!confirmOpen && write.notice}
+        <ConfirmationDialog
+          returnFocus={() => document.getElementById(`novel-actions-${target?.id}`)}
+          open={confirmOpen}
+          onOpenChange={setConfirmOpen}
+          title={t('delete_target', { name: target?.name })}
+          description={t('delete_novel_impact')}
+          confirmLabel={t('delete')}
+          cancelLabel={t('cancel')}
+          pending={write.pending}
+          confirmDisabled={write.blocked}
+          notice={write.notice}
+          onConfirm={async () => {
+            if (!target) return;
+            const { id } = target;
+            const confirmed = () => {
+              setConfirmOpen(false);
+              void Promise.resolve()
+                .then(() => refetch())
+                .catch(() => undefined);
+            };
+            if (
+              await write.execute(async () => (await deleteNovel({ variables: { id } })).data?.deleteNovel, {
+                verify: () => checkDeleted(client, id),
+                confirmed,
+              })
+            )
+              confirmed();
+          }}
+        />
 
-            <Field className="*:w-auto">
-              <FieldLabel>{t('match_collections')}</FieldLabel>
-              <Controller
-                control={control}
-                name="collectionMatch.matchSet"
-                render={({ field }) => <CollectionMultiSelect {...field} />}
-              />
-            </Field>
+        <div className="flex-[1_1_0] overflow-y-auto p-4 pr-1 w-full">
+          <Card className="mb-4 gap-0">
+            <CardContent className="grid grid-cols-[auto_1fr] gap-y-2 gap-x-4">
+              <Field>
+                <FieldLabel>{t('collection_whether_full_match')}</FieldLabel>
+                <Controller
+                  control={control}
+                  name="collectionMatch.fullMatch"
+                  render={({ field: { value, onChange, ...field } }) => (
+                    <Switch
+                      aria-label={t('collection_whether_full_match')}
+                      checked={value}
+                      onCheckedChange={onChange}
+                      {...field}
+                    />
+                  )}
+                />
+              </Field>
 
-            <Field>
-              <FieldLabel>{t('tag_whether_full_match')}</FieldLabel>
-              <Controller
-                control={control}
-                name="tagMatch.fullMatch"
-                render={({ field: { value, onChange, ...field } }) => (
-                  <Switch
-                    aria-label={t('tag_whether_full_match')}
-                    checked={value}
-                    onCheckedChange={onChange}
-                    {...field}
-                  />
-                )}
-              />
-            </Field>
+              <Field className="*:w-auto">
+                <FieldLabel>{t('match_collections')}</FieldLabel>
+                <Controller
+                  control={control}
+                  name="collectionMatch.matchSet"
+                  render={({ field }) => <CollectionMultiSelect {...field} />}
+                />
+              </Field>
 
-            <Field className="*:w-auto">
-              <FieldLabel>{t('match_tags')}</FieldLabel>
-              <Controller
-                control={control}
-                name="tagMatch.matchSet"
-                render={({ field }) => <TagsSelect aria-label={t('match_tags')} className="w-[400px]" {...field} />}
-              />
-            </Field>
-          </CardContent>
-        </Card>
-        <CustomTable className="w-full" options={tableOptions} page={page} />
+              <Field>
+                <FieldLabel>{t('tag_whether_full_match')}</FieldLabel>
+                <Controller
+                  control={control}
+                  name="tagMatch.fullMatch"
+                  render={({ field: { value, onChange, ...field } }) => (
+                    <Switch
+                      aria-label={t('tag_whether_full_match')}
+                      checked={value}
+                      onCheckedChange={onChange}
+                      {...field}
+                    />
+                  )}
+                />
+              </Field>
+
+              <Field className="*:w-auto">
+                <FieldLabel>{t('match_tags')}</FieldLabel>
+                <Controller
+                  control={control}
+                  name="tagMatch.matchSet"
+                  render={({ field }) => <TagsSelect aria-label={t('match_tags')} className="w-[400px]" {...field} />}
+                />
+              </Field>
+            </CardContent>
+          </Card>
+          <CustomTable className="w-full" options={tableOptions} page={page} />
+        </div>
       </div>
     </div>
   );

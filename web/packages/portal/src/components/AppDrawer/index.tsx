@@ -7,7 +7,8 @@
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
 import { Home } from 'lucide-react';
-import { Outlet } from 'react-router';
+import { useEffect } from 'react';
+import { Outlet, useLocation } from 'react-router';
 import RouterItems from './RouterItem';
 import { useI18n } from 'i18n';
 import { I18nDrawerItem } from '../../features/language';
@@ -22,13 +23,27 @@ import {
   SidebarGroupLabel,
   SidebarMenu,
   SidebarProvider,
+  useSidebar,
 } from 'ui/components/sidebar';
 import { Toaster } from 'ui/components/sonner';
+
+function CloseSidebarOnNavigation() {
+  const { key } = useLocation();
+  const { setOpenMobile } = useSidebar();
+
+  // A location key also changes when a link targets the current page.
+  useEffect(() => {
+    setOpenMobile(false);
+  }, [key, setOpenMobile]);
+
+  return null;
+}
 
 export default function AppDrawer() {
   const t = useI18n();
   return (
-    <SidebarProvider defaultOpen>
+    <SidebarProvider defaultOpen className="h-dvh min-h-0">
+      <CloseSidebarOnNavigation />
       <Sidebar>
         <SidebarContent>
           <SidebarGroup>
@@ -48,8 +63,10 @@ export default function AppDrawer() {
           </SidebarGroup>
         </SidebarContent>
       </Sidebar>
-      <main className="flex-1">
-        <Outlet />
+      <main className="flex min-h-0 min-w-0 flex-1 flex-col">
+        <div className="min-h-0 flex-1">
+          <Outlet />
+        </div>
         <Toaster />
       </main>
     </SidebarProvider>

@@ -1,5 +1,6 @@
+import { SidebarProvider } from 'ui/components/sidebar';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { afterEach, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { ApolloProvider } from '@apollo/client/react';
 import { Link, MemoryRouter, Route, Routes } from 'react-router';
 import { clearAuthenticatedState, getClient } from 'custom-graphql';
@@ -7,6 +8,15 @@ import Collections from './view';
 import { CollectionsProvider, CollectionLoadingState, useAllCollection } from '../../entities/collection';
 
 vi.mock('i18n', () => ({ useI18n: () => (key: string) => key }));
+
+beforeEach(() => {
+  vi.stubGlobal('matchMedia', (media: string) => ({
+    media,
+    matches: false,
+    addEventListener: vi.fn<MediaQueryList['addEventListener']>(),
+    removeEventListener: vi.fn<MediaQueryList['removeEventListener']>(),
+  }));
+});
 
 afterEach(() => {
   cleanup();
@@ -67,13 +77,15 @@ it('refreshes both the page and shared collection options after creation, withou
   render(
     <ApolloProvider client={getClient('/api/bookmarks/graphql')}>
       <MemoryRouter>
-        <CollectionsProvider>
-          <Link to="/selector">open selector</Link>
-          <Routes>
-            <Route path="/" element={<Collections />} />
-            <Route path="/selector" element={<SharedCollectionOptions />} />
-          </Routes>
-        </CollectionsProvider>
+        <SidebarProvider>
+          <CollectionsProvider>
+            <Link to="/selector">open selector</Link>
+            <Routes>
+              <Route path="/" element={<Collections />} />
+              <Route path="/selector" element={<SharedCollectionOptions />} />
+            </Routes>
+          </CollectionsProvider>
+        </SidebarProvider>
       </MemoryRouter>
     </ApolloProvider>,
   );

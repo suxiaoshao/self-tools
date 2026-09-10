@@ -1,3 +1,4 @@
+import { PageToolbar } from 'ui/page-toolbar';
 import { ConfirmationDialog } from 'ui/confirmation-dialog';
 import { useState } from 'react';
 import { RequestNotice } from 'custom-graphql';
@@ -161,52 +162,54 @@ export default function Tags() {
     [columns, data],
   );
 
-  const input = useMemo(() => {
+  const toolbar = useMemo(() => {
     return (
-      <div className="flex-0 mt-4 flex">
+      <PageToolbar>
         <CreateTagButton refetch={refetch} />
         <Button variant="ghost" size="icon" className="ml-auto" onClick={onSearch} aria-label={t('search')}>
           <Search />
         </Button>
-      </div>
+      </PageToolbar>
     );
   }, [onSearch, refetch, t]);
 
   return (
-    <div className="flex flex-col size-full p-4">
-      <RequestNotice error={error} />
-      {!confirmOpen && write.notice}
-      <ConfirmationDialog
-        returnFocus={() => document.getElementById(`tag-actions-${target?.id}`)}
-        open={confirmOpen}
-        onOpenChange={setConfirmOpen}
-        title={t('delete_target', { name: target?.name })}
-        description={t('delete_tag_impact')}
-        confirmLabel={t('delete')}
-        cancelLabel={t('cancel')}
-        pending={write.pending}
-        confirmDisabled={write.blocked}
-        notice={write.notice}
-        onConfirm={async () => {
-          if (!target) return;
-          const { id } = target;
-          const confirmed = () => {
-            setConfirmOpen(false);
-            void Promise.resolve()
-              .then(() => refetch())
-              .catch(() => undefined);
-          };
-          if (
-            await write.execute(async () => (await deleteTag({ variables: { id } })).data?.deleteTag, {
-              verify: () => checkDeleted(client, id),
-              confirmed,
-            })
-          )
-            confirmed();
-        }}
-      />
-      {input}
-      <CustomTable options={tableOptions} page={page} />
+    <div className="flex min-h-0 size-full flex-col">
+      {toolbar}
+      <div className="flex min-h-0 flex-1 flex-col p-4">
+        <RequestNotice error={error} />
+        {!confirmOpen && write.notice}
+        <ConfirmationDialog
+          returnFocus={() => document.getElementById(`tag-actions-${target?.id}`)}
+          open={confirmOpen}
+          onOpenChange={setConfirmOpen}
+          title={t('delete_target', { name: target?.name })}
+          description={t('delete_tag_impact')}
+          confirmLabel={t('delete')}
+          cancelLabel={t('cancel')}
+          pending={write.pending}
+          confirmDisabled={write.blocked}
+          notice={write.notice}
+          onConfirm={async () => {
+            if (!target) return;
+            const { id } = target;
+            const confirmed = () => {
+              setConfirmOpen(false);
+              void Promise.resolve()
+                .then(() => refetch())
+                .catch(() => undefined);
+            };
+            if (
+              await write.execute(async () => (await deleteTag({ variables: { id } })).data?.deleteTag, {
+                verify: () => checkDeleted(client, id),
+                confirmed,
+              })
+            )
+              confirmed();
+          }}
+        />
+        <CustomTable options={tableOptions} page={page} />
+      </div>
     </div>
   );
 }

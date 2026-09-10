@@ -1,3 +1,4 @@
+import { PageToolbar } from 'ui/page-toolbar';
 import { RequestNotice } from 'custom-graphql';
 import { CustomTable, getCoreRowModel, usePage, usePageWithTotal } from 'custom-table';
 import { RefreshCcw } from 'lucide-react';
@@ -73,9 +74,8 @@ export default function Collection() {
   );
 
   return (
-    <div className="size-full p-4 flex flex-col">
-      <AncestorsPath />
-      <div className="flex-[0_0_auto] mb-2 flex">
+    <div className="flex min-h-0 size-full flex-col">
+      <PageToolbar>
         <CreateCollectionButton parentId={id} refetch={allRefetch} />
         {id && <CreateItemButton className="ml-2" refetch={allRefetch} collectionIds={[id]} />}
         <Button
@@ -87,9 +87,13 @@ export default function Collection() {
         >
           <RefreshCcw />
         </Button>
+      </PageToolbar>
+      <div className="flex min-h-0 flex-1 flex-col p-4">
+        <AncestorsPath />
+
+        <RequestNotice error={error} retry={allRefetch} />
+        <CustomTable options={tableOptions} page={page} />
       </div>
-      <RequestNotice error={error} retry={allRefetch} />
-      <CustomTable options={tableOptions} page={page} />
     </div>
   );
 }

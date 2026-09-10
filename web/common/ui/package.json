@@ -15,6 +15,7 @@
     "./fonts.css": "./src/styles/fonts.css",
     "./confirmation-dialog": "./src/confirmation-dialog.tsx",
     "./locale": "./src/locale.tsx",
+    "./page-toolbar": "./src/page-toolbar.tsx",
     "./async-boundary": "./src/async-boundary.tsx"
   },
   "dependencies": {

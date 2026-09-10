@@ -1,3 +1,4 @@
+import { PageToolbar } from 'ui/page-toolbar';
 import { ConfirmationDialog } from 'ui/confirmation-dialog';
 import { useState } from 'react';
 import { RequestNotice, hasQueryFailure } from 'custom-graphql';
@@ -188,23 +189,8 @@ export default function NovelDetails() {
       confirmed();
   };
   return (
-    <div className="flex flex-col size-full h-screen">
-      <RequestNotice error={error} retry={refetch} />
-      {!loading && data?.getNovel === null && !hasQueryFailure(error, ['getNovel']) && <p>{t('request_missing')}</p>}
-      {write.notice}
-      <ConfirmationDialog
-        open={confirmOpen}
-        onOpenChange={setConfirmOpen}
-        title={t('delete_target', { name: `${target?.name ?? ''} · ${t('comment')}` })}
-        description={t('delete_comment_impact')}
-        confirmLabel={t('delete')}
-        cancelLabel={t('cancel')}
-        pending={deletion.pending}
-        confirmDisabled={deletion.blocked}
-        onConfirm={handleDeleteComment}
-        notice={deletion.notice}
-      />
-      <div className="flex w-full p-4 pb-0">
+    <div className="flex min-h-0 size-full flex-col">
+      <PageToolbar>
         <Button variant="ghost" size="icon" onClick={() => navigate(-1)} aria-label={t('back')}>
           <ChevronLeft />
         </Button>
@@ -212,120 +198,138 @@ export default function NovelDetails() {
         <Button variant="ghost" size="icon" onClick={handleRefresh} aria-label={t('refresh')}>
           <RefreshCcw />
         </Button>
-      </div>
-      <div className="flex-1 overflow-auto p-4 overscroll-contain">
-        <div className="flex flex-col gap-4">
-          {data?.getNovel && (
-            <>
-              <Card>
-                <Item className="pt-0 px-6">
-                  <ItemMedia>
-                    <Avatar className="size-10">
-                      <AvatarImage alt="" src={getImageUrl(data.getNovel.avatar)} />
-                      <AvatarFallback>{data.getNovel.name[0]}</AvatarFallback>
-                    </Avatar>
-                  </ItemMedia>
-                  <ItemContent>
-                    <ItemTitle>{data.getNovel.name}</ItemTitle>
-                    <ItemDescription>{data.getNovel.author?.name ?? '-'}</ItemDescription>
-                  </ItemContent>
-                  <ItemActions>
-                    <Tooltip>
-                      <TooltipTrigger
-                        render={
-                          <Button
-                            aria-label={t('update_by_crawler')}
-                            variant="ghost"
-                            size="icon"
-                            disabled={write.blocked || updateLoading}
-                            onClick={handleUpdateNovel}
-                          />
-                        }
-                      >
-                        <Download />
-                      </TooltipTrigger>
-                      <TooltipContent>{t('update_by_crawler')}</TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                      <TooltipTrigger
-                        render={
-                          <Button
-                            aria-label={t('go_to_source_site')}
-                            variant="ghost"
-                            size="icon"
-                            onClick={goToSourceSite}
-                          />
-                        }
-                      >
-                        <SquareArrowOutUpRight />
-                      </TooltipTrigger>
-                      <TooltipContent>{t('go_to_source_site')}</TooltipContent>
-                    </Tooltip>
-                  </ItemActions>
-                </Item>
-                <CardContent>
-                  <Details items={items} className="gap-2" fullSpan={4} />
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle>{t('comment')}</CardTitle>
-                  <CardAction>
-                    {!hasQueryFailure(error, ['getNovel', 'comments']) && (
-                      <CommentEdit
-                        disabled={deletion.blocked}
-                        refetch={refetch}
-                        novelId={data.getNovel.id}
-                        mode={match(data.getNovel.comments?.content)
-                          .with(P.nonNullable, () => 'update' as const)
-                          .otherwise(() => 'create' as const)}
-                        initContent={data.getNovel.comments?.content}
-                      />
-                    )}
-                    {data.getNovel.comments?.content && (
+      </PageToolbar>
+      <div className="flex min-h-0 flex-1 flex-col">
+        <RequestNotice error={error} retry={refetch} />
+        {!loading && data?.getNovel === null && !hasQueryFailure(error, ['getNovel']) && <p>{t('request_missing')}</p>}
+        {write.notice}
+        <ConfirmationDialog
+          open={confirmOpen}
+          onOpenChange={setConfirmOpen}
+          title={t('delete_target', { name: `${target?.name ?? ''} · ${t('comment')}` })}
+          description={t('delete_comment_impact')}
+          confirmLabel={t('delete')}
+          cancelLabel={t('cancel')}
+          pending={deletion.pending}
+          confirmDisabled={deletion.blocked}
+          onConfirm={handleDeleteComment}
+          notice={deletion.notice}
+        />
+
+        <div className="flex-1 overflow-auto p-4 overscroll-contain">
+          <div className="flex flex-col gap-4">
+            {data?.getNovel && (
+              <>
+                <Card>
+                  <Item className="pt-0 px-6">
+                    <ItemMedia>
+                      <Avatar className="size-10">
+                        <AvatarImage alt="" src={getImageUrl(data.getNovel.avatar)} />
+                        <AvatarFallback>{data.getNovel.name[0]}</AvatarFallback>
+                      </Avatar>
+                    </ItemMedia>
+                    <ItemContent>
+                      <ItemTitle>{data.getNovel.name}</ItemTitle>
+                      <ItemDescription>{data.getNovel.author?.name ?? '-'}</ItemDescription>
+                    </ItemContent>
+                    <ItemActions>
                       <Tooltip>
                         <TooltipTrigger
                           render={
                             <Button
-                              aria-label={t('delete')}
+                              aria-label={t('update_by_crawler')}
                               variant="ghost"
                               size="icon"
-                              disabled={deletion.pending}
-                              onClick={() => {
-                                if (!deletion.blocked && data.getNovel)
-                                  setTarget({ id: data.getNovel.id, name: data.getNovel.name });
-                                setConfirmOpen(true);
-                              }}
+                              disabled={write.blocked || updateLoading}
+                              onClick={handleUpdateNovel}
                             />
                           }
                         >
-                          <Delete />
+                          <Download />
                         </TooltipTrigger>
-                        <TooltipContent>{t('delete')}</TooltipContent>
+                        <TooltipContent>{t('update_by_crawler')}</TooltipContent>
                       </Tooltip>
-                    )}
-                  </CardAction>
-                </CardHeader>
-                <CardContent>
-                  <CustomMarkdown value={data.getNovel.comments?.content || '-'} />
+                      <Tooltip>
+                        <TooltipTrigger
+                          render={
+                            <Button
+                              aria-label={t('go_to_source_site')}
+                              variant="ghost"
+                              size="icon"
+                              onClick={goToSourceSite}
+                            />
+                          }
+                        >
+                          <SquareArrowOutUpRight />
+                        </TooltipTrigger>
+                        <TooltipContent>{t('go_to_source_site')}</TooltipContent>
+                      </Tooltip>
+                    </ItemActions>
+                  </Item>
+                  <CardContent>
+                    <Details items={items} className="gap-2" fullSpan={4} />
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>{t('comment')}</CardTitle>
+                    <CardAction>
+                      {!hasQueryFailure(error, ['getNovel', 'comments']) && (
+                        <CommentEdit
+                          disabled={deletion.blocked}
+                          refetch={refetch}
+                          novelId={data.getNovel.id}
+                          mode={match(data.getNovel.comments?.content)
+                            .with(P.nonNullable, () => 'update' as const)
+                            .otherwise(() => 'create' as const)}
+                          initContent={data.getNovel.comments?.content}
+                        />
+                      )}
+                      {data.getNovel.comments?.content && (
+                        <Tooltip>
+                          <TooltipTrigger
+                            render={
+                              <Button
+                                aria-label={t('delete')}
+                                variant="ghost"
+                                size="icon"
+                                disabled={deletion.pending}
+                                onClick={() => {
+                                  if (!deletion.blocked && data.getNovel)
+                                    setTarget({ id: data.getNovel.id, name: data.getNovel.name });
+                                  setConfirmOpen(true);
+                                }}
+                              />
+                            }
+                          >
+                            <Delete />
+                          </TooltipTrigger>
+                          <TooltipContent>{t('delete')}</TooltipContent>
+                        </Tooltip>
+                      )}
+                    </CardAction>
+                  </CardHeader>
+                  <CardContent>
+                    <CustomMarkdown value={data.getNovel.comments?.content || '-'} />
+                  </CardContent>
+                </Card>
+                {data.getNovel.chapters && (
+                  <Chapters chapters={data.getNovel.chapters} refetch={refetch} novelId={data.getNovel.id} />
+                )}
+              </>
+            )}
+            {loading && (
+              <Card>
+                <CardContent className="flex items-center gap-4">
+                  <Skeleton className="h-12 w-12 rounded-full" />
+                  <div className="flex flex-col gap-2">
+                    <Skeleton className="h-4 w-[250px]" />
+                    <Skeleton className="h-4 w-[200px]" />
+                  </div>
                 </CardContent>
               </Card>
-              {data.getNovel.chapters && (
-                <Chapters chapters={data.getNovel.chapters} refetch={refetch} novelId={data.getNovel.id} />
-              )}
-            </>
-          )}
-          {loading && (
-            <Card>
-              <CardContent className="flex items-center gap-4">
-                <Skeleton className="h-12 w-12 rounded-full" />
-                <div className="flex flex-col gap-2">
-                  <Skeleton className="h-4 w-[250px]" />
-                  <Skeleton className="h-4 w-[200px]" />
-                </div>
-              </CardContent>
-            </Card>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </div>

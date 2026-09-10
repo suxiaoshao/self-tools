@@ -56,6 +56,14 @@ portal/src/main.tsx
 
 `MicroConfig` 接口定义在 `common/types/src/micro.ts`。新增可组合功能包时，应实现该契约并在 `portal/src/micro/index.ts` 注册；不要为功能包另建一套独立应用入口，除非任务明确要求改变当前组合架构。
 
+`AppDrawer` 拥有 SidebarProvider 和动态视口高度边界。壳内页面及 RouteBoundary 的加载／失败回退通过
+`ui/page-toolbar` 组合导航入口与本页操作，每页只显示一条工具栏；业务回调、Provider 和表单归属仍由页面拥有。
+工具栏支持窄屏换行且不收缩，内容区使用剩余高度并在内部滚动，不额外使用整屏高度。抓取页工具栏留在原 form 内，
+导航和保存草稿按钮不提交表单。共享表格的滚动容器同时建立定位边界，避免分页辅助文本越界撑开外层页面。
+移动端使用共享 Sidebar 的独立抽屉状态、可见关闭按钮和本地化标题；
+portal 监听路由 location key，在导航完成后关闭移动端抽屉，包括指向当前页面的链接和账号安全入口。
+菜单分组及主题／语言弹窗不触发导航关闭；桌面侧栏状态独立保留。键盘关闭和设置弹窗的焦点恢复由底层 Sheet／Dialog 管理。
+
 ## GraphQL 客户端代码
 
 `bookmarks` 和 `collections` 分别维护自己的 GraphQL 客户端输入与生成物：
@@ -106,7 +114,7 @@ Item 创建将名称、正文和初始集合关联一次提交；编辑只修改
 ## shadcn/ui 与样式所有权
 
 共享源码与 shadcn 配置位于 `common/ui/`，组件通过 `ui/components/*` 公开，工具通过
-`ui/lib/utils`、主题通过 `ui/theme`、确认视图通过 `ui/confirmation-dialog`、基础文案通过 `ui/locale`、编辑器与 Markdown 共用字体通过 `ui/fonts.css` 公开。组件目录的受限 subpath pattern 供 CLI 定位；不公开
+`ui/lib/utils`、主题通过 `ui/theme`、确认视图通过 `ui/confirmation-dialog`、页面工具栏通过 `ui/page-toolbar`、基础文案通过 `ui/locale`、编辑器与 Markdown 共用字体通过 `ui/fonts.css` 公开。组件目录的受限 subpath pattern 供 CLI 定位；不公开
 `src/*`、私有 hooks 或其他内部目录。UI 包使用 `#components/*`、`#hooks/*`、`#lib/*` 作为内部 CLI alias。
 `packages/portal/components.json` 指向共享 UI，应用全局 CSS 仍为 `packages/portal/src/styles/globals.css`，
 页面尺寸 CSS 归 portal。主题运行时归 ui，菜单表单归 portal；i18n 仅拥有语言运行时与资源。
