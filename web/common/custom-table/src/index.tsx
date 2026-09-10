@@ -26,7 +26,7 @@ export function CustomTable<D extends object>({
   const { getHeaderGroups, getRowModel } = useReactTable(options);
   return (
     <div
-      className={cn('grow shrink-0 basis-0 flex flex-col max-h-full overflow-y-auto', className)}
+      className={cn('relative grow shrink-0 basis-0 flex flex-col max-h-full overflow-y-auto', className)}
       {...containerProps}
     >
       <Table {...tableProps}>

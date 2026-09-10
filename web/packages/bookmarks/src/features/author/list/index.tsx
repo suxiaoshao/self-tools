@@ -1,3 +1,4 @@
+import { PageToolbar } from 'ui/page-toolbar';
 import { ConfirmationDialog } from 'ui/confirmation-dialog';
 import { useState } from 'react';
 import { RequestNotice } from 'custom-graphql';
@@ -184,39 +185,8 @@ export default function AuthorList() {
   );
 
   return (
-    <div className="flex flex-col size-full p-4">
-      <RequestNotice error={error} />
-      {!confirmOpen && write.notice}
-      <ConfirmationDialog
-        returnFocus={() => document.getElementById(`author-actions-${target?.id}`)}
-        open={confirmOpen}
-        onOpenChange={setConfirmOpen}
-        title={t('delete_target', { name: target?.name })}
-        description={t('delete_author_impact')}
-        confirmLabel={t('delete')}
-        cancelLabel={t('cancel')}
-        pending={write.pending}
-        confirmDisabled={write.blocked}
-        notice={write.notice}
-        onConfirm={async () => {
-          if (!target) return;
-          const { id } = target;
-          const confirmed = () => {
-            setConfirmOpen(false);
-            void Promise.resolve()
-              .then(() => refetch())
-              .catch(() => undefined);
-          };
-          if (
-            await write.execute(async () => (await deleteAuthor({ variables: { id } })).data?.deleteAuthor, {
-              verify: () => checkDeleted(client, id),
-              confirmed,
-            })
-          )
-            confirmed();
-        }}
-      />
-      <div className="flex-[0_0_auto] mb-4 flex">
+    <div className="flex min-h-0 size-full flex-col">
+      <PageToolbar>
         <CreateAuthorButton refetch={refetch} />
         <Link to="/bookmarks/authors/fetch" className={buttonVariants({ variant: 'default', className: 'ml-2' })}>
           {t('crawler')}
@@ -224,8 +194,42 @@ export default function AuthorList() {
         <Button className="ml-auto" variant="ghost" size="icon" onClick={() => refetch()} aria-label={t('refresh')}>
           <RefreshCcw />
         </Button>
+      </PageToolbar>
+      <div className="flex min-h-0 flex-1 flex-col p-4">
+        <RequestNotice error={error} />
+        {!confirmOpen && write.notice}
+        <ConfirmationDialog
+          returnFocus={() => document.getElementById(`author-actions-${target?.id}`)}
+          open={confirmOpen}
+          onOpenChange={setConfirmOpen}
+          title={t('delete_target', { name: target?.name })}
+          description={t('delete_author_impact')}
+          confirmLabel={t('delete')}
+          cancelLabel={t('cancel')}
+          pending={write.pending}
+          confirmDisabled={write.blocked}
+          notice={write.notice}
+          onConfirm={async () => {
+            if (!target) return;
+            const { id } = target;
+            const confirmed = () => {
+              setConfirmOpen(false);
+              void Promise.resolve()
+                .then(() => refetch())
+                .catch(() => undefined);
+            };
+            if (
+              await write.execute(async () => (await deleteAuthor({ variables: { id } })).data?.deleteAuthor, {
+                verify: () => checkDeleted(client, id),
+                confirmed,
+              })
+            )
+              confirmed();
+          }}
+        />
+
+        <CustomTable options={tableOptions} page={page} />
       </div>
-      <CustomTable options={tableOptions} page={page} />
     </div>
   );
 }

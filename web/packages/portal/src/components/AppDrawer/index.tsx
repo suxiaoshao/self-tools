@@ -23,7 +23,6 @@ import {
   SidebarGroupLabel,
   SidebarMenu,
   SidebarProvider,
-  SidebarTrigger,
   useSidebar,
 } from 'ui/components/sidebar';
 import { Toaster } from 'ui/components/sonner';
@@ -43,7 +42,7 @@ function CloseSidebarOnNavigation() {
 export default function AppDrawer() {
   const t = useI18n();
   return (
-    <SidebarProvider defaultOpen>
+    <SidebarProvider defaultOpen className="h-dvh min-h-0">
       <CloseSidebarOnNavigation />
       <Sidebar>
         <SidebarContent>
@@ -64,10 +63,7 @@ export default function AppDrawer() {
           </SidebarGroup>
         </SidebarContent>
       </Sidebar>
-      <main className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-12 shrink-0 items-center border-b px-3">
-          <SidebarTrigger />
-        </header>
+      <main className="flex min-h-0 min-w-0 flex-1 flex-col">
         <div className="min-h-0 flex-1">
           <Outlet />
         </div>

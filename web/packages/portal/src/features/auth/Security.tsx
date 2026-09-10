@@ -1,3 +1,4 @@
+import { PageToolbar } from 'ui/page-toolbar';
 import { useEffect, useState } from 'react';
 import { KeyRound, Plus } from 'lucide-react';
 import { useI18n } from 'i18n';
@@ -152,86 +153,91 @@ export default function Security() {
     setError(null);
   };
   return (
-    <section className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-6">
+    <section className="flex min-h-0 size-full flex-col">
       <title>{t('auth_security')}</title>
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('auth_security')}</CardTitle>
-          <CardDescription>{t('auth_security_description')}</CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-6">
-          {saved && <output>{t('auth_operation_saved')}</output>}
-          <div className="flex items-center justify-between gap-4">
-            <h2 className="font-medium">{t('auth_passkeys')}</h2>
-            <Button disabled={pending || keys === null} onClick={() => open({ kind: 'add', name: '' })}>
-              <Plus data-icon="inline-start" />
-              {t('auth_add_passkey')}
-            </Button>
-          </div>
-          {keys === null ? (
-            <output>{t('auth_loading_passkeys')}</output>
-          ) : keys.length === 0 ? (
-            <Empty>
-              <EmptyHeader>
-                <EmptyTitle>{t('auth_no_passkeys_title')}</EmptyTitle>
-                <EmptyDescription>{t('auth_no_passkeys_description')}</EmptyDescription>
-              </EmptyHeader>
-            </Empty>
-          ) : (
-            <ul className="flex flex-col gap-5">
-              {keys.map((key) => (
-                <li key={key.id} className="flex flex-wrap items-center justify-between gap-3">
-                  <div className="flex min-w-0 flex-col gap-1">
-                    <span className="break-words font-medium">{key.name}</span>
-                    <span className="text-sm text-muted-foreground">
-                      {t('auth_created_at')}: {new Date(key.createdAt).toLocaleString()}
-                    </span>
-                    <span className="text-sm text-muted-foreground">
-                      {t('auth_last_used')}:{' '}
-                      {key.lastUsedAt ? new Date(key.lastUsedAt).toLocaleString() : t('auth_never_used')}
-                    </span>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      disabled={pending}
-                      onClick={() => open({ kind: 'rename', id: key.id, name: key.name })}
-                    >
-                      {t('auth_rename')}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      disabled={pending}
-                      onClick={() => open({ kind: 'delete', id: key.id, name: key.name })}
-                    >
-                      {t('delete')}
-                    </Button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-          {!operation && error && (
-            <>
-              <p role="alert">
-                {t(error)} {requestId && <code>{requestId}</code>}
-              </p>
-              <Button
-                variant="outline"
-                disabled={pending}
-                onClick={() =>
-                  run(async (signal, generation) => {
-                    const values = await getPasskeys(signal);
-                    if (!signal.aborted && useAuthStore.getState().generation === generation) setKeys(values);
-                  })
-                }
-              >
-                {t('auth_retry')}
-              </Button>
-            </>
-          )}
-        </CardContent>
-      </Card>
+      <PageToolbar>
+        <h1 className="font-medium">{t('auth_security')}</h1>
+        <Button className="ml-auto" disabled={pending || keys === null} onClick={() => open({ kind: 'add', name: '' })}>
+          <Plus data-icon="inline-start" />
+          {t('auth_add_passkey')}
+        </Button>
+      </PageToolbar>
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="mx-auto w-full max-w-3xl p-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>{t('auth_passkeys')}</CardTitle>
+              <CardDescription>{t('auth_security_description')}</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-6">
+              {saved && <output>{t('auth_operation_saved')}</output>}
+
+              {keys === null ? (
+                <output>{t('auth_loading_passkeys')}</output>
+              ) : keys.length === 0 ? (
+                <Empty>
+                  <EmptyHeader>
+                    <EmptyTitle>{t('auth_no_passkeys_title')}</EmptyTitle>
+                    <EmptyDescription>{t('auth_no_passkeys_description')}</EmptyDescription>
+                  </EmptyHeader>
+                </Empty>
+              ) : (
+                <ul className="flex flex-col gap-5">
+                  {keys.map((key) => (
+                    <li key={key.id} className="flex flex-wrap items-center justify-between gap-3">
+                      <div className="flex min-w-0 flex-col gap-1">
+                        <span className="break-words font-medium">{key.name}</span>
+                        <span className="text-sm text-muted-foreground">
+                          {t('auth_created_at')}: {new Date(key.createdAt).toLocaleString()}
+                        </span>
+                        <span className="text-sm text-muted-foreground">
+                          {t('auth_last_used')}:{' '}
+                          {key.lastUsedAt ? new Date(key.lastUsedAt).toLocaleString() : t('auth_never_used')}
+                        </span>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          disabled={pending}
+                          onClick={() => open({ kind: 'rename', id: key.id, name: key.name })}
+                        >
+                          {t('auth_rename')}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          disabled={pending}
+                          onClick={() => open({ kind: 'delete', id: key.id, name: key.name })}
+                        >
+                          {t('delete')}
+                        </Button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {!operation && error && (
+                <>
+                  <p role="alert">
+                    {t(error)} {requestId && <code>{requestId}</code>}
+                  </p>
+                  <Button
+                    variant="outline"
+                    disabled={pending}
+                    onClick={() =>
+                      run(async (signal, generation) => {
+                        const values = await getPasskeys(signal);
+                        if (!signal.aborted && useAuthStore.getState().generation === generation) setKeys(values);
+                      })
+                    }
+                  >
+                    {t('auth_retry')}
+                  </Button>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
       <Dialog
         open={operation !== null}
         onOpenChange={(open) => {

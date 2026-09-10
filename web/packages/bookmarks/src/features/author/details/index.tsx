@@ -1,3 +1,4 @@
+import { PageToolbar } from 'ui/page-toolbar';
 import { RequestNotice, hasQueryFailure } from 'custom-graphql';
 import useBookmarkWrite from '@bookmarks/useBookmarkWrite';
 import { useMutation, useQuery } from '@apollo/client/react';
@@ -124,11 +125,8 @@ export default function AuthorDetails() {
       .catch(() => undefined);
   }, [authorId, refetch, updateAuthor, t, write]);
   return (
-    <div className="flex flex-col size-full p-4 gap-2 pb-0 pt-2">
-      <RequestNotice error={error} retry={refetch} />
-      {!loading && data?.getAuthor === null && !hasQueryFailure(error, ['getAuthor']) && <p>{t('request_missing')}</p>}
-      {write.notice}
-      <div className="flex w-full">
+    <div className="flex min-h-0 size-full flex-col">
+      <PageToolbar>
         <Button variant="ghost" size="icon" onClick={() => navigate(-1)} aria-label={t('back')}>
           <ChevronLeft />
         </Button>
@@ -136,161 +134,172 @@ export default function AuthorDetails() {
         <Button variant="ghost" size="icon" onClick={handleRefresh} aria-label={t('refresh')}>
           <RefreshCcw />
         </Button>
-      </div>
-      {data?.getAuthor && (
-        <>
-          <Card>
-            <Item className="pt-0 px-6">
-              <ItemMedia>
-                <Avatar className="size-10">
-                  <AvatarImage alt="" src={getImageUrl(data.getAuthor.avatar)} />
-                  <AvatarFallback>{data.getAuthor.name[0]}</AvatarFallback>
-                </Avatar>
-              </ItemMedia>
-              <ItemContent>
-                <ItemTitle>{data.getAuthor.name}</ItemTitle>
-              </ItemContent>
-              <ItemActions>
-                <Tooltip>
-                  <TooltipTrigger
-                    render={
-                      <Button
-                        aria-label={t('update_by_crawler')}
-                        variant="ghost"
-                        size="icon"
-                        disabled={write.blocked || updateLoading}
-                        onClick={handleUpdateAuthor}
-                      />
-                    }
-                  >
-                    <Download />
-                  </TooltipTrigger>
-                  <TooltipContent>{t('update_by_crawler')}</TooltipContent>
-                </Tooltip>
-                <Tooltip>
-                  <TooltipTrigger
-                    render={
-                      <Button
-                        aria-label={t('go_to_source_site')}
-                        variant="ghost"
-                        size="icon"
-                        onClick={goToSourceSite}
-                      />
-                    }
-                  >
-                    <SquareArrowOutUpRight />
-                  </TooltipTrigger>
-                  <TooltipContent>{t('go_to_source_site')}</TooltipContent>
-                </Tooltip>
-              </ItemActions>
-            </Item>
-            <CardContent>{data.getAuthor.description}</CardContent>
-          </Card>
-          <div className="flex-[1_1_0] overflow-y-auto grid gap-4 pb-4 grid-cols-[repeat(auto-fill,minmax(--spacing(80),1fr))] grid-rows-[masonry] auto-rows-max items-start display-[masonry]">
-            {data?.getAuthor.novels?.map(
-              ({ id, avatar, name, description, url, novelStatus, wordCount, lastChapter, firstChapter }) => (
-                <Card key={id}>
-                  <Item className="pt-0 px-6">
-                    <ItemMedia>
-                      <Avatar className="size-10">
-                        <AvatarImage alt="" src={getImageUrl(avatar)} />
-                        <AvatarFallback>{name[0]}</AvatarFallback>
-                      </Avatar>
-                    </ItemMedia>
-                    <ItemContent>
-                      <ItemTitle>
-                        <Link className="text-primary underline-offset-4 hover:underline" to={`/bookmarks/novel/${id}`}>
-                          {name}
-                        </Link>
-                      </ItemTitle>
-                      <ItemDescription>
-                        {match(novelStatus)
-                          .with('ONGOING', () => (
-                            <Badge variant="outline" className="text-muted-foreground px-1.5">
-                              <Loader className="fill-yellow-500 dark:fill-yellow-400" />
-                              {t('ongoing')}
-                            </Badge>
-                          ))
-                          .with('COMPLETED', () => (
-                            <Badge variant="outline" className="text-muted-foreground px-1.5">
-                              <CircleCheck className="fill-green-500 dark:fill-green-400" />
-                              {t('completed')}
-                            </Badge>
-                          ))
-                          .with('PAUSED', () => (
-                            <Badge variant="outline" className="text-muted-foreground px-1.5">
-                              <CirclePause className="fill-red-500 dark:fill-red-400" />
-                              {t('paused')}
-                            </Badge>
-                          ))
-                          .exhaustive()}
-                      </ItemDescription>
-                    </ItemContent>
-                    <ItemActions>
-                      <Tooltip>
-                        <TooltipTrigger
-                          render={
-                            <Button
-                              aria-label={t('go_to_source_site')}
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => window.open(url, '_blank')}
-                            />
-                          }
-                        >
-                          <SquareArrowOutUpRight />
-                        </TooltipTrigger>
-                        <TooltipContent>{t('go_to_source_site')}</TooltipContent>
-                      </Tooltip>
-                    </ItemActions>
-                  </Item>
-                  <CardContent className="flex flex-col gap-2">
-                    <p>{description}</p>
-                    <Details
-                      fullSpan={2}
-                      items={
-                        [
-                          {
-                            label: t('novel_status'),
-                            value: t(getLabelKeyByNovelStatus(novelStatus)),
-                          },
-                          {
-                            label: t('word_count'),
-                            value: wordCount,
-                          },
-                          {
-                            label: t('last_update_time'),
-                            value: match(lastChapter?.time)
-                              .with(P.string, (data) => format(data))
-                              .otherwise(() => '-'),
-                          },
-                          {
-                            label: t('first_chapter_time'),
-                            value: match(firstChapter?.time)
-                              .with(P.string, (data) => format(data))
-                              .otherwise(() => '-'),
-                          },
-                        ] satisfies DetailsItem[]
+      </PageToolbar>
+      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4">
+        <RequestNotice error={error} retry={refetch} />
+        {!loading && data?.getAuthor === null && !hasQueryFailure(error, ['getAuthor']) && (
+          <p>{t('request_missing')}</p>
+        )}
+        {write.notice}
+
+        {data?.getAuthor && (
+          <>
+            <Card>
+              <Item className="pt-0 px-6">
+                <ItemMedia>
+                  <Avatar className="size-10">
+                    <AvatarImage alt="" src={getImageUrl(data.getAuthor.avatar)} />
+                    <AvatarFallback>{data.getAuthor.name[0]}</AvatarFallback>
+                  </Avatar>
+                </ItemMedia>
+                <ItemContent>
+                  <ItemTitle>{data.getAuthor.name}</ItemTitle>
+                </ItemContent>
+                <ItemActions>
+                  <Tooltip>
+                    <TooltipTrigger
+                      render={
+                        <Button
+                          aria-label={t('update_by_crawler')}
+                          variant="ghost"
+                          size="icon"
+                          disabled={write.blocked || updateLoading}
+                          onClick={handleUpdateAuthor}
+                        />
                       }
-                    />
-                  </CardContent>
-                </Card>
-              ),
-            )}
-          </div>
-        </>
-      )}
-      {loading && (
-        <Card>
-          <CardContent className="flex items-center gap-4">
-            <Skeleton className="h-12 w-12 rounded-full" />
-            <div className="flex flex-col gap-2">
-              <Skeleton className="h-4 w-[250px]" />
-              <Skeleton className="h-4 w-[200px]" />
+                    >
+                      <Download />
+                    </TooltipTrigger>
+                    <TooltipContent>{t('update_by_crawler')}</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger
+                      render={
+                        <Button
+                          aria-label={t('go_to_source_site')}
+                          variant="ghost"
+                          size="icon"
+                          onClick={goToSourceSite}
+                        />
+                      }
+                    >
+                      <SquareArrowOutUpRight />
+                    </TooltipTrigger>
+                    <TooltipContent>{t('go_to_source_site')}</TooltipContent>
+                  </Tooltip>
+                </ItemActions>
+              </Item>
+              <CardContent>{data.getAuthor.description}</CardContent>
+            </Card>
+            <div className="grid shrink-0 gap-4 grid-cols-[repeat(auto-fill,minmax(--spacing(80),1fr))] grid-rows-[masonry] auto-rows-max items-start display-[masonry]">
+              {data?.getAuthor.novels?.map(
+                ({ id, avatar, name, description, url, novelStatus, wordCount, lastChapter, firstChapter }) => (
+                  <Card key={id}>
+                    <Item className="pt-0 px-6">
+                      <ItemMedia>
+                        <Avatar className="size-10">
+                          <AvatarImage alt="" src={getImageUrl(avatar)} />
+                          <AvatarFallback>{name[0]}</AvatarFallback>
+                        </Avatar>
+                      </ItemMedia>
+                      <ItemContent>
+                        <ItemTitle>
+                          <Link
+                            className="text-primary underline-offset-4 hover:underline"
+                            to={`/bookmarks/novel/${id}`}
+                          >
+                            {name}
+                          </Link>
+                        </ItemTitle>
+                        <ItemDescription>
+                          {match(novelStatus)
+                            .with('ONGOING', () => (
+                              <Badge variant="outline" className="text-muted-foreground px-1.5">
+                                <Loader className="fill-yellow-500 dark:fill-yellow-400" />
+                                {t('ongoing')}
+                              </Badge>
+                            ))
+                            .with('COMPLETED', () => (
+                              <Badge variant="outline" className="text-muted-foreground px-1.5">
+                                <CircleCheck className="fill-green-500 dark:fill-green-400" />
+                                {t('completed')}
+                              </Badge>
+                            ))
+                            .with('PAUSED', () => (
+                              <Badge variant="outline" className="text-muted-foreground px-1.5">
+                                <CirclePause className="fill-red-500 dark:fill-red-400" />
+                                {t('paused')}
+                              </Badge>
+                            ))
+                            .exhaustive()}
+                        </ItemDescription>
+                      </ItemContent>
+                      <ItemActions>
+                        <Tooltip>
+                          <TooltipTrigger
+                            render={
+                              <Button
+                                aria-label={t('go_to_source_site')}
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => window.open(url, '_blank')}
+                              />
+                            }
+                          >
+                            <SquareArrowOutUpRight />
+                          </TooltipTrigger>
+                          <TooltipContent>{t('go_to_source_site')}</TooltipContent>
+                        </Tooltip>
+                      </ItemActions>
+                    </Item>
+                    <CardContent className="flex flex-col gap-2">
+                      <p>{description}</p>
+                      <Details
+                        fullSpan={2}
+                        items={
+                          [
+                            {
+                              label: t('novel_status'),
+                              value: t(getLabelKeyByNovelStatus(novelStatus)),
+                            },
+                            {
+                              label: t('word_count'),
+                              value: wordCount,
+                            },
+                            {
+                              label: t('last_update_time'),
+                              value: match(lastChapter?.time)
+                                .with(P.string, (data) => format(data))
+                                .otherwise(() => '-'),
+                            },
+                            {
+                              label: t('first_chapter_time'),
+                              value: match(firstChapter?.time)
+                                .with(P.string, (data) => format(data))
+                                .otherwise(() => '-'),
+                            },
+                          ] satisfies DetailsItem[]
+                        }
+                      />
+                    </CardContent>
+                  </Card>
+                ),
+              )}
             </div>
-          </CardContent>
-        </Card>
-      )}
+          </>
+        )}
+        {loading && (
+          <Card>
+            <CardContent className="flex items-center gap-4">
+              <Skeleton className="h-12 w-12 rounded-full" />
+              <div className="flex flex-col gap-2">
+                <Skeleton className="h-4 w-[250px]" />
+                <Skeleton className="h-4 w-[200px]" />
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   );
 }

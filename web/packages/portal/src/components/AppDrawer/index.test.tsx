@@ -1,3 +1,4 @@
+import { PageToolbar } from 'ui/page-toolbar';
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
@@ -5,7 +6,11 @@ import { i18n } from 'i18n';
 
 function Page() {
   const { pathname } = useLocation();
-  return <h1>{pathname}</h1>;
+  return (
+    <PageToolbar>
+      <h1>{pathname}</h1>
+    </PageToolbar>
+  );
 }
 
 async function renderLayout(width = 390) {

@@ -1,3 +1,4 @@
+import { PageToolbar } from 'ui/page-toolbar';
 import { ConfirmationDialog } from 'ui/confirmation-dialog';
 import { useState } from 'react';
 import { attemptWrite, useWriteAction, WriteNotice, RequestNotice } from 'custom-graphql';
@@ -68,8 +69,8 @@ export default function ItemDetails() {
     if (result?.status === 'saved') navigate(-1);
   };
   return (
-    <div className="flex flex-col size-full overflow-hidden pb-2">
-      <div className="flex w-full pl-2 pr-2">
+    <div className="flex min-h-0 size-full flex-col">
+      <PageToolbar>
         <Button
           variant="ghost"
           size="icon-lg"
@@ -89,83 +90,85 @@ export default function ItemDetails() {
         >
           <RefreshCcw />
         </Button>
-      </div>
-      <RequestNotice error={error} retry={refetch} />
-      <ConfirmationDialog
-        open={confirmOpen}
-        onOpenChange={setConfirmOpen}
-        title={t('delete_target', { name: target?.name })}
-        description={t('delete_item_impact')}
-        confirmLabel={t('delete')}
-        cancelLabel={t('cancel')}
-        pending={deletion.pending}
-        confirmDisabled={deletion.blocked}
-        onConfirm={handleDelete}
-        notice={
-          <WriteNotice
-            outcome={deletion.outcome}
-            pending={deletion.pending}
-            check={async () => {
-              if (target && (await deletion.check(() => checkDeleted(client, target.id)))) navigate(-1);
-            }}
-          />
-        }
-      />
-      {!loading && !error && data?.getItem === null && <p>{t('request_not_found')}</p>}
-      <div className="flex-[1_1_0] overflow-y-auto pl-2 pr-2">
-        <div className="flex flex-col gap-2">
-          {data?.getItem && (
-            <Card>
-              <CardHeader>
-                <CardTitle>{data.getItem.name}</CardTitle>
-                <CardAction>
-                  <Dialog open={open} onOpenChange={handleOpenChange}>
-                    <Button
-                      variant="ghost"
-                      size="icon-lg"
-                      className="rounded-full"
-                      disabled={deletion.blocked}
-                      aria-label={t('edit')}
-                      onClick={handleOpen}
-                    >
-                      <Edit />
-                    </Button>
-                    {open && (
-                      <EditItemForm key={itemId} id={Number(itemId)} handleClose={handleClose} refresh={refetch} />
-                    )}
-                    <Button
-                      variant="ghost"
-                      size="icon-lg"
-                      className="rounded-full"
-                      disabled={deletion.pending}
-                      aria-label={t('delete_target', { name: data.getItem.name })}
-                      onClick={() => {
-                        if (!deletion.blocked && data.getItem)
-                          setTarget({ id: data.getItem.id, name: data.getItem.name });
-                        setConfirmOpen(true);
-                      }}
-                    >
-                      <Delete />
-                    </Button>
-                  </Dialog>
-                </CardAction>
-              </CardHeader>
-              <CardContent>
-                <Details items={items} className="gap-2" fullSpan={4} />
-              </CardContent>
-            </Card>
-          )}
-          {loading && (
-            <Card>
-              <CardContent className="flex items-center gap-4">
-                <Skeleton className="h-12 w-12 rounded-full" />
-                <div className="flex flex-col gap-2">
-                  <Skeleton className="h-4 w-[250px]" />
-                  <Skeleton className="h-4 w-[200px]" />
-                </div>
-              </CardContent>
-            </Card>
-          )}
+      </PageToolbar>
+      <div className="flex min-h-0 flex-1 flex-col pb-2">
+        <RequestNotice error={error} retry={refetch} />
+        <ConfirmationDialog
+          open={confirmOpen}
+          onOpenChange={setConfirmOpen}
+          title={t('delete_target', { name: target?.name })}
+          description={t('delete_item_impact')}
+          confirmLabel={t('delete')}
+          cancelLabel={t('cancel')}
+          pending={deletion.pending}
+          confirmDisabled={deletion.blocked}
+          onConfirm={handleDelete}
+          notice={
+            <WriteNotice
+              outcome={deletion.outcome}
+              pending={deletion.pending}
+              check={async () => {
+                if (target && (await deletion.check(() => checkDeleted(client, target.id)))) navigate(-1);
+              }}
+            />
+          }
+        />
+        {!loading && !error && data?.getItem === null && <p>{t('request_not_found')}</p>}
+        <div className="flex-[1_1_0] overflow-y-auto pl-2 pr-2">
+          <div className="flex flex-col gap-2">
+            {data?.getItem && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>{data.getItem.name}</CardTitle>
+                  <CardAction>
+                    <Dialog open={open} onOpenChange={handleOpenChange}>
+                      <Button
+                        variant="ghost"
+                        size="icon-lg"
+                        className="rounded-full"
+                        disabled={deletion.blocked}
+                        aria-label={t('edit')}
+                        onClick={handleOpen}
+                      >
+                        <Edit />
+                      </Button>
+                      {open && (
+                        <EditItemForm key={itemId} id={Number(itemId)} handleClose={handleClose} refresh={refetch} />
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="icon-lg"
+                        className="rounded-full"
+                        disabled={deletion.pending}
+                        aria-label={t('delete_target', { name: data.getItem.name })}
+                        onClick={() => {
+                          if (!deletion.blocked && data.getItem)
+                            setTarget({ id: data.getItem.id, name: data.getItem.name });
+                          setConfirmOpen(true);
+                        }}
+                      >
+                        <Delete />
+                      </Button>
+                    </Dialog>
+                  </CardAction>
+                </CardHeader>
+                <CardContent>
+                  <Details items={items} className="gap-2" fullSpan={4} />
+                </CardContent>
+              </Card>
+            )}
+            {loading && (
+              <Card>
+                <CardContent className="flex items-center gap-4">
+                  <Skeleton className="h-12 w-12 rounded-full" />
+                  <div className="flex flex-col gap-2">
+                    <Skeleton className="h-4 w-[250px]" />
+                    <Skeleton className="h-4 w-[200px]" />
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
         </div>
       </div>
     </div>

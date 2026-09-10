@@ -1,3 +1,4 @@
+import { PageToolbar } from 'ui/page-toolbar';
 import { RequestNotice } from 'custom-graphql';
 import { useTitle } from 'hooks';
 import { graphql } from '@collections/gql/index';
@@ -107,8 +108,8 @@ export default function ItemList() {
     [columns, data],
   );
   return (
-    <div className="flex flex-col size-full">
-      <div className="flex-[0_0_auto] flex p-4 pb-0">
+    <div className="flex min-h-0 size-full flex-col">
+      <PageToolbar>
         <CreateItemButton variant="default" refetch={refetch} collectionIds={[]} />
         <Button
           variant="ghost"
@@ -119,33 +120,35 @@ export default function ItemList() {
         >
           <RefreshCcw />
         </Button>
-      </div>
-      <div className="flex-[1_1_0] overflow-auto p-4 pr-2">
-        <Card className="mb-4 gap-0">
-          <CardContent className="grid grid-cols-[auto_1fr] gap-y-2 gap-x-4">
-            <Field>
-              <FieldLabel id="collection-full-match">{t('collection_whether_full_match')}</FieldLabel>
-              <Controller
-                control={control}
-                name="collectionMatch.fullMatch"
-                render={({ field: { onChange, value, ...field } }) => (
-                  <Switch {...field} checked={value} onCheckedChange={onChange} />
-                )}
-              />
-            </Field>
+      </PageToolbar>
+      <div className="flex min-h-0 flex-1 flex-col">
+        <div className="flex-[1_1_0] overflow-auto p-4 pr-2">
+          <Card className="mb-4 gap-0">
+            <CardContent className="grid grid-cols-[auto_1fr] gap-y-2 gap-x-4">
+              <Field>
+                <FieldLabel id="collection-full-match">{t('collection_whether_full_match')}</FieldLabel>
+                <Controller
+                  control={control}
+                  name="collectionMatch.fullMatch"
+                  render={({ field: { onChange, value, ...field } }) => (
+                    <Switch {...field} checked={value} onCheckedChange={onChange} />
+                  )}
+                />
+              </Field>
 
-            <Field>
-              <FieldLabel>{t('match_collections')}</FieldLabel>
-              <Controller
-                control={control}
-                name="collectionMatch.matchSet"
-                render={({ field }) => <CollectionMultiSelect {...field} />}
-              />
-            </Field>
-          </CardContent>
-        </Card>
-        <RequestNotice error={error} retry={refetch} />
-        <CustomTable className="overflow-hidden flex-none max-h-none" options={tableOptions} page={page} />
+              <Field>
+                <FieldLabel>{t('match_collections')}</FieldLabel>
+                <Controller
+                  control={control}
+                  name="collectionMatch.matchSet"
+                  render={({ field }) => <CollectionMultiSelect {...field} />}
+                />
+              </Field>
+            </CardContent>
+          </Card>
+          <RequestNotice error={error} retry={refetch} />
+          <CustomTable className="overflow-hidden flex-none max-h-none" options={tableOptions} page={page} />
+        </div>
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
+import { SidebarProvider } from 'ui/components/sidebar';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { Suspense } from 'react';
-import { afterEach, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { ApolloProvider } from '@apollo/client/react';
 import { MemoryRouter } from 'react-router';
 import { clearAuthenticatedState, getClient } from 'custom-graphql';
@@ -11,6 +12,15 @@ vi.mock('i18n', () => ({
   useI18n: () => (key: string) =>
     (({ qidian: '起点中文网', jjwxc: '晋江文学城' }) as Record<string, string>)[key] ?? key,
 }));
+
+beforeEach(() => {
+  vi.stubGlobal('matchMedia', (media: string) => ({
+    media,
+    matches: false,
+    addEventListener: vi.fn<MediaQueryList['addEventListener']>(),
+    removeEventListener: vi.fn<MediaQueryList['removeEventListener']>(),
+  }));
+});
 
 afterEach(() => {
   cleanup();
@@ -34,13 +44,18 @@ it.each([
   render(
     <ApolloProvider client={getClient('/api/bookmarks/graphql')}>
       <MemoryRouter>
-        <Suspense fallback={null}>
-          <Form />
-        </Suspense>
+        <SidebarProvider>
+          <Suspense fallback={null}>
+            <Form />
+          </Suspense>
+        </SidebarProvider>
       </MemoryRouter>
     </ApolloProvider>,
   );
   await act(() => vi.dynamicImportSettled());
+  fireEvent.click(screen.getByRole('button', { name: 'Toggle sidebar' }));
+  expect(fetchMock).not.toHaveBeenCalled();
+  expect(screen.queryByText('request_required')).not.toBeInTheDocument();
   fireEvent.change(screen.getByRole('textbox', { name: `${kind}_id` }), { target: { value: '123' } });
   fireEvent.click(screen.getByRole('button', { name: 'fetch' }));
   expect(await screen.findByText('request_required')).toBeVisible();
