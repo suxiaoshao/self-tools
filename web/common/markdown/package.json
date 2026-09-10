@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.tsx"
+    ".": "./src/index.tsx",
+    "./vite": "./vite.config.ts"
   },
   "dependencies": {
     "i18n": "workspace:*",
@@ -16,6 +17,7 @@
     "ui": "workspace:*"
   },
   "devDependencies": {
-    "@types/prismjs": "^1.26.6"
+    "@types/prismjs": "^1.26.6",
+    "vite": "^8.1.4"
   }
 }

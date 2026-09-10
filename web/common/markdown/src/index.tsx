@@ -1,8 +1,6 @@
 import { useI18n } from 'i18n';
-import React, { type ComponentProps, type JSX, useEffect } from 'react';
+import React, { type ComponentProps, type JSX, useEffect, useRef, useState } from 'react';
 import MarkdownSource, { type MarkdownToJSX } from 'markdown-to-jsx';
-import Prism from 'prismjs';
-import './init';
 import { match, P } from 'ts-pattern';
 import { Separator } from 'ui/components/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from 'ui/components/table';
@@ -34,10 +32,38 @@ function CustomCode(props: { children: string; className?: string }) {
   );
 }
 
-function CustomPre(props: { children: string }) {
+function CustomPre({ children }: { children: React.ReactNode }) {
+  const pre = useRef<HTMLPreElement>(null);
+  const t = useI18n();
+  const [copyState, setCopyState] = useState<'copy' | 'copied' | 'copy_failed'>('copy');
+  const language = React.isValidElement<{ className?: string }>(children)
+    ? /(?:^|\s)lang(?:uage)?-([\w-]+)(?=\s|$)/i.exec(children.props.className ?? '')?.[1]
+    : undefined;
   return (
-    <div>
-      <pre className="line-numbers">{props.children}</pre>
+    <div className="my-3">
+      <div className="mb-1 flex items-center justify-between gap-2">
+        <span className="text-sm text-muted-foreground">{language}</span>
+        <button
+          type="button"
+          className="rounded border px-2 text-sm"
+          onClick={async () => {
+            try {
+              await navigator.clipboard.writeText(pre.current?.querySelector('code')?.textContent ?? '');
+              setCopyState('copied');
+            } catch {
+              setCopyState('copy_failed');
+            }
+          }}
+        >
+          {t(copyState)}
+        </button>
+      </div>
+      <pre
+        ref={pre}
+        className={`line-numbers rounded bg-muted p-4 font-mono text-foreground overflow-auto${language ? ` language-${language}` : ''}`}
+      >
+        {children}
+      </pre>
     </div>
   );
 }
@@ -101,19 +127,19 @@ const option: MarkdownToJSX.Options = {
   },
 };
 export default function CustomMarkdown({ value, ...props }: MarkdownProps) {
-  const t = useI18n();
+  const container = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    Prism.highlightAll();
-  }, [value, t]);
+    const target = container.current;
+    if (!target?.querySelector('pre code')) return;
+    let active = true;
+    void import('./init').then(({ highlight }) => highlight(target, () => active)).catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [value]);
   return (
-    <div
-      key={t('copy')}
-      data-prismjs-copy={t('copy')}
-      data-prismjs-copy-success={t('copied')}
-      data-prismjs-copy-error={t('copy_failed')}
-      {...props}
-    >
-      <MarkdownSource className="size-full" options={option}>
+    <div {...props} ref={container}>
+      <MarkdownSource key={value} className="size-full" options={option}>
         {value}
       </MarkdownSource>
     </div>

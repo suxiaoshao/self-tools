@@ -322,6 +322,14 @@ export type CreateCollectionMutation = {
       };
 };
 
+export type ReadBookmarkCollectionStateQueryVariables = Exact<{
+  id: number;
+}>;
+
+export type ReadBookmarkCollectionStateQuery = {
+  getCollection: { id: number; name: string; description: string | null; parentId: number | null } | null;
+};
+
 export type GetCollectionsQueryVariables = Exact<{
   parentId?: number | null | undefined;
   pagination: Pagination;
@@ -340,14 +348,6 @@ export type GetCollectionsQuery = {
       description: string | null;
     }>;
   };
-};
-
-export type ReadBookmarkCollectionStateQueryVariables = Exact<{
-  id: number;
-}>;
-
-export type ReadBookmarkCollectionStateQuery = {
-  getCollection: { id: number; name: string; description: string | null; parentId: number | null } | null;
 };
 
 export type AddCollectionForNovelMutationVariables = Exact<{
@@ -629,6 +629,10 @@ export type CreateTagMutation = {
       };
 };
 
+export type ReadBookmarkTagsStateQueryVariables = Exact<{ [key: string]: never }>;
+
+export type ReadBookmarkTagsStateQuery = { allTags: Array<{ id: number }> };
+
 export type GetTagsQueryVariables = Exact<{
   pagination: Pagination;
 }>;
@@ -652,10 +656,6 @@ export type DeleteTagMutation = {
         issues: Array<{ path: Array<string>; code: ValidationCode; min: number | null; max: number | null }>;
       };
 };
-
-export type ReadBookmarkTagsStateQueryVariables = Exact<{ [key: string]: never }>;
-
-export type ReadBookmarkTagsStateQuery = { allTags: Array<{ id: number }> };
 
 export const SearchAuthorDocument = {
   kind: 'Document',
@@ -1880,6 +1880,48 @@ export const CreateCollectionDocument = {
     },
   ],
 } as unknown as DocumentNode<CreateCollectionMutation, CreateCollectionMutationVariables>;
+export const ReadBookmarkCollectionStateDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'ReadBookmarkCollectionState' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+          type: { kind: 'NonNullType', type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'getCollection' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'id' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'parentId' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ReadBookmarkCollectionStateQuery, ReadBookmarkCollectionStateQueryVariables>;
 export const GetCollectionsDocument = {
   kind: 'Document',
   definitions: [
@@ -1945,48 +1987,6 @@ export const GetCollectionsDocument = {
     },
   ],
 } as unknown as DocumentNode<GetCollectionsQuery, GetCollectionsQueryVariables>;
-export const ReadBookmarkCollectionStateDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'ReadBookmarkCollectionState' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
-          type: { kind: 'NonNullType', type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } } },
-        },
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'getCollection' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'id' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
-              },
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'description' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'parentId' } },
-              ],
-            },
-          },
-        ],
-      },
-    },
-  ],
-} as unknown as DocumentNode<ReadBookmarkCollectionStateQuery, ReadBookmarkCollectionStateQueryVariables>;
 export const AddCollectionForNovelDocument = {
   kind: 'Document',
   definitions: [
@@ -3626,6 +3626,29 @@ export const CreateTagDocument = {
     },
   ],
 } as unknown as DocumentNode<CreateTagMutation, CreateTagMutationVariables>;
+export const ReadBookmarkTagsStateDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'ReadBookmarkTagsState' },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'allTags' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [{ kind: 'Field', name: { kind: 'Name', value: 'id' } }],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ReadBookmarkTagsStateQuery, ReadBookmarkTagsStateQueryVariables>;
 export const GetTagsDocument = {
   kind: 'Document',
   definitions: [
@@ -3761,26 +3784,3 @@ export const DeleteTagDocument = {
     },
   ],
 } as unknown as DocumentNode<DeleteTagMutation, DeleteTagMutationVariables>;
-export const ReadBookmarkTagsStateDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'ReadBookmarkTagsState' },
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'allTags' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [{ kind: 'Field', name: { kind: 'Name', value: 'id' } }],
-            },
-          },
-        ],
-      },
-    },
-  ],
-} as unknown as DocumentNode<ReadBookmarkTagsStateQuery, ReadBookmarkTagsStateQueryVariables>;

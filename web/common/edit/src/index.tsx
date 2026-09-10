@@ -1,143 +1,63 @@
-import {
-  type ComponentProps,
-  type Ref,
-  useEffect,
-  useEffectEvent,
-  useImperativeHandle,
-  useMemo,
-  useState,
-} from 'react';
-import { editor } from 'monaco-editor';
-import './init';
-import { match } from 'ts-pattern';
-import { ColorSetting, selectColorMode, useThemeStore } from 'ui/theme';
-import { useShallow } from 'zustand/react/shallow';
+import { lazy, useCallback, useImperativeHandle, useRef, type Ref } from 'react';
+import { AsyncBoundary } from 'ui/async-boundary';
+import type { EditProps, MonacoEditorRef } from './types';
+export type { EditProps, MonacoEditorRef } from './types';
 
-export type MonacoEditorRef = editor.IStandaloneCodeEditor | undefined;
+const MonacoEditor = lazy(() => import('./MonacoEditor'));
 
-/**
- * @author sushao
- * @version 0.2.2
- * @since 0.2.2
- * @description 可写情况下的 editProp
- * */
-export interface EditProps extends Omit<ComponentProps<'div'>, 'onChange' | 'code' | 'ref'> {
-  /**
-   * 要显示的代码字符串
-   * */
-  code?: string;
-
-  /**
-   * 当编辑器代码改变时触发的方法
-   * */
-  onChangeCode?: (newCode: string) => void;
-  readOnly?: boolean;
-  language?: string;
-  wordWrap?: 'off' | 'on' | 'wordWrapColumn' | 'bounded';
-  ref?: Ref<editor.IStandaloneCodeEditor | undefined>;
-}
-
-/**
- * @author sushao
- * @version 0.2.2
- * @since 0.2.2
- * @description 编辑器组件
- * */
-export default function Edit({
-  onChangeCode,
-  code,
-  language,
-  wordWrap,
-  readOnly = false,
-  ref,
-  'aria-label': ariaLabel,
-  ...props
-}: EditProps) {
-  /**
-   * 编辑器绑定的 dom 的引用
-   * */
-  const [editRef, setEditRef] = useState<HTMLDivElement | null>(null);
-  /**
-   * 编辑器实体
-   * */
-  const [edit, setEdit] = useState<editor.IStandaloneCodeEditor | undefined>();
-  useImperativeHandle(ref, () => edit, [edit]);
-
-  const theme = useThemeStore(useShallow((state) => selectColorMode(state)));
-  const editTheme = useMemo(
-    () =>
-      match(theme)
-        .with('dark', ColorSetting.dark, () => 'monankai')
-        .otherwise(() => undefined),
-    [theme],
+export default function Edit({ ref, focusRef, ...props }: EditProps & { focusRef?: Ref<{ focus: () => void }> }) {
+  const editorRef = useRef<MonacoEditorRef>(undefined);
+  const textarea = useRef<HTMLTextAreaElement>(null);
+  const pendingFocus = useRef(false);
+  useImperativeHandle(
+    focusRef,
+    () => ({
+      focus() {
+        if (editorRef.current) editorRef.current.focus();
+        else {
+          pendingFocus.current = true;
+          textarea.current?.focus();
+        }
+      },
+    }),
+    [],
   );
-  const createEditor = useEffectEvent(() => {
-    if (editRef === null) {
-      return null;
-    }
-    if (
-      (edit === undefined && editRef.firstChild === null) ||
-      (edit !== undefined && edit?.getModel()?.getLanguageId() && edit?.getModel()?.getLanguageId() !== language)
-    ) {
-      const newEditor = editor.create(editRef, {
-        theme: editTheme,
-        automaticLayout: true,
-        fontSize: 16,
-        ariaLabel,
-        minimap: {
-          enabled: true,
-        },
-        language,
-        readOnly,
-        value: code,
-        fontLigatures: true,
-        wordWrap,
-        fontFamily: 'jetbrains mono',
-      });
-      return newEditor;
-    }
-    return null;
-  });
-  /**
-   * 编辑器要绑定的 dom 生成时,再这个 dom 上新建一个编辑器,并赋值给 edit
-   * */
-  useEffect(() => {
-    const newEdit = createEditor();
-    if (newEdit !== null) {
-      setEdit(newEdit);
-    }
-  }, [editRef, language]);
-  useEffect(() => {
-    edit?.updateOptions({ readOnly, ariaLabel });
-  }, [edit, readOnly, ariaLabel]);
-  /**
-   * props.readonly 改变时修改编辑器的只读属性
-   * */
-  useEffect(() => {
-    const id = edit?.getModel()?.onDidChangeContent(() => {
-      const content = edit.getValue();
-      onChangeCode?.(content);
-    });
-    return () => {
-      id?.dispose();
-    };
-  }, [edit, onChangeCode]);
-
-  /**
-   * props.code 改变时,如果 props.code和编辑器本身储存的 code 不一样,则重设编辑器的值
-   * */
-  useEffect(() => {
-    if (code !== edit?.getValue() && code) {
-      edit?.setValue(code);
-    }
-  }, [edit, code]);
-  /**
-   * 编辑器退出时,使用 editor 的方法注销编辑器
-   * */
-  useEffect(() => {
-    return () => {
-      edit?.dispose();
-    };
-  }, [edit]);
-  return <div ref={setEditRef} {...props} />;
+  const attach = useCallback(
+    (instance: MonacoEditorRef | null) => {
+      editorRef.current = instance ?? undefined;
+      if (typeof ref === 'function') ref(instance);
+      else if (ref) ref.current = instance ?? undefined;
+      if (instance && pendingFocus.current) {
+        pendingFocus.current = false;
+        instance.focus();
+      }
+    },
+    [ref],
+  );
+  const { code, onChangeCode, readOnly, language: _language, wordWrap: _wordWrap, ...containerProps } = props;
+  const fallback = (
+    <div {...containerProps}>
+      <textarea
+        ref={textarea}
+        className="size-full min-h-40 resize-none border rounded p-2 font-mono"
+        aria-label={props['aria-label']}
+        aria-describedby={props['aria-describedby']}
+        aria-invalid={props['aria-invalid']}
+        value={code ?? ''}
+        readOnly={readOnly}
+        onChange={(event) => onChangeCode?.(event.target.value)}
+        onFocus={() => {
+          pendingFocus.current = true;
+        }}
+        onBlur={() => {
+          pendingFocus.current = false;
+        }}
+      />
+    </div>
+  );
+  return (
+    <AsyncBoundary pending={fallback} failed={fallback}>
+      <MonacoEditor {...props} ref={attach} />
+    </AsyncBoundary>
+  );
 }

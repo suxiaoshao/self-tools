@@ -53,6 +53,12 @@ xtask 按现有 null 环境键规则读取，无值时不注入。不增加容�
 
 `cargo run -p xtask -- build --tag <release>` 使用共享 `docker/docker-bake.hcl`、Buildx 和根 `.dockerignore` 构建，Rust builder 从仓库源码一并构建。CI 同时发布 latest 与提交 SHA 标签；部署回退应记录并使用明确的 image ID/digest 或提交标签，不依赖 latest 指向旧版本。Compose 的 image 字段是运行版本事实源。
 
+前端产物使用主站根路径和同源 `/fetch-content`。发布新前端前先部署支持该图片路由的 gateway；
+回退旧 gateway 时同时恢复旧前端图片入口，域名与 upstream 继续由网关环境控制。该变更不新增自动前端部署。
+
+服务镜像 workflow 的 paths 覆盖各服务启用 feature 后的运行／构建 workspace 依赖闭包；dev-only 依赖由 PR 测试覆盖。
+修改依赖时用 `cargo tree -p <service> --edges normal,build` 核对实际消费者，再更新对应 workflow。
+
 五个服务共享的 Cargo registry 和 target 缓存使用 `sharing=locked`，避免 Buildx 并行构建时同时解包依赖或写入编译产物。
 
 CI 通过 `TAG=github.sha` 生成提交标签，再用 Bake 的 `tags+=` 追加 `latest`；标签不能用逗号拼成单个字符串。Rust builder 使用官方 `rust` 镜像自带的 Debian 软件源安装 clang、cmake、pkg-config 和 mold，不混入其他发行版的软件源。

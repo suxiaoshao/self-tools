@@ -52,6 +52,12 @@ pub fn build_routes(config: &GatewayConfig) -> Vec<Route> {
             "collections",
         ),
         route(
+            &config.main_host,
+            Some("/fetch-content"),
+            &config.bookmarks_upstream,
+            "bookmarks",
+        ),
+        route(
             &config.bookmarks_host,
             None,
             &config.bookmarks_upstream,

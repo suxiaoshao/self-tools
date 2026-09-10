@@ -6,9 +6,10 @@
  * @FilePath: /self-tools/web/packages/collections/src/main.tsx
  */
 import type { Menu, MicroConfig } from 'types';
-import Collection from './pages/collection-browser/index';
+const Collection = lazy(() => import('./pages/collection-browser/index'));
 import type { ReactNode } from 'react';
-import App from './App';
+import { lazy } from 'react';
+const App = lazy(() => import('./App'));
 import { Route } from 'react-router';
 import { ItemList, ItemDetails } from './features/item';
 

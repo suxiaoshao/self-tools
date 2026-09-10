@@ -24,6 +24,10 @@ jobs:
         run: pnpm lint
       - name: Test
         run: pnpm test
+      - name: GraphQL generated contract
+        run: pnpm graphql:check
+      - name: Production build and budgets
+        run: pnpm build:check
   server:
     runs-on: ubuntu-latest
     steps:

@@ -7,13 +7,15 @@ on:
       - .dockerignore
       - docker/docker-bake.hcl
       - docker/server/rust/**
-      - server/common/service-health/**
-      - server/common/service-db/**
-      - server/common/service-query/**
-      - server/common/graphql-common/**
       - docker/server/collections.Dockerfile
       - server/packages/collections/**
+      - server/common/graphql-common/**
       - server/common/middleware/**
+      - server/common/service-db/**
+      - server/common/service-errors/**
+      - server/common/service-health/**
+      - server/common/service-query/**
+      - server/common/telemetry/**
       - server/common/thrift/**
       - Cargo.lock
       - Cargo.toml

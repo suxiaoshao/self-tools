@@ -18,6 +18,7 @@ interface Workspace {
 }
 
 const commonDependencies: Record<string, readonly string[]> = {
+  'runtime-config': [],
   ui: [],
   hooks: [],
   i18n: [],

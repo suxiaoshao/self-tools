@@ -5,7 +5,8 @@
  * @LastEditTime: 2024-03-01 17:56:35
  * @FilePath: /self-tools/web/packages/bookmarks/src/main.tsx
  */
-import App from './App';
+import { lazy } from 'react';
+const App = lazy(() => import('./App'));
 import type { Menu, MicroConfig } from 'types';
 import type { ReactNode } from 'react';
 import { NovelList } from './features/novel';

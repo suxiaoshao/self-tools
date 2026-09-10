@@ -223,5 +223,7 @@
   "back": "返回",
   "novel": "小说",
   "chapter": "章节",
-  "resource": "资源"
+  "resource": "资源",
+  "route_load_failed": "页面资源加载失败，请重新加载页面。",
+  "reload_page": "重新加载页面"
 }

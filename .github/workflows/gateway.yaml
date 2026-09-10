@@ -7,10 +7,12 @@ on:
       - .dockerignore
       - docker/docker-bake.hcl
       - docker/server/rust/**
-      - server/common/service-health/**
       - docker/server/gateway.Dockerfile
       - server/packages/gateway/**
       - server/common/middleware/**
+      - server/common/service-errors/**
+      - server/common/service-health/**
+      - server/common/telemetry/**
       - Cargo.lock
       - Cargo.toml
       - .cargo/**

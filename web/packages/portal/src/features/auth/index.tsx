@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { lazy, useState } from 'react';
 import { Navigate, useSearchParams } from 'react-router';
 import { KeyRound } from 'lucide-react';
 import { useI18n } from 'i18n';
@@ -13,7 +13,7 @@ import { safeFrom } from './redirect';
 export { default as useLogin } from './useLogin';
 export { default as AuthDrawerItem } from './AuthDrawerItem';
 export { default as SessionGate } from './SessionGate';
-export { default as Security } from './Security';
+export const Security = lazy(() => import('./Security'));
 export { useAuthStore } from './authSlice';
 export default function Login() {
   const t = useI18n();
