@@ -1,6 +1,6 @@
 # Issue #94：仓库代码 Review 清单
 
-本文只记录可重复使用的审查范围、分类、检查标准和必需产物；具体 review 的状态与问题结论写入 `review-findings.md`，实施设计写入 `README.md`。
+本文只记录可重复使用的审查范围、分类、检查标准和必需产物；具体 review 的状态与问题结论写入 `review-findings.md`，历史问题归属见 `README.md`，实施设计由[各所有者开发计划](../README.md)记录。
 
 ## Review 覆盖原则
 
@@ -367,7 +367,7 @@ database / RPC / external HTTP / filesystem
 
 - `review-checklist.md`：只记录审查范围、通用模板、专项清单、覆盖单位和完成标准，不记录问题结论。
 - `review-findings.md`：review 时记录问题、证据、影响、严重程度、涉及模块、验证方式和建议处理方向，不写完整实施设计。
-- `README.md`：问题清单确认后，选择本分支要解决的内容，补齐完整设计、工作包和验证；过大的独立问题另外创建 Issue 和分支。
+- `README.md`：保留本轮审查证据入口与问题归属；实施设计和必要验证由各整改组的规范开发计划拥有，Issue／PR 状态由 GitHub 管理。
 - 每轮 review 必须产出前端和后端各自的目录/依赖契约判断、模块允许边与例外矩阵、数据库写操作/transaction 矩阵、关键链路和测试覆盖矩阵；具体目标结构必须基于当轮证据决定，不能预设所有应用完全相同。
 
 建议在以下情况下拆分新 Issue：
