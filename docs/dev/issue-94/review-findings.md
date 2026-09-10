@@ -1,6 +1,6 @@
 # Issue #94：仓库代码 Review 结果
 
-本文记录依据 [`review-checklist.md`](review-checklist.md) 完成的本轮仓库代码 review 结果。本文是问题清单，不是整改计划：只记录已确认的问题、证据、影响、验证方式和建议处理边界，不预先决定目标设计、实施顺序或最终 Issue 拆分。
+本文保留 2026-07-19 依据 [`review-checklist.md`](review-checklist.md) 完成的审查快照。正文中的“当前”及源码位置均指审查时的代码，不能据此判断整改后的状态；问题处理归属见 [README.md](README.md)，当前设计与验证见[开发计划索引](../README.md)。原始问题、证据、影响和建议边界保留供追溯。
 
 ## Review 状态
 
