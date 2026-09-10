@@ -1,0 +1,22 @@
+mutation updateItem($id: Int!, $name: String!, $content: String!) {
+  updateItem(id: $id, name: $name, content: $content) {
+    __typename
+    ... on ItemSaved {
+      itemId
+    }
+    ... on ValidationFailure {
+      issues {
+        path
+        code
+        min
+        max
+      }
+    }
+    ... on MissingResources {
+      resources {
+        kind
+        id
+      }
+    }
+  }
+}

@@ -6,7 +6,6 @@ import {
   type CustomColumnDefArray,
   CustomTable,
   type CustomTableOptions,
-  getCoreRowModel,
   usePage,
   usePageWithTotal,
 } from 'custom-table';
@@ -20,27 +19,9 @@ import { useI18n } from 'i18n';
 import { Link, createSearchParams } from 'react-router';
 import { format } from 'time';
 import CollectionActions from './components/CollectionActions';
-import { useTitle } from 'hooks';
-import { graphql } from '@bookmarks/gql/index';
+import { GetCollectionsDocument as GetCollections } from '@bookmarks/gql/graphql';
 import { useQuery } from '@apollo/client/react';
 import { Button, buttonVariants } from 'ui/components/button';
-
-const GetCollections = graphql(`
-  query getCollections($parentId: Int, $pagination: Pagination!) {
-    getCollections(parentId: $parentId, pagination: $pagination) {
-      data {
-        name
-        id
-        path
-        parentId
-        createTime
-        updateTime
-        description
-      }
-      total
-    }
-  }
-`);
 
 const columnHelper = createCustomColumnHelper<CollectionTableData>();
 
@@ -70,10 +51,10 @@ export default function Collections() {
   }, [refetch, fetchData]);
 
   const t = useI18n();
-  useTitle(t('collection_manage'));
+
   const columns = useMemo<CustomColumnDefArray<CollectionTableData>>(
     () =>
-      [
+      columnHelper.columns([
         columnHelper.accessor(
           ({ name, id }) => (
             <Link
@@ -96,8 +77,10 @@ export default function Collections() {
         columnHelper.accessor(({ description }) => description || '-', {
           header: t('description'),
           id: 'description',
-          cellProps: {
-            align: 'center',
+          meta: {
+            cellProps: {
+              align: 'center',
+            },
           },
         }),
         columnHelper.accessor(({ createTime }) => format(createTime), {
@@ -108,21 +91,22 @@ export default function Collections() {
           header: t('update_time'),
           id: 'updateTime',
         }),
-        columnHelper.accessor((data) => <CollectionActions {...data} refetch={allRefetch} />, {
+        columnHelper.display({
           header: t('actions'),
           id: 'action',
-          cell: (context) => context.getValue(),
+          cell: ({ row }) => <CollectionActions {...row.original} refetch={allRefetch} />,
         }),
-      ] as CustomColumnDefArray<CollectionTableData>,
+      ]),
     [allRefetch, t],
   );
   const tableOptions = useMemo<CustomTableOptions<CollectionTableData>>(
-    () => ({ columns, data: data ?? [], getCoreRowModel: getCoreRowModel() }),
+    () => ({ columns, data: data ?? [] }),
     [columns, data],
   );
 
   return (
     <div className="flex min-h-0 size-full flex-col">
+      <title>{t('collection_manage')}</title>
       <PageToolbar>
         <CreateCollectionButton refetch={allRefetch} />
         <Button variant="ghost" size="icon" className="ml-auto" onClick={() => refetch()} aria-label={t('refresh')}>

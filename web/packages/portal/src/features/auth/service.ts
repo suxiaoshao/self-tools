@@ -217,6 +217,7 @@ const descriptor = (value: DescriptorJSON): PublicKeyCredentialDescriptor => ({
   id: decodeBase64Url(value.id),
 });
 export function credentialJSON(credential: PublicKeyCredential): unknown {
+  if (typeof credential.toJSON === 'function') return credential.toJSON();
   const response = credential.response;
   const common = {
     id: credential.id,
@@ -255,11 +256,14 @@ export async function passkeyAuthentication(purpose: 'login' | 'reauth', signal:
   const options = await request(`${path}/options`, requestOptionsSchema, signal, {});
   const credential = await navigator.credentials.get({
     signal,
-    publicKey: {
-      ...options.publicKey,
-      challenge: decodeBase64Url(options.publicKey.challenge),
-      allowCredentials: options.publicKey.allowCredentials?.map(descriptor),
-    },
+    publicKey:
+      typeof PublicKeyCredential.parseRequestOptionsFromJSON === 'function'
+        ? PublicKeyCredential.parseRequestOptionsFromJSON(options.publicKey)
+        : {
+            ...options.publicKey,
+            challenge: decodeBase64Url(options.publicKey.challenge),
+            allowCredentials: options.publicKey.allowCredentials?.map(descriptor),
+          },
   });
   signal.throwIfAborted();
   if (!(credential instanceof PublicKeyCredential)) throw new PasskeyError('cancelled');
@@ -273,12 +277,15 @@ export async function registerPasskey(name: string, signal: AbortSignal): Promis
   const options = await request('passkeys/options', creationOptionsSchema, signal, { name });
   const credential = await navigator.credentials.create({
     signal,
-    publicKey: {
-      ...options.publicKey,
-      challenge: decodeBase64Url(options.publicKey.challenge),
-      user: { ...options.publicKey.user, id: decodeBase64Url(options.publicKey.user.id) },
-      excludeCredentials: options.publicKey.excludeCredentials?.map(descriptor),
-    },
+    publicKey:
+      typeof PublicKeyCredential.parseCreationOptionsFromJSON === 'function'
+        ? PublicKeyCredential.parseCreationOptionsFromJSON(options.publicKey)
+        : {
+            ...options.publicKey,
+            challenge: decodeBase64Url(options.publicKey.challenge),
+            user: { ...options.publicKey.user, id: decodeBase64Url(options.publicKey.user.id) },
+            excludeCredentials: options.publicKey.excludeCredentials?.map(descriptor),
+          },
   });
   signal.throwIfAborted();
   if (!(credential instanceof PublicKeyCredential)) throw new PasskeyError('cancelled');

@@ -4,7 +4,7 @@ import { checkNovelState } from '@bookmarks/features/novel/model/reconcile';
 import { useApolloClient } from '@apollo/client/react';
 import useBookmarkWrite from '@bookmarks/useBookmarkWrite';
 import { useMutation } from '@apollo/client/react';
-import { graphql } from '@bookmarks/gql/index';
+import { CreateCommentDocument as CreateComment, UpdateCommentDocument as UpdateComment } from '@bookmarks/gql/graphql';
 import type { CreateCommentMutationVariables } from '@bookmarks/gql/graphql';
 import CustomEdit from 'edit/form';
 import { useDialog } from 'hooks';
@@ -27,70 +27,6 @@ import { Button } from 'ui/components/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from 'ui/components/tooltip';
 import { FieldError, FieldGroup, FieldLabel, Field } from 'ui/components/field';
 import { Spinner } from 'ui/components/spinner';
-
-const CreateComment = graphql(`
-  mutation CreateComment($novelId: Int!, $content: String!) {
-    addCommentForNovel(novelId: $novelId, content: $content) {
-      __typename
-      ... on CommentSaved {
-        novelId
-      }
-      ... on ValidationFailure {
-        issues {
-          path
-          code
-          min
-          max
-        }
-      }
-      ... on MissingResources {
-        resources {
-          kind
-          id
-        }
-      }
-      ... on Conflict {
-        reason
-        resources {
-          kind
-          id
-        }
-      }
-    }
-  }
-`);
-
-const UpdateComment = graphql(`
-  mutation UpdateComment($novelId: Int!, $content: String!) {
-    updateCommentForNovel(novelId: $novelId, content: $content) {
-      __typename
-      ... on CommentSaved {
-        novelId
-      }
-      ... on ValidationFailure {
-        issues {
-          path
-          code
-          min
-          max
-        }
-      }
-      ... on MissingResources {
-        resources {
-          kind
-          id
-        }
-      }
-      ... on Conflict {
-        reason
-        resources {
-          kind
-          id
-        }
-      }
-    }
-  }
-`);
 
 interface CommentEditProps {
   disabled?: boolean;

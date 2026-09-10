@@ -12,7 +12,6 @@ import Login, { useLogin, SessionGate, Security, useAuthStore } from '../feature
 import { microConfigs } from '@portal/micro/index';
 import type { Menu } from 'types';
 import { match } from 'ts-pattern';
-import { useI18n } from 'i18n';
 import ErrorPage from './Error/index';
 import RouteBoundary from './RouteBoundary';
 
@@ -39,12 +38,10 @@ function MenuRouter({ path }: Menu) {
 
 export default function AppRouter() {
   useLogin();
-  const t = useI18n();
   const generation = useAuthStore((s) => s.generation);
 
   return (
     <>
-      <title>{t('self_tools')}</title>
       <link rel="icon" href="/favicon.ico" type="image/x-icon" />
       <link rel="icon" type="image/png" href="/logo.png" sizes="32x32" />
       <link rel="apple-touch-icon" href="/logo.png" />

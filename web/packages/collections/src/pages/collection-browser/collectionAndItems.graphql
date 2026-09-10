@@ -1,0 +1,23 @@
+query collectionAndItems($query: CollectionItemQuery!) {
+  collectionAndItem(query: $query) {
+    data {
+      ... on Collection {
+        name
+        id
+        path
+        createTime
+        updateTime
+        description
+        __typename
+      }
+      ... on Item {
+        name
+        id
+        updateTime
+        createTime
+        __typename
+      }
+    }
+    total
+  }
+}

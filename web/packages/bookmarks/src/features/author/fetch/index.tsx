@@ -8,10 +8,9 @@ import { useI18n } from 'i18n';
 import { getImageUrl } from '@bookmarks/utils/image';
 import ChapterModal from '@bookmarks/components/ChapterModal/index';
 import { convertFetchToDraftAuthor } from './utils';
-import { useTitle } from 'hooks';
-import { graphql } from '@bookmarks/gql/index';
+import { FetchAuthorDocument as FetchAuthor, SaveDraftAuthorDocument as SaveDraftAuthor } from '@bookmarks/gql/graphql';
 import { useLazyQuery, useMutation } from '@apollo/client/react';
-import { toast } from 'sonner';
+import { toast } from 'ui/components/toast';
 import { Button } from 'ui/components/button';
 import { Card, CardContent, CardHeader, CardTitle } from 'ui/components/card';
 import { FieldError, FieldGroup, FieldLabel, Field } from 'ui/components/field';
@@ -25,82 +24,12 @@ import { Skeleton } from 'ui/components/skeleton';
 import { Spinner } from 'ui/components/spinner';
 import { match } from 'ts-pattern';
 
-const FetchAuthor = graphql(`
-  query fetchAuthor($id: String!, $novelSite: NovelSite!) {
-    fetchAuthor(id: $id, novelSite: $novelSite) {
-      __typename
-      name
-      description
-      image
-      url
-      id
-      site
-      novels {
-        id
-        name
-        description
-        image
-        url
-        status
-        site
-        chapters {
-          id
-          novelId
-          title
-          url
-          time
-          wordCount
-          site
-        }
-        tags {
-          id
-          name
-          url
-        }
-      }
-    }
-  }
-`);
-
-const SaveDraftAuthor = graphql(`
-  mutation saveDraftAuthor($author: SaveDraftAuthor!) {
-    saveDraftAuthor(author: $author) {
-      __typename
-      ... on AuthorSaved {
-        authorId
-      }
-      ... on ValidationFailure {
-        issues {
-          path
-          code
-          min
-          max
-        }
-      }
-      ... on MissingResources {
-        resources {
-          kind
-          id
-        }
-      }
-      ... on Conflict {
-        reason
-        resources {
-          kind
-          id
-        }
-      }
-    }
-  }
-`);
-
 export default function AuthorFetch() {
   const write = useBookmarkWrite('/bookmarks/authors');
   const formId = useId();
   // title
   const t = useI18n();
   const sites = { JJWXC: t('jjwxc'), QIDIAN: t('qidian') };
-  useTitle(t('author_crawler'));
 
   // fetch
   type FormData = FetchAuthorQueryVariables;
@@ -120,6 +49,7 @@ export default function AuthorFetch() {
   const [saveDraftAuthor, { loading: saveLoading }] = useMutation(SaveDraftAuthor);
   return (
     <form noValidate className="flex min-h-0 size-full flex-col" onSubmit={onSubmit}>
+      <title>{t('author_crawler')}</title>
       <PageToolbar>
         <Tooltip>
           <TooltipTrigger
@@ -148,7 +78,7 @@ export default function AuthorFetch() {
                       ))
                     )
                       return;
-                    toast.success(t('save_draft_success'));
+                    toast.add({ title: t('save_draft_success'), type: 'success' });
                   }
                 }}
               />

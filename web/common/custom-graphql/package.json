@@ -11,9 +11,10 @@
     ".": "./src/index.tsx"
   },
   "dependencies": {
-    "@apollo/client": "^4.2.6",
+    "@apollo/client": "^4.2.12",
     "i18n": "workspace:*",
-    "react": "^19.2.7",
-    "request-errors": "workspace:*"
+    "react": "^19.2.8",
+    "request-errors": "workspace:*",
+    "ui": "workspace:*"
   }
 }

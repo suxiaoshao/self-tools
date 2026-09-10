@@ -3,10 +3,10 @@ import type { CodegenConfig } from '@graphql-codegen/cli';
 export function codegenConfig(output = './src/gql/'): CodegenConfig {
   return {
     schema: './schema.graphql',
-    documents: ['./src/**/*.tsx', './src/**/*.ts', '!./src/gql/**', '!./src/**/*.test.*', '!./src/**/fixtures/**'],
+    documents: ['./src/**/*.graphql', '!./src/gql/**', '!./src/**/fixtures/**'],
     generates: {
-      [output]: {
-        preset: 'client',
+      [`${output}/graphql.ts`]: {
+        plugins: ['typescript-operations', 'typed-document-node'],
         config: {
           scalars: {
             DateTime: 'string',

@@ -7,7 +7,7 @@ import type { DetailsItem } from 'details';
 import { useMemo } from 'react';
 import { match, P } from 'ts-pattern';
 import { Link } from 'react-router';
-import { graphql } from '@collections/gql/index';
+import { DeleteCollectionForItemDocument as DeleteCollectionForItem } from '@collections/gql/graphql';
 import { useApolloClient, useMutation } from '@apollo/client/react';
 import AddCollection from './components/AddCollection';
 import { format } from 'time';
@@ -16,30 +16,6 @@ import { Badge } from 'ui/components/badge';
 import { Button } from 'ui/components/button';
 import { X } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from 'ui/components/tooltip';
-
-const DeleteCollectionForItem = graphql(`
-  mutation deleteCollectionForItem($collectionId: Int!, $itemId: Int!) {
-    deleteCollectionForItem(collectionId: $collectionId, itemId: $itemId) {
-      __typename
-      ... on CollectionMembershipChanged {
-        collectionId
-        resource {
-          kind
-          id
-        }
-        present
-      }
-      ... on ValidationFailure {
-        issues {
-          path
-          code
-          min
-          max
-        }
-      }
-    }
-  }
-`);
 
 export default function useItemDetailItems(data: GetItemQuery | undefined, refetch: () => void, error: unknown) {
   const t = useI18n();

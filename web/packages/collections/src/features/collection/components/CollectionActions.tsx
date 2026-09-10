@@ -8,64 +8,13 @@ import { TableActions } from 'custom-table';
 import { useI18n } from 'i18n';
 import { useDialog } from 'hooks';
 import CollectionForm, { type CollectionFormData } from './CollectionForm';
-import { graphql } from '@collections/gql/index';
+import {
+  DeleteCollectionDocument as DeleteCollection,
+  UpdateCollectionDocument as UpdateCollection,
+} from '@collections/gql/graphql';
 import { useApolloClient, useMutation } from '@apollo/client/react';
 import { DropdownMenuItem } from 'ui/components/dropdown-menu';
 import { Dialog } from 'ui/components/dialog';
-
-const DeleteCollection = graphql(`
-  mutation deleteCollection($id: Int!) {
-    deleteCollection(id: $id) {
-      __typename
-      ... on ResourceDeleted {
-        resource {
-          kind
-          id
-        }
-      }
-      ... on ValidationFailure {
-        issues {
-          path
-          code
-          min
-          max
-        }
-      }
-    }
-  }
-`);
-
-const UpdateCollection = graphql(`
-  mutation updateCollection($id: Int!, $name: String!, $description: String) {
-    updateCollection(id: $id, name: $name, description: $description) {
-      __typename
-      ... on CollectionSaved {
-        collectionId
-      }
-      ... on ValidationFailure {
-        issues {
-          path
-          code
-          min
-          max
-        }
-      }
-      ... on MissingResources {
-        resources {
-          kind
-          id
-        }
-      }
-      ... on Conflict {
-        reason
-        resources {
-          kind
-          id
-        }
-      }
-    }
-  }
-`);
 
 interface CollectionActionsProps {
   id: number;

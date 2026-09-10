@@ -1,13 +1,18 @@
 import { Button } from 'ui/components/button';
 import { Label } from 'ui/components/label';
-import { CheckIcon, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { useId } from 'react';
 import type { PageWithTotal } from './usePage';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from 'ui/components/select';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from 'ui/components/select';
 import { useI18n } from 'i18n';
-import { Popover, PopoverContent, PopoverTrigger } from 'ui/components/popover';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from 'ui/components/command';
-import { useDialog } from 'hooks';
-import { match } from 'ts-pattern';
+import {
+  Combobox,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+} from 'ui/components/combobox';
 
 export default function TablePagination({
   pageIndex,
@@ -17,10 +22,10 @@ export default function TablePagination({
   pageSizeOptions,
   setPage,
 }: PageWithTotal) {
-  const { open, handleOpenChange, handleClose } = useDialog();
   const t = useI18n();
   const pageCount = Math.ceil(total / pageSize);
-  const pagePickerId = 'table-pagination-page-picker';
+  const pageSizeId = useId();
+  const pages = Array.from({ length: pageCount }, (_, index) => index + 1);
   return (
     <div className="flex items-center justify-between px-4">
       <div className="text-muted-foreground hidden flex-1 text-sm lg:flex">
@@ -28,7 +33,7 @@ export default function TablePagination({
       </div>
       <div className="flex w-full items-center gap-8 lg:w-fit">
         <div className="hidden items-center gap-2 lg:flex">
-          <Label htmlFor="rows-per-page" className="text-sm font-medium">
+          <Label htmlFor={pageSizeId} className="text-sm font-medium">
             {t('table_pagination_row_per_page')}
           </Label>
           <Select
@@ -37,58 +42,41 @@ export default function TablePagination({
               setPageSize(Number(value));
             }}
           >
-            <SelectTrigger size="sm" className="w-20" id="rows-per-page">
+            <SelectTrigger size="sm" className="w-20" id={pageSizeId}>
               <SelectValue placeholder={pageSize} />
             </SelectTrigger>
             <SelectContent side="top">
-              {(pageSizeOptions ?? [10, 20, 30, 40, 50]).map((pageSize) => (
-                <SelectItem key={pageSize} value={`${pageSize}`}>
-                  {pageSize}
-                </SelectItem>
-              ))}
+              <SelectGroup>
+                {(pageSizeOptions ?? [10, 20, 30, 40, 50]).map((pageSize) => (
+                  <SelectItem key={pageSize} value={`${pageSize}`}>
+                    {pageSize}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
             </SelectContent>
           </Select>
         </div>
         <div className="flex w-fit items-center justify-center text-sm font-medium gap-2">
-          <Popover open={open} onOpenChange={handleOpenChange}>
-            <PopoverTrigger
-              render={
-                <Button variant="outline" className="h-8 px-3" aria-controls={pagePickerId} aria-expanded={open} />
-              }
-            >
-              {pageIndex}
-            </PopoverTrigger>
-            <PopoverContent id={pagePickerId} className="w-[150px] p-0">
-              <Command>
-                <CommandInput placeholder={t('search_page')} />
-                <CommandList>
-                  <CommandEmpty>{t('no_page_found')}</CommandEmpty>
-                  <CommandGroup>
-                    {Array.from({ length: pageCount }, (_, i) => i + 1).map((page) => (
-                      <CommandItem
-                        key={page}
-                        value={String(page)}
-                        onSelect={(currentValue) => {
-                          if (!(currentValue === String(pageIndex))) {
-                            setPage(Number(currentValue));
-                          }
-                          handleClose();
-                        }}
-                      >
-                        <CheckIcon
-                          visibility={match(page)
-                            .with(pageIndex, () => 'visible')
-                            .otherwise(() => 'hidden')}
-                          className="mr-2 h-4 w-4"
-                        />
-                        {page}
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
+          <Combobox
+            items={pages}
+            value={pageIndex}
+            itemToStringLabel={String}
+            onValueChange={(value) => {
+              if (value !== null && value !== pageIndex) setPage(value);
+            }}
+          >
+            <ComboboxInput aria-label={t('search_page')} className="w-24" />
+            <ComboboxContent>
+              <ComboboxEmpty>{t('no_page_found')}</ComboboxEmpty>
+              <ComboboxList>
+                {(page) => (
+                  <ComboboxItem key={page} value={page}>
+                    {page}
+                  </ComboboxItem>
+                )}
+              </ComboboxList>
+            </ComboboxContent>
+          </Combobox>
           {t('table_pagination_page', { pageCount })}
         </div>
         <div className="ml-auto flex items-center gap-2 lg:ml-0">

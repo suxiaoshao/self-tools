@@ -1,11 +1,10 @@
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defineConfig, loadEnv, type PluginOption } from 'vite';
-import { devServer } from './dev-server.config';
-import { bundleReport } from './bundle-report.config';
+import { devServer } from './dev-server.config.ts';
+import { bundleReport } from './bundle-report.config.ts';
 import { prismAssets } from 'markdown/vite';
-import react, { reactCompilerPreset } from '@vitejs/plugin-react';
-import babel from '@rolldown/plugin-babel';
+import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { analyzer } from 'vite-bundle-analyzer';
 import { codeInspectorPlugin } from 'code-inspector-plugin';
@@ -33,15 +32,7 @@ export default defineConfig(({ command, mode }) => {
     plugins.push(codeInspectorPlugin({ bundler: 'vite' }));
   }
 
-  plugins.push(
-    react(),
-    babel({
-      // The root test runner must resolve compiler plugins from their owning package.
-      cwd: rootDir,
-      include: /\.[jt]sx?$/,
-      presets: [reactCompilerPreset()],
-    }),
-  );
+  plugins.push(react({ compiler: { target: '19', logDiagnostics: true } }));
 
   const config = {
     base: '/',
@@ -49,6 +40,7 @@ export default defineConfig(({ command, mode }) => {
     plugins,
     resolve: {
       tsconfigPaths: true,
+      alias: [{ find: /^clsx$/, replacement: fileURLToPath(import.meta.resolve('cn')) }],
     },
     server,
     preview: {

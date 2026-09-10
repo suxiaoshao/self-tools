@@ -225,5 +225,14 @@
   "chapter": "章节",
   "resource": "资源",
   "route_load_failed": "页面资源加载失败，请重新加载页面。",
-  "reload_page": "重新加载页面"
+  "reload_page": "重新加载页面",
+  "all_collections": "全部集合",
+  "browse_collection": "浏览 {{name}}",
+  "collection_search_results": "集合搜索结果",
+  "no_collection_matches": "没有匹配的集合",
+  "no_child_collections": "没有子集合",
+  "search_collections": "搜索名称或完整路径",
+  "selected_collections": "已选集合",
+  "confirm_selection": "确认选择",
+  "collection_picker_hint": "点击名称或箭头浏览子级；使用选择控件选中集合，确认后生效。"
 }

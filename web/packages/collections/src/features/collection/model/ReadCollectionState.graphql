@@ -1,0 +1,7 @@
+query ReadCollectionState($id: Int!) {
+  getCollection(id: $id) {
+    id
+    name
+    description
+  }
+}

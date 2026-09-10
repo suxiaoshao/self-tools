@@ -1,0 +1,31 @@
+query fetchNovel($id: String!, $novelSite: NovelSite!) {
+  fetchNovel(id: $id, novelSite: $novelSite) {
+    author {
+      description
+      image
+      name
+      url
+      id
+    }
+    chapters {
+      title
+      url
+      site
+      time
+      wordCount
+      id
+    }
+    tags {
+      id
+      name
+      url
+    }
+    description
+    image
+    name
+    url
+    site
+    status
+    id
+  }
+}

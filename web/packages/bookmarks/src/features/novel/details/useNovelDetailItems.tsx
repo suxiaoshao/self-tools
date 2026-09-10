@@ -2,7 +2,7 @@ import { checkNovelState } from '@bookmarks/features/novel/model/reconcile';
 import { useApolloClient } from '@apollo/client/react';
 import useBookmarkWrite from '@bookmarks/useBookmarkWrite';
 import { useMutation } from '@apollo/client/react';
-import { graphql } from '@bookmarks/gql/index';
+import { DeleteCollectionForNovelDocument as DeleteCollectionForNovel } from '@bookmarks/gql/graphql';
 import type { GetNovelQuery } from '@bookmarks/gql/graphql';
 import { getLabelKeyBySite } from '@bookmarks/utils/novelSite';
 import { getLabelKeyByNovelStatus } from '@bookmarks/utils/novelStatus';
@@ -18,29 +18,6 @@ import { Tooltip, TooltipContent, TooltipTrigger } from 'ui/components/tooltip';
 import { Badge } from 'ui/components/badge';
 import { X } from 'lucide-react';
 
-const DeleteCollectionForNovel = graphql(`
-  mutation deleteCollectionForNovel($novelId: Int!, $collectionId: Int!) {
-    deleteCollectionForNovel(collectionId: $collectionId, novelId: $novelId) {
-      __typename
-      ... on CollectionMembershipChanged {
-        collectionId
-        resource {
-          kind
-          id
-        }
-        present
-      }
-      ... on ValidationFailure {
-        issues {
-          path
-          code
-          min
-          max
-        }
-      }
-    }
-  }
-`);
 export default function useNovelDetailItems(data: GetNovelQuery | undefined, refetch: () => void) {
   const client = useApolloClient();
   const write = useBookmarkWrite('/bookmarks');

@@ -34,8 +34,8 @@ export function usePage({
   const [pageSize, setPageSize] = useState(initPageSize);
   const [pageSizeOptions] = useState(initPageSizeOptions);
 
-  const offset = useMemo(() => (pageIndex - 1) * pageSize, [pageIndex, pageSize]);
-  const limit = useMemo(() => pageSize, [pageSize]);
+  const offset = (pageIndex - 1) * pageSize;
+  const limit = pageSize;
   return useMemo(
     () => ({ pageIndex, setPage, offset, limit, pageSize, setPageSize, pageSizeOptions }),
     [limit, offset, pageIndex, pageSize, pageSizeOptions],

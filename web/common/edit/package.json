@@ -12,9 +12,9 @@
     "./form": "./src/FormEditor.tsx"
   },
   "dependencies": {
-    "monaco-editor": "^0.55.1",
+    "monaco-editor": "^0.56.0",
     "monaco-themes": "^0.4.8",
-    "react": "^19.2.7",
+    "react": "^19.2.8",
     "ui": "workspace:*"
   }
 }

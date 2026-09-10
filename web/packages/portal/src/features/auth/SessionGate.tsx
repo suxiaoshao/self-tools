@@ -11,6 +11,7 @@ export default function SessionGate({ children }: { children: ReactNode }) {
   if (status === 'checking' || status === 'unavailable')
     return (
       <Empty className="min-h-svh">
+        <title>{t('self_tools')}</title>
         <EmptyHeader>
           <EmptyTitle>{t(status === 'checking' ? 'auth_checking' : 'auth_unavailable')}</EmptyTitle>
           <EmptyDescription>{t('auth_session_check_description')}</EmptyDescription>

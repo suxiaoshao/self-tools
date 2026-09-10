@@ -1,0 +1,23 @@
+mutation createTag($name: String!, $site: NovelSite!, $siteId: String!) {
+  createTag(name: $name, site: $site, siteId: $siteId) {
+    __typename
+    ... on TagSaved {
+      tagId
+    }
+    ... on ValidationFailure {
+      issues {
+        path
+        code
+        min
+        max
+      }
+    }
+    ... on Conflict {
+      reason
+      resources {
+        kind
+        id
+      }
+    }
+  }
+}

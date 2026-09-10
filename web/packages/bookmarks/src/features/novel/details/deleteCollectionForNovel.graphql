@@ -1,0 +1,21 @@
+mutation deleteCollectionForNovel($novelId: Int!, $collectionId: Int!) {
+  deleteCollectionForNovel(collectionId: $collectionId, novelId: $novelId) {
+    __typename
+    ... on CollectionMembershipChanged {
+      collectionId
+      resource {
+        kind
+        id
+      }
+      present
+    }
+    ... on ValidationFailure {
+      issues {
+        path
+        code
+        min
+        max
+      }
+    }
+  }
+}

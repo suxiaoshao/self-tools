@@ -1,0 +1,14 @@
+query getCollections($parentId: Int, $pagination: Pagination!) {
+  getCollections(parentId: $parentId, pagination: $pagination) {
+    data {
+      name
+      id
+      path
+      parentId
+      createTime
+      updateTime
+      description
+    }
+    total
+  }
+}

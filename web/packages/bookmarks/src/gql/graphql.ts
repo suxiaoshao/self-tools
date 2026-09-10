@@ -1,4 +1,3 @@
-/* eslint-disable */
 /** Internal type. DO NOT USE DIRECTLY. */
 type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
 /** Internal type. DO NOT USE DIRECTLY. */
@@ -228,6 +227,19 @@ export type CreateAuthorMutation = {
       };
 };
 
+export type DeleteAuthorMutationVariables = Exact<{
+  id: number;
+}>;
+
+export type DeleteAuthorMutation = {
+  deleteAuthor:
+    | { __typename: 'ResourceDeleted'; resource: { kind: ResourceKind; id: number } }
+    | {
+        __typename: 'ValidationFailure';
+        issues: Array<{ path: Array<string>; code: ValidationCode; min: number | null; max: number | null }>;
+      };
+};
+
 export type GetAuthorsQueryVariables = Exact<{
   pagination: Pagination;
 }>;
@@ -247,31 +259,27 @@ export type GetAuthorsQuery = {
   };
 };
 
-export type DeleteAuthorMutationVariables = Exact<{
-  id: number;
-}>;
-
-export type DeleteAuthorMutation = {
-  deleteAuthor:
-    | { __typename: 'ResourceDeleted'; resource: { kind: ResourceKind; id: number } }
-    | {
-        __typename: 'ValidationFailure';
-        issues: Array<{ path: Array<string>; code: ValidationCode; min: number | null; max: number | null }>;
-      };
-};
-
 export type ReadBookmarkAuthorStateQueryVariables = Exact<{
   id: number;
 }>;
 
 export type ReadBookmarkAuthorStateQuery = { getAuthor: { id: number } | null };
 
-export type GetCollectionAncestorsQueryVariables = Exact<{
-  id: number;
+export type CreateCollectionMutationVariables = Exact<{
+  parentId?: number | null | undefined;
+  name: string;
+  description?: string | null | undefined;
 }>;
 
-export type GetCollectionAncestorsQuery = {
-  getCollection: { id: number; name: string; ancestors: Array<{ id: number; name: string }> | null } | null;
+export type CreateCollectionMutation = {
+  createCollection:
+    | { __typename: 'CollectionSaved'; collectionId: number }
+    | { __typename: 'Conflict'; reason: ConflictReason; resources: Array<{ kind: ResourceKind; id: number }> }
+    | { __typename: 'MissingResources'; resources: Array<{ kind: ResourceKind; id: number }> }
+    | {
+        __typename: 'ValidationFailure';
+        issues: Array<{ path: Array<string>; code: ValidationCode; min: number | null; max: number | null }>;
+      };
 };
 
 export type DeleteCollectionMutationVariables = Exact<{
@@ -285,6 +293,14 @@ export type DeleteCollectionMutation = {
         __typename: 'ValidationFailure';
         issues: Array<{ path: Array<string>; code: ValidationCode; min: number | null; max: number | null }>;
       };
+};
+
+export type GetCollectionAncestorsQueryVariables = Exact<{
+  id: number;
+}>;
+
+export type GetCollectionAncestorsQuery = {
+  getCollection: { id: number; name: string; ancestors: Array<{ id: number; name: string }> | null } | null;
 };
 
 export type UpdateCollectionMutationVariables = Exact<{
@@ -305,31 +321,6 @@ export type UpdateCollectionMutation = {
       };
 };
 
-export type CreateCollectionMutationVariables = Exact<{
-  parentId?: number | null | undefined;
-  name: string;
-  description?: string | null | undefined;
-}>;
-
-export type CreateCollectionMutation = {
-  createCollection:
-    | { __typename: 'CollectionSaved'; collectionId: number }
-    | { __typename: 'Conflict'; reason: ConflictReason; resources: Array<{ kind: ResourceKind; id: number }> }
-    | { __typename: 'MissingResources'; resources: Array<{ kind: ResourceKind; id: number }> }
-    | {
-        __typename: 'ValidationFailure';
-        issues: Array<{ path: Array<string>; code: ValidationCode; min: number | null; max: number | null }>;
-      };
-};
-
-export type ReadBookmarkCollectionStateQueryVariables = Exact<{
-  id: number;
-}>;
-
-export type ReadBookmarkCollectionStateQuery = {
-  getCollection: { id: number; name: string; description: string | null; parentId: number | null } | null;
-};
-
 export type GetCollectionsQueryVariables = Exact<{
   parentId?: number | null | undefined;
   pagination: Pagination;
@@ -348,6 +339,46 @@ export type GetCollectionsQuery = {
       description: string | null;
     }>;
   };
+};
+
+export type ReadBookmarkCollectionStateQueryVariables = Exact<{
+  id: number;
+}>;
+
+export type ReadBookmarkCollectionStateQuery = {
+  getCollection: { id: number; name: string; description: string | null; parentId: number | null } | null;
+};
+
+export type CreateCommentMutationVariables = Exact<{
+  novelId: number;
+  content: string;
+}>;
+
+export type CreateCommentMutation = {
+  addCommentForNovel:
+    | { __typename: 'CommentSaved'; novelId: number }
+    | { __typename: 'Conflict'; reason: ConflictReason; resources: Array<{ kind: ResourceKind; id: number }> }
+    | { __typename: 'MissingResources'; resources: Array<{ kind: ResourceKind; id: number }> }
+    | {
+        __typename: 'ValidationFailure';
+        issues: Array<{ path: Array<string>; code: ValidationCode; min: number | null; max: number | null }>;
+      };
+};
+
+export type UpdateCommentMutationVariables = Exact<{
+  novelId: number;
+  content: string;
+}>;
+
+export type UpdateCommentMutation = {
+  updateCommentForNovel:
+    | { __typename: 'CommentSaved'; novelId: number }
+    | { __typename: 'Conflict'; reason: ConflictReason; resources: Array<{ kind: ResourceKind; id: number }> }
+    | { __typename: 'MissingResources'; resources: Array<{ kind: ResourceKind; id: number }> }
+    | {
+        __typename: 'ValidationFailure';
+        issues: Array<{ path: Array<string>; code: ValidationCode; min: number | null; max: number | null }>;
+      };
 };
 
 export type AddCollectionForNovelMutationVariables = Exact<{
@@ -400,32 +431,32 @@ export type DeleteReadRecordMutation = {
       };
 };
 
-export type CreateCommentMutationVariables = Exact<{
+export type DeleteCollectionForNovelMutationVariables = Exact<{
   novelId: number;
-  content: string;
+  collectionId: number;
 }>;
 
-export type CreateCommentMutation = {
-  addCommentForNovel:
-    | { __typename: 'CommentSaved'; novelId: number }
-    | { __typename: 'Conflict'; reason: ConflictReason; resources: Array<{ kind: ResourceKind; id: number }> }
-    | { __typename: 'MissingResources'; resources: Array<{ kind: ResourceKind; id: number }> }
+export type DeleteCollectionForNovelMutation = {
+  deleteCollectionForNovel:
+    | {
+        __typename: 'CollectionMembershipChanged';
+        collectionId: number;
+        present: boolean;
+        resource: { kind: ResourceKind; id: number };
+      }
     | {
         __typename: 'ValidationFailure';
         issues: Array<{ path: Array<string>; code: ValidationCode; min: number | null; max: number | null }>;
       };
 };
 
-export type UpdateCommentMutationVariables = Exact<{
+export type DeleteCommentForNovelMutationVariables = Exact<{
   novelId: number;
-  content: string;
 }>;
 
-export type UpdateCommentMutation = {
-  updateCommentForNovel:
-    | { __typename: 'CommentSaved'; novelId: number }
-    | { __typename: 'Conflict'; reason: ConflictReason; resources: Array<{ kind: ResourceKind; id: number }> }
-    | { __typename: 'MissingResources'; resources: Array<{ kind: ResourceKind; id: number }> }
+export type DeleteCommentForNovelMutation = {
+  deleteCommentForNovel:
+    | { __typename: 'ResourceDeleted'; resource: { kind: ResourceKind; id: number } }
     | {
         __typename: 'ValidationFailure';
         issues: Array<{ path: Array<string>; code: ValidationCode; min: number | null; max: number | null }>;
@@ -482,38 +513,6 @@ export type UpdateNovelByCrawlerMutation = {
       };
 };
 
-export type DeleteCommentForNovelMutationVariables = Exact<{
-  novelId: number;
-}>;
-
-export type DeleteCommentForNovelMutation = {
-  deleteCommentForNovel:
-    | { __typename: 'ResourceDeleted'; resource: { kind: ResourceKind; id: number } }
-    | {
-        __typename: 'ValidationFailure';
-        issues: Array<{ path: Array<string>; code: ValidationCode; min: number | null; max: number | null }>;
-      };
-};
-
-export type DeleteCollectionForNovelMutationVariables = Exact<{
-  novelId: number;
-  collectionId: number;
-}>;
-
-export type DeleteCollectionForNovelMutation = {
-  deleteCollectionForNovel:
-    | {
-        __typename: 'CollectionMembershipChanged';
-        collectionId: number;
-        present: boolean;
-        resource: { kind: ResourceKind; id: number };
-      }
-    | {
-        __typename: 'ValidationFailure';
-        issues: Array<{ path: Array<string>; code: ValidationCode; min: number | null; max: number | null }>;
-      };
-};
-
 export type FetchNovelQueryVariables = Exact<{
   id: string;
   novelSite: NovelSite;
@@ -564,6 +563,19 @@ export type CreateNovelMutation = {
       };
 };
 
+export type DeleteNovelMutationVariables = Exact<{
+  id: number;
+}>;
+
+export type DeleteNovelMutation = {
+  deleteNovel:
+    | { __typename: 'ResourceDeleted'; resource: { kind: ResourceKind; id: number } }
+    | {
+        __typename: 'ValidationFailure';
+        issues: Array<{ path: Array<string>; code: ValidationCode; min: number | null; max: number | null }>;
+      };
+};
+
 export type GetNovelsQueryVariables = Exact<{
   collectionMatch?: TagMatch | null | undefined;
   novelStatus?: NovelStatus | null | undefined;
@@ -585,19 +597,6 @@ export type GetNovelsQuery = {
       site: NovelSite;
     }>;
   };
-};
-
-export type DeleteNovelMutationVariables = Exact<{
-  id: number;
-}>;
-
-export type DeleteNovelMutation = {
-  deleteNovel:
-    | { __typename: 'ResourceDeleted'; resource: { kind: ResourceKind; id: number } }
-    | {
-        __typename: 'ValidationFailure';
-        issues: Array<{ path: Array<string>; code: ValidationCode; min: number | null; max: number | null }>;
-      };
 };
 
 export type ReadBookmarkNovelStateQueryVariables = Exact<{
@@ -629,21 +628,6 @@ export type CreateTagMutation = {
       };
 };
 
-export type ReadBookmarkTagsStateQueryVariables = Exact<{ [key: string]: never }>;
-
-export type ReadBookmarkTagsStateQuery = { allTags: Array<{ id: number }> };
-
-export type GetTagsQueryVariables = Exact<{
-  pagination: Pagination;
-}>;
-
-export type GetTagsQuery = {
-  queryTags: {
-    total: number;
-    data: Array<{ name: string; id: number; site: NovelSite; url: string; createTime: string; updateTime: string }>;
-  };
-};
-
 export type DeleteTagMutationVariables = Exact<{
   id: number;
 }>;
@@ -656,6 +640,21 @@ export type DeleteTagMutation = {
         issues: Array<{ path: Array<string>; code: ValidationCode; min: number | null; max: number | null }>;
       };
 };
+
+export type GetTagsQueryVariables = Exact<{
+  pagination: Pagination;
+}>;
+
+export type GetTagsQuery = {
+  queryTags: {
+    total: number;
+    data: Array<{ name: string; id: number; site: NovelSite; url: string; createTime: string; updateTime: string }>;
+  };
+};
+
+export type ReadBookmarkTagsStateQueryVariables = Exact<{ [key: string]: never }>;
+
+export type ReadBookmarkTagsStateQuery = { allTags: Array<{ id: number }> };
 
 export const SearchAuthorDocument = {
   kind: 'Document',
@@ -1305,61 +1304,6 @@ export const CreateAuthorDocument = {
     },
   ],
 } as unknown as DocumentNode<CreateAuthorMutation, CreateAuthorMutationVariables>;
-export const GetAuthorsDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'getAuthors' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'pagination' } },
-          type: { kind: 'NonNullType', type: { kind: 'NamedType', name: { kind: 'Name', value: 'Pagination' } } },
-        },
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'queryAuthors' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'pagination' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'pagination' } },
-              },
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'data' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'site' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'createTime' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'updateTime' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'avatar' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'description' } },
-                    ],
-                  },
-                },
-                { kind: 'Field', name: { kind: 'Name', value: 'total' } },
-              ],
-            },
-          },
-        ],
-      },
-    },
-  ],
-} as unknown as DocumentNode<GetAuthorsQuery, GetAuthorsQueryVariables>;
 export const DeleteAuthorDocument = {
   kind: 'Document',
   definitions: [
@@ -1441,6 +1385,61 @@ export const DeleteAuthorDocument = {
     },
   ],
 } as unknown as DocumentNode<DeleteAuthorMutation, DeleteAuthorMutationVariables>;
+export const GetAuthorsDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'getAuthors' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'pagination' } },
+          type: { kind: 'NonNullType', type: { kind: 'NamedType', name: { kind: 'Name', value: 'Pagination' } } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'queryAuthors' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'pagination' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'pagination' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'data' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'site' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'createTime' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'updateTime' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'avatar' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+                    ],
+                  },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'total' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<GetAuthorsQuery, GetAuthorsQueryVariables>;
 export const ReadBookmarkAuthorStateDocument = {
   kind: 'Document',
   definitions: [
@@ -1478,18 +1477,28 @@ export const ReadBookmarkAuthorStateDocument = {
     },
   ],
 } as unknown as DocumentNode<ReadBookmarkAuthorStateQuery, ReadBookmarkAuthorStateQueryVariables>;
-export const GetCollectionAncestorsDocument = {
+export const CreateCollectionDocument = {
   kind: 'Document',
   definitions: [
     {
       kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'getCollectionAncestors' },
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'createCollection' },
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
-          type: { kind: 'NonNullType', type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } } },
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'parentId' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'name' } },
+          type: { kind: 'NonNullType', type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'description' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
         },
       ],
       selectionSet: {
@@ -1497,30 +1506,99 @@ export const GetCollectionAncestorsDocument = {
         selections: [
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'getCollection' },
+            name: { kind: 'Name', value: 'createCollection' },
             arguments: [
               {
                 kind: 'Argument',
-                name: { kind: 'Name', value: 'id' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+                name: { kind: 'Name', value: 'parentId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'parentId' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'name' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'name' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'description' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'description' } },
               },
             ],
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
+                { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
                 {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'ancestors' },
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'CollectionSaved' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [{ kind: 'Field', name: { kind: 'Name', value: 'collectionId' } }],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'ValidationFailure' } },
                   selectionSet: {
                     kind: 'SelectionSet',
                     selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'issues' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'path' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'min' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'max' } },
+                          ],
+                        },
+                      },
                     ],
                   },
                 },
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'MissingResources' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'resources' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Conflict' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'reason' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'resources' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
               ],
             },
           },
@@ -1528,7 +1606,7 @@ export const GetCollectionAncestorsDocument = {
       },
     },
   ],
-} as unknown as DocumentNode<GetCollectionAncestorsQuery, GetCollectionAncestorsQueryVariables>;
+} as unknown as DocumentNode<CreateCollectionMutation, CreateCollectionMutationVariables>;
 export const DeleteCollectionDocument = {
   kind: 'Document',
   definitions: [
@@ -1610,6 +1688,57 @@ export const DeleteCollectionDocument = {
     },
   ],
 } as unknown as DocumentNode<DeleteCollectionMutation, DeleteCollectionMutationVariables>;
+export const GetCollectionAncestorsDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'getCollectionAncestors' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+          type: { kind: 'NonNullType', type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'getCollection' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'id' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'ancestors' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                    ],
+                  },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<GetCollectionAncestorsQuery, GetCollectionAncestorsQueryVariables>;
 export const UpdateCollectionDocument = {
   kind: 'Document',
   definitions: [
@@ -1750,13 +1879,13 @@ export const UpdateCollectionDocument = {
     },
   ],
 } as unknown as DocumentNode<UpdateCollectionMutation, UpdateCollectionMutationVariables>;
-export const CreateCollectionDocument = {
+export const GetCollectionsDocument = {
   kind: 'Document',
   definitions: [
     {
       kind: 'OperationDefinition',
-      operation: 'mutation',
-      name: { kind: 'Name', value: 'createCollection' },
+      operation: 'query',
+      name: { kind: 'Name', value: 'getCollections' },
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
@@ -1765,13 +1894,8 @@ export const CreateCollectionDocument = {
         },
         {
           kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'name' } },
-          type: { kind: 'NonNullType', type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } } },
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'description' } },
-          type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'pagination' } },
+          type: { kind: 'NonNullType', type: { kind: 'NamedType', name: { kind: 'Name', value: 'Pagination' } } },
         },
       ],
       selectionSet: {
@@ -1779,7 +1903,7 @@ export const CreateCollectionDocument = {
         selections: [
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'createCollection' },
+            name: { kind: 'Name', value: 'getCollections' },
             arguments: [
               {
                 kind: 'Argument',
@@ -1788,13 +1912,115 @@ export const CreateCollectionDocument = {
               },
               {
                 kind: 'Argument',
-                name: { kind: 'Name', value: 'name' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'name' } },
+                name: { kind: 'Name', value: 'pagination' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'pagination' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'data' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'path' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'parentId' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'createTime' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'updateTime' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+                    ],
+                  },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'total' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<GetCollectionsQuery, GetCollectionsQueryVariables>;
+export const ReadBookmarkCollectionStateDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'ReadBookmarkCollectionState' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+          type: { kind: 'NonNullType', type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'getCollection' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'id' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'parentId' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ReadBookmarkCollectionStateQuery, ReadBookmarkCollectionStateQueryVariables>;
+export const CreateCommentDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'CreateComment' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'novelId' } },
+          type: { kind: 'NonNullType', type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'content' } },
+          type: { kind: 'NonNullType', type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'addCommentForNovel' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'novelId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'novelId' } },
               },
               {
                 kind: 'Argument',
-                name: { kind: 'Name', value: 'description' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'description' } },
+                name: { kind: 'Name', value: 'content' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'content' } },
               },
             ],
             selectionSet: {
@@ -1803,10 +2029,10 @@ export const CreateCollectionDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
                 {
                   kind: 'InlineFragment',
-                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'CollectionSaved' } },
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'CommentSaved' } },
                   selectionSet: {
                     kind: 'SelectionSet',
-                    selections: [{ kind: 'Field', name: { kind: 'Name', value: 'collectionId' } }],
+                    selections: [{ kind: 'Field', name: { kind: 'Name', value: 'novelId' } }],
                   },
                 },
                 {
@@ -1879,66 +2105,24 @@ export const CreateCollectionDocument = {
       },
     },
   ],
-} as unknown as DocumentNode<CreateCollectionMutation, CreateCollectionMutationVariables>;
-export const ReadBookmarkCollectionStateDocument = {
+} as unknown as DocumentNode<CreateCommentMutation, CreateCommentMutationVariables>;
+export const UpdateCommentDocument = {
   kind: 'Document',
   definitions: [
     {
       kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'ReadBookmarkCollectionState' },
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'UpdateComment' },
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'novelId' } },
           type: { kind: 'NonNullType', type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } } },
         },
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'getCollection' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'id' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
-              },
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'description' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'parentId' } },
-              ],
-            },
-          },
-        ],
-      },
-    },
-  ],
-} as unknown as DocumentNode<ReadBookmarkCollectionStateQuery, ReadBookmarkCollectionStateQueryVariables>;
-export const GetCollectionsDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'getCollections' },
-      variableDefinitions: [
         {
           kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'parentId' } },
-          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'pagination' } },
-          type: { kind: 'NonNullType', type: { kind: 'NamedType', name: { kind: 'Name', value: 'Pagination' } } },
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'content' } },
+          type: { kind: 'NonNullType', type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } } },
         },
       ],
       selectionSet: {
@@ -1946,39 +2130,94 @@ export const GetCollectionsDocument = {
         selections: [
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'getCollections' },
+            name: { kind: 'Name', value: 'updateCommentForNovel' },
             arguments: [
               {
                 kind: 'Argument',
-                name: { kind: 'Name', value: 'parentId' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'parentId' } },
+                name: { kind: 'Name', value: 'novelId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'novelId' } },
               },
               {
                 kind: 'Argument',
-                name: { kind: 'Name', value: 'pagination' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'pagination' } },
+                name: { kind: 'Name', value: 'content' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'content' } },
               },
             ],
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
+                { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
                 {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'data' },
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'CommentSaved' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [{ kind: 'Field', name: { kind: 'Name', value: 'novelId' } }],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'ValidationFailure' } },
                   selectionSet: {
                     kind: 'SelectionSet',
                     selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'path' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'parentId' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'createTime' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'updateTime' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'issues' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'path' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'min' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'max' } },
+                          ],
+                        },
+                      },
                     ],
                   },
                 },
-                { kind: 'Field', name: { kind: 'Name', value: 'total' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'MissingResources' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'resources' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Conflict' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'reason' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'resources' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
               ],
             },
           },
@@ -1986,7 +2225,7 @@ export const GetCollectionsDocument = {
       },
     },
   ],
-} as unknown as DocumentNode<GetCollectionsQuery, GetCollectionsQueryVariables>;
+} as unknown as DocumentNode<UpdateCommentMutation, UpdateCommentMutationVariables>;
 export const AddCollectionForNovelDocument = {
   kind: 'Document',
   definitions: [
@@ -2315,13 +2554,13 @@ export const DeleteReadRecordDocument = {
     },
   ],
 } as unknown as DocumentNode<DeleteReadRecordMutation, DeleteReadRecordMutationVariables>;
-export const CreateCommentDocument = {
+export const DeleteCollectionForNovelDocument = {
   kind: 'Document',
   definitions: [
     {
       kind: 'OperationDefinition',
       operation: 'mutation',
-      name: { kind: 'Name', value: 'CreateComment' },
+      name: { kind: 'Name', value: 'deleteCollectionForNovel' },
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
@@ -2330,8 +2569,8 @@ export const CreateCommentDocument = {
         },
         {
           kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'content' } },
-          type: { kind: 'NonNullType', type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } } },
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'collectionId' } },
+          type: { kind: 'NonNullType', type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } } },
         },
       ],
       selectionSet: {
@@ -2339,17 +2578,17 @@ export const CreateCommentDocument = {
         selections: [
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'addCommentForNovel' },
+            name: { kind: 'Name', value: 'deleteCollectionForNovel' },
             arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'collectionId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'collectionId' } },
+              },
               {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'novelId' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'novelId' } },
-              },
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'content' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'content' } },
               },
             ],
             selectionSet: {
@@ -2358,10 +2597,24 @@ export const CreateCommentDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
                 {
                   kind: 'InlineFragment',
-                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'CommentSaved' } },
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'CollectionMembershipChanged' } },
                   selectionSet: {
                     kind: 'SelectionSet',
-                    selections: [{ kind: 'Field', name: { kind: 'Name', value: 'novelId' } }],
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'collectionId' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'resource' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                          ],
+                        },
+                      },
+                      { kind: 'Field', name: { kind: 'Name', value: 'present' } },
+                    ],
                   },
                 },
                 {
@@ -2386,47 +2639,6 @@ export const CreateCommentDocument = {
                     ],
                   },
                 },
-                {
-                  kind: 'InlineFragment',
-                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'MissingResources' } },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'resources' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                          ],
-                        },
-                      },
-                    ],
-                  },
-                },
-                {
-                  kind: 'InlineFragment',
-                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Conflict' } },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'reason' } },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'resources' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                          ],
-                        },
-                      },
-                    ],
-                  },
-                },
               ],
             },
           },
@@ -2434,24 +2646,19 @@ export const CreateCommentDocument = {
       },
     },
   ],
-} as unknown as DocumentNode<CreateCommentMutation, CreateCommentMutationVariables>;
-export const UpdateCommentDocument = {
+} as unknown as DocumentNode<DeleteCollectionForNovelMutation, DeleteCollectionForNovelMutationVariables>;
+export const DeleteCommentForNovelDocument = {
   kind: 'Document',
   definitions: [
     {
       kind: 'OperationDefinition',
       operation: 'mutation',
-      name: { kind: 'Name', value: 'UpdateComment' },
+      name: { kind: 'Name', value: 'deleteCommentForNovel' },
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'novelId' } },
           type: { kind: 'NonNullType', type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } } },
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'content' } },
-          type: { kind: 'NonNullType', type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } } },
         },
       ],
       selectionSet: {
@@ -2459,17 +2666,12 @@ export const UpdateCommentDocument = {
         selections: [
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'updateCommentForNovel' },
+            name: { kind: 'Name', value: 'deleteCommentForNovel' },
             arguments: [
               {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'novelId' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'novelId' } },
-              },
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'content' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'content' } },
               },
             ],
             selectionSet: {
@@ -2478,10 +2680,22 @@ export const UpdateCommentDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
                 {
                   kind: 'InlineFragment',
-                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'CommentSaved' } },
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'ResourceDeleted' } },
                   selectionSet: {
                     kind: 'SelectionSet',
-                    selections: [{ kind: 'Field', name: { kind: 'Name', value: 'novelId' } }],
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'resource' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                          ],
+                        },
+                      },
+                    ],
                   },
                 },
                 {
@@ -2506,47 +2720,6 @@ export const UpdateCommentDocument = {
                     ],
                   },
                 },
-                {
-                  kind: 'InlineFragment',
-                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'MissingResources' } },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'resources' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                          ],
-                        },
-                      },
-                    ],
-                  },
-                },
-                {
-                  kind: 'InlineFragment',
-                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Conflict' } },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'reason' } },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'resources' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                          ],
-                        },
-                      },
-                    ],
-                  },
-                },
               ],
             },
           },
@@ -2554,7 +2727,7 @@ export const UpdateCommentDocument = {
       },
     },
   ],
-} as unknown as DocumentNode<UpdateCommentMutation, UpdateCommentMutationVariables>;
+} as unknown as DocumentNode<DeleteCommentForNovelMutation, DeleteCommentForNovelMutationVariables>;
 export const GetNovelDocument = {
   kind: 'Document',
   definitions: [
@@ -2793,180 +2966,6 @@ export const UpdateNovelByCrawlerDocument = {
     },
   ],
 } as unknown as DocumentNode<UpdateNovelByCrawlerMutation, UpdateNovelByCrawlerMutationVariables>;
-export const DeleteCommentForNovelDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'mutation',
-      name: { kind: 'Name', value: 'deleteCommentForNovel' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'novelId' } },
-          type: { kind: 'NonNullType', type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } } },
-        },
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'deleteCommentForNovel' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'novelId' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'novelId' } },
-              },
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
-                {
-                  kind: 'InlineFragment',
-                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'ResourceDeleted' } },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'resource' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                          ],
-                        },
-                      },
-                    ],
-                  },
-                },
-                {
-                  kind: 'InlineFragment',
-                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'ValidationFailure' } },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'issues' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'path' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'code' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'min' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'max' } },
-                          ],
-                        },
-                      },
-                    ],
-                  },
-                },
-              ],
-            },
-          },
-        ],
-      },
-    },
-  ],
-} as unknown as DocumentNode<DeleteCommentForNovelMutation, DeleteCommentForNovelMutationVariables>;
-export const DeleteCollectionForNovelDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'mutation',
-      name: { kind: 'Name', value: 'deleteCollectionForNovel' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'novelId' } },
-          type: { kind: 'NonNullType', type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } } },
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'collectionId' } },
-          type: { kind: 'NonNullType', type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } } },
-        },
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'deleteCollectionForNovel' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'collectionId' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'collectionId' } },
-              },
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'novelId' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'novelId' } },
-              },
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
-                {
-                  kind: 'InlineFragment',
-                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'CollectionMembershipChanged' } },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'collectionId' } },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'resource' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                          ],
-                        },
-                      },
-                      { kind: 'Field', name: { kind: 'Name', value: 'present' } },
-                    ],
-                  },
-                },
-                {
-                  kind: 'InlineFragment',
-                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'ValidationFailure' } },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'issues' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'path' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'code' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'min' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'max' } },
-                          ],
-                        },
-                      },
-                    ],
-                  },
-                },
-              ],
-            },
-          },
-        ],
-      },
-    },
-  ],
-} as unknown as DocumentNode<DeleteCollectionForNovelMutation, DeleteCollectionForNovelMutationVariables>;
 export const FetchNovelDocument = {
   kind: 'Document',
   definitions: [
@@ -3283,6 +3282,87 @@ export const CreateNovelDocument = {
     },
   ],
 } as unknown as DocumentNode<CreateNovelMutation, CreateNovelMutationVariables>;
+export const DeleteNovelDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'deleteNovel' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+          type: { kind: 'NonNullType', type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'deleteNovel' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'id' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'ResourceDeleted' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'resource' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'ValidationFailure' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'issues' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'path' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'min' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'max' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<DeleteNovelMutation, DeleteNovelMutationVariables>;
 export const GetNovelsDocument = {
   kind: 'Document',
   definitions: [
@@ -3369,87 +3449,6 @@ export const GetNovelsDocument = {
     },
   ],
 } as unknown as DocumentNode<GetNovelsQuery, GetNovelsQueryVariables>;
-export const DeleteNovelDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'mutation',
-      name: { kind: 'Name', value: 'deleteNovel' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
-          type: { kind: 'NonNullType', type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } } },
-        },
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'deleteNovel' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'id' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
-              },
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
-                {
-                  kind: 'InlineFragment',
-                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'ResourceDeleted' } },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'resource' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                          ],
-                        },
-                      },
-                    ],
-                  },
-                },
-                {
-                  kind: 'InlineFragment',
-                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'ValidationFailure' } },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'issues' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'path' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'code' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'min' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'max' } },
-                          ],
-                        },
-                      },
-                    ],
-                  },
-                },
-              ],
-            },
-          },
-        ],
-      },
-    },
-  ],
-} as unknown as DocumentNode<DeleteNovelMutation, DeleteNovelMutationVariables>;
 export const ReadBookmarkNovelStateDocument = {
   kind: 'Document',
   definitions: [
@@ -3626,83 +3625,6 @@ export const CreateTagDocument = {
     },
   ],
 } as unknown as DocumentNode<CreateTagMutation, CreateTagMutationVariables>;
-export const ReadBookmarkTagsStateDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'ReadBookmarkTagsState' },
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'allTags' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [{ kind: 'Field', name: { kind: 'Name', value: 'id' } }],
-            },
-          },
-        ],
-      },
-    },
-  ],
-} as unknown as DocumentNode<ReadBookmarkTagsStateQuery, ReadBookmarkTagsStateQueryVariables>;
-export const GetTagsDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'getTags' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'pagination' } },
-          type: { kind: 'NonNullType', type: { kind: 'NamedType', name: { kind: 'Name', value: 'Pagination' } } },
-        },
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'queryTags' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'pagination' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'pagination' } },
-              },
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'data' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'site' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'url' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'createTime' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'updateTime' } },
-                    ],
-                  },
-                },
-                { kind: 'Field', name: { kind: 'Name', value: 'total' } },
-              ],
-            },
-          },
-        ],
-      },
-    },
-  ],
-} as unknown as DocumentNode<GetTagsQuery, GetTagsQueryVariables>;
 export const DeleteTagDocument = {
   kind: 'Document',
   definitions: [
@@ -3784,3 +3706,80 @@ export const DeleteTagDocument = {
     },
   ],
 } as unknown as DocumentNode<DeleteTagMutation, DeleteTagMutationVariables>;
+export const GetTagsDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'getTags' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'pagination' } },
+          type: { kind: 'NonNullType', type: { kind: 'NamedType', name: { kind: 'Name', value: 'Pagination' } } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'queryTags' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'pagination' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'pagination' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'data' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'site' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'url' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'createTime' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'updateTime' } },
+                    ],
+                  },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'total' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<GetTagsQuery, GetTagsQueryVariables>;
+export const ReadBookmarkTagsStateDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'ReadBookmarkTagsState' },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'allTags' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [{ kind: 'Field', name: { kind: 'Name', value: 'id' } }],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ReadBookmarkTagsStateQuery, ReadBookmarkTagsStateQueryVariables>;

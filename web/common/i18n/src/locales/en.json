@@ -225,5 +225,14 @@
   "chapter": "Chapter",
   "resource": "Resource",
   "route_load_failed": "Page resources failed to load. Reload the page to try again.",
-  "reload_page": "Reload page"
+  "reload_page": "Reload page",
+  "all_collections": "All collections",
+  "browse_collection": "Browse {{name}}",
+  "collection_search_results": "Collection search results",
+  "no_collection_matches": "No matching collections",
+  "no_child_collections": "No child collections",
+  "search_collections": "Search names or full paths",
+  "selected_collections": "Selected collections",
+  "confirm_selection": "Confirm selection",
+  "collection_picker_hint": "Browse with the name or arrow. Use the selection control to choose a collection, then confirm."
 }

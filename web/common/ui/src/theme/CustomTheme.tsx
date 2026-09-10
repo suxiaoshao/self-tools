@@ -1,51 +1,26 @@
-import { type ReactNode, useEffect, useEffectEvent, useMemo } from 'react';
-import { colorSchemaMatch, selectColorMode, useThemeStore } from './themeSlice';
-import { match } from 'ts-pattern';
-import { useShallow } from 'zustand/react/shallow';
+import { type ReactNode, useEffect } from 'react';
+import { ThemeProvider, useTheme } from 'next-themes';
+import { useColorStore } from './themeSlice';
 
-interface CustomThemeProps {
-  children?: ReactNode;
+function ThemeMetadata() {
+  const color = useColorStore((state) => state.color);
+  const { theme, setTheme } = useTheme();
+  useEffect(() => {
+    if (theme && !['light', 'dark', 'system'].includes(theme)) setTheme('system');
+  }, [theme, setTheme]);
+  return (
+    <>
+      <meta name="theme-color" content={color} />
+      <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    </>
+  );
 }
 
-export function CustomTheme({ children }: CustomThemeProps) {
-  const { setSystemColorScheme, ...state } = useThemeStore(
-    useShallow(({ setSystemColorScheme, color, colorSetting, systemColorScheme }) => ({
-      color,
-      colorSetting,
-      systemColorScheme,
-      setSystemColorScheme,
-      colorMode: selectColorMode({ colorSetting, systemColorScheme }),
-    })),
-  );
-  const handleColorSchemaChange = useEffectEvent((e: MediaQueryListEvent) => {
-    const colorScheme = match(e.matches)
-      .with(true, () => 'dark' as const)
-      .otherwise(() => 'light' as const);
-    setSystemColorScheme(colorScheme);
-  });
-  useEffect(() => {
-    const sign = new AbortController();
-    colorSchemaMatch.addEventListener('change', handleColorSchemaChange, { signal: sign.signal });
-    return () => {
-      sign.abort();
-    };
-  }, []);
-  useEffect(() => {
-    const root = window.document.documentElement;
-
-    root.classList.remove('light', 'dark');
-
-    root.classList.add(state.colorMode);
-  }, [state.colorMode]);
-  return useMemo(
-    () => (
-      <>
-        <meta name="theme-color" content={state.color} />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <meta name="color-scheme" content={state.colorMode} />
-        {children}
-      </>
-    ),
-    [children, state],
+export function CustomTheme({ children }: { children?: ReactNode }) {
+  return (
+    <ThemeProvider attribute="class" storageKey="colorSetting" defaultTheme="system">
+      <ThemeMetadata />
+      {children}
+    </ThemeProvider>
   );
 }

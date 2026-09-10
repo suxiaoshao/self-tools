@@ -1,22 +1,8 @@
 import { createContext, createElement, useCallback, useContext, useEffect, useMemo, type ReactNode } from 'react';
 import { useLazyQuery } from '@apollo/client/react';
 import { RequestError } from 'request-errors';
-import { graphql } from '@bookmarks/gql/index';
+import { AllCollectionsDocument as AllCollections } from '@bookmarks/gql/graphql';
 import type { AllCollectionsQuery } from '@bookmarks/gql/graphql';
-
-const AllCollections = graphql(`
-  query allCollections {
-    allCollections {
-      name
-      id
-      path
-      createTime
-      updateTime
-      description
-      parentId
-    }
-  }
-`);
 
 type AllCollectionItem = AllCollectionsQuery['allCollections'][number];
 

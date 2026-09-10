@@ -6,16 +6,16 @@ edition.workspace = true
 [dependencies]
 service-health.workspace = true
 tokio = { workspace = true, features = ["rt", "time", "macros"] }
-async-trait = "0.1.89"
+async-trait = "0.1.92"
 http.workspace = true
 tracing.workspace = true
 telemetry.workspace = true
 service-errors.workspace = true
 serde_json.workspace = true
-bytes = "1.11.1"
+bytes = "1.12.1"
 
 [target.'cfg(not(windows))'.dependencies]
-pingora = { version = "0.8", features = ["proxy", "rustls"] }
+pingora = { version = "0.9.0", features = ["proxy", "rustls"] }
 
 [dependencies.middleware]
 workspace = true

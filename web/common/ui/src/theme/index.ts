@@ -1,2 +1,3 @@
 export { CustomTheme } from './CustomTheme';
-export { ColorSetting, useThemeStore, selectColorMode } from './themeSlice';
+export { ColorSetting, useColorStore } from './themeSlice';
+export { useTheme } from 'next-themes';

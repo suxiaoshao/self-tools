@@ -11,7 +11,6 @@ import {
   type CustomColumnDefArray,
   CustomTable,
   type CustomTableOptions,
-  getCoreRowModel,
   TableActions,
   usePage,
   usePageWithTotal,
@@ -23,51 +22,11 @@ import { useI18n } from 'i18n';
 import { Link } from 'react-router';
 import { getImageUrl } from '@bookmarks/utils/image';
 import { getLabelKeyBySite } from '@bookmarks/utils/novelSite';
-import { useTitle } from 'hooks';
-import { graphql } from '@bookmarks/gql/index';
+import { GetAuthorsDocument as GetAuthors, DeleteAuthorDocument as DeleteAuthor } from '@bookmarks/gql/graphql';
 import { useMutation, useQuery } from '@apollo/client/react';
 import type { GetAuthorsQuery } from '@bookmarks/gql/graphql';
 import { Button, buttonVariants } from 'ui/components/button';
 import { Avatar, AvatarFallback, AvatarImage } from 'ui/components/avatar';
-
-const GetAuthors = graphql(`
-  query getAuthors($pagination: Pagination!) {
-    queryAuthors(pagination: $pagination) {
-      data {
-        id
-        site
-        name
-        createTime
-        updateTime
-        avatar
-        description
-      }
-      total
-    }
-  }
-`);
-
-const DeleteAuthor = graphql(`
-  mutation deleteAuthor($id: Int!) {
-    deleteAuthor(id: $id) {
-      __typename
-      ... on ResourceDeleted {
-        resource {
-          kind
-          id
-        }
-      }
-      ... on ValidationFailure {
-        issues {
-          path
-          code
-          min
-          max
-        }
-      }
-    }
-  }
-`);
 
 type TableItem = GetAuthorsQuery['queryAuthors']['data'][0];
 
@@ -92,10 +51,10 @@ export default function AuthorList() {
 
   const [deleteAuthor] = useMutation(DeleteAuthor);
   const t = useI18n();
-  useTitle(t('author_manage'));
+
   const columns = useMemo<CustomColumnDefArray<TableItem>>(
     () =>
-      [
+      columnHelper.columns([
         columnHelper.accessor(
           ({ name, id }) => (
             <Link
@@ -133,24 +92,30 @@ export default function AuthorList() {
         columnHelper.accessor(({ description }) => <p className="truncate">{description}</p>, {
           header: t('description'),
           id: 'description',
-          cellProps: {
-            className: 'max-w-[200px]',
+          meta: {
+            cellProps: {
+              className: 'max-w-[200px]',
+            },
           },
           cell: (context) => context.getValue(),
         }),
         columnHelper.accessor(({ createTime }) => format(createTime), {
           header: t('create_time'),
           id: 'createTime',
-          cellProps: {
-            className: 'max-w-[150px]',
+          meta: {
+            cellProps: {
+              className: 'max-w-[150px]',
+            },
           },
           cell: (context) => context.getValue(),
         }),
         columnHelper.accessor(({ updateTime }) => format(updateTime), {
           header: t('update_time'),
           id: 'updateTime',
-          cellProps: {
-            className: 'max-w-[150px]',
+          meta: {
+            cellProps: {
+              className: 'max-w-[150px]',
+            },
           },
           cell: (context) => context.getValue(),
         }),
@@ -176,16 +141,14 @@ export default function AuthorList() {
             </TableActions>
           ),
         }),
-      ] as CustomColumnDefArray<TableItem>,
+      ]),
     [t, write, target],
   );
-  const tableOptions = useMemo<CustomTableOptions<TableItem>>(
-    () => ({ columns, data: data ?? [], getCoreRowModel: getCoreRowModel() }),
-    [columns, data],
-  );
+  const tableOptions = useMemo<CustomTableOptions<TableItem>>(() => ({ columns, data: data ?? [] }), [columns, data]);
 
   return (
     <div className="flex min-h-0 size-full flex-col">
+      <title>{t('author_manage')}</title>
       <PageToolbar>
         <CreateAuthorButton refetch={refetch} />
         <Link to="/bookmarks/authors/fetch" className={buttonVariants({ variant: 'default', className: 'ml-2' })}>

@@ -12,7 +12,6 @@ import {
   type CustomColumnDefArray,
   CustomTable,
   type CustomTableOptions,
-  getCoreRowModel,
   TableActions,
   usePage,
   usePageWithTotal,
@@ -21,51 +20,10 @@ import { format } from 'time';
 import CreateTagButton from './components/CreateTagButton';
 import { useI18n } from 'i18n';
 import { getLabelKeyBySite } from '@bookmarks/utils/novelSite';
-import { useTitle } from 'hooks';
-import { graphql } from '@bookmarks/gql/index';
+import { GetTagsDocument as GetTags, DeleteTagDocument as DeleteTag } from '@bookmarks/gql/graphql';
 import { useLazyQuery, useMutation } from '@apollo/client/react';
 import type { GetTagsQuery } from '@bookmarks/gql/graphql';
 import { Button, buttonVariants } from 'ui/components/button';
-
-const GetTags = graphql(`
-  query getTags($pagination: Pagination!) {
-    queryTags(pagination: $pagination) {
-      data {
-        name
-        id
-        site
-        url
-        createTime
-        updateTime
-      }
-      total
-    }
-  }
-`);
-
-const DeleteTag = graphql(`
-  mutation deleteTag($id: Int!) {
-    deleteTag(id: $id) {
-      __typename
-      ... on ResourceDeleted {
-        resource {
-          kind
-          id
-        }
-      }
-      ... on ValidationFailure {
-        issues {
-          path
-          code
-          min
-          max
-        }
-      }
-    }
-  }
-`);
-
-const rowModel = getCoreRowModel();
 
 type Data = GetTagsQuery['queryTags']['data'][0];
 
@@ -96,10 +54,10 @@ export default function Tags() {
     onSearch();
   }, [onSearch]);
   const t = useI18n();
-  useTitle(t('tag_manage'));
+
   const columns = useMemo<CustomColumnDefArray<Data>>(
     () =>
-      [
+      columnHelper.columns([
         columnHelper.accessor(
           ({ url, name }) => (
             <a
@@ -154,13 +112,10 @@ export default function Tags() {
             </TableActions>
           ),
         }),
-      ] as CustomColumnDefArray<Data>,
+      ]),
     [t, write, target],
   );
-  const tableOptions = useMemo<CustomTableOptions<Data>>(
-    () => ({ columns, data: data ?? [], getCoreRowModel: rowModel }),
-    [columns, data],
-  );
+  const tableOptions = useMemo<CustomTableOptions<Data>>(() => ({ columns, data: data ?? [] }), [columns, data]);
 
   const toolbar = useMemo(() => {
     return (
@@ -175,6 +130,7 @@ export default function Tags() {
 
   return (
     <div className="flex min-h-0 size-full flex-col">
+      <title>{t('tag_manage')}</title>
       {toolbar}
       <div className="flex min-h-0 flex-1 flex-col p-4">
         <RequestNotice error={error} />

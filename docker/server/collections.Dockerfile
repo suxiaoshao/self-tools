@@ -4,7 +4,7 @@ COPY ./ /app
 RUN --mount=type=cache,target=/usr/local/cargo/registry,id=rust_registry,sharing=locked \
     --mount=type=cache,target=/app/target,id=rust_target,sharing=locked \
     cd /app \
-    && RUSTFLAGS="-C target-feature=-crt-static" cargo build --release -p collections \
+    && cargo build --release -p collections \
     && cp /app/target/release/collections /app/
 
 FROM debian:trixie-slim AS prod

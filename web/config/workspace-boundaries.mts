@@ -25,7 +25,7 @@ const commonDependencies: Record<string, readonly string[]> = {
   time: [],
   types: [],
   'request-errors': [],
-  'custom-graphql': ['request-errors', 'i18n'],
+  'custom-graphql': ['request-errors', 'i18n', 'ui'],
   'custom-table': ['ui', 'hooks', 'i18n', 'time'],
   details: ['ui', 'hooks', 'i18n', 'time'],
   edit: ['ui', 'hooks', 'i18n', 'time'],

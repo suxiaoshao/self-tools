@@ -1,58 +1,16 @@
 import { useI18n } from 'i18n';
 import useBookmarkWrite from '@bookmarks/useBookmarkWrite';
 import { checkNovelState } from '@bookmarks/features/novel/model/reconcile';
-import { graphql } from '@bookmarks/gql/index';
+import {
+  AddReadRecordDocument as AddReadRecord,
+  DeleteReadRecordDocument as DeleteReadRecord,
+} from '@bookmarks/gql/graphql';
 import { useMutation, useApolloClient } from '@apollo/client/react';
 import { Switch } from 'ui/components/switch';
 
-export const AddReadRecord = graphql(`
-  mutation addReadRecord($novelId: Int!, $chapterIds: [Int!]!) {
-    addReadRecordsForChapter(novelId: $novelId, chapterIds: $chapterIds) {
-      __typename
-      ... on ReadRecordsUpdated {
-        chapterIds
-        changedCount
-      }
-      ... on ValidationFailure {
-        issues {
-          path
-          code
-          min
-          max
-        }
-      }
-      ... on MissingResources {
-        resources {
-          kind
-          id
-        }
-      }
-      ... on ChaptersAlreadyRead {
-        chapterIds
-      }
-    }
-  }
-`);
+export { AddReadRecord };
 
-export const DeleteReadRecord = graphql(`
-  mutation deleteReadRecord($chapterIds: [Int!]!) {
-    deleteReadRecordsForChapter(chapterIds: $chapterIds) {
-      __typename
-      ... on ReadRecordsUpdated {
-        chapterIds
-        changedCount
-      }
-      ... on ValidationFailure {
-        issues {
-          path
-          code
-          min
-          max
-        }
-      }
-    }
-  }
-`);
+export { DeleteReadRecord };
 
 interface ChapterTableActionProps {
   isRead: boolean;

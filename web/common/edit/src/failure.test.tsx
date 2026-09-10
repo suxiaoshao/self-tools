@@ -1,10 +1,18 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { useState } from 'react';
 import { expect, it, vi } from 'vitest';
 import CustomEdit from './FormEditor';
 
-vi.mock('./MonacoEditor', () => {
-  throw new Error('simulated chunk load failure');
+const load = vi.hoisted(() => {
+  let reject!: (error: Error) => void;
+  const promise = new Promise<void>((_resolve, fail) => {
+    reject = fail;
+  });
+  return { promise, reject };
+});
+vi.mock('./MonacoEditor', async () => {
+  await load.promise;
+  return { default: () => null };
 });
 
 it('keeps the same editable draft when the editor chunk fails and respects readOnly', async () => {
@@ -16,6 +24,9 @@ it('keeps the same editable draft when the editor chunk fails and respects readO
   const view = render(<Form />);
   const fallback = await screen.findByRole('textbox', { name: 'Content' });
   fireEvent.change(fallback, { target: { value: 'keep editing' } });
+  await act(async () => {
+    load.reject(new Error('simulated chunk load failure'));
+  });
   expect(await screen.findByRole('textbox', { name: 'Content' })).toHaveValue('keep editing');
   view.rerender(<Form readOnly />);
   expect(screen.getByRole('textbox', { name: 'Content' })).toHaveAttribute('readonly');

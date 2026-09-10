@@ -1,47 +1,12 @@
 import { useQuery, useMutation, useApolloClient } from '@apollo/client/react';
 import { attemptWrite, RequestNotice } from 'custom-graphql';
 import { useI18n } from 'i18n';
-import { graphql } from '@collections/gql/index';
+import { GetEditItemDocument as GetEditItem, UpdateItemDocument as UpdateItem } from '@collections/gql/graphql';
 import { itemResult } from '@collections/features/item/model/results';
 import { checkItem } from '@collections/features/item/model/reconcile';
 import { DialogContent, DialogHeader, DialogTitle } from 'ui/components/dialog';
 import { Spinner } from 'ui/components/spinner';
 import ItemForm, { type ItemEditData } from './ItemForm';
-
-const GetEditItem = graphql(`
-  query getEditItem($id: Int!) {
-    getItem(id: $id) {
-      id
-      name
-      content
-    }
-  }
-`);
-
-const UpdateItem = graphql(`
-  mutation updateItem($id: Int!, $name: String!, $content: String!) {
-    updateItem(id: $id, name: $name, content: $content) {
-      __typename
-      ... on ItemSaved {
-        itemId
-      }
-      ... on ValidationFailure {
-        issues {
-          path
-          code
-          min
-          max
-        }
-      }
-      ... on MissingResources {
-        resources {
-          kind
-          id
-        }
-      }
-    }
-  }
-`);
 
 /** Both entry points create an isolated read and draft for each open dialog. */
 export default function EditItemForm({

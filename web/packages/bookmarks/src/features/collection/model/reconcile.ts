@@ -1,15 +1,6 @@
 import type { ApolloClient } from '@apollo/client';
-import { graphql } from '@bookmarks/gql/index';
-const ReadCollectionState = graphql(`
-  query ReadBookmarkCollectionState($id: Int!) {
-    getCollection(id: $id) {
-      id
-      name
-      description
-      parentId
-    }
-  }
-`);
+import { ReadBookmarkCollectionStateDocument as ReadCollectionState } from '@bookmarks/gql/graphql';
+
 export async function checkDeleted(client: ApolloClient, id: number) {
   const response = await client.query({ query: ReadCollectionState, variables: { id }, fetchPolicy: 'network-only' });
   return !response.error && response.data?.getCollection === null;

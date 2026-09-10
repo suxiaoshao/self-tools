@@ -1,6 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { safeFrom } from './redirect';
-import { credentialJSON, decodeBase64Url, passwordReauth, passwordLogin, UnconfirmedWrite } from './service';
+import {
+  credentialJSON,
+  decodeBase64Url,
+  passwordReauth,
+  passwordLogin,
+  passkeyAuthentication,
+  registerPasskey,
+  UnconfirmedWrite,
+} from './service';
 import { RequestError } from 'request-errors';
 import { useAuthStore } from './authSlice';
 vi.mock('custom-graphql', () => ({ clearAuthenticatedState: vi.fn<() => void>() }));
@@ -115,6 +123,64 @@ it('serializes all assertion bytes and only one extension field', () => {
   expect(json).not.toHaveProperty('extensions');
   expect(Array.from(decodeBase64Url('__4'))).toEqual([255, 254]);
 });
+
+it.each(['login', 'register'] as const)(
+  'uses native WebAuthn JSON conversion for %s while preserving the ceremony and cancellation signal',
+  async (purpose) => {
+    const publicKey =
+      purpose === 'login'
+        ? { challenge: 'AQI', allowCredentials: [{ id: 'AwQ', type: 'public-key' }] }
+        : {
+            challenge: 'AQI',
+            rp: { name: 'Self Tools' },
+            user: { id: 'AwQ', name: 'admin', displayName: 'Admin' },
+            pubKeyCredParams: [{ type: 'public-key', alg: -7 }],
+          };
+    const parsed = { challenge: new Uint8Array([1, 2]) };
+    const nativeJSON = {
+      id: 'credential',
+      type: 'public-key',
+      rawId: 'AwQ',
+      response: { clientDataJSON: 'AQI' },
+      clientExtensionResults: {},
+    };
+    class NativeCredential {
+      static parseRequestOptionsFromJSON = vi.fn<(value: unknown) => typeof parsed>(() => parsed);
+      static parseCreationOptionsFromJSON = vi.fn<(value: unknown) => typeof parsed>(() => parsed);
+      toJSON() {
+        return nativeJSON;
+      }
+    }
+    vi.stubGlobal('PublicKeyCredential', NativeCredential);
+    const get = vi.fn<(options: unknown) => Promise<NativeCredential>>().mockResolvedValue(new NativeCredential());
+    const create = vi.fn<(options: unknown) => Promise<NativeCredential>>().mockResolvedValue(new NativeCredential());
+    vi.stubGlobal('navigator', { credentials: { get, create } });
+    const passkey = {
+      id: 'b5968c77-731a-4b4e-bdd5-80b253c2d9f5',
+      name: 'Laptop',
+      createdAt: '2026-09-10T00:00:00Z',
+      lastUsedAt: null,
+    };
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ data: { ceremonyId: 'BQY', publicKey } })))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ data: purpose === 'login' ? session : passkey })));
+    vi.stubGlobal('fetch', fetchMock);
+    const signal = new AbortController().signal;
+    const result = purpose === 'login' ? passkeyAuthentication('login', signal) : registerPasskey('Laptop', signal);
+    const parse =
+      purpose === 'login'
+        ? NativeCredential.parseRequestOptionsFromJSON
+        : NativeCredential.parseCreationOptionsFromJSON;
+    await expect(result).resolves.toEqual(purpose === 'login' ? session : passkey);
+    expect(parse).toHaveBeenCalledExactlyOnceWith(publicKey);
+    expect(purpose === 'login' ? get : create).toHaveBeenCalledExactlyOnceWith({ signal, publicKey: parsed });
+    expect(JSON.parse(fetchMock.mock.calls[1][1]?.body as string)).toEqual({
+      ceremonyId: 'BQY',
+      credential: nativeJSON,
+    });
+  },
+);
 
 it('rejects malformed success data and preserves an unconfirmed login after failed reconciliation', async () => {
   const fetchMock = vi

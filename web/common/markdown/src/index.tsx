@@ -1,8 +1,9 @@
 import { useI18n } from 'i18n';
-import React, { type ComponentProps, type JSX, useEffect, useRef, useState } from 'react';
+import React, { type ComponentProps, useEffect, useRef, useState } from 'react';
 import MarkdownSource, { type MarkdownToJSX } from 'markdown-to-jsx';
-import { match, P } from 'ts-pattern';
 import { Separator } from 'ui/components/separator';
+import { Button } from 'ui/components/button';
+import './typeset.css';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from 'ui/components/table';
 
 interface MarkdownProps extends ComponentProps<'div'> {
@@ -13,22 +14,11 @@ function CustomImage({ alt = '', ...props }: React.ImgHTMLAttributes<HTMLImageEl
   return <img alt={alt} {...props} />;
 }
 
-function CustomLink(props: { title: string; href: string; children: string }) {
+function CustomLink({ children, ...props }: ComponentProps<'a'>) {
   return (
-    <a title={props.title} href={props.href} target="_blank" className="inline-block ml-1 mr-1 underline text-blue-700">
-      {props.children}
+    <a {...props} target="_blank" rel="noreferrer">
+      {children}
     </a>
-  );
-}
-
-function CustomCode(props: { children: string; className?: string }) {
-  if (props.className) {
-    return <code className={props.className}>{props.children}</code>;
-  }
-  return (
-    <code className="bg-muted relative rounded px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold">
-      {props.children}
-    </code>
   );
 }
 
@@ -40,12 +30,13 @@ function CustomPre({ children }: { children: React.ReactNode }) {
     ? /(?:^|\s)lang(?:uage)?-([\w-]+)(?=\s|$)/i.exec(children.props.className ?? '')?.[1]
     : undefined;
   return (
-    <div className="my-3">
+    <div className="not-typeset my-3">
       <div className="mb-1 flex items-center justify-between gap-2">
         <span className="text-sm text-muted-foreground">{language}</span>
-        <button
+        <Button
           type="button"
-          className="rounded border px-2 text-sm"
+          variant="outline"
+          size="sm"
           onClick={async () => {
             try {
               await navigator.clipboard.writeText(pre.current?.querySelector('code')?.textContent ?? '');
@@ -56,7 +47,7 @@ function CustomPre({ children }: { children: React.ReactNode }) {
           }}
         >
           {t(copyState)}
-        </button>
+        </Button>
       </div>
       <pre
         ref={pre}
@@ -68,54 +59,11 @@ function CustomPre({ children }: { children: React.ReactNode }) {
   );
 }
 
-function CustomListItem(props: { children: JSX.Element[] }) {
-  return (
-    <ul className="my-6 ml-6 list-disc [&>li]:mt-2">
-      {props.children.map((value) =>
-        match(value)
-          .with(P.string, (value) => <li key={JSON.stringify(value)}>{value}</li>)
-          .otherwise((value) => value),
-      )}
-    </ul>
-  );
-}
-
-function TypographyH1({ children }: { children: JSX.Element }) {
-  return <h1 className="scroll-m-20 text-center text-4xl font-extrabold tracking-tight text-balance">{children}</h1>;
-}
-
-function TypographyH2({ children }: { children: JSX.Element }) {
-  return <h2 className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0">{children}</h2>;
-}
-
-function TypographyH3({ children }: { children: JSX.Element }) {
-  return <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight">{children}</h3>;
-}
-
-function TypographyH4({ children }: { children: JSX.Element }) {
-  return <h4 className="scroll-m-20 text-xl font-semibold tracking-tight">{children}</h4>;
-}
-
-function TypographyP({ children }: { children: JSX.Element }) {
-  return <p className="leading-7 not-first:mt-6">{children}</p>;
-}
-
-function TypographyBlockquote({ children }: { children: JSX.Element }) {
-  return <blockquote className="mt-6 border-l-2 pl-6 italic">{children}</blockquote>;
-}
-
 const option: MarkdownToJSX.Options = {
   overrides: {
-    h1: TypographyH1,
-    h2: TypographyH2,
-    h3: TypographyH3,
-    h4: TypographyH4,
-    p: TypographyP,
     img: CustomImage,
     a: CustomLink,
-    code: CustomCode,
     pre: CustomPre,
-    ul: CustomListItem,
     table: Table,
     thead: TableHeader,
     tr: TableRow,
@@ -123,7 +71,6 @@ const option: MarkdownToJSX.Options = {
     td: TableCell,
     th: TableHead,
     hr: Separator,
-    blockquote: TypographyBlockquote,
   },
 };
 export default function CustomMarkdown({ value, ...props }: MarkdownProps) {
@@ -139,7 +86,7 @@ export default function CustomMarkdown({ value, ...props }: MarkdownProps) {
   }, [value]);
   return (
     <div {...props} ref={container}>
-      <MarkdownSource key={value} className="size-full" options={option}>
+      <MarkdownSource key={value} className="typeset size-full" options={option}>
         {value}
       </MarkdownSource>
     </div>

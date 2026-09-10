@@ -13,12 +13,14 @@ export default function RouteBoundary({ children }: { children?: ReactNode }) {
       resetKey={location.pathname}
       pending={
         <div className="flex min-h-0 size-full flex-col">
+          <title>{t('self_tools')}</title>
           <PageToolbar />
           <output className="min-h-0 flex-1 overflow-auto p-4">{t('loading')}</output>
         </div>
       }
       failed={
         <div className="flex min-h-0 size-full flex-col">
+          <title>{t('self_tools')}</title>
           <PageToolbar>
             <Button onClick={() => window.location.reload()}>{t('reload_page')}</Button>
           </PageToolbar>

@@ -9,7 +9,7 @@ import { RequestNotice } from 'custom-graphql';
 import { useI18n } from 'i18n';
 import { type ComponentProps, useMemo } from 'react';
 import { getImageUrl } from '@bookmarks/utils/image';
-import { graphql } from '@bookmarks/gql/index';
+import { SearchAuthorDocument as SearchAuthor } from '@bookmarks/gql/graphql';
 import { useQuery } from '@apollo/client/react';
 import { match } from 'ts-pattern';
 import {
@@ -22,18 +22,6 @@ import {
   useComboboxAnchor,
 } from 'ui/components/combobox';
 import { Avatar, AvatarFallback, AvatarImage } from 'ui/components/avatar';
-
-const SearchAuthor = graphql(`
-  query searchAuthor($searchName: String) {
-    # todo 取消分页或者选择器支持分页
-    allAuthors(searchName: $searchName) {
-      id
-      name
-      description
-      avatar
-    }
-  }
-`);
 
 interface TagsSelectProps extends Omit<ComponentProps<'input'>, 'onChange' | 'value'> {
   onChange: (value: number) => void;

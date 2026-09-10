@@ -5,14 +5,13 @@ import { attemptWrite, useWriteAction, WriteNotice, RequestNotice } from 'custom
 import { deleteResult } from '@collections/results';
 import { checkDeleted } from '@collections/features/item/model/reconcile';
 import { useApolloClient, useMutation, useQuery } from '@apollo/client/react';
-import { graphql } from '@collections/gql/index';
+import { GetItemDocument as GetItem } from '@collections/gql/graphql';
 import { Delete, Edit, RefreshCcw, ChevronLeft } from 'lucide-react';
 import { useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { Details } from 'details';
 import { useI18n } from 'i18n';
 import useItemDetailItems from './useItemDetailItems';
-import { useTitle } from 'hooks';
 import { useDialog } from 'hooks';
 import EditItemForm from '../components/EditItemForm';
 import { DeleteItem } from '../model/operations';
@@ -20,24 +19,6 @@ import { Dialog } from 'ui/components/dialog';
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from 'ui/components/card';
 import { Skeleton } from 'ui/components/skeleton';
 import { Button } from 'ui/components/button';
-
-const GetItem = graphql(`
-  query getItem($id: Int!) {
-    getItem(id: $id) {
-      id
-      name
-      content
-      createTime
-      updateTime
-      collections {
-        id
-        name
-        path
-        description
-      }
-    }
-  }
-`);
 
 export default function ItemDetails() {
   const client = useApolloClient();
@@ -50,7 +31,7 @@ export default function ItemDetails() {
 
   // title
   const t = useI18n();
-  useTitle(t('item_detail_title', { itemName: data?.getItem?.name }));
+
   const navigate = useNavigate();
   const handleRefresh = useCallback(() => {
     void refetch().catch(() => undefined);
@@ -70,6 +51,7 @@ export default function ItemDetails() {
   };
   return (
     <div className="flex min-h-0 size-full flex-col">
+      <title>{t('item_detail_title', { itemName: data?.getItem?.name })}</title>
       <PageToolbar>
         <Button
           variant="ghost"

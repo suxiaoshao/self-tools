@@ -3,42 +3,10 @@ import { collectionResult } from '@collections/features/collection/model/results
 import { useI18n } from 'i18n';
 import { useDialog } from 'hooks';
 import CollectionForm, { type CollectionFormData } from './CollectionForm';
-import { graphql } from '@collections/gql/index';
+import { CreateCollectionDocument as CreateCollection } from '@collections/gql/graphql';
 import { useMutation } from '@apollo/client/react';
 import { Dialog, DialogTrigger } from 'ui/components/dialog';
 import { Button } from 'ui/components/button';
-
-const CreateCollection = graphql(`
-  mutation createCollection($parentId: Int, $name: String!, $description: String) {
-    createCollection(parentId: $parentId, name: $name, description: $description) {
-      __typename
-      ... on CollectionSaved {
-        collectionId
-      }
-      ... on ValidationFailure {
-        issues {
-          path
-          code
-          min
-          max
-        }
-      }
-      ... on MissingResources {
-        resources {
-          kind
-          id
-        }
-      }
-      ... on Conflict {
-        reason
-        resources {
-          kind
-          id
-        }
-      }
-    }
-  }
-`);
 
 interface CreateCollectButtonProps {
   parentId: number | null;

@@ -1,0 +1,15 @@
+query getItem($id: Int!) {
+  getItem(id: $id) {
+    id
+    name
+    content
+    createTime
+    updateTime
+    collections {
+      id
+      name
+      path
+      description
+    }
+  }
+}

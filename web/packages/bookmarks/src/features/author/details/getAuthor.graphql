@@ -1,0 +1,29 @@
+query getAuthor($id: Int!) {
+  getAuthor(id: $id) {
+    novels {
+      id
+      name
+      avatar
+      createTime
+      updateTime
+      description
+      novelStatus
+      url
+      lastChapter {
+        time
+      }
+      firstChapter {
+        time
+      }
+      wordCount
+    }
+    id
+    site
+    name
+    createTime
+    updateTime
+    avatar
+    description
+    url
+  }
+}

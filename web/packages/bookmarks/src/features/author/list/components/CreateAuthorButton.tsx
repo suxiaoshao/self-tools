@@ -1,9 +1,10 @@
+import { NativeSelect, NativeSelectOption } from 'ui/components/native-select';
 import { useId, useEffect } from 'react';
 import { rejectionFieldErrors } from 'custom-graphql';
 import useBookmarkWrite from '@bookmarks/useBookmarkWrite';
 import { type SubmitHandler, useForm } from 'react-hook-form';
 import { useI18n } from 'i18n';
-import { graphql } from '@bookmarks/gql/index';
+import { CreateAuthorDocument as CreateAuthor } from '@bookmarks/gql/graphql';
 import { useMutation } from '@apollo/client/react';
 import type { CreateAuthorMutationVariables } from '@bookmarks/gql/graphql';
 import {
@@ -19,38 +20,6 @@ import { Button } from 'ui/components/button';
 import { useDialog } from 'hooks';
 import { FieldError, FieldGroup, FieldLabel, Field } from 'ui/components/field';
 import { Input } from 'ui/components/input';
-
-const CreateAuthor = graphql(`
-  mutation createAuthor($avatar: String!, $description: String!, $name: String!, $site: NovelSite!, $siteId: String!) {
-    createAuthor(avatar: $avatar, description: $description, name: $name, site: $site, siteId: $siteId) {
-      __typename
-      ... on AuthorSaved {
-        authorId
-      }
-      ... on ValidationFailure {
-        issues {
-          path
-          code
-          min
-          max
-        }
-      }
-      ... on MissingResources {
-        resources {
-          kind
-          id
-        }
-      }
-      ... on Conflict {
-        reason
-        resources {
-          kind
-          id
-        }
-      }
-    }
-  }
-`);
 
 interface CreateAuthorButtonProps {
   refetch: () => void;
@@ -148,16 +117,17 @@ export default function CreateAuthorButton({ refetch }: CreateAuthorButtonProps)
             </Field>
             <Field data-invalid={!!errors.site}>
               <FieldLabel htmlFor={`${formId}-site`}>{t('novel_site')}</FieldLabel>
-              <select
+              <NativeSelect
+                className="w-full"
                 disabled={write.blocked}
                 id={`${formId}-site`}
                 aria-describedby={errors.site ? `${formId}-site-error` : undefined}
                 aria-invalid={!!errors.site}
                 {...register('site', { required: t('request_required') })}
               >
-                <option value="JJWXC">{t('jjwxc')}</option>
-                <option value="QIDIAN">{t('qidian')}</option>
-              </select>
+                <NativeSelectOption value="JJWXC">{t('jjwxc')}</NativeSelectOption>
+                <NativeSelectOption value="QIDIAN">{t('qidian')}</NativeSelectOption>
+              </NativeSelect>
 
               <FieldError
                 id={`${formId}-site-error`}

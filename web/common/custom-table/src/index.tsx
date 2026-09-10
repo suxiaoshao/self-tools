@@ -1,7 +1,6 @@
-import { useReactTable, flexRender } from '@tanstack/react-table';
-import type { CustomColumnDef, CustomTableOptions } from './columns';
+import { useTable, flexRender } from '@tanstack/react-table';
+import { features, type CustomTableOptions } from './columns';
 import type { PageWithTotal } from './usePage';
-import { match } from 'ts-pattern';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from 'ui/components/table';
 import { cn } from 'ui/lib/utils';
 import type { ComponentProps } from 'react';
@@ -20,10 +19,7 @@ export function CustomTable<D extends object>({
   className,
   ...tableProps
 }: CustomTableProps<D>) {
-  'use no memo';
-  // TanStack mutates a stable table instance. Keep it inside this render boundary;
-  // callers pass immutable options so compiler memoization observes data changes.
-  const { getHeaderGroups, getRowModel } = useReactTable(options);
+  const table = useTable({ ...options, features });
   return (
     <div
       className={cn('relative grow shrink-0 basis-0 flex flex-col max-h-full overflow-y-auto', className)}
@@ -31,59 +27,29 @@ export function CustomTable<D extends object>({
     >
       <Table {...tableProps}>
         <TableHeader>
-          {
-            // Loop over the header rows
-            getHeaderGroups().map((headerGroup) => (
-              // Apply the header row props
-              <TableRow key={headerGroup.id}>
-                {
-                  // Loop over the headers in each row
-                  headerGroup.headers.map((header) => {
-                    const headerColumn = header.column.columnDef as CustomColumnDef<D>;
-                    const headerProps = headerColumn.headerCellProps ?? headerColumn.cellProps ?? {};
-
-                    return (
-                      // Apply the header cell props
-                      <TableHead colSpan={header.colSpan} key={header.id} {...headerProps}>
-                        {match(header.isPlaceholder)
-                          .with(true, () => null)
-                          .with(false, () => flexRender(header.column.columnDef.header, header.getContext()))
-                          .exhaustive()}
-                      </TableHead>
-                    );
-                  })
-                }
-              </TableRow>
-            ))
-          }
+          {table.getHeaderGroups().map((headerGroup) => (
+            <TableRow key={headerGroup.id}>
+              {headerGroup.headers.map((header) => {
+                const meta = header.column.columnDef.meta;
+                return (
+                  <TableHead colSpan={header.colSpan} key={header.id} {...(meta?.headerCellProps ?? meta?.cellProps)}>
+                    {!header.isPlaceholder && flexRender(header.column.columnDef.header, header.getContext())}
+                  </TableHead>
+                );
+              })}
+            </TableRow>
+          ))}
         </TableHeader>
-        {/* Apply the table body props */}
         <TableBody className="flex-1">
-          {
-            // Loop over the table rows
-            getRowModel().rows.map((row) => {
-              // Prepare the row for display
-
-              return (
-                // Apply the row props
-                <TableRow key={row.id}>
-                  {
-                    // Loop over the rows cells
-                    row.getVisibleCells().map((cell) => {
-                      const column = cell.column.columnDef as CustomColumnDef<D>;
-
-                      // Apply the cell props
-                      return (
-                        <TableCell key={cell.id} {...column.cellProps}>
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                        </TableCell>
-                      );
-                    })
-                  }
-                </TableRow>
-              );
-            })
-          }
+          {table.getRowModel().rows.map((row) => (
+            <TableRow key={row.id}>
+              {row.getAllCells().map((cell) => (
+                <TableCell key={cell.id} {...cell.column.columnDef.meta?.cellProps}>
+                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </TableCell>
+              ))}
+            </TableRow>
+          ))}
         </TableBody>
       </Table>
       {page && page.total > page.pageSize && <TablePagination {...page} />}
@@ -98,11 +64,7 @@ export {
   createCustomColumnHelper,
   type CustomColumnDef,
   type CustomColumnDefArray,
-  type CustomColumnHelper,
-  type CustomExtendsType,
   type CustomTableOptions,
 } from './columns';
 
 export { default as TablePagination } from './TablePagination';
-
-export { getCoreRowModel, getFilteredRowModel, getPaginationRowModel } from '@tanstack/react-table';

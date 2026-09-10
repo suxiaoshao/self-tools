@@ -1,0 +1,22 @@
+mutation createItem($collectionIds: [Int!]!, $name: String!, $content: String!) {
+  createItem(collectionIds: $collectionIds, name: $name, content: $content) {
+    __typename
+    ... on ItemSaved {
+      itemId
+    }
+    ... on ValidationFailure {
+      issues {
+        path
+        code
+        min
+        max
+      }
+    }
+    ... on MissingResources {
+      resources {
+        kind
+        id
+      }
+    }
+  }
+}

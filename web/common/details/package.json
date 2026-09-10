@@ -11,7 +11,7 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "react": "^19.2.7",
+    "react": "^19.2.8",
     "ts-pattern": "^5.9.0",
     "ui": "workspace:*"
   }

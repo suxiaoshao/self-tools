@@ -1,0 +1,11 @@
+query allCollections {
+  allCollections {
+    name
+    id
+    path
+    createTime
+    updateTime
+    description
+    parentId
+  }
+}

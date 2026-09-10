@@ -5,7 +5,7 @@ import useBookmarkWrite from '@bookmarks/useBookmarkWrite';
 import { useMutation } from '@apollo/client/react';
 import { CollectionSelect } from 'collection-tree';
 import { CollectionLoadingState, useAllCollection } from '@bookmarks/entities/collection';
-import { graphql } from '@bookmarks/gql/index';
+import { AddCollectionForNovelDocument as AddCollectionForNovel } from '@bookmarks/gql/graphql';
 import { useDialog } from 'hooks';
 import { valibotResolver } from '@hookform/resolvers/valibot';
 import { Plus } from 'lucide-react';
@@ -24,43 +24,6 @@ import {
   DialogTrigger,
 } from 'ui/components/dialog';
 import { Spinner } from 'ui/components/spinner';
-
-const AddCollectionForNovel = graphql(`
-  mutation addCollectionForNovel($novelId: Int!, $collectionId: Int!) {
-    addCollectionForNovel(collectionId: $collectionId, novelId: $novelId) {
-      __typename
-      ... on CollectionMembershipChanged {
-        collectionId
-        resource {
-          kind
-          id
-        }
-        present
-      }
-      ... on ValidationFailure {
-        issues {
-          path
-          code
-          min
-          max
-        }
-      }
-      ... on MissingResources {
-        resources {
-          kind
-          id
-        }
-      }
-      ... on Conflict {
-        reason
-        resources {
-          kind
-          id
-        }
-      }
-    }
-  }
-`);
 
 interface AddCollectionProps {
   novelId: number;
@@ -126,8 +89,8 @@ export default function AddCollection({ novelId, refetch }: AddCollectionProps) 
                 name="collectionId"
                 render={({ field, fieldState }) => (
                   <CollectionSelect
-                    disabled={write.blocked}
                     {...field}
+                    disabled={write.blocked}
                     allCollections={allCollections}
                     errorMessage={fieldState.error?.message}
                   />

@@ -1,13 +1,11 @@
 # Docker 与本地编排
 
-本目录拥有服务镜像、Compose 拓扑和相关部署资源。当前运行入口是 Rust `gateway`，不是 `docker/web` 中的 Nginx 镜像。
+本目录拥有服务镜像、Compose 拓扑和相关部署资源。当前运行入口是 Rust `gateway`。
 
 ## 目录所有权
 
 - [`server/`](server/)：后端服务和 gateway 的 Dockerfile，以及共享 Rust builder 镜像配置。
 - [`compose/docker-compose.yml`](compose/docker-compose.yml)：当前容器、依赖、端口、环境文件、volume 与证书挂载的事实源。
-- [`test/`](test/)：独立的 Docker 测试镜像资源，不属于常规 Compose 拓扑。
-- [`web/`](web/)：遗留 Nginx 构建与配置；当前 Compose 和 `xtask build` 均不使用它。
 
 ## 当前 Compose 拓扑
 
@@ -61,7 +59,7 @@ xtask 按现有 null 环境键规则读取，无值时不注入。不增加容�
 
 五个服务共享的 Cargo registry 和 target 缓存使用 `sharing=locked`，避免 Buildx 并行构建时同时解包依赖或写入编译产物。
 
-CI 通过 `TAG=github.sha` 生成提交标签，再用 Bake 的 `tags+=` 追加 `latest`；标签不能用逗号拼成单个字符串。Rust builder 使用官方 `rust` 镜像自带的 Debian 软件源安装 clang、cmake、pkg-config 和 mold，不混入其他发行版的软件源。
+CI 通过 `TAG=github.sha` 生成提交标签，再用 Bake 的 `tags+=` 追加 `latest`；标签不能用逗号拼成单个字符串。Rust builder 使用官方 `rust:trixie`，跟随稳定 Rust，Debian variant 与运行镜像一致；通过自带软件源安装 clang、cmake、pkg-config 和 mold。rustfmt 是 Volo/Pilota 在 build.rs 中生成 Thrift 代码的必要工具。collections 与其他服务共用 `.cargo/config.toml` 的 mold 链接设置。Bake 从源码构建 builder，不依赖独立发布的 Rust builder 镜像。
 
 部署前准备专用数据库/角色及连接配置。三个服务镜像都支持显式迁移，以下命令需要正确镜像、数据库容器和 Compose 网络已存在：
 

@@ -1,6 +1,6 @@
 import { PageToolbar } from 'ui/page-toolbar';
 import { RequestNotice } from 'custom-graphql';
-import { CustomTable, getCoreRowModel, usePage, usePageWithTotal } from 'custom-table';
+import { CustomTable, usePage, usePageWithTotal } from 'custom-table';
 import { RefreshCcw } from 'lucide-react';
 import { CreateCollectionButton } from '@collections/features/collection';
 import AncestorsPath from './components/AncestorsPath';
@@ -9,41 +9,14 @@ import useTableColumns from './hooks/useTableColumns';
 import { CreateItemButton } from '@collections/features/item';
 import { useCallback, useEffect, useMemo } from 'react';
 import { useI18n } from 'i18n';
-import { useTitle } from 'hooks';
-import { graphql } from '@collections/gql/index';
+import { CollectionAndItemsDocument as CollectionAndItems } from '@collections/gql/graphql';
 import { useQuery } from '@apollo/client/react';
 import { useAllCollection } from '../../entities/collection';
 import { Button } from 'ui/components/button';
 
-const CollectionAndItems = graphql(`
-  query collectionAndItems($query: CollectionItemQuery!) {
-    collectionAndItem(query: $query) {
-      data {
-        ... on Collection {
-          name
-          id
-          path
-          createTime
-          updateTime
-          description
-          __typename
-        }
-        ... on Item {
-          name
-          id
-          updateTime
-          createTime
-          __typename
-        }
-      }
-      total
-    }
-  }
-`);
-
 export default function Collection() {
   const t = useI18n();
-  useTitle(t('collection_manage'));
+
   const id = useParentId();
   const pageState = usePage();
   useEffect(() => {
@@ -68,13 +41,13 @@ export default function Collection() {
     () => ({
       columns,
       data: data ?? [],
-      getCoreRowModel: getCoreRowModel(),
     }),
     [columns, data],
   );
 
   return (
     <div className="flex min-h-0 size-full flex-col">
+      <title>{t('collection_manage')}</title>
       <PageToolbar>
         <CreateCollectionButton parentId={id} refetch={allRefetch} />
         {id && <CreateItemButton className="ml-2" refetch={allRefetch} collectionIds={[id]} />}

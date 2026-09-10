@@ -1,0 +1,5 @@
+query ReadBookmarkAuthorState($id: Int!) {
+  getAuthor(id: $id) {
+    id
+  }
+}

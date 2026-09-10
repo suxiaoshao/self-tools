@@ -1,0 +1,21 @@
+mutation deleteCollectionForItem($collectionId: Int!, $itemId: Int!) {
+  deleteCollectionForItem(collectionId: $collectionId, itemId: $itemId) {
+    __typename
+    ... on CollectionMembershipChanged {
+      collectionId
+      resource {
+        kind
+        id
+      }
+      present
+    }
+    ... on ValidationFailure {
+      issues {
+        path
+        code
+        min
+        max
+      }
+    }
+  }
+}

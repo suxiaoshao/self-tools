@@ -1,0 +1,11 @@
+query getItems($collectionMatch: TagMatch, $pagination: Pagination!) {
+  queryItems(collectionMatch: $collectionMatch, pagination: $pagination) {
+    data {
+      id
+      name
+      createTime
+      updateTime
+    }
+    total
+  }
+}

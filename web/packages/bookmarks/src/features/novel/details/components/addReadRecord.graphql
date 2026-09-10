@@ -1,0 +1,26 @@
+mutation addReadRecord($novelId: Int!, $chapterIds: [Int!]!) {
+  addReadRecordsForChapter(novelId: $novelId, chapterIds: $chapterIds) {
+    __typename
+    ... on ReadRecordsUpdated {
+      chapterIds
+      changedCount
+    }
+    ... on ValidationFailure {
+      issues {
+        path
+        code
+        min
+        max
+      }
+    }
+    ... on MissingResources {
+      resources {
+        kind
+        id
+      }
+    }
+    ... on ChaptersAlreadyRead {
+      chapterIds
+    }
+  }
+}
