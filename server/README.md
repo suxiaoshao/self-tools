@@ -193,6 +193,31 @@ BOOKMARKS_TEST_PG，运行 `cargo test -p bookmarks bookmarks_transactions_and_t
 该测试清空专用库的 bookmarks 表，不能使用个人业务库。固定 crawler 回归在容量为 1 的池上
 验证网络暂停时仍可查询、按需抓取、失败回滚、阅读记录保留以及 GraphQL mutation/嵌套字段。
 
+## Crawler 数据与测试
+
+`novel_crawler` 只负责站点下载、解析与模型，bookmarks 的私有 adapter 把模型转换为拥有所有权的应用快照。
+`NovelFn::chapters()` 同步借用初次抓取时已解析的完整章节 slice，保持来源顺序，不复制或再发请求；
+小说和章节的站点来自 `NovelFn::SITE`。作者只暴露已解析的 `novel_ids`，关联抓取继续由 application 按字段触发。
+公开接口没有批量抓取作者作品的快捷方法或未实现的正文 trait；两站具体类型仍提供已有 URL 构造合同。
+起点标签取去除外围空白后的 DOM 纯文本，忽略空项与“相似标签小说”入口；标签 ID 仍为名称，不对存量标签执行自动清理。
+
+四个作者／小说入口在私有 HTTP 层下载并解码后调用纯 parser。起点小说并发下载详情与目录；
+晋江沿用 GB18030 fallback。下载保持 20 秒超时、非 2xx 错误、原有 User-Agent 和 `crawler.http` span，
+错误仍通过 `NovelError` 进入既有 application 分类。来源 URL 不由前端任意配置。
+
+`cargo test -p novel_crawler` 使用[合成固定样本](common/novel_crawler/tests/fixtures/README.md)和 loopback HTTP 响应，
+不请求公网、不读取数据库。HTTP 测试需要允许本机随机端口；Cargo 的 `--offline` 只限制依赖获取，不能证明测试没有联网。
+默认 workspace tests 和提交钩子会运行这些测试。纯 parser 接收解码后的字符串，字符集解码由 HTTP 测试单独覆盖。
+
+四项真实站点检查位于 `tests/live.rs`，默认忽略；需要公网时显式执行：
+
+```bash
+cargo test -p novel_crawler --test live -- --ignored --test-threads=1
+```
+
+该命令只读取公开作者、小说和目录，不使用登录凭据或抓取章节正文；失败可能表示站点结构或访问条件变化。
+固定样本用于保护已有解析合同，不能替代实时站点兼容性检查。样本来源与更新要求见其 README。
+
 ## 集合层级与删除一致性
 
 bookmarks / collections 的 `collection.parent_id` 是父子关系事实源，`path` 是由祖先名称链

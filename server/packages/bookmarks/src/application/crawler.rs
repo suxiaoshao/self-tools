@@ -83,16 +83,13 @@ async fn author<T: AuthorFn>(id: &str) -> AppResult<DraftAuthor> {
 }
 async fn novel<T: NovelFn>(id: &str) -> AppResult<DraftNovel> {
     let value = T::get_novel_data(id).await.map_err(crawler_error)?;
-    // Both site implementations already load the catalogue in get_novel_data; chapters only clones it.
     let chapters = value
         .chapters()
-        .await
-        .map_err(crawler_error)?
         .iter()
         .map(|v| DraftChapter {
             id: v.chapter_id().into(),
             novel_id: v.novel_id().into(),
-            site: <T::Chapter as ChapterFn>::Author::SITE.into(),
+            site: T::SITE.into(),
             url: v.url(),
             title: v.title().into(),
             time: v.time(),
@@ -101,7 +98,7 @@ async fn novel<T: NovelFn>(id: &str) -> AppResult<DraftNovel> {
         .collect();
     Ok(DraftNovel {
         id: value.id().into(),
-        site: T::Author::SITE.into(),
+        site: T::SITE.into(),
         url: value.url(),
         name: value.name().into(),
         description: value.description().into(),
