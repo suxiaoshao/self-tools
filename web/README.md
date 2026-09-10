@@ -56,6 +56,10 @@ portal/src/main.tsx
 
 `MicroConfig` 接口定义在 `common/types/src/micro.ts`。新增可组合功能包时，应实现该契约并在 `portal/src/micro/index.ts` 注册；不要为功能包另建一套独立应用入口，除非任务明确要求改变当前组合架构。
 
+`AppDrawer` 在主内容区顶部提供全局侧栏入口。移动端使用共享 Sidebar 的独立抽屉状态、可见关闭按钮和本地化标题；
+portal 监听路由 location key，在导航完成后关闭移动端抽屉，包括指向当前页面的链接和账号安全入口。
+菜单分组及主题／语言弹窗不触发导航关闭；桌面侧栏状态独立保留。键盘关闭和设置弹窗的焦点恢复由底层 Sheet／Dialog 管理。
+
 ## GraphQL 客户端代码
 
 `bookmarks` 和 `collections` 分别维护自己的 GraphQL 客户端输入与生成物：
