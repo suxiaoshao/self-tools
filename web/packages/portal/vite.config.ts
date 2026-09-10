@@ -1,6 +1,9 @@
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv, type PluginOption } from 'vite';
+import { devServer } from './dev-server.config';
+import { bundleReport } from './bundle-report.config';
+import { prismAssets } from 'markdown/vite';
 import react, { reactCompilerPreset } from '@vitejs/plugin-react';
 import babel from '@rolldown/plugin-babel';
 import tailwindcss from '@tailwindcss/vite';
@@ -11,14 +14,12 @@ const rootDir = fileURLToPath(new URL('.', import.meta.url));
 const isAnalyze = Boolean(process.env.RSDOCTOR);
 
 export default defineConfig(({ command, mode }) => {
-  let base = '/';
+  const server = command === 'serve' ? devServer({ ...loadEnv(mode, rootDir, 'WEB_DEV_'), ...process.env }) : undefined;
 
-  if (command === 'build') {
-    base = 'https://sushao.top/';
-  }
-
-  const plugins = [
+  const plugins: PluginOption[] = [
     tailwindcss(),
+    prismAssets(),
+    bundleReport(),
     analyzer({
       enabled: isAnalyze,
       analyzerMode: 'static',
@@ -37,28 +38,19 @@ export default defineConfig(({ command, mode }) => {
     babel({
       // The root test runner must resolve compiler plugins from their owning package.
       cwd: rootDir,
+      include: /\.[jt]sx?$/,
       presets: [reactCompilerPreset()],
     }),
   );
 
   const config = {
-    base,
+    base: '/',
+    build: { manifest: true },
     plugins,
     resolve: {
       tsconfigPaths: true,
     },
-    server: {
-      host: '0.0.0.0',
-      port: 3000,
-      strictPort: true,
-      origin: 'https://sushao.top',
-      hmr: {
-        host: 'sushao.top',
-        clientPort: 443,
-        port: 3000,
-        protocol: 'wss',
-      },
-    },
+    server,
     preview: {
       host: '0.0.0.0',
       port: 3000,

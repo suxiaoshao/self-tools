@@ -14,7 +14,8 @@
     "./components/*": "./src/components/*.tsx",
     "./fonts.css": "./src/styles/fonts.css",
     "./confirmation-dialog": "./src/confirmation-dialog.tsx",
-    "./locale": "./src/locale.tsx"
+    "./locale": "./src/locale.tsx",
+    "./async-boundary": "./src/async-boundary.tsx"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",

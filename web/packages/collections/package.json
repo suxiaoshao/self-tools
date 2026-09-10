@@ -7,7 +7,7 @@
     ".": "./src/main.tsx"
   },
   "scripts": {
-    "generate": "graphql-codegen"
+    "generate": "node ../../config/generate-graphql.mts"
   },
   "dependencies": {
     "@apollo/client": "^4.2.6",
@@ -27,6 +27,7 @@
     "react-hook-form": "^7.81.0",
     "react-router": "^7.18.1",
     "request-errors": "workspace:*",
+    "runtime-config": "workspace:*",
     "time": "workspace:*",
     "ts-pattern": "^5.9.0",
     "types": "workspace:*",

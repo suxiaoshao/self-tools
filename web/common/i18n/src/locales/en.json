@@ -223,5 +223,7 @@
   "back": "Back",
   "novel": "Novel",
   "chapter": "Chapter",
-  "resource": "Resource"
+  "resource": "Resource",
+  "route_load_failed": "Page resources failed to load. Reload the page to try again.",
+  "reload_page": "Reload page"
 }

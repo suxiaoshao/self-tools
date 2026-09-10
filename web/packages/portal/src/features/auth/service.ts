@@ -1,3 +1,4 @@
+import { endpoints } from 'runtime-config';
 import * as v from 'valibot';
 import {
   decodePublicError,
@@ -102,7 +103,7 @@ async function request<S extends v.GenericSchema>(
   const waiting = AbortSignal.any([signal, AbortSignal.timeout(15_000)]);
   let response: Response;
   try {
-    response = await fetch(`/api/auth/${path}`, {
+    response = await fetch(`${endpoints.auth}${path}`, {
       credentials: 'same-origin',
       method,
       signal: waiting,

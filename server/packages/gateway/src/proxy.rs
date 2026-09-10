@@ -465,6 +465,37 @@ mod tests {
         );
     }
 
+    #[test]
+    fn main_image_route_is_exact_and_does_not_forward_session_cookies() {
+        let config = crate::config::GatewayConfig::from_env();
+        let proxy = super::GatewayProxy::new(crate::route::build_routes(&config), &config);
+        let route = proxy
+            .route_for(&config.main_host, "/fetch-content")
+            .unwrap();
+        assert_eq!(route.upstream, config.bookmarks_upstream);
+        assert!(!route.auth_api());
+        let mut headers = http::HeaderMap::new();
+        headers.insert(
+            "cookie",
+            "__Host-st_session=secret; __Host-st_ceremony=secret; theme=dark"
+                .parse()
+                .unwrap(),
+        );
+        let forwarded = middleware::auth_http::forwarded_cookies(
+            &headers,
+            route.auth_api(),
+            route.sni == "login",
+        )
+        .unwrap();
+        assert_eq!(forwarded, "theme=dark");
+        for path in ["/fetch-content/", "/fetch-content-extra"] {
+            assert_eq!(
+                proxy.route_for(&config.main_host, path).unwrap().sni,
+                "portal"
+            );
+        }
+    }
+
     use pingora::http::RequestHeader;
 
     #[test]

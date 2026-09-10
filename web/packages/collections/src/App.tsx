@@ -1,3 +1,4 @@
+import { endpoints } from 'runtime-config';
 /*
  * @Author: suxiaoshao suxiaoshao@gmail.com
  * @Date: 2024-01-06 01:30:13
@@ -10,7 +11,7 @@ import { Outlet } from 'react-router';
 import { ApolloProvider } from '@apollo/client/react';
 import { getClient } from 'custom-graphql';
 
-const client = getClient('/api/collections/graphql');
+const client = getClient(endpoints.collectionsGraphql);
 
 function App() {
   return (

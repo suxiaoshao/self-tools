@@ -29,8 +29,8 @@ type Documents = {
   '\n  mutation deleteCollection($id: Int!) {\n    deleteCollection(id: $id) {\n      __typename\n      ... on ResourceDeleted {\n        resource {\n          kind\n          id\n        }\n      }\n      ... on ValidationFailure {\n        issues {\n          path\n          code\n          min\n          max\n        }\n      }\n    }\n  }\n': typeof types.DeleteCollectionDocument;
   '\n  mutation updateCollection($id: Int!, $name: String!, $parentId: Int, $description: String) {\n    updateCollection(id: $id, name: $name, parentId: $parentId, description: $description) {\n      __typename\n      ... on CollectionSaved {\n        collectionId\n      }\n      ... on ValidationFailure {\n        issues {\n          path\n          code\n          min\n          max\n        }\n      }\n      ... on MissingResources {\n        resources {\n          kind\n          id\n        }\n      }\n      ... on Conflict {\n        reason\n        resources {\n          kind\n          id\n        }\n      }\n    }\n  }\n': typeof types.UpdateCollectionDocument;
   '\n  mutation createCollection($parentId: Int, $name: String!, $description: String) {\n    createCollection(parentId: $parentId, name: $name, description: $description) {\n      __typename\n      ... on CollectionSaved {\n        collectionId\n      }\n      ... on ValidationFailure {\n        issues {\n          path\n          code\n          min\n          max\n        }\n      }\n      ... on MissingResources {\n        resources {\n          kind\n          id\n        }\n      }\n      ... on Conflict {\n        reason\n        resources {\n          kind\n          id\n        }\n      }\n    }\n  }\n': typeof types.CreateCollectionDocument;
-  '\n  query getCollections($parentId: Int, $pagination: Pagination!) {\n    getCollections(parentId: $parentId, pagination: $pagination) {\n      data {\n        name\n        id\n        path\n        parentId\n        createTime\n        updateTime\n        description\n      }\n      total\n    }\n  }\n': typeof types.GetCollectionsDocument;
   '\n  query ReadBookmarkCollectionState($id: Int!) {\n    getCollection(id: $id) {\n      id\n      name\n      description\n      parentId\n    }\n  }\n': typeof types.ReadBookmarkCollectionStateDocument;
+  '\n  query getCollections($parentId: Int, $pagination: Pagination!) {\n    getCollections(parentId: $parentId, pagination: $pagination) {\n      data {\n        name\n        id\n        path\n        parentId\n        createTime\n        updateTime\n        description\n      }\n      total\n    }\n  }\n': typeof types.GetCollectionsDocument;
   '\n  mutation addCollectionForNovel($novelId: Int!, $collectionId: Int!) {\n    addCollectionForNovel(collectionId: $collectionId, novelId: $novelId) {\n      __typename\n      ... on CollectionMembershipChanged {\n        collectionId\n        resource {\n          kind\n          id\n        }\n        present\n      }\n      ... on ValidationFailure {\n        issues {\n          path\n          code\n          min\n          max\n        }\n      }\n      ... on MissingResources {\n        resources {\n          kind\n          id\n        }\n      }\n      ... on Conflict {\n        reason\n        resources {\n          kind\n          id\n        }\n      }\n    }\n  }\n': typeof types.AddCollectionForNovelDocument;
   '\n  mutation addReadRecord($novelId: Int!, $chapterIds: [Int!]!) {\n    addReadRecordsForChapter(novelId: $novelId, chapterIds: $chapterIds) {\n      __typename\n      ... on ReadRecordsUpdated {\n        chapterIds\n        changedCount\n      }\n      ... on ValidationFailure {\n        issues {\n          path\n          code\n          min\n          max\n        }\n      }\n      ... on MissingResources {\n        resources {\n          kind\n          id\n        }\n      }\n      ... on ChaptersAlreadyRead {\n        chapterIds\n      }\n    }\n  }\n': typeof types.AddReadRecordDocument;
   '\n  mutation deleteReadRecord($chapterIds: [Int!]!) {\n    deleteReadRecordsForChapter(chapterIds: $chapterIds) {\n      __typename\n      ... on ReadRecordsUpdated {\n        chapterIds\n        changedCount\n      }\n      ... on ValidationFailure {\n        issues {\n          path\n          code\n          min\n          max\n        }\n      }\n    }\n  }\n': typeof types.DeleteReadRecordDocument;
@@ -47,9 +47,9 @@ type Documents = {
   '\n  mutation deleteNovel($id: Int!) {\n    deleteNovel(id: $id) {\n      __typename\n      ... on ResourceDeleted {\n        resource {\n          kind\n          id\n        }\n      }\n      ... on ValidationFailure {\n        issues {\n          path\n          code\n          min\n          max\n        }\n      }\n    }\n  }\n': typeof types.DeleteNovelDocument;
   '\n  query ReadBookmarkNovelState($id: Int!) {\n    getNovel(id: $id) {\n      id\n      comments {\n        content\n      }\n      collections {\n        id\n      }\n      chapters {\n        id\n        isRead\n      }\n    }\n  }\n': typeof types.ReadBookmarkNovelStateDocument;
   '\n  mutation createTag($name: String!, $site: NovelSite!, $siteId: String!) {\n    createTag(name: $name, site: $site, siteId: $siteId) {\n      __typename\n      ... on TagSaved {\n        tagId\n      }\n      ... on ValidationFailure {\n        issues {\n          path\n          code\n          min\n          max\n        }\n      }\n      ... on Conflict {\n        reason\n        resources {\n          kind\n          id\n        }\n      }\n    }\n  }\n': typeof types.CreateTagDocument;
+  '\n  query ReadBookmarkTagsState {\n    allTags {\n      id\n    }\n  }\n': typeof types.ReadBookmarkTagsStateDocument;
   '\n  query getTags($pagination: Pagination!) {\n    queryTags(pagination: $pagination) {\n      data {\n        name\n        id\n        site\n        url\n        createTime\n        updateTime\n      }\n      total\n    }\n  }\n': typeof types.GetTagsDocument;
   '\n  mutation deleteTag($id: Int!) {\n    deleteTag(id: $id) {\n      __typename\n      ... on ResourceDeleted {\n        resource {\n          kind\n          id\n        }\n      }\n      ... on ValidationFailure {\n        issues {\n          path\n          code\n          min\n          max\n        }\n      }\n    }\n  }\n': typeof types.DeleteTagDocument;
-  '\n  query ReadBookmarkTagsState {\n    allTags {\n      id\n    }\n  }\n': typeof types.ReadBookmarkTagsStateDocument;
 };
 const documents: Documents = {
   '\n  query searchAuthor($searchName: String) {\n    # todo 取消分页或者选择器支持分页\n    allAuthors(searchName: $searchName) {\n      id\n      name\n      description\n      avatar\n    }\n  }\n':
@@ -81,10 +81,10 @@ const documents: Documents = {
     types.UpdateCollectionDocument,
   '\n  mutation createCollection($parentId: Int, $name: String!, $description: String) {\n    createCollection(parentId: $parentId, name: $name, description: $description) {\n      __typename\n      ... on CollectionSaved {\n        collectionId\n      }\n      ... on ValidationFailure {\n        issues {\n          path\n          code\n          min\n          max\n        }\n      }\n      ... on MissingResources {\n        resources {\n          kind\n          id\n        }\n      }\n      ... on Conflict {\n        reason\n        resources {\n          kind\n          id\n        }\n      }\n    }\n  }\n':
     types.CreateCollectionDocument,
-  '\n  query getCollections($parentId: Int, $pagination: Pagination!) {\n    getCollections(parentId: $parentId, pagination: $pagination) {\n      data {\n        name\n        id\n        path\n        parentId\n        createTime\n        updateTime\n        description\n      }\n      total\n    }\n  }\n':
-    types.GetCollectionsDocument,
   '\n  query ReadBookmarkCollectionState($id: Int!) {\n    getCollection(id: $id) {\n      id\n      name\n      description\n      parentId\n    }\n  }\n':
     types.ReadBookmarkCollectionStateDocument,
+  '\n  query getCollections($parentId: Int, $pagination: Pagination!) {\n    getCollections(parentId: $parentId, pagination: $pagination) {\n      data {\n        name\n        id\n        path\n        parentId\n        createTime\n        updateTime\n        description\n      }\n      total\n    }\n  }\n':
+    types.GetCollectionsDocument,
   '\n  mutation addCollectionForNovel($novelId: Int!, $collectionId: Int!) {\n    addCollectionForNovel(collectionId: $collectionId, novelId: $novelId) {\n      __typename\n      ... on CollectionMembershipChanged {\n        collectionId\n        resource {\n          kind\n          id\n        }\n        present\n      }\n      ... on ValidationFailure {\n        issues {\n          path\n          code\n          min\n          max\n        }\n      }\n      ... on MissingResources {\n        resources {\n          kind\n          id\n        }\n      }\n      ... on Conflict {\n        reason\n        resources {\n          kind\n          id\n        }\n      }\n    }\n  }\n':
     types.AddCollectionForNovelDocument,
   '\n  mutation addReadRecord($novelId: Int!, $chapterIds: [Int!]!) {\n    addReadRecordsForChapter(novelId: $novelId, chapterIds: $chapterIds) {\n      __typename\n      ... on ReadRecordsUpdated {\n        chapterIds\n        changedCount\n      }\n      ... on ValidationFailure {\n        issues {\n          path\n          code\n          min\n          max\n        }\n      }\n      ... on MissingResources {\n        resources {\n          kind\n          id\n        }\n      }\n      ... on ChaptersAlreadyRead {\n        chapterIds\n      }\n    }\n  }\n':
@@ -117,11 +117,11 @@ const documents: Documents = {
     types.ReadBookmarkNovelStateDocument,
   '\n  mutation createTag($name: String!, $site: NovelSite!, $siteId: String!) {\n    createTag(name: $name, site: $site, siteId: $siteId) {\n      __typename\n      ... on TagSaved {\n        tagId\n      }\n      ... on ValidationFailure {\n        issues {\n          path\n          code\n          min\n          max\n        }\n      }\n      ... on Conflict {\n        reason\n        resources {\n          kind\n          id\n        }\n      }\n    }\n  }\n':
     types.CreateTagDocument,
+  '\n  query ReadBookmarkTagsState {\n    allTags {\n      id\n    }\n  }\n': types.ReadBookmarkTagsStateDocument,
   '\n  query getTags($pagination: Pagination!) {\n    queryTags(pagination: $pagination) {\n      data {\n        name\n        id\n        site\n        url\n        createTime\n        updateTime\n      }\n      total\n    }\n  }\n':
     types.GetTagsDocument,
   '\n  mutation deleteTag($id: Int!) {\n    deleteTag(id: $id) {\n      __typename\n      ... on ResourceDeleted {\n        resource {\n          kind\n          id\n        }\n      }\n      ... on ValidationFailure {\n        issues {\n          path\n          code\n          min\n          max\n        }\n      }\n    }\n  }\n':
     types.DeleteTagDocument,
-  '\n  query ReadBookmarkTagsState {\n    allTags {\n      id\n    }\n  }\n': types.ReadBookmarkTagsStateDocument,
 };
 
 /**
@@ -232,14 +232,14 @@ export function graphql(
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(
-  source: '\n  query getCollections($parentId: Int, $pagination: Pagination!) {\n    getCollections(parentId: $parentId, pagination: $pagination) {\n      data {\n        name\n        id\n        path\n        parentId\n        createTime\n        updateTime\n        description\n      }\n      total\n    }\n  }\n',
-): (typeof documents)['\n  query getCollections($parentId: Int, $pagination: Pagination!) {\n    getCollections(parentId: $parentId, pagination: $pagination) {\n      data {\n        name\n        id\n        path\n        parentId\n        createTime\n        updateTime\n        description\n      }\n      total\n    }\n  }\n'];
+  source: '\n  query ReadBookmarkCollectionState($id: Int!) {\n    getCollection(id: $id) {\n      id\n      name\n      description\n      parentId\n    }\n  }\n',
+): (typeof documents)['\n  query ReadBookmarkCollectionState($id: Int!) {\n    getCollection(id: $id) {\n      id\n      name\n      description\n      parentId\n    }\n  }\n'];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(
-  source: '\n  query ReadBookmarkCollectionState($id: Int!) {\n    getCollection(id: $id) {\n      id\n      name\n      description\n      parentId\n    }\n  }\n',
-): (typeof documents)['\n  query ReadBookmarkCollectionState($id: Int!) {\n    getCollection(id: $id) {\n      id\n      name\n      description\n      parentId\n    }\n  }\n'];
+  source: '\n  query getCollections($parentId: Int, $pagination: Pagination!) {\n    getCollections(parentId: $parentId, pagination: $pagination) {\n      data {\n        name\n        id\n        path\n        parentId\n        createTime\n        updateTime\n        description\n      }\n      total\n    }\n  }\n',
+): (typeof documents)['\n  query getCollections($parentId: Int, $pagination: Pagination!) {\n    getCollections(parentId: $parentId, pagination: $pagination) {\n      data {\n        name\n        id\n        path\n        parentId\n        createTime\n        updateTime\n        description\n      }\n      total\n    }\n  }\n'];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -340,6 +340,12 @@ export function graphql(
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(
+  source: '\n  query ReadBookmarkTagsState {\n    allTags {\n      id\n    }\n  }\n',
+): (typeof documents)['\n  query ReadBookmarkTagsState {\n    allTags {\n      id\n    }\n  }\n'];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(
   source: '\n  query getTags($pagination: Pagination!) {\n    queryTags(pagination: $pagination) {\n      data {\n        name\n        id\n        site\n        url\n        createTime\n        updateTime\n      }\n      total\n    }\n  }\n',
 ): (typeof documents)['\n  query getTags($pagination: Pagination!) {\n    queryTags(pagination: $pagination) {\n      data {\n        name\n        id\n        site\n        url\n        createTime\n        updateTime\n      }\n      total\n    }\n  }\n'];
 /**
@@ -348,12 +354,6 @@ export function graphql(
 export function graphql(
   source: '\n  mutation deleteTag($id: Int!) {\n    deleteTag(id: $id) {\n      __typename\n      ... on ResourceDeleted {\n        resource {\n          kind\n          id\n        }\n      }\n      ... on ValidationFailure {\n        issues {\n          path\n          code\n          min\n          max\n        }\n      }\n    }\n  }\n',
 ): (typeof documents)['\n  mutation deleteTag($id: Int!) {\n    deleteTag(id: $id) {\n      __typename\n      ... on ResourceDeleted {\n        resource {\n          kind\n          id\n        }\n      }\n      ... on ValidationFailure {\n        issues {\n          path\n          code\n          min\n          max\n        }\n      }\n    }\n  }\n'];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(
-  source: '\n  query ReadBookmarkTagsState {\n    allTags {\n      id\n    }\n  }\n',
-): (typeof documents)['\n  query ReadBookmarkTagsState {\n    allTags {\n      id\n    }\n  }\n'];
 
 export function graphql(source: string) {
   return (documents as any)[source] ?? {};

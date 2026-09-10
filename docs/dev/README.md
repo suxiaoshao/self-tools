@@ -20,6 +20,7 @@
 | [Issue #101：层级写入与删除一致性](issue-101/README.md)                            | bookmarks / collections / database              | 明确父子关系事实源、有限层级遍历、路径更新与删除原子性。                  |
 | [Issue #103：前端包与领域所有权](issue-103/README.md)                              | web workspace / portal / common / lint          | 明确共享能力与领域所有者、公开入口及可执行依赖边界。                      |
 | [Issue #104：操作安全、可访问性与表单反馈](../../web/docs/dev/issue-104/README.md) | web / portal / bookmarks / collections / common | 统一删除确认、交互语义、翻译与字段反馈。                                  |
+| [Issue #105：前端配置、加载边界与构建检查](issue-105/README.md)                    | web / gateway / CI                              | 集中同源路径、按需加载与生产产物和生成漂移检查。                          |
 
 ### 已完成或已替代计划
 

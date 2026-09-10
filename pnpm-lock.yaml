@@ -167,15 +167,9 @@ importers:
       react:
         specifier: ^19.2.7
         version: 19.2.7
-      ts-pattern:
-        specifier: ^5.9.0
-        version: 5.9.0
       ui:
         specifier: workspace:*
         version: link:../ui
-      zustand:
-        specifier: 5.0.14
-        version: 5.0.14(@types/react@19.2.17)(react@19.2.7)(use-sync-external-store@1.6.0(react@19.2.7))
 
   web/common/hooks:
     dependencies:
@@ -225,12 +219,17 @@ importers:
       '@types/prismjs':
         specifier: ^1.26.6
         version: 1.26.6
+      vite:
+        specifier: ^8.1.4
+        version: 8.1.4(@types/node@24.13.3)(jiti@2.7.0)(yaml@2.9.0)
 
   web/common/request-errors:
     dependencies:
       valibot:
         specifier: 1.4.2
         version: 1.4.2(typescript@7.0.2)
+
+  web/common/runtime-config: {}
 
   web/common/time:
     dependencies:
@@ -333,6 +332,9 @@ importers:
       request-errors:
         specifier: workspace:*
         version: link:../../common/request-errors
+      runtime-config:
+        specifier: workspace:*
+        version: link:../../common/runtime-config
       sonner:
         specifier: ^2.0.7
         version: 2.0.7(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
@@ -412,6 +414,9 @@ importers:
       request-errors:
         specifier: workspace:*
         version: link:../../common/request-errors
+      runtime-config:
+        specifier: workspace:*
+        version: link:../../common/runtime-config
       time:
         specifier: workspace:*
         version: link:../../common/time
@@ -473,6 +478,9 @@ importers:
       request-errors:
         specifier: workspace:*
         version: link:../../common/request-errors
+      runtime-config:
+        specifier: workspace:*
+        version: link:../../common/runtime-config
       ts-pattern:
         specifier: ^5.9.0
         version: 5.9.0
@@ -507,6 +515,9 @@ importers:
       code-inspector-plugin:
         specifier: ^1.6.6
         version: 1.6.6(supports-color@7.2.0)
+      markdown:
+        specifier: workspace:*
+        version: link:../../common/markdown
       shadcn:
         specifier: ^4.13.0
         version: 4.13.0(supports-color@7.2.0)(typescript@7.0.2)

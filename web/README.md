@@ -14,6 +14,7 @@
 | `common/collection-tree` | 纯集合树投影与受控单选 / 多选视图。                                                          |
 | `common/markdown`        | Markdown 渲染及语法高亮。                                                                    |
 | `common/request-errors`  | HTTP 公共错误运行时解码、请求失败分类与结果未知判定。                                        |
+| `common/runtime-config`  | 无框架依赖的同源认证、GraphQL 与图片路径。                                                   |
 | `common/types`           | 跨包类型，以及 `MicroConfig`、菜单和路由接入契约。                                           |
 | `common/custom-graphql`  | Apollo Client、同源 Cookie/认证边界、按路径的查询故障与写入反馈。                            |
 | `common/custom-table`    | TanStack Table 的表格、分页和 column helper 封装。                                           |
@@ -63,6 +64,10 @@ portal/src/main.tsx
 - `src/**/*.ts`、`src/**/*.tsx` 中的 GraphQL operation：业务查询和 mutation 的手写事实源。
 - `codegen.ts`：输入范围、scalar 映射和输出位置配置。
 - `src/gql/`：生成物，只能通过目标包现有的 `generate` script 刷新，不应手工修改。
+
+`generate` 统一执行 codegen 和 oxfmt，先在临时目录完成输出再同步受管目录（包含移除过时文件）。
+`pnpm graphql:check` 用同一 codegen 配置在临时目录生成与格式化，比较完整文件集合与内容，不改写工作区；
+漂移时按提示运行所属包的 generate。生成目录和测试 fixture 不参与 operation 扫描。后端 CI 继续复用既有 schema 快照与 browser operation 回归。
 
 schema、operation 或 codegen 配置变化时，在受影响的 package 运行 `generate`，检查生成 diff，再执行适用的前端验证。若后端 schema 同时变化，应同步更新客户端的 `schema.graphql`，避免前后端各自保留不同契约。
 
@@ -121,9 +126,36 @@ Tailwind 的源码扫描根目录由 `globals.css` 的 `source()` 显式指定�
 
 处理组件选型、API、迁移、CLI 或 registry 时，先从 [shadcn/ui llms.txt](https://ui.shadcn.com/llms.txt) 定位当前官方文档，并结合仓库的 `.agents/skills/shadcn/`。更新组件前先判断本地差异是有意定制还是过期实现，并保留仍有价值的本地行为。
 
-## 地址配置现状
+## 部署地址与开发配置
 
-认证和 GraphQL 使用当前主站的相对 `/api/...` 路径；Vite `base`、开发 HMR 和部分资源地址仍使用 `sushao.top` 相关域名。这是现状，不是新增代码应复制的配置方式。新增或调整服务地址时，优先建立集中且可按环境切换的配置入口，并一次性更新相关消费者；不要把线上域名继续散落到新文件。
+`runtime-config` 是浏览器端同源路径的唯一事实源，portal auth、两个 Apollo 入口和 bookmarks 图片 helper 直接消费。
+生产 Vite base 固定 `/`，同一产物可用于不同域名的主站根路径；域名、TLS 和后端地址由 gateway 配置。
+切换域名时还须同步 auth/login/两个 GraphQL 服务的 `AUTH_ORIGIN`，WebAuthn RP 规则仍按后端配置校验。
+认证、GraphQL、图片均经当前主站，不需要启动时请求配置，也不支持任意跨域 endpoint 或子目录部署。
+图片 `/fetch-content` 路由必须先部署到 gateway，再更新前端产物；回退旧网关时须同时恢复旧前端图片入口。
+
+开发配置见 [portal/.env.example](packages/portal/.env.example)：`WEB_DEV_PORT` 默认 3000；可选 `WEB_DEV_ORIGIN`
+集中指定开发网关 Origin，并派生 Vite origin、HMR host、协议与客户端端口。只接受 HTTP(S) Origin，不接受凭据、
+业务路径、query 或 fragment；开发文件使用未跟踪的 `.env.local`。未提供 origin 时使用 Vite 默认推导和默认 host 限制。
+这些值只用于开发服务；普通 HTTP 预览不提供认证例外，HTTPS 联调仍需配置 gateway、证书和后端。
+
+## 加载边界与产物预算
+
+MicroConfig 入口只组合菜单与 lazy 声明；业务 App、各页面独立加载，Apollo 与集合树 Provider 随所属应用进入。
+portal 在现有菜单路由内容上放置 `ui/async-boundary`，页面切换保留应用 Provider 与外层导航。加载失败提供显式刷新，
+不会自动循环重试已缓存的失败 import；认证 generation 仍卸载旧业务树。
+
+`edit` 仅在挂载时加载 Monaco。加载中或失败时使用受控文本框，保留 RHF 草稿、只读状态和 focus 请求；
+成功加载后才创建 editor，卸载清理 listener、editor 和 model。公开 Monaco ref 保持原语义，表单 focus 通过独立适配器保持可用。
+
+Markdown 先渲染正文与复制操作，有代码块时才加载 Prism。`markdown/vite` 从锁定版本的本地包提供语言及依赖资源，
+语言清单归 markdown，别名和依赖关系使用 Prism metadata/autoloader。无 CDN；高亮只处理当前容器，过时异步完成不改写旧 DOM。
+不支持的语言或资源加载失败保留纯文本和复制操作。
+
+`pnpm build:check` 执行生产 build，读取本次 `.vite/manifest.json` 与模块归属报告，遍历入口静态 imports，按产物去重、
+逐文件 gzip 计量。入口 JS 上限 450 KiB、CSS 上限 60 KiB，并禁止业务页面、Monaco、Prism grammar 和 worker 出现在初始静态闭包。
+预算事实源为 [bundle-budget.json](config/bundle-budget.json)，同时限制路由静态增量、编辑器、worker、单个 grammar 和总资源；
+这些是产物体积，不能视为所有资源都会在首屏请求。异步预算基于 #105 首轮实测并留出余量，调整需说明用途与比较对象。
 
 ## 登录与会话边界
 

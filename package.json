@@ -16,7 +16,9 @@
     "build": "pnpm --filter './web/packages/*' run build",
     "commit": "git-cz",
     "prepare": "husky",
-    "boundaries": "node web/config/check-boundaries.mts"
+    "boundaries": "node web/config/check-boundaries.mts",
+    "graphql:check": "node web/config/generate-graphql.mts --check",
+    "build:check": "pnpm build && node web/config/check-bundle.mts"
   },
   "devDependencies": {
     "@apollo/client": "^4.2.6",

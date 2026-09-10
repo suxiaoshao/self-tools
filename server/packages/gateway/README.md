@@ -28,12 +28,14 @@
 | main host        | `/api/auth/` 前缀                  | login         |
 | main host        | 精确 `/api/bookmarks/graphql`      | bookmarks     |
 | main host        | 精确 `/api/collections/graphql`    | collections   |
+| main host        | 精确 `/fetch-content`              | bookmarks     |
 | bookmarks host   | `/fetch-content` 等现有非 API 路径 | bookmarks     |
 | collections host | 现有非 API、非 `/graphql` 路径     | 遗留前端      |
 | main host        | 非 `/api`、非 `/api/` 路径         | portal        |
 
 主站未知 `/api/` 返回 404，不落入前端 fallback。旧 auth host 认证接口和两个子域的
-`/graphql` 已退役。API 规则必须位于 portal fallback 前。
+`/graphql` 已退役。API 与图片规则必须位于 portal fallback 前。主站图片路径保留原 URI 和 query，复用 bookmarks 图片 handler 的来源限制、流式响应和缓存；不转发 session／ceremony Cookie，trace 标签固定 `/fetch-content`。
+先部署该网关路由再更新使用同源图片的前端；回退旧网关时同时恢复旧前端图片入口。
 仅向上述三个 API upstream 传递 session Cookie，ceremony Cookie 仅传给 login；
 其他 upstream 移除这两个 Cookie，保留不相关 Cookie。API 移除旧 Authorization，
 响应强制 `Cache-Control: no-store`。gateway 不校验 session，Cookie/Origin 的实际验证由下游所有者执行。

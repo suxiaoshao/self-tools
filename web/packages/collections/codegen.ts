@@ -1,17 +1,19 @@
 import type { CodegenConfig } from '@graphql-codegen/cli';
 
-const config: CodegenConfig = {
-  schema: './schema.graphql',
-  documents: ['./src/**/*.tsx', './src/**/*.ts'],
-  generates: {
-    './src/gql/': {
-      preset: 'client',
-      config: {
-        scalars: {
-          DateTime: 'string',
+export function codegenConfig(output = './src/gql/'): CodegenConfig {
+  return {
+    schema: './schema.graphql',
+    documents: ['./src/**/*.tsx', './src/**/*.ts', '!./src/gql/**', '!./src/**/*.test.*', '!./src/**/fixtures/**'],
+    generates: {
+      [output]: {
+        preset: 'client',
+        config: {
+          scalars: {
+            DateTime: 'string',
+          },
         },
       },
     },
-  },
-} satisfies CodegenConfig;
-export default config;
+  };
+}
+export default codegenConfig(process.env.GRAPHQL_OUTPUT_DIR);

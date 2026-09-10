@@ -1,3 +1,5 @@
-export { default as AuthorList } from './list';
-export { default as AuthorDetails } from './details';
-export { default as AuthorFetch } from './fetch';
+import { lazy } from 'react';
+
+export const AuthorList = lazy(() => import('./list'));
+export const AuthorDetails = lazy(() => import('./details'));
+export const AuthorFetch = lazy(() => import('./fetch'));

@@ -14,12 +14,13 @@ import type { Menu } from 'types';
 import { match } from 'ts-pattern';
 import { useI18n } from 'i18n';
 import ErrorPage from './Error/index';
+import RouteBoundary from './RouteBoundary';
 
 function MenuRouter({ path }: Menu) {
   return match(path)
     .with({ tag: 'path' }, ({ value }) => {
       return (
-        <Route key={value.path} path={value.path} element={value.element}>
+        <Route key={value.path} path={value.path} element={<RouteBoundary>{value.element}</RouteBoundary>}>
           {value.children}
         </Route>
       );
@@ -52,9 +53,20 @@ export default function AppRouter() {
         <Routes key={generation}>
           <Route path="/" element={<AppDrawer />}>
             <Route path="/" element={<Home />} />
-            <Route path="/settings/security" element={<Security />} />
+            <Route
+              path="/settings/security"
+              element={
+                <RouteBoundary>
+                  <Security />
+                </RouteBoundary>
+              }
+            />
             {microConfigs.map((item) => (
-              <Route key={`route-${item.getActiveRule()}`} path={item.getActiveRule()} element={item.getElement()}>
+              <Route
+                key={`route-${item.getActiveRule()}`}
+                path={item.getActiveRule()}
+                element={<RouteBoundary>{item.getElement()}</RouteBoundary>}
+              >
                 {item.getMenu().map((menu) => MenuRouter(menu))}
               </Route>
             ))}

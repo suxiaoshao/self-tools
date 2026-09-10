@@ -1,0 +1,9 @@
+{
+  "initialJsGzip": 460800,
+  "initialCssGzip": 61440,
+  "routeJsGzip": 262144,
+  "editorJsGzip": 1126400,
+  "workerGzip": 1638400,
+  "grammarGzip": 8192,
+  "totalGzip": 6291456
+}

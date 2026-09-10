@@ -28,7 +28,9 @@
     "./web/common/*/src",
     "./web/config",
     "./graphql.config.ts",
-    "./web/packages/*/codegen.ts"
+    "./web/packages/*/codegen.ts",
+    "./web/packages/portal/*.ts",
+    "./web/common/markdown/*.ts"
   ],
   "exclude": ["./**/node_modules"]
 }

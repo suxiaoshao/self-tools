@@ -1,3 +1,5 @@
-export { default as NovelList } from './list';
-export { default as NovelDetails } from './details';
-export { default as NovelFetch } from './fetch';
+import { lazy } from 'react';
+
+export const NovelList = lazy(() => import('./list'));
+export const NovelDetails = lazy(() => import('./details'));
+export const NovelFetch = lazy(() => import('./fetch'));

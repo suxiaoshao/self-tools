@@ -1,35 +1,31 @@
-/* plugin */
-import 'prismjs/plugins/line-numbers/prism-line-numbers.min';
+import './manual';
+import Prism from 'prismjs/components/prism-core';
+import 'prismjs/plugins/autoloader/prism-autoloader';
+import 'prismjs/plugins/line-numbers/prism-line-numbers';
 import 'prismjs/plugins/line-numbers/prism-line-numbers.css';
-
-import 'prismjs/plugins/toolbar/prism-toolbar.min';
-import 'prismjs/plugins/toolbar/prism-toolbar.css';
-import 'prismjs/plugins/show-language/prism-show-language.min';
-import 'prismjs/plugins/copy-to-clipboard/prism-copy-to-clipboard.min';
-
-// 引入语言
-import 'prismjs/components/prism-clike.min';
-import 'prismjs/components/prism-markup-templating.min';
-import 'prismjs/components/prism-nginx.min';
-import 'prismjs/components/prism-typescript.min';
-import 'prismjs/components/prism-bash.min';
-import 'prismjs/components/prism-python.min';
-import 'prismjs/components/prism-sass.min';
-import 'prismjs/components/prism-css.min';
-import 'prismjs/components/prism-markdown.min';
-import 'prismjs/components/prism-markup.min';
-import 'prismjs/components/prism-go.min';
-import 'prismjs/components/prism-jsx.min';
-import 'prismjs/components/prism-tsx.min';
-import 'prismjs/components/prism-javascript.min';
-import 'prismjs/components/prism-yaml.min';
-import 'prismjs/components/prism-ejs.min';
-import 'prismjs/components/prism-java.min';
-import 'prismjs/components/prism-json.min';
-import 'prismjs/components/prism-nasm.min';
-import 'prismjs/components/prism-sql.min';
-import 'prismjs/components/prism-rust.min';
-
-/* style */
 import 'prism-themes/themes/prism-dracula.css';
 import './index.css';
+
+const autoloader = Prism.plugins.autoloader as {
+  languages_path: string;
+  loadLanguages: (languages: string[], success: () => void, error: () => void) => void;
+};
+autoloader.languages_path = __PRISM_PATH__;
+
+export async function highlight(container: HTMLElement, current: () => boolean) {
+  await Promise.all(
+    Array.from(container.querySelectorAll<HTMLElement>('pre code')).map(async (element) => {
+      const language =
+        __PRISM_ALIASES__[(/\blang(?:uage)?-([\w-]+)\b/i.exec(element.className)?.[1] ?? '').toLowerCase()];
+      if (!language) return;
+      const loaded = await new Promise<boolean>((resolve) =>
+        autoloader.loadLanguages(
+          [language],
+          () => resolve(true),
+          () => resolve(false),
+        ),
+      );
+      if (loaded && current() && container.contains(element)) Prism.highlightElement(element);
+    }),
+  );
+}
