@@ -3,7 +3,7 @@ import { afterEach, expect, it, vi } from 'vitest';
 import { ApolloProvider } from '@apollo/client/react';
 import { Link, MemoryRouter, Route, Routes } from 'react-router';
 import { clearAuthenticatedState, getClient } from 'custom-graphql';
-import Collections from './index';
+import Collections from './view';
 import { CollectionsProvider, CollectionLoadingState, useAllCollection } from '../../entities/collection';
 
 vi.mock('i18n', () => ({ useI18n: () => (key: string) => key }));
