@@ -31,17 +31,27 @@
 
 ## 环境要求
 
-- Node.js LTS 与根 `package.json` 声明版本的 pnpm
-- Rust stable（`cargo`）
+- macOS / Linux 安装 Nix 并启用 `nix-command flakes`；工具与系统库由 `flake.lock` 固定
+- macOS 原生编译仍需 Xcode Command Line Tools；Rust 版本与组件见 `rust-toolchain.toml`
 - Docker daemon（仅镜像构建、容器编排与相关验证需要）
 
 ## 快速开始
 
+先进入项目环境（默认同时提供前后端工具）：
+
+```bash
+nix develop
+# 仅前端或后端：nix develop .#web / nix develop .#backend
+# 在当前 Fish 中工作：nix develop --command fish --no-config
+```
+
+`web` 提供 Node 24 与 `package.json` 指定的 pnpm；`backend` 提供 Rust、C/C++、CMake、pkg-config、OpenSSL 和 libpq。pnpm 使用固定哈希的官方 12.4.0 平台包，更新版本时同步 `nix/pnpm.nix`。进入环境不自动安装业务依赖、启动服务或修改数据库。
+
 安装依赖：
 
 ```bash
-pnpm install
-cargo fetch
+pnpm install --frozen-lockfile
+cargo fetch --locked
 ```
 
 启动前端入口：
@@ -72,6 +82,6 @@ cargo run -p xtask -- --help
 
 ## CI 与部署
 
-- GitHub Actions 的实际触发条件与步骤以 [`.github/workflows/`](.github/workflows/) 为准。
+- GitHub Actions 的 web / server job 分别通过同一 flake 的 `web` / `backend` 环境运行；实际触发条件与步骤以 [`.github/workflows/`](.github/workflows/) 为准。
 - 镜像构建和 Compose 编排是两个独立阶段，详见 [`xtask` 文档](server/common/xtask/README.md)。
 - 容器、证书、volume、域名解析及外部服务等前置条件见 [`docker/README.md`](docker/README.md)。
