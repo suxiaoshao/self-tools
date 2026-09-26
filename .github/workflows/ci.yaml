@@ -7,15 +7,16 @@ on:
 jobs:
   web:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: nix develop .#web --command bash -e {0}
     steps:
       - name: git clone
         uses: actions/checkout@v7
-      - name: Install Node.js, pnpm and dependencies
-        uses: pnpm/setup@v2
-        with:
-          runtime: node@lts
-          cache: true
-          require-lockfile: true
+      - name: Install Nix
+        uses: cachix/install-nix-action@b85815f71a6de0ddee80b8a80a98d43f4bcc66c7 # v31
+      - name: Install frontend dependencies
+        run: pnpm install --frozen-lockfile
       - name: Lint
         run: pnpm lint
       - name: Test
@@ -26,14 +27,15 @@ jobs:
         run: pnpm build:check
   server:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: nix develop .#backend --command bash -e {0}
     steps:
       - name: git clone
         uses: actions/checkout@v7
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-      - name: Install native build tools
-        run: sudo apt update && sudo apt install mold clang -y
+      - name: Install Nix
+        uses: cachix/install-nix-action@b85815f71a6de0ddee80b8a80a98d43f4bcc66c7 # v31
       - name: server Lint
-        run: cargo clippy --all
+        run: cargo clippy --all --locked
       - name: server test
-        run: cargo test --all
+        run: cargo test --all --locked

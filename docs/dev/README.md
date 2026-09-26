@@ -22,3 +22,4 @@
 | [Issue #105：前端配置、加载边界与构建检查](issue-105/README.md)                     | web / gateway / CI                              | 集中同源路径、按需加载与生产产物和生成漂移检查。                          |
 | [Issue #107：crawler 所有权与确定性测试](../../server/docs/dev/issue-107/README.md) | novel_crawler / bookmarks                       | 使用同步借用读取已抓取章节，收敛公开接口并隔离公网测试。                  |
 | [Issue #125：导航入口与页面操作栏统一](../../web/docs/dev/issue-125/README.md)      | web / portal / bookmarks / collections / ui     | 合并导航入口和页面操作，统一高度、表单及回退组合约定。                    |
+| [可复现的本机与 CI 开发环境](nix-development/README.md)                             | 根工具链 / web / server / CI                    | 统一项目依赖与本机、CI 的开发入口。                                       |
